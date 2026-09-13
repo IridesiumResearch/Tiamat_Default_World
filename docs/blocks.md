@@ -83,6 +83,19 @@ somewhere that is not wet).
 | `dead_wood` (reused) | snags and fallen firs, one fir in twenty-one | as the woodlands, twice as often |
 | `alpine_turf` | turf over the dirt below the tree line, in the tufts' cold blue-green | 2026-09-12: the shared `grass` block carries the temperate tint, and a tint is per material |
 
+### 1.4 Coastal Cliffs (2026-09-13)
+
+Shares `stone` and `slate` (strata), `limestone` (standing in for the
+sandstone stratum: one new material a biome is the rule and two were asked
+for by name), `creek_bed` (the tide-washed gravel and the beaches), `grass`
+and `tall_grass` (the cliff-top turf and its sparse tufts), and the `water`
+FLUID, filled below the sea level by the generator.
+
+| Block | Where | Why |
+|---|---|---|
+| `dark_basalt` | strata through the cliffs, near-black | asked for by name 2026-09-13 |
+| `dead_coral` | the splash zone's crust where a fast noise is high, a pale pitted bone colour | asked for by name 2026-09-13 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:

@@ -146,6 +146,21 @@ new material, and additions are flagged before they land.
 
 ## Biomes
 
+- [x] 1.4 Coastal Cliffs — sheer precipices thirty to sixty blocks into open
+      water or a short shingle beach, on a FLAT sea: the biome's terms cancel
+      the world's dome and the generator fills the engine's water below one
+      level. The cliff is the engine's `contour` distance to the coastline,
+      so it is sheer everywhere and not only where the coast noise climbs;
+      sea stacks off the shore, narrow headlands, an undercut notch at the
+      waterline, sea caves that open through a thin headland as an arch,
+      and the alpine's cracks across the cliff tops that open the face as
+      fissures. Layered horizontal strata of stone, dark basalt, slate and
+      limestone (for sandstone); thin turf and sparse grass on top; dead
+      coral, stone, slate and gravel in the splash zone. Dev switch
+      `everywhere = "coastal_cliffs"`; in the ring world the Long Shore
+      drops eight hundred metres across its width and where its sea sits is
+      an open design question.
+
 Every biome from the design is registered in `biomes/catalogue.lua`; each is
 built one at a time in its own file. Built so far:
 

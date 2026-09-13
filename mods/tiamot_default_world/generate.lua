@@ -80,6 +80,23 @@ local function seed_int(seed)
     return math.tointeger(seed % 4294967296.0) or 0
 end
 
+-- The coast's sea: the engine's water below the biome's sea level, in
+-- every chunk of the coast mode that reaches it. `fill_fluid_below` takes a
+-- level and a fluid and fills the air under the level; the terrain keeps
+-- its cells. The coast is the one mode with a flat sea to fill — see
+-- biomes/coastal_cliffs.lua for why a sea cannot lie on the dome.
+local WATER = "tiamot_default_world:water"
+local function sea_into(buf, mode, y_lo)
+    if mode ~= "coast" then
+        return
+    end
+    local sea = tdw.biomes.coastal_cliffs.sea_y
+    if sea == nil or y_lo > sea then
+        return
+    end
+    buf:fill_fluid_below(sea, WATER)
+end
+
 local function generate(buf, pos)
     if tdw.seed ~= pos.seed then
         tdw.seed = pos.seed
@@ -133,6 +150,8 @@ local function generate(buf, pos)
     -- Air: above the surface, beyond the body, or wholly inside the Hollow.
     if tmax < 0 or outside_body then
         stats.air = stats.air + 1
+        -- The sea: a chunk of air over the seabed still gets its water.
+        sea_into(buf, mode, y0)
         return
     end
     if e2hi < HOLLOW_IN then
@@ -210,6 +229,9 @@ local function generate(buf, pos)
                     end
                 end
             end
+            -- The sea, after the terrain: the fluid fill leaves the terrain
+            -- its cells and takes the air below the level.
+            sea_into(buf, mode, y0)
             -- The structures, after the covers: a trunk's base merges into
             -- the surface block over the grass cells stood in it. The
             -- engine's `scatter` does the whole neighbourhood pass — every

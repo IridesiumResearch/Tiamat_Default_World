@@ -133,6 +133,13 @@ M.rose = game.register_item{ id = "rose", name = "Rose", description = "Picked f
 -- opaque or gone at random.
 block("oak_leaves", "Oak leaves", "Canopy of a temperate oak.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 
+-- The coast (1.4). Two new nodes, asked for by name: the dark basalt of
+-- the strata and the dead coral of the splash zone. The sandstone stratum
+-- is `limestone` standing in (one new material a biome is the rule, and
+-- two were asked for); the gravel is `creek_bed`.
+block("dark_basalt", "Dark basalt", "A near-black stratum of the sea cliffs.", { hardness = 1.6, tint = ROCK })
+block("dead_coral", "Dead coral", "Bleached, pitted, slick: the splash zone's crust.", { hardness = 0.7, tint = SOIL })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

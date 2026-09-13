@@ -230,10 +230,11 @@ end
 -- The distance, in blocks, from the zero contour of a 2D noise (engine
 -- `contour` node, 2026-09-13): a line across the ground with a width, for
 -- cracks. Same stream and frequency as a noise; one octave.
-local function contour(stream, frequency)
-    return { op = "contour", stream = stream, frequency = frequency, octaves = 1 }
+local function contour(stream, frequency, octaves, signed)
+    return { op = "contour", stream = stream, frequency = frequency, octaves = octaves or 1, signed = signed or false }
 end
-M.node = { const = const, X = X, Y = Y, Z = Z, add = add, sub = sub, mul = mul, min = min, max = max, clamp = clamp, abs = abs, noise = noise, contour = contour }
+local function div(a, b) return { op = "div", a = a, b = b } end
+M.node = { const = const, X = X, Y = Y, Z = Z, add = add, sub = sub, mul = mul, div = div, min = min, max = max, clamp = clamp, abs = abs, noise = noise, contour = contour }
 
 -- Shared subexpressions (each call builds a fresh tree) ----------------------
 -- r^2 in km^2: seven ops and three buffers.
@@ -331,6 +332,7 @@ end
 --   "dry"       its dry half alone (dev switch: grasslands)
 --   "temperate" both halves cross-faded by humidity — the temperate ring
 --   "alpine"    the frost ring's terms alone
+--   "coast"     the shore ring's cliffs alone, on a flat sea (dev switch: coastal cliffs)
 --   "all"       temperate and alpine cross-faded by the alpine weight: the
 --               band a few hundred metres wide at the frost ring's edge,
 --               and the only programs that carry every ring's noise.
@@ -345,6 +347,8 @@ function M.default_mode()
         return "dry"
     elseif only == "alpine_highlands" then
         return "alpine"
+    elseif only == "coastal_cliffs" then
+        return "coast"
     end
     return "wet"
 end
@@ -414,6 +418,13 @@ function M.terrain(flank)
         relief = mul(relief, plain_mask())
     end
     local shape = add(relief, detail)
+    if mode == "coast" then
+        -- The coast stands on a flat sea, not on the dome or the world's
+        -- hills: its terms cancel the dome and carry their own relief. Its
+        -- terms first and the depth after: the terms are the deeper, and
+        -- with the depth held first they reached the eighth buffer.
+        return add(M.coast_terms(), M.depth())
+    end
     if mode == "wet" then
         shape = add(shape, wet_terms())
     elseif mode == "dry" then
@@ -522,7 +533,7 @@ end
 -- needs them (`top_for`); the rest are compiled here, at load, where
 -- `--check-mods` sees them.
 P.top = {}
-local LAZY = { alpine = true, all = true }
+local LAZY = { alpine = true, all = true, coast = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then
@@ -565,8 +576,15 @@ P.hollow = compile("hollow", M.inside(M.HOLLOW_R))
 function M.spawn_extra_above()
     if M.default_mode() == "alpine" then
         return math.ceil((M.ALPINE_PEAK or 0.4) * 1000) + 10
+    elseif M.default_mode() == "coast" then
+        return math.ceil((M.COAST_TOP or 0.06) * 1000) + 10
     end
     return 0
+end
+-- The dome, as a node, for a biome that has to cancel it (the coast: a
+-- sea is flat).
+function M.dome_node()
+    return dome()
 end
 function M.dome_at(u_value)
     return M.SUMMIT - M.DOME_DROP * u_value * (2.0 - u_value)

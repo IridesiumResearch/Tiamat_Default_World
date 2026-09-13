@@ -414,6 +414,40 @@ engine commit they landed in, because the mod is written against them.
   the map depth now, no noise, and keeps the cover off a cave's floor,
   which is all that was wanted.
 
+### Alpine dials, and 1.4 Coastal Cliffs
+
+- Alpine: the cracks over a twentieth of the ground rather than a third
+  (the area gate's threshold to the noise's ninety-fifth percentile), the
+  hollows one surface tick in eight hundred rather than one in a hundred
+  and twenty — "15% as common" — and the firs at 0.28 of the squares,
+  four fifths of before.
+- 1.4 Coastal Cliffs (`biomes/coastal_cliffs.lua`, terrain mode
+  `coast`). The world's surface is a dome and a sea is flat, so the
+  biome's terms cancel the dome and stand the land on one sea level eight
+  blocks under the spawn base, and the generator fills the engine's water
+  fluid below it in every coast chunk — a chunk of air over the seabed
+  included. Land is where a three-octave kilometre noise is positive; the
+  cliff is the `contour` distance to that coastline, the plateau's height
+  (thirty to sixty blocks, by a slow noise, with a couple of blocks of
+  relief) rising over two blocks — sheer — or over twenty-eight where a
+  beach noise says. Sea stacks: a fast noise over a threshold on the sea
+  side within reach of the shore, at the plateau's height. The seabed
+  twelve blocks down. Cut from the land: an undercut notch three and a
+  half blocks into the face within two and a half of the sea level; sea
+  caves where a fast 3D noise is high within seven blocks of the line and
+  two to sixteen over the sea, which through a thin headland are arches;
+  and the alpine's cracks, a block wide and twelve deep from the cliff
+  top in stretches, opening the face as fissures. Materials by the
+  layered fill: eighteen horizontal strata of stone, dark basalt, slate
+  and limestone (standing in for sandstone) from twenty blocks under the
+  sea up; the splash zone within three blocks of the sea and six of the
+  line — dead coral where a fast noise is high, gravel where it is low;
+  gravel over the beaches; a block and a half of turf on the plateau with
+  sparse tufts by the cover fill. Two new blocks, `dark_basalt` and
+  `dead_coral`. The dev switch is on it. Open: where the sea sits in the
+  ring world, whose Long Shore drops eight hundred metres across its
+  width — one level, a shelf, or terraces is a design call.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

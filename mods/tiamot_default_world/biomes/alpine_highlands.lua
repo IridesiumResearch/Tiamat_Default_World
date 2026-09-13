@@ -401,7 +401,7 @@ CRACK.SEG_FREQ = 1 / 60
 CRACK.SEG_T = 0.0
 CRACK.SEG_K = 12.0
 CRACK.AREA_FREQ = 1 / 350
-CRACK.AREA_T = 0.08
+CRACK.AREA_T = 0.28                                   -- was 0.08, a third of the ground; near the ninety-fifth percentile of the noise now, a twentieth: "15% as common"
 CRACK.AREA_K = 20.0
 CRACK.RIM = 1.0                                 -- blocks past the crack the ice rim reaches
 CRACK.RIM_DEPTH = 0.0015                        -- km: the ice into the wall and the lip
@@ -477,7 +477,7 @@ tdw.biomes.alpine_highlands.lazy = true               -- its programs read the m
 -- nil on an engine without `game.schematic`: the tick alone, as before.
 local FIR_SCHEMATICS = nil
 local TREE_CELL = 3
-local TREE_SQUARES = 0.35     -- was 0.5: "thin the trees to 70%" — a fir per twenty-six columns where the forest is
+local TREE_SQUARES = 0.28     -- was 0.5, then 0.35 ("70%"), then this ("80% again"): a fir per thirty-two columns where the forest is
 local TREE_SALT = 11
 -- Where the forest is, below the line: a coarse noise over FOREST_MIN,
 -- which leaves about three fifths of the ground forested — "the forested
@@ -657,7 +657,7 @@ local TREE_APART = 3           -- never within this many blocks of another fir's
 local FIR_SMALL = { 8, 6 }     -- blocks of height: least and extra
 local FIR_BIG = { 18, 11 }
 local DEAD_ONE_IN = 21         -- of the firs, one in this many is dead wood: half snags, half fallen (twice the woodlands' rate)
-local HOLLOW_CHANCE = 120      -- one surface block in this many, in a square that has them; most find no wall within three blocks, cheaply
+local HOLLOW_CHANCE = 800      -- one surface block in this many, in a square that has them; most find no wall within three blocks, cheaply (was 120: "15% as common")
 local HOLLOW_CELL = 64
 local HOLLOW_CELL_ONE_IN = 2
 local HOLLOW_R = { 1.6, 1.4 }  -- the first sphere's half-width: least and extra

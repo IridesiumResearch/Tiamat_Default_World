@@ -45,6 +45,8 @@ BLOCKS = {
     "ladys_mantle_bloom": (172, 176,  92,  0),
     "rose_bush":      ( 58,  90,  46,  0),
     "slate":          ( 72,  78,  90,  0),
+    "dark_basalt":    ( 44,  44,  48,  0),
+    "dead_coral":     (178, 166, 150,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
     "ice":            (126, 172, 228,  0),   # cold blue (2026-09-12; was a grey-blue near the snow's)
