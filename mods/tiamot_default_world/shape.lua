@@ -599,4 +599,43 @@ function M.spawn_base_y()
     return M.Y0 + 1000.0 * M.dome_at(M.PLAIN_U)
 end
 
+-- The ground at a column, by the field: the terrain program for the
+-- column's ring, compiled once per mode, sampled every COLUMN_STEP blocks
+-- from `top` down until it is solid and then block by block within that
+-- step — the topmost solid block. Some two hundred samples, once per
+-- landing, which is what `Density:at` is for ("for choosing WHERE, not for
+-- looping"). nil if nothing is solid within COLUMN_REACH below `top`.
+--
+-- For the spawn: the alpine dev world stood the spawn a thousand blocks
+-- over the base dome, since the peaks can reach that, and a new player
+-- fell the whole way. This finds the ground before they drop.
+local COLUMN_STEP, COLUMN_REACH = 8, 1600
+local column_programs = {}
+function M.ground_at_column(x, z, seed, top)
+    local u = (x * x + z * z) * 1e-6 / (M.R_DISC * M.R_DISC)
+    local mode = M.terrain_mode_for(u, u)
+    local program = column_programs[mode]
+    if program == nil then
+        local was = M.terrain_mode
+        M.terrain_mode = mode
+        program = game.density(M.terrain(false))
+        M.terrain_mode = was
+        column_programs[mode] = program
+    end
+    local y = math.floor(top)
+    local lowest = y - COLUMN_REACH
+    while y > lowest and program:at(x + 0.5, y + 0.5, z + 0.5, seed) <= 0 do
+        y = y - COLUMN_STEP
+    end
+    if y <= lowest then
+        return nil
+    end
+    for yy = y + COLUMN_STEP - 1, y + 1, -1 do
+        if program:at(x + 0.5, yy + 0.5, z + 0.5, seed) > 0 then
+            return yy
+        end
+    end
+    return y
+end
+
 return M

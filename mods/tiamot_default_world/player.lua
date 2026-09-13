@@ -30,6 +30,7 @@ local SPAWN = {
 local SAMPLE_EVERY = 10        -- ticks between position samples
 local SAVE_EVERY = 400         -- ticks between writes to storage
 local SCAN_DOWN = 190          -- blocks searched below a landing player (within the vertical view)
+local AIM_ABOVE = 6            -- blocks over the ground the field finds that a new player is put, before the blocks confirm it
 local HOP = 160                -- blocks dropped when all of that is air
 local GIVE_UP_AFTER = 1200     -- ticks (one minute) before a landing is abandoned
 
@@ -81,6 +82,21 @@ local function land(uuid, rec)
         return
     end
     local x, z = math.floor(p.x), math.floor(p.z)
+    -- First, aim: the ground under the spawn from the terrain field itself
+    -- (`shape.ground_at_column`), the moment the seed is known — the first
+    -- chunk to generate sets it, which is the first tick the player exists.
+    -- The player is put AIM_ABOVE over it and the block reads below take
+    -- it from there: a fall of a few blocks, where the alpine spawn was a
+    -- thousand blocks over the dome and a new player fell the whole way.
+    if not rec.landing.aimed and tdw.seed ~= nil then
+        rec.landing.aimed = true
+        local ground = tdw.shape.ground_at_column(x, z, tdw.seed, p.y)
+        if ground ~= nil and ground + AIM_ABOVE < p.y then
+            game.move_player(uuid, { x = x + 0.5, y = ground + AIM_ABOVE + 0.01, z = z + 0.5 })
+            game.log(string.format("tiamot_default_world: %s aimed at the ground the field puts at %d, %d, %d", uuid, x, ground, z))
+            return
+        end
+    end
     local feet_y = math.floor(p.y)
     local function at(y)
         return game.get_block{ x = x, y = y, z = z }

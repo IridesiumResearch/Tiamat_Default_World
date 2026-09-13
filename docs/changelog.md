@@ -346,6 +346,30 @@ engine commit they landed in, because the mod is written against them.
   dropped — see the engine's contract §8.2. Nothing to do in the mod;
   the leaf textures already carry the leaf colour under their holes.)
 
+### Alpine, fifteenth cut: fewer firs in stands, the spawn on the ground, whole trees across chunks
+
+- Firs thinned to seven tenths (a square in 0.35 rather than half) and
+  the forest confined to stands: a coarse noise gate on where a fir may
+  stand leaves about three fifths of the ground below the line forested,
+  in stands a few hundred blocks across with open ground between. "Thin
+  the trees to 70% and the forested areas to 60%."
+- A new player no longer falls a thousand blocks: the spawn's ground is
+  found from the terrain field itself (`shape.ground_at_column`, some
+  two hundred samples of the column, once) the first tick the seed is
+  known, and the player is put six blocks over it before the block reads
+  confirm the landing. The fall is a few blocks.
+- The tick-grown firs try one surface block in nine rather than three:
+  a thickener now the forest is stamped at generation, where a third of
+  all surface ticks were fir tries refused under it.
+- Trees cut off by chunks (engine): the scatter judged a candidate's
+  surface over a window that differed per chunk, so a ledge under an
+  overhang got a tree from the chunk below and no crown from the chunk
+  above. A surface is now a crossing with no other crossing within the
+  structure's height above it, judged over the same column from every
+  chunk; nothing stands under an overhang, and the higher surface gets
+  the tree whole from every chunk it reaches. Tested across three
+  stacked chunks and under a slab.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

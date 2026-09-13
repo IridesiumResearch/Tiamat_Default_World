@@ -405,8 +405,15 @@ tdw.biomes.alpine_highlands.lazy = true               -- its programs read the m
 -- nil on an engine without `game.schematic`: the tick alone, as before.
 local FIR_SCHEMATICS = nil
 local TREE_CELL = 3
-local TREE_SQUARES = 0.5
+local TREE_SQUARES = 0.35     -- was 0.5: "thin the trees to 70%" — a fir per twenty-six columns where the forest is
 local TREE_SALT = 11
+-- Where the forest is, below the line: a coarse noise over FOREST_MIN,
+-- which leaves about three fifths of the ground forested — "the forested
+-- areas back to 60%" — in stands a few hundred blocks across with open
+-- ground between. The threshold is on the noise's own scale: its values
+-- are bell-shaped about zero, and -0.04 is near the fortieth percentile.
+local FOREST_FREQ = 1 / 220
+local FOREST_MIN = -0.04
 
 tdw.build_biome("alpine_highlands", function(ctx)
     local function masked(field)
@@ -503,6 +510,7 @@ tdw.build_biome("alpine_highlands", function(ctx)
     local stand_field = n.sub(n.const(TREELINE / 1000), map_node("alp_height"))
     stand_field = n.add(stand_field, n.noise("tree_line", TREELINE_WANDER_FREQ, 2, TREELINE_WANDER))
     for _, gate in ipairs(snow_gates()) do stand_field = n.min(stand_field, gate) end
+    stand_field = n.min(stand_field, n.sub(n.noise("forest", FOREST_FREQ, 2, 1.0), n.const(FOREST_MIN)))
     local stand = shape.compile("biome.alpine.stand", masked(stand_field))
     local km = 0.001
     local entries = {
@@ -558,7 +566,7 @@ local ROCK_R = { 0.5, 0.5 }    -- half-width, blocks: least and extra
 -- thin; one in three is a big one.
 local TREELINE_JITTER = 40
 local TREELINE_CELL = 24
-local TREE_CHANCE = 3          -- one surface block in this many, below the line: the forest fills in within a minute or two of a chunk loading, held apart by TREE_APART; a try is one read when the block above is not air
+local TREE_CHANCE = 9          -- one surface block in this many, below the line: a thickener now the forest is stamped at generation (was 3: a third of all surface ticks were fir tries, most refused under the forest)
 local TREE_APART = 3           -- never within this many blocks of another fir's trunk
 local FIR_SMALL = { 8, 6 }     -- blocks of height: least and extra
 local FIR_BIG = { 18, 11 }

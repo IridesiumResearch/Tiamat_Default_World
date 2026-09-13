@@ -245,9 +245,9 @@ built one at a time in its own file. Built so far:
       and a cone of needle pads to a point, tiered on the big ones; one in
       twenty-one is dead wood, a snag or a fallen trunk. The forest is
       there when the chunk is: the firs are schematics stamped by the
-      engine's `scatter` at generation, below a tree line that wanders
-      320 blocks over the base dome, and the random tick thickens it
-      after. Now and then a
+      engine's `scatter` at generation, in stands over about three
+      fifths of the ground below a tree line that wanders 320 blocks
+      over the base dome, and the random tick thickens it after. Now and then a
       crevasse cracks the glaciers and the high snow, long and narrow, deep
       in the middle, its walls coated with ice. Below the snowline
       dirt over most ground that faces up and cold-tinted turf over most of
