@@ -194,7 +194,7 @@ local DETAIL_ROCK = 2.0                               -- ...and three times that
 -- Small clamped steps: a noise clamped hard makes little terraces and
 -- ledges a block or so high wherever it crosses zero — the "slightly
 -- clamped small-scale detail".
-local COVER_CELL = 0.001 / 3                          -- km: one cell, for the cover's near-surface guard
+local COVER_BAND = 0.010                              -- km: the cover stands within this of the map's surface — not on a cave's floor
 local TUFT_FREQ = 1.5                                 -- the grass: each cell nearly its own decision
 local TUFT_MIN = 0.30                                 -- sparse: a third of the 0.22 cut, a column in a dozen blocks
 local STEP_FREQ = 1 / 18
@@ -377,6 +377,76 @@ local function snow_lift()
     end
     return n.mul(taper, n.const(SNOW_LIFT))
 end
+-- The cracks, in the terrain itself (2026-09-13). Along the zero contour
+-- of a slow 2D noise, within CRACK.W blocks of it at the mouth — the
+-- engine's `contour` node is the distance to the line, so the width is
+-- the width everywhere along it (a band `|noise| < w` was a line where
+-- the noise climbed and a pond where it lay flat: a fifth of the ground)
+-- — narrowing to nothing CRACK.D below the map's surface: a wedge, its
+-- walls smooth and vertical, curving gently along the contour. Broken into lengths by CRACK.SEG
+-- — cracks where that noise is over CRACK.SEG_T, some sixty blocks long,
+-- tapering to their ends — and only where CRACK.AREA is over CRACK.AREA_T,
+-- about a third of the ground. A rim of ice CRACK.RIM past the mouth and
+-- down the walls, from the layer codes. In the FIELD, not carved after:
+-- the tick's crevasses (`carve_crevasse`, the chat word still) were cut
+-- through the forest, and were small and jagged besides — an ellipsoid
+-- roughed up, where a crack is a smooth wedge. The firs keep CRACK.KEEP_OFF
+-- clear of them.
+local CRACK = {}                                   -- one table, not a local each: Lua allows a file two hundred locals, and this one is near it
+CRACK.FREQ = 1 / 80
+CRACK.W = 1.6                                         -- blocks: the half-width at the mouth
+CRACK.D = 0.018                                 -- km: eighteen blocks at the deepest
+CRACK.EDGE = 6.0                                -- 1 / the share of the wedge over which a wall comes in: crisp
+CRACK.SEG_FREQ = 1 / 60
+CRACK.SEG_T = 0.0
+CRACK.SEG_K = 12.0
+CRACK.AREA_FREQ = 1 / 350
+CRACK.AREA_T = 0.08
+CRACK.AREA_K = 20.0
+CRACK.RIM = 1.0                                 -- blocks past the crack the ice rim reaches
+CRACK.RIM_DEPTH = 0.0015                        -- km: the ice into the wall and the lip
+CRACK.KEEP_OFF = 2.0                            -- blocks past the crack the firs keep
+-- The depth below the MAP's surface: the dome and the map, no noise. Off
+-- the field's own by the detail, the steps and the snow lift — a few
+-- blocks — which is close enough for a crack's depth and a cover's guard.
+local function map_depth()
+    return n.add(shape.depth(), map_node("alp_height"))
+end
+-- The crack as a wedge field, positive inside: 1 - |n| / W - d / D, with
+-- W the half-width at the mouth and d the map depth. `w` widens W.
+-- Left-leaning, the map depth FIRST: this is evaluated inside the terrain
+-- with two or three buffers held, and the depth (the dome's polynomial in
+-- u, the y ramp, the map) is the deepest operand — pushed after a
+-- constant and a noise it was the ninth buffer.
+local function crack_wedge(w)
+    local wedge = n.add(n.mul(map_depth(), n.const(-1 / CRACK.D)), n.const(1.0))
+    return n.sub(wedge, n.mul(n.contour("crack", CRACK.FREQ), n.const(1 / (CRACK.W + w))))
+end
+-- Where the cracks are: the segment and the area gates and the lakes, 0
+-- to 1.
+local function crack_gate()
+    local seg = n.clamp(n.mul(n.sub(n.noise("crack_seg", CRACK.SEG_FREQ, 1, 1.0), n.const(CRACK.SEG_T)), n.const(CRACK.SEG_K)), 0.0, 1.0)
+    local area = n.clamp(n.mul(n.sub(n.noise("crack_area", CRACK.AREA_FREQ, 1, 1.0), n.const(CRACK.AREA_T)), n.const(CRACK.AREA_K)), 0.0, 1.0)
+    return n.mul(n.mul(seg, area), n.clamp(n.mul(dry(), n.const(4.0)), 0.0, 1.0))
+end
+-- The crack term of the terrain: the wedge clamped crisp, times the gate,
+-- times more depth than the crack has, so the wedge is air to its bottom.
+-- Subtracted from the terrain.
+local function crack_term()
+    return n.mul(n.mul(n.clamp(n.mul(crack_wedge(0.0), n.const(CRACK.EDGE)), 0.0, 1.0), crack_gate()), n.const(CRACK.D * 1.5))
+end
+-- The ice rim: positive in and CRACK.RIM round a crack, where the gate is
+-- firmly on. A layer code; the ice is the band CRACK.RIM_DEPTH into every
+-- surface there — the walls, and the lip round the mouth.
+local function crack_rim()
+    return n.min(crack_wedge(CRACK.RIM), n.sub(crack_gate(), n.const(0.5)))
+end
+-- Clear of any crack, for the firs: past the mouth by CRACK.KEEP_OFF, or
+-- where no crack is.
+local function crack_clear()
+    local off_line = n.sub(n.contour("crack", CRACK.FREQ), n.const(CRACK.W + CRACK.KEEP_OFF))
+    return n.max(off_line, n.sub(n.const(0.5), crack_gate()))
+end
 function shape.alpine_terms()
     -- Rock: 1 on a wall or a crest, 0 on a floor or a snowfield, from the
     -- maps; the mid detail is DETAIL_ROCK times stronger there.
@@ -385,9 +455,11 @@ function shape.alpine_terms()
     local detail = n.mul(n.mul(n.abs(n.noise("alp_detail", DETAIL_FREQ, 1, 1.0)), n.const(DETAIL_H)),
         n.add(n.const(1.0), n.mul(rock, n.const(DETAIL_ROCK))))
     local steps = n.mul(n.clamp(n.mul(n.noise("alp_steps", STEP_FREQ, 1, 1.0), n.const(STEP_STEEP)), -1.0, 1.0), n.const(STEP_H))
-    -- The lift FIRST: it is the deepest term, and evaluated first it holds
-    -- one buffer through the rest, the same as the height alone did.
-    return n.add(n.add(n.add(snow_lift(), map_node("alp_height")), detail), steps)
+    -- The crack FIRST, then the lift: the deepest terms, and evaluated
+    -- first they hold one buffer through the rest, the same as the height
+    -- alone did.
+    local deep = n.add(n.mul(crack_term(), n.const(-1.0)), snow_lift())
+    return n.add(n.add(n.add(deep, map_node("alp_height")), detail), steps)
 end
 shape.ALPINE_PEAK = RIDGE_AMP[1] + RIDGE_AMP[2] + RIDGE_AMP[3] + RIDGE_AMP[4] + BASE_AMP * shape.NOISE_RANGE
 
@@ -449,7 +521,13 @@ tdw.build_biome("alpine_highlands", function(ctx)
     -- six terms against the engine's eight buffers. Terrain FIRST, the
     -- constant after: a constant pushed before it holds a buffer through
     -- the terrain's own peak, which is the ninth.
-    local take = n.add(n.mul(shape.terrain(false), n.const(-1.0)), n.const(COVER_CELL / 2))
+    -- (Until 2026-09-13 the first term was the whole terrain, negated, as a
+    -- "near-surface guard" — which is positive in ALL air, so it guarded
+    -- nothing, and the cover fill evaluates its field over the 27 cells of
+    -- every surface block: a full terrain, ten octaves, seven thousand
+    -- times a chunk. The map depth does the one thing wanted, keeping the
+    -- cover off a cave's floor, for no noise at all.)
+    local take = n.sub(n.const(COVER_BAND), n.abs(map_depth()))
     for _, term in ipairs({ low(), dry(), faces_up(), n.sub(n.const(0.5), crest()),
         n.sub(n.noise("alp_tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)) }) do
         take = n.min(take, term)
@@ -493,6 +571,8 @@ tdw.build_biome("alpine_highlands", function(ctx)
         chain(high(), { dry(), n.sub(floor(), n.const(0.5)) }, n.min),
         -- 9: the lakes.
         n.sub(lake(), n.const(0.5)),
+        -- 10: the ice rim of a crack, over everything.
+        crack_rim(),
     }
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
@@ -514,6 +594,8 @@ tdw.build_biome("alpine_highlands", function(ctx)
     -- And off the glaciers: the floors above the snowline are ice, and
     -- nothing grows on ice. (The lakes are off already, by `dry`.)
     stand_field = n.min(stand_field, n.max(low(), n.sub(n.const(0.5), floor())))
+    -- And clear of the cracks.
+    stand_field = n.min(stand_field, crack_clear())
     local stand = shape.compile("biome.alpine.stand", masked(stand_field))
     local km = 0.001
     local entries = {
@@ -528,6 +610,7 @@ tdw.build_biome("alpine_highlands", function(ctx)
         { code = 8, to = ICE_DEPTH, material = blocks.ice },
         { code = 9, to = LAKE_ICE, material = blocks.ice },
         { code = 9, from = LAKE_ICE, to = LAKE_ICE + LAKE_DEPTH, material = blocks.water },
+        { code = 10, to = CRACK.RIM_DEPTH, material = blocks.ice },
     }
     return {
         { field = granite, material = blocks.granite, shared_only = true },
@@ -582,16 +665,17 @@ local HOLLOW_R = { 1.6, 1.4 }  -- the first sphere's half-width: least and extra
 -- crack down into the ground, ice-coated. One tall ellipsoid of ice
 -- written first and a slightly smaller one carved as air inside it, so
 -- the walls are ice. Along x or z.
-local CREVASSE_CHANCE = 300    -- one ice or high-snow block in this many, in a square that has them
-local CREVASSE_CELL = 128
-local CREVASSE_CELL_ONE_IN = 3
-local CREVASSE_LENGTH = { 14, 20 }  -- blocks: least and extra
-local CREVASSE_DEPTH = { 8, 14 }
-local CREVASSE_HALF = { 0.7, 0.9 }  -- half-width, blocks: least and extra
-local CREVASSE_COAT = 0.7           -- how far past the crack the ice reaches, on the glaciers and the high snow
+local CREVASSE = {}                                   -- one table, not a local each: Lua allows a file two hundred locals, and this one is near it
+CREVASSE.CHANCE = 300    -- one ice or high-snow block in this many, in a square that has them
+CREVASSE.CELL = 128
+CREVASSE.CELL_ONE_IN = 3
+CREVASSE.LENGTH = { 14, 20 }  -- blocks: least and extra
+CREVASSE.DEPTH = { 8, 14 }
+CREVASSE.HALF = { 0.7, 0.9 }  -- half-width, blocks: least and extra
+CREVASSE.COAT = 0.7           -- how far past the crack the ice reaches, on the glaciers and the high snow
 -- Lower down — a crevasse or a hollow anywhere below the line — the ice is
 -- a crust: thinner, and rough enough to be patchy, "a little bit of ice".
-local CREVASSE_CRUST = 0.4
+CREVASSE.CRUST = 0.4
 local HOLLOW_CRUST = 0.45
 local CRUST_ROUGH = 0.6
 local STATS_EVERY = 200
@@ -990,8 +1074,9 @@ local function carve_hollow(x, y, z, rng)
     return edits.commit(RESERVE.hollow)
 end
 
--- A crevasse: from a tick on ice or high snow, a crack CREVASSE_LENGTH long
--- along x or z, CREVASSE_DEPTH deep in the middle and shallowing to its
+-- A crevasse by hand (the chat word `crevasse` — the ground's cracks are
+-- in the terrain field now, see CRACK.W): a crack CREVASSE.LENGTH long
+-- along x or z, CREVASSE.DEPTH deep in the middle and shallowing to its
 -- ends (an ellipsoid's profile), one to three blocks wide, its walls
 -- coated with ice. Two writes: ice over the crack's bounds plus the coat,
 -- then the crack carved out of that as air — merged, so the ground round
@@ -1010,16 +1095,16 @@ local function carve_crevasse(x, y, z, rng, anywhere)
     -- any surface below the line — a crust, thin and patchy (`anywhere` is
     -- the chat word, which takes the coat).
     local high = anywhere or holds(b, blocks.ice) or (holds(b, blocks.snow) and over_dome(x, y, z) > SNOWLINE * 1000)
-    local coat = high and CREVASSE_COAT or CREVASSE_CRUST
+    local coat = high and CREVASSE.COAT or CREVASSE.CRUST
     local rough = high and 0.25 or CRUST_ROUGH
     local ground = ground_at(x, z, y)
     if ground == nil then
         stats.unloaded = stats.unloaded + 1
         return false
     end
-    local length = schem.pick(rng, CREVASSE_LENGTH)
-    local depth = schem.pick(rng, CREVASSE_DEPTH)
-    local half = CREVASSE_HALF[1] + rng:below(10) / 10 * CREVASSE_HALF[2]
+    local length = schem.pick(rng, CREVASSE.LENGTH)
+    local depth = schem.pick(rng, CREVASSE.DEPTH)
+    local half = CREVASSE.HALF[1] + rng:below(10) / 10 * CREVASSE.HALF[2]
     local along_x = rng:next_bool()
     local reach = length // 2 + 3
     if not schem.loaded_box(x - reach, ground - depth - 3, z - reach, x + reach, ground + 3, z + reach) then
@@ -1115,11 +1200,10 @@ local function on_surface(x, y, z)
     -- Each kind draws from its own salt of the hash: a chance of one in 45
     -- drawn from the same number as a chance of one in 9 is never a rock,
     -- because 45 is 9 times 5 and the tree took it first.
-    if candidate(x, y + 4000, z, CREVASSE_CHANCE) and candidate(x // CREVASSE_CELL, 37, z // CREVASSE_CELL, CREVASSE_CELL_ONE_IN) then
-        try("crevasse", carve_crevasse, x, y, z)
-    elseif holds(at(x, y, z), blocks.ice) then
-        -- Nothing grows on ice: no fir, boulder, rock or hollow — only the
-        -- crevasse above takes it.
+    -- (The crevasses left the chain 2026-09-13: the cracks are in the
+    -- terrain field. `carve_crevasse` stays for the chat word.)
+    if holds(at(x, y, z), blocks.ice) then
+        -- Nothing grows on ice: no fir, boulder, rock or hollow.
         return true
     elseif over_dome(x, y, z) < treeline_at(x, z) and candidate(x, y, z, TREE_CHANCE) then
         try("fir", grow_fir, x, y, z)

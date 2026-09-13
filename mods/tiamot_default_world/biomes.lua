@@ -79,8 +79,16 @@ function tdw.build_biome(id, build)
     -- chunk's surface was made from or it paints at the wrong height.
     local function compile_fills(mode)
         tdw.shape.terrain_mode = mode
-        local fills = build(ctx)
+        -- Under pcall so the message reaches the log: the engine reports a
+        -- generation failure as "errored in on_generate" and no more, and
+        -- a program past the eight buffers or an unknown node in a lazy
+        -- build was a chunk of air with nothing to read.
+        local ok, fills = pcall(build, ctx)
         tdw.shape.terrain_mode = nil
+        if not ok then
+            game.log("tiamot_default_world: building the fills of " .. id .. " in mode " .. tostring(mode) .. " failed: " .. tostring(fills))
+            error(fills, 0)
+        end
         assert(type(fills) == "table", "build for " .. id .. " must return a list of fills")
         for i, fill in ipairs(fills) do
             -- A fill paints where its field is positive; a cover stands a

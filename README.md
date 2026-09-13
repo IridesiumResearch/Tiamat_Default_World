@@ -247,9 +247,11 @@ built one at a time in its own file. Built so far:
       there when the chunk is: the firs are schematics stamped by the
       engine's `scatter` at generation, in stands over about three
       fifths of the ground below a tree line that wanders 320 blocks
-      over the base dome, and the random tick thickens it after. Now and then a
-      crevasse cracks the glaciers and the high snow, long and narrow, deep
-      in the middle, its walls coated with ice. Below the snowline
+      over the base dome, and the random tick thickens it after. Cracks run through
+      the ground here and there, in the terrain field itself so the firs
+      stand clear of them: smooth wedges some sixty blocks long, two to
+      four wide at the mouth and eighteen deep, leaning a little, their
+      walls and lips rimmed with ice. Below the snowline
       dirt over most ground that faces up and cold-tinted turf over most of
       that below the tree line, so granite shows on the walls and crests;
       sparse tufts of the biome's own grass, darker and bluer, the same

@@ -389,6 +389,31 @@ engine commit they landed in, because the mod is written against them.
   snags, the grasslands' sentinels — so a trunk continues into the
   ground rather than resting on it.
 
+### Alpine, seventeenth cut: cracks in the terrain, a cheaper cover
+
+- The crevasses are cracks in the terrain field now, not carved after by
+  the tick — which cut them through the stamped forest, and made them
+  small and jagged besides (a roughed-up ellipsoid, where a crack is a
+  smooth wedge). A crack term of the alpine terrain: along the zero
+  contour of a slow 2D noise, within a block and six tenths of it at the
+  mouth narrowing to nothing eighteen blocks below the map's surface, a
+  wedge with crisp smooth vertical walls, curving along the contour; in
+  lengths of some sixty blocks tapering to their ends (a segment noise),
+  over about a third of the ground (an area noise), off the lakes. A
+  tenth layer code lays an ice rim a block and a half into the walls and
+  round the lip. The firs' `stand` keeps two blocks clear of the cracks.
+  `carve_crevasse` stays for the chat word. The width is the engine's new
+  `contour` node — the distance to the line, so it is the width
+  everywhere along it; the first cut used a band `|noise| < w`, which is a
+  line only where the noise climbs and a pond where it lies flat, and it
+  covered a fifth of the ground and took three firs in four with it.
+- Optimization: the alpine cover's `take` carried the whole terrain,
+  negated, as a "near-surface guard" — positive in all air, so it guarded
+  nothing — and the cover fill evaluates its field over the 27 cells of
+  every surface block: ten octaves, seven thousand times a chunk. It is
+  the map depth now, no noise, and keeps the cover off a cave's floor,
+  which is all that was wanted.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

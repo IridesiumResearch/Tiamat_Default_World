@@ -227,7 +227,13 @@ local function noise(stream, frequency, octaves, amplitude)
     local raw = { op = "noise", stream = stream, frequency = frequency, octaves = octaves, amplitude = amplitude }
     return { op = "clamp", a = raw, low = -M.NOISE_RANGE * amplitude, high = M.NOISE_RANGE * amplitude }
 end
-M.node = { const = const, X = X, Y = Y, Z = Z, add = add, sub = sub, mul = mul, min = min, max = max, clamp = clamp, abs = abs, noise = noise }
+-- The distance, in blocks, from the zero contour of a 2D noise (engine
+-- `contour` node, 2026-09-13): a line across the ground with a width, for
+-- cracks. Same stream and frequency as a noise; one octave.
+local function contour(stream, frequency)
+    return { op = "contour", stream = stream, frequency = frequency, octaves = 1 }
+end
+M.node = { const = const, X = X, Y = Y, Z = Z, add = add, sub = sub, mul = mul, min = min, max = max, clamp = clamp, abs = abs, noise = noise, contour = contour }
 
 -- Shared subexpressions (each call builds a fresh tree) ----------------------
 -- r^2 in km^2: seven ops and three buffers.

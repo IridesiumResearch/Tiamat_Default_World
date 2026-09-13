@@ -80,7 +80,7 @@ local function seed_int(seed)
     return math.tointeger(seed % 4294967296.0) or 0
 end
 
-game.register_on_generate(function(buf, pos)
+local function generate(buf, pos)
     if tdw.seed ~= pos.seed then
         tdw.seed = pos.seed
         tdw.seed_int = seed_int(pos.seed)
@@ -242,6 +242,17 @@ game.register_on_generate(function(buf, pos)
     end
     if touched then
         stats.shells = stats.shells + 1
+    end
+end
+-- Under pcall so the message reaches the log: the engine reports a
+-- generation failure as "errored in on_generate" and no more, and the
+-- chunk is air — a program past the eight buffers, compiled at the first
+-- alpine chunk, was a world of air with nothing to read.
+game.register_on_generate(function(buf, pos)
+    local ok, err = pcall(generate, buf, pos)
+    if not ok then
+        game.log(string.format("tiamot_default_world: generating chunk %d, %d, %d failed: %s", pos.x, pos.y, pos.z, tostring(err)))
+        error(err, 0)
     end
 end)
 
