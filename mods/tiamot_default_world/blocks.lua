@@ -139,6 +139,24 @@ block("oak_leaves", "Oak leaves", "Canopy of a temperate oak.", { hardness = 0.2
 -- two were asked for); the gravel is `creek_bed`.
 block("dark_basalt", "Dark basalt", "A near-black stratum of the sea cliffs.", { hardness = 1.6, tint = ROCK })
 block("dead_coral", "Dead coral", "Bleached, pitted, slick: the splash zone's crust.", { hardness = 0.7, tint = SOIL })
+-- The cliff-top flora, light yellow-green: a tint is per material, so a
+-- hue is a block (as the alpine's cold green was), and the chunk tint
+-- would carry the strata with it.
+local YELLOW_GREEN = { strength = 0.22, scale = 160, low = { 0.92, 1.0, 0.62 }, high = { 1.0, 0.96, 0.70 } }
+block("coast_turf", "Coastal turf", "Thin, wind-scoured, light yellow-green.", { hardness = 0.5, tint = YELLOW_GREEN })
+block("coast_grass", "Coastal grass", "Sparse tufts on the cliff rim, light yellow-green.", { hardness = 0.1, tint = YELLOW_GREEN, passable = true, sway = true, billboard = "cross" })
+-- The coastal shelf, the coast's sea side (2026-09-13). Four asked for by
+-- name — the moss, the barnacles, the seagrass and the kelp — and sand,
+-- which the shelf's floor is and nothing here could stand in for. The
+-- seagrass and the kelp are cross cards like the grasses, stacked block
+-- on block by the scatter; a card block holds three cells of its
+-- twenty-seven, so the sea fill puts water round it and it sways in the
+-- sea rather than in a bubble.
+block("sand", "Sand", "The shelf's floor, and the drifts along the beaches.", { hardness = 0.4, tint = SOIL })
+block("ocean_moss", "Ocean moss", "A thin dark coat on the wave-scoured rock flats.", { hardness = 0.3, tint = COLD_GREEN })
+block("barnacles", "Barnacles", "A pale crust on the rock flats and the wave-rounded boulders.", { hardness = 0.6, tint = ROCK })
+block("seagrass", "Seagrass", "Two to four blocks of it, swaying with the current.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
+block("kelp", "Kelp", "Ten blocks of it from a hollow, swaying.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",

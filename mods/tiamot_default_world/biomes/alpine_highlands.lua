@@ -614,7 +614,10 @@ tdw.build_biome("alpine_highlands", function(ctx)
     }
     return {
         { field = granite, material = blocks.granite, shared_only = true },
-        { layers = true, depth = depth, code = codes, entries = entries },
+        -- `body`: where the chunk is this biome's alone, the generator lets
+        -- this fill lay the granite and the stone under the layers too, and
+        -- runs no body fill of its own (generate.lua).
+        { layers = true, depth = depth, code = codes, entries = entries, body = true },
         { cover = blocks.alpine_grass, cells = 2, take = tufts },
         -- The forest, last: a trunk's base merges into the surface block
         -- over the grass cells the cover stood in it.

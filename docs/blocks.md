@@ -95,6 +95,22 @@ FLUID, filled below the sea level by the generator.
 |---|---|---|
 | `dark_basalt` | strata through the cliffs, near-black | asked for by name 2026-09-13 |
 | `dead_coral` | the splash zone's crust where a fast noise is high, a pale pitted bone colour | asked for by name 2026-09-13 |
+| `coast_turf` | the cliff-top turf, light yellow-green | asked for 2026-09-13 ("light green yellow turf grasses"); a tint is per material, and the chunk tint would carry the strata |
+| `coast_grass` | sparse tufts on the rim, the same | with the turf |
+
+### 1.5 Coastal Shelf (2026-09-13) — the coast's sea side, one biome with the cliffs
+
+Shares `creek_bed` (gravel beds), `limestone` (the pavement, standing in
+for sandstone), `stone` (boulders), `fir_log` and `fir_needles` (the
+coastal pines on the rim).
+
+| Block | Where | Why |
+|---|---|---|
+| `sand` | the shelf's floor, four blocks over the rock; the burrows' cones | the floor is sand and nothing stood in for it |
+| `ocean_moss` | a block's coat on the rock flats where a fast noise is high | asked for by name 2026-09-13 |
+| `barnacles` | a crust on the rock flats and the boulder tops | asked for by name 2026-09-13; a crust on rock, not a plant — a block, not a card |
+| `seagrass` | cross cards two to four blocks tall over the terrace, in prairies | asked for by name 2026-09-13 |
+| `kelp` | cross cards eight to twelve tall in the hollows and off the ledge | asked for by name 2026-09-13 |
 
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up

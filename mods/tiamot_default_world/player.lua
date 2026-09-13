@@ -88,9 +88,10 @@ local function land(uuid, rec)
     -- The player is put AIM_ABOVE over it and the block reads below take
     -- it from there: a fall of a few blocks, where the alpine spawn was a
     -- thousand blocks over the dome and a new player fell the whole way.
-    if not rec.landing.aimed and tdw.seed ~= nil then
+    local seed = tdw.seed or game.world_seed              -- the generator's, or the engine's when it sets one (engine-asks 21)
+    if not rec.landing.aimed and seed ~= nil then
         rec.landing.aimed = true
-        local ground = tdw.shape.ground_at_column(x, z, tdw.seed, p.y)
+        local ground = tdw.shape.ground_at_column(x, z, seed, p.y)
         if ground ~= nil and ground + AIM_ABOVE < p.y then
             game.move_player(uuid, { x = x + 0.5, y = ground + AIM_ABOVE + 0.01, z = z + 0.5 })
             game.log(string.format("tiamot_default_world: %s aimed at the ground the field puts at %d, %d, %d", uuid, x, ground, z))

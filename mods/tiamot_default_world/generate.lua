@@ -46,7 +46,7 @@ local STACK_Y_BLOCKS = shape.STACK_Y * 1000 + shape.Y0
 local HOLLOW_IN = (shape.HOLLOW_R - SAFETY) * (shape.HOLLOW_R - SAFETY)
 
 -- Chunk-class counters, logged now and then so the cost mix is visible.
-local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0 }
+local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0, by_layers = 0 }
 local LOG_EVERY = 1024        -- was 4096: a ninety-second headless run never reached one line
 
 -- Smallest and largest |value| over the integer range [a0, a1].
@@ -97,6 +97,13 @@ local function sea_into(buf, mode, y_lo)
     buf:fill_fluid_below(sea, WATER)
 end
 
+-- The world seed in THIS VM. The generator runs in worker VMs now (engine:
+-- terrain generates off the tick), so the seed it records there never
+-- reaches the main VM, and the spawn's aim (`shape.ground_at_column`)
+-- reads nil and stands down. The chunk tint is asked in the workers too.
+-- Nothing on the main thread carries the seed today — engine-asks 21 —
+-- so `game.world_seed` is read wherever the seed is wanted, for the day
+-- the engine sets it.
 local function generate(buf, pos)
     if tdw.seed ~= pos.seed then
         tdw.seed = pos.seed
@@ -105,8 +112,8 @@ local function generate(buf, pos)
     stats.total = stats.total + 1
     if stats.total % LOG_EVERY == 0 then
         game.log(string.format(
-            "tiamot_default_world chunks: %d total — air %d, hollow %d, filled %d, carved %d (surface %d, %d structures stamped), shells %d",
-            stats.total, stats.air, stats.hollow, stats.filled, stats.carved, stats.surface, stats.stamped, stats.shells))
+            "tiamot_default_world chunks: %d total — air %d, hollow %d, filled %d, carved %d (%d by the layers alone; surface %d, %d structures stamped), shells %d",
+            stats.total, stats.air, stats.hollow, stats.filled, stats.carved, stats.by_layers, stats.surface, stats.stamped, stats.shells))
     end
 
     -- Order-independent with any other overworld generator: start empty.
@@ -176,9 +183,30 @@ local function generate(buf, pos)
         base = tdw.surface_soil(ulo, uhi)
     end
 
+    -- **The body by the biome's layered fill, where there is one.** A chunk
+    -- wholly in one biome whose surface is a layered fill gets its body —
+    -- the soil to SKIN_DIRT, the stone below — from the same evaluation
+    -- that lays the layers (the engine's wildcard layer, code -1), and the
+    -- generator's own body fill and its stone fill are not run: three
+    -- evaluations of the terrain a chunk were one, and the coast at
+    -- forty-eight milliseconds a chunk asked for it. A chunk two biomes
+    -- share keeps the old path: a wildcard cannot know whose ground it is.
+    local found = (skin and inside_body and tmin < shape.SKIN_TOP) and tdw.surface_biomes_in(ulo, uhi) or nil
+    local body_by_layers = nil
+    if found and #found == 1 then
+        for _, fill in ipairs(tdw.fills_for(found[1], mode)) do
+            if fill.layers and fill.body then
+                body_by_layers = fill
+            end
+        end
+    end
+
     if inside_body and tmin > 0 then
         buf:fill_all(base)
         stats.filled = stats.filled + 1
+    elseif body_by_layers then
+        stats.carved = stats.carved + 1
+        stats.by_layers = stats.by_layers + 1
     else
         buf:fill_density(V.solid, base, DETAIL)
         stats.carved = stats.carved + 1
@@ -187,7 +215,7 @@ local function generate(buf, pos)
     if not tail then
         if skin then
             stats.surface = stats.surface + 1
-            if tmax > shape.SKIN_DIRT then
+            if tmax > shape.SKIN_DIRT and not body_by_layers then
                 buf:fill_density(V.stone, blocks.stone, DETAIL)
             end
         end
@@ -210,7 +238,16 @@ local function generate(buf, pos)
                         -- Every layer of the surface from one evaluation of
                         -- the terrain and one of a code field (engine
                         -- `fill_layers`); eight fills were eight evaluations.
-                        buf:fill_layers(fill.depth, fill.code, fill.entries)
+                        -- And the body too, where this chunk is the biome's
+                        -- alone: the wildcard bands after the coded ones.
+                        local entries = fill.entries
+                        if fill == body_by_layers then
+                            entries = {}
+                            for _, e in ipairs(fill.entries) do entries[#entries + 1] = e end
+                            entries[#entries + 1] = { code = -1, to = shape.SKIN_DIRT, material = base }
+                            entries[#entries + 1] = { code = -1, from = shape.SKIN_DIRT, to = math.huge, material = blocks.stone }
+                        end
+                        buf:fill_layers(fill.depth, fill.code, entries)
                     elseif fill.field and (not fill.shared_only or #found > 1) then
                         -- A fill may ask for its own detail.
                         buf:fill_density(fill.field, fill.material, fill.detail or DETAIL)

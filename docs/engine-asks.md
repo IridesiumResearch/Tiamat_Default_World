@@ -16,6 +16,25 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+## 21. The world seed in every VM (2026-09-13)
+
+Terrain generates off the tick now, in worker VMs, and the seed arrives
+there on each generator call's `pos`. The main VM never sees it: no hook
+that runs there — ticks, joins, digs, random ticks — carries the seed, and
+the chunk tint is asked in the workers as well. The mod's spawn aim
+(`shape.ground_at_column`, `Density:at` with the seed) needs it on the
+main thread, and so will anything that samples a field at runtime. A
+`game.world_seed` integer set in every VM when the world opens — beside
+`set_fluid_ids`, in `handle.rs` and `worldgen.rs` — is the whole ask; the
+mod reads it already.
+
+## 20. Particles (2026-09-13)
+
+The coast's blowholes should erupt with sea spray, and nothing in the API
+emits a particle: a burst of short-lived sprites at a position, in a
+colour, with a velocity and a lifetime, spawned by a mod on a tick. Until
+then a blowhole is a shaft with the sea at the bottom.
+
 ## 19. One terrain evaluation for many materials (2026-09-12) — LANDED twice: `fill_palette` (engine 44e7790, one value against thresholds) and `fill_layers` (a code per block and depth bands, this tree); the alpine surface uses the latter
 
 **Seen.** An alpine chunk takes fifty milliseconds and more to generate,

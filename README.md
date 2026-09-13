@@ -159,7 +159,20 @@ new material, and additions are flagged before they land.
       coral, stone, slate and gravel in the splash zone. Dev switch
       `everywhere = "coastal_cliffs"`; in the ring world the Long Shore
       drops eight hundred metres across its width and where its sea sits is
-      an open design question.
+      an open design question. The face is jagged over most of its length,
+      flooded caves tunnel inland under the tops with blowholes up from
+      them, small wind-bent pines stand along the rim (never on the face),
+      and the turf and its tufts are a light yellow-green.
+- [x] 1.5 Coastal Shelf — the same biome's sea side. A sunlit terrace two
+      to twelve blocks under the sea over the first eighty blocks out,
+      breaking at a drop-off ledge a hundred out; two sandbars parallel to
+      the coast with tidal gutters between, wave-scoured rock flats level
+      at four blocks, hollows for the kelp. Sand, beds of gravel, limestone
+      pavement coated in ocean moss and crusted with barnacles; prairies of
+      seagrass, kelp groves in the hollows and off the ledge, boulder
+      clusters colonised by barnacles, crab burrows with cones of sand —
+      stamped on the seabed before the sea is filled, so the water takes
+      the cells the cards leave.
 
 Every biome from the design is registered in `biomes/catalogue.lua`; each is
 built one at a time in its own file. Built so far:

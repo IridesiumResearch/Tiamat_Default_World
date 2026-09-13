@@ -448,6 +448,83 @@ engine commit they landed in, because the mod is written against them.
   ring world, whose Long Shore drops eight hundred metres across its
   width — one level, a shelf, or terraces is a design call.
 
+### Optimization: the body by the layered fill — one terrain evaluation a chunk
+
+- The spawn's aim has stood down: the engine generates terrain in worker
+  VMs now, so the seed the generator recorded never reaches the main VM,
+  and nothing on the main thread carries it (the chunk tint is asked in
+  the workers too). A new player falls the old way again — hopping down
+  a hundred and sixty blocks a tick through loaded chunks — until the
+  engine sets `game.world_seed` in every VM (engine-asks 21), which the
+  aim reads as soon as it exists.
+
+- The generator evaluated a chunk's terrain three times: its own body
+  fill, its stone-below-the-soil fill, and the biome's layered fill's
+  depth. The engine's layered fill takes a wildcard layer now (code -1,
+  `to = math.huge`), so a biome whose surface is a layered fill lays its
+  body too — the soil to SKIN_DIRT and the stone below it, after the
+  coded bands — and the generator runs neither of its own fills for a
+  chunk wholly in such a biome (`body = true` on the fill; a chunk two
+  biomes share keeps the old path). The alpine and the coast both. The
+  coast's first cut generated at forty-eight milliseconds a chunk.
+- The coast, cheaper besides: the island under the spawn without its
+  wobble (a contour in every read of the shore); the shelf's shapes from
+  the coast's three-octave line, read only at sea; the cuts in two groups
+  sharing one read of the shore each; the tufts' field without the
+  land's height, which the cover fill evaluates over every surface
+  block's twenty-seven cells.
+
+### Coast, second cut, and the Coastal Shelf
+
+- The coastline has a fourth octave (137 m). The face is jagged over most
+  of its length: a fast 3D noise of two and a half blocks either way
+  added to the terrain within six blocks of the line, above the splash
+  zone, where an area noise says (most areas). The cliff-top cracks are
+  a tenth of the contour length rather than two fifths ("reduce by
+  75%").
+- Pines along the rim: ten templates of a trunk three to five tall bent
+  over a block or two near the top, a root under, and three to five
+  clumps of needles about the top with half their cells each — small,
+  wind-bent, sparse and chaotic — scattered one square in six blocks at
+  0.35, between three and twenty-six blocks in from the coastline (never
+  on the face, whose two blocks the band starts past), in stands where a
+  patch noise says and always within three blocks of a crack line
+  ("trees cling to fractures").
+- The turf and its tufts are light yellow-green: two blocks, `coast_turf`
+  and `coast_grass`, since a tint is per material and the chunk tint
+  would carry the strata with it.
+- Flooded caves and blowholes: tunnels five wide and seven tall along the
+  contour lines of a slow noise, from four blocks under the sea to three
+  over, seventy blocks inland, where an area noise says — flooded, since
+  the sea fill takes every air cell under its level; and where a tunnel
+  line crosses a second noise's contour, a shaft a block and a half
+  across from the tunnel floor up through the plateau, within forty-five
+  blocks of the shore. Sea spray erupting from a blowhole is particles,
+  and an engine ask.
+- The Coastal Shelf, the same biome's sea side ("lift the biome lock so it
+  is all one biome"): the seabed is a terrace from two to twelve blocks
+  under the sea over the first eighty blocks out, a drop-off ledge of
+  thirty more over fourteen blocks at a hundred out, two sandbars two
+  and a half blocks high parallel to the coast at twenty-eight and
+  fifty-eight out with the gutters between, rock flats level at four
+  blocks where a slow noise says, and hollows seven deep for the kelp.
+  All of it from the coast noise's unsigned contour distance, one buffer.
+  Materials by five more layer codes: sand four deep this side of the
+  ledge's foot, gravel beds in it, the flats' limestone pavement, and on
+  that ocean moss and barnacles by two fast noises. Life by the scatter,
+  on the seabed the field finds, before the sea is filled: seagrass
+  columns two to four tall one square in two at 0.65 in prairies over
+  the terrace off the flats, kelp columns eight to twelve tall one
+  square in four at 0.35 eight blocks down or more, boulder clusters
+  (three by three, two tall, by chance, barnacles on the tops) on the
+  flats, crab burrows (a hole a block down, a ring of sand half a block
+  high round it) on the sand. A card block holds three of its
+  twenty-seven cells, so the sea fill puts twenty-four cells of water in
+  it and the plant sways in the sea. Five blocks: `sand` (the floor, and
+  nothing stood in for it), `ocean_moss`, `barnacles`, `seagrass`,
+  `kelp`. Barnacles are a crust on rock, so a block laid by the layered
+  fill and stamped on the boulders, not a card.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
