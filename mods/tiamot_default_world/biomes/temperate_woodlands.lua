@@ -590,6 +590,8 @@ local function grow_tree(x, y, z, rng, species)
         keys[#keys + 1] = { key = key, y = entry.y, mask = entry.mask }
     end
     table.sort(keys, function(p, q) return p.y < q.y or (p.y == q.y and p.key < q.key) end)
+    -- The root: a block of trunk under the footing, whole.
+    edits.push({ x = x, y = base - 1, z = z }, species.log)
     for _, item in ipairs(keys) do
         local bx, by, bz = item.key:match("^(-?%d+):(-?%d+):(-?%d+)$")
         bx, by, bz = tonumber(bx), tonumber(by), tonumber(bz)
@@ -664,7 +666,7 @@ local function grow_snag(x, y, z, rng)
     end
     local top = y + height
     edits.begin()
-    for by = base, top - 1 do
+    for by = base - 1, top - 1 do                        -- from a block under the footing: the root
         edits.push({ x = x, y = by, z = z }, "tiamot_default_world:dead_wood")
     end
     -- The broken top: the bottom layer and a few cells above it.

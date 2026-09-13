@@ -312,7 +312,7 @@ local function grow_sentinel(x, y, z, rng)
         end
     end
     -- Wood last. The column under the first point is whole blocks.
-    for by = base, y do
+    for by = base - 1, y do                              -- from a block under the footing: the root
         edits.push({ x = x, y = by, z = z }, LOG)
     end
     for _, p in ipairs(points) do

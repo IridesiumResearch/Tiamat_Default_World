@@ -370,6 +370,25 @@ engine commit they landed in, because the mod is written against them.
   the tree whole from every chunk it reaches. Tested across three
   stacked chunks and under a slab.
 
+### Alpine, sixteenth cut: no blobs in the trees, no walls of ice, nothing on ice, roots
+
+- "Blobs floating in the trees": the hollow carver's ground probe took a
+  fir's crown for a wall (three blocks out, five blocks up: a wall by its
+  rule) and carved a hollow into the tree, ice crust and all. The probe
+  now reads through trunks, needles, dead wood and the grass cover.
+- "Whole messy walls of ice": the crevasse's coat and the hollows' crust
+  were written over their whole ellipsoid, air included, so on a slope
+  the coat stood out of the hillside as a slab. Both are written into the
+  rock that is there and never into air (the `carve` mask with the ice as
+  the material).
+- Nothing grows on ice: the surface tick on an ice block takes only the
+  crevasse, and the scatter's `stand` field keeps off the glaciers (the
+  floors above the snowline) as it already kept off the lakes.
+- Roots, in every biome: a block of trunk under the base — the fir
+  schematics and the tick-grown firs and snags, the woodlands' trees and
+  snags, the grasslands' sentinels — so a trunk continues into the
+  ground rather than resting on it.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

@@ -511,6 +511,9 @@ tdw.build_biome("alpine_highlands", function(ctx)
     stand_field = n.add(stand_field, n.noise("tree_line", TREELINE_WANDER_FREQ, 2, TREELINE_WANDER))
     for _, gate in ipairs(snow_gates()) do stand_field = n.min(stand_field, gate) end
     stand_field = n.min(stand_field, n.sub(n.noise("forest", FOREST_FREQ, 2, 1.0), n.const(FOREST_MIN)))
+    -- And off the glaciers: the floors above the snowline are ice, and
+    -- nothing grows on ice. (The lakes are off already, by `dry`.)
+    stand_field = n.min(stand_field, n.max(low(), n.sub(n.const(0.5), floor())))
     local stand = shape.compile("biome.alpine.stand", masked(stand_field))
     local km = 0.001
     local entries = {
@@ -761,7 +764,7 @@ local function grow_snag(x, y, z, rng, ground, top_block, big)
     end
     edits.begin()
     local base = top_block.occupancy == FULL and ground + 1 or ground
-    for by = base, base + height - 2 do
+    for by = base - 1, base + height - 2 do             -- from a block under the base: the root
         edits.push({ x = x, y = by, z = z }, DEAD, PLUS, true)
     end
     -- The broken top: the plus's bottom layer and a couple of cells above.
@@ -885,7 +888,7 @@ local function grow_fir(x, y, z, rng)
     -- The trunk: from the block the surface is in (or the one above a
     -- whole block) up through the pads, merged so the needles stay.
     local base = top.occupancy == FULL and ground + 1 or ground
-    for by = base, base + height - 1 do
+    for by = base - 1, base + height - 1 do             -- from a block under the base: the root
         edits.push({ x = x, y = by, z = z }, FIR_LOG, PLUS, true)
     end
     return edits.commit(RESERVE.fir)
@@ -902,12 +905,34 @@ local WALL_RISE = 5
 -- The surface at (x, z) looking well above the hint: the rocks module's
 -- probe scans two blocks up, and a wall five blocks higher is above its
 -- window, which read as unloaded. nil only when a read is.
+-- What the probe does NOT take for ground: a fir's trunk or needles, dead
+-- wood, the grass cover. Once the forest was stamped at generation, the
+-- probe three blocks out found a crown five blocks up and called it a
+-- wall — and carved a hollow into the tree, ice crust and all, which was
+-- "blobs floating in the trees".
+local NOT_GROUND = {
+    [game.get_block_id(FIR_LOG)] = true,
+    [game.get_block_id(FIR_NEEDLES)] = true,
+    [game.get_block_id(DEAD)] = true,
+    [blocks.alpine_grass] = true,
+}
+local function is_ground(b)
+    if b == nil or b.occupancy == 0 then return false end
+    if b.material ~= nil then return not NOT_GROUND[b.material] end
+    if b.cells then
+        for i = 1, 27 do
+            local m = b.cells[i]
+            if m ~= game.AIR and not NOT_GROUND[m] then return true end
+        end
+    end
+    return false
+end
 local function ground_at(x, z, hint)
     local above = at(x, hint + 13, z)
     for yy = hint + 12, hint - 6, -1 do
         local b = at(x, yy, z)
         if b == nil or above == nil then return nil end
-        if b.occupancy ~= 0 and above.occupancy == 0 then return yy end
+        if is_ground(b) and not is_ground(above) then return yy end
         above = b
     end
     return hint - 6
@@ -957,7 +982,7 @@ local function carve_hollow(x, y, z, rng)
     -- crust written after the next sphere's carve would fill that back in.
     for _, s in ipairs(spheres) do
         schem.push_ellipsoid("tiamot_default_world:ice", s[1], s[2], s[3], s[4] + HOLLOW_CRUST, s[4] * 0.8 + HOLLOW_CRUST, s[4] + HOLLOW_CRUST,
-            { rough = CRUST_ROUGH, over_whole = true })
+            { rough = CRUST_ROUGH, carve = true })       -- into the rock that is there, never into air
     end
     for _, s in ipairs(spheres) do
         schem.push_ellipsoid("engine:air", s[1], s[2], s[3], s[4], s[4] * 0.8, s[4], { carve = true, rough = 0.3 })
@@ -1009,7 +1034,7 @@ local function carve_crevasse(x, y, z, rng, anywhere)
     local rz = along_x and half or length * 0.5
     edits.begin()
     schem.push_ellipsoid("tiamot_default_world:ice", cx, cy, cz, rx + coat, depth * 0.5 + coat, rz + coat,
-        { rough = rough, over_whole = true })
+        { rough = rough, carve = true })                -- into the ground only: written over the whole ellipsoid it stood out of a slope as a wall of ice
     schem.push_ellipsoid("engine:air", cx, cy, cz, rx, depth * 0.5, rz, { carve = true, rough = 0.35 })
     return edits.commit(RESERVE.crevasse)
 end
@@ -1092,6 +1117,10 @@ local function on_surface(x, y, z)
     -- because 45 is 9 times 5 and the tree took it first.
     if candidate(x, y + 4000, z, CREVASSE_CHANCE) and candidate(x // CREVASSE_CELL, 37, z // CREVASSE_CELL, CREVASSE_CELL_ONE_IN) then
         try("crevasse", carve_crevasse, x, y, z)
+    elseif holds(at(x, y, z), blocks.ice) then
+        -- Nothing grows on ice: no fir, boulder, rock or hollow — only the
+        -- crevasse above takes it.
+        return true
     elseif over_dome(x, y, z) < treeline_at(x, z) and candidate(x, y, z, TREE_CHANCE) then
         try("fir", grow_fir, x, y, z)
     elseif candidate(x, y + 1000, z, BOULDER_CHANCE) and candidate(x // BOULDER_CELL, 29, z // BOULDER_CELL, BOULDER_CELL_ONE_IN) then
@@ -1147,7 +1176,7 @@ local function fir_blocks(rng, big)
         schem.push_ellipsoid(FIR_NEEDLES, 0.5, surface + i + 0.5, 0.5, r, 0.65, r, { rough = 0.3, jitter = rng, blind = true })
     end
     schem.push_ellipsoid(FIR_NEEDLES, 0.5, surface + height + 0.3, 0.5, 0.45, 0.9, 0.45, { rough = 0.2, blind = true })
-    for by = 0, height - 1 do
+    for by = -1, height - 1 do                           -- from a block under the root: the root proper
         edits.push({ x = 0, y = by, z = 0 }, FIR_LOG, PLUS, true)
     end
     return edits.take()
@@ -1155,7 +1184,7 @@ end
 local function snag_blocks(rng, big)
     local height = math.floor(schem.pick(rng, big and FIR_BIG or FIR_SMALL) * (0.4 + rng:below(4) / 10))
     edits.begin()
-    for by = 0, height - 2 do
+    for by = -1, height - 2 do
         edits.push({ x = 0, y = by, z = 0 }, DEAD, PLUS, true)
     end
     local jag = 0
