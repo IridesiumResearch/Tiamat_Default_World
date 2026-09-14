@@ -114,8 +114,16 @@ density field; what the options are and what each needs is in
 - Where you are when you leave is where you come back. Positions are kept per
   player UUID in the mod's storage, sampled every half second, written every
   twenty seconds and on leave.
-- Say `where` in chat and the server log prints your position in the
-  Spindle's terms: height in the frame, ring, and depth below the base dome.
+- **Commands** all start with `/` (`/help` lists them):
+  - `/tp <biome>` — `alpine`, `woodlands`, `grasslands`, `river`,
+    `rainforest` — worked out from the world's seed and dropped onto the
+    ground there; `/tp <ring>` (`crown`, `frost`, `temperate`, `ember`,
+    `glass`, `verdant`, `shore`, `hem`) to the middle of a ring on your own
+    heading; `/tp spawn`; `/tp <x> <z>` to land on the ground there; `/tp
+    <x> <y> <z>` exactly; `/tp list` for the names.
+  - `/where` — your position in the Spindle's terms: the biome, height in
+    the frame, ring, and depth below the base dome.
+  - `/roses`, `/crevasse`, `/stats` — see the biomes below.
 
 ## The layers
 
@@ -180,13 +188,14 @@ smooth channel a block or more under its banks.
 names itself on the HUD for a second, small and centred at the top: the
 server reads the ground under you every half second, and a name only
 appears when it changes (`whereami.lua`, `hud.lua`). Which biome a place
-belongs to is a field of the radius and the humidity noise, and the seed
-those need is not in the main VM, so the ground is read instead — every
-biome lays its own materials. Saying `alpine`, `woodlands`, `grasslands`
-or `coast` in chat sends you looking for that one: you are dropped on one
-azimuth of its ring, and if the humidity put something else there the
-landing goes round to the next, up to sixteen. `tdw.config.spawn_biome`
-does the same for a new player before they arrive.
+belongs to is a field of the radius and the humidity noise; the HUD reads
+the ground instead, since every biome lays its own materials. `/tp <biome>`
+samples the field itself — the world's seed is in every VM now
+(`game.world_seed`) — walking out from your heading round the compass and
+across the biome's rings to the first place well inside it, and drops you
+there; a river is found by stepping straight at the nearest course.
+`tdw.config.spawn_biome` does the same for a new player before they
+arrive.
 
 **What no biome claims is white.** Four surface biomes are built; every
 other area in the catalogue — the three cave bands, the five shells, the
@@ -287,7 +296,7 @@ built one at a time in its own file. Built so far:
       else, after a two-second grace so the button held through the pick
       does not take the bush. A right-click pick waits on the engine
       (`docs/engine-asks.md`, item 16), as does reading the block inside
-      the dig hook (item 17). Say `roses` in chat to be put beside the first
+      the dig hook (item 17). `/roses` puts you beside the first
       bush planted this session. Burrows
       tunnelled into hillsides: a wandering tunnel of air with two blocks of
       roof, a fork in half of them, a squat den, and a second tunnel climbing
@@ -297,7 +306,7 @@ built one at a time in its own file. Built so far:
       a cell-dithered band (`shape.lua`, `tdw.biome_mask`), so there is no
       step and no line at the border. A grass tick belongs to the biome whose
       soil is under the turf (`tdw.soil_under`). The grass tick logs its counts every ten seconds and
-      on `stats` in chat.
+      on `/stats`.
 - [x] 1.3 Alpine Highlands — the frost ring's dry half, and the first biome
       whose shape is a MAP: the Alps, glacially carved
       (`biomes/alpine_highlands.lua`). A field's noises are 3D, so a wall

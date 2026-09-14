@@ -147,98 +147,245 @@ tdw.on_tick(function(dt)
     end
 end)
 
--- -------------------------------------------------------------- the search
+-- -------------------------------------------------------------- teleporting
 
--- Where to look for a biome: a radius its spans cover, preferring one no
--- humidity split can take away.
--- Biomes that are lines rather than bands, and are looked for by walking
--- outward on one heading instead of round the ring.
-local SWEEP = { river_valleys = true }
-local FIND_AT = {
-    alpine_highlands = 0.015,      -- u: the cold core, seven kilometres out
-    rolling_grasslands = 0.149,    -- the middle of the hot rings, which are all grassland
-    temperate_woodlands = 0.067,   -- the temperate ring, at the spawn's own radius
-    coastal_cliffs = 0.50,         -- the Long Shore, where it WOULD be if it were placed
-    river_valleys = 0.067,         -- the temperate ring: a course crosses every ring, so any will do
-    dense_rainforest_canopy = 0.295, -- the middle of the Verdant Belt, thirty-two kilometres out
+-- `/tp` (2026-09-14: "make it so I can teleport to areas on the Spindle").
+-- **Where a biome is, is worked out, not searched for.** The world's seed is
+-- in this VM now (`game.world_seed`, engine-asks 21), so a biome's own
+-- placement field — its rings and its humidity half, the same field its
+-- fills are masked by — can be sampled here. The search walks out from the
+-- player's own heading round the compass and across the biome's rings, and
+-- stops at the first place well inside it; the player is dropped over it
+-- and the landing puts them on the ground. A biome that is a line rather
+-- than a band (the river) answers `locate` itself.
+
+local SEEK_ABOVE = 220         -- blocks over the base dome a teleport drops from
+local MARGIN = 0.01            -- how far inside a biome's field a place must be
+local R_BLOCKS = shape.R_DISC * 1000
+
+-- What `/tp` understands: a biome's short name (or its id), a ring's id.
+local BIOME_WORDS = {
+    alpine = "alpine_highlands", mountains = "alpine_highlands",
+    woodlands = "temperate_woodlands", woodland = "temperate_woodlands", forest = "temperate_woodlands",
+    grasslands = "rolling_grasslands", grassland = "rolling_grasslands",
+    river = "river_valleys", rivers = "river_valleys",
+    rainforest = "dense_rainforest_canopy", jungle = "dense_rainforest_canopy",
+    coast = "coastal_cliffs", cliffs = "coastal_cliffs",
+    ocean = "deep_ocean", sea = "deep_ocean",
 }
+local RING_WORDS = { frostmoor = "frost", greensward = "temperate", firwold = "frost" }
 
--- Sends a player looking for a biome. Which humidity half a place is in is a
--- noise this VM cannot evaluate, so the search is by trial: drop on one
--- azimuth, land, read the ground, and go round again if it is the wrong
--- biome. Sixteen azimuths, each a different stretch of the same ring.
+local function world_seed()
+    return game.world_seed or tdw.seed
+end
+
+local function u_at(x, z)
+    return (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+end
+
+-- Sixty-four headings round the compass, as unit vectors: the sixteen and
+-- three between each pair, normalised. No trigonometry.
+local HEADINGS = {}
+for i = 1, 16 do
+    local a, b = schem.DIR16[i], schem.DIR16[i % 16 + 1]
+    for k = 0, 3 do
+        local t = k / 4
+        local x, z = a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t
+        local len = math.sqrt(x * x + z * z)
+        HEADINGS[#HEADINGS + 1] = { x / len, z / len }
+    end
+end
+-- The headings in the order to try them: the player's own first, then out
+-- either side of it.
+local function headings_from(px, pz)
+    local best, best_dot = 1, -2
+    local r = math.sqrt(px * px + pz * pz)
+    local hx, hz = 1.0, 0.0
+    if r > 1 then
+        hx, hz = px / r, pz / r
+    end
+    for i, d in ipairs(HEADINGS) do
+        local dot = d[1] * hx + d[2] * hz
+        if dot > best_dot then
+            best, best_dot = i, dot
+        end
+    end
+    local out = { HEADINGS[best] }
+    for k = 1, 32 do
+        out[#out + 1] = HEADINGS[(best - 1 + k) % 64 + 1]
+        if k < 32 then
+            out[#out + 1] = HEADINGS[(best - 1 - k) % 64 + 1]
+        end
+    end
+    return out
+end
+
+-- The biome's placement field, compiled once here.
+local FIELDS = {}
+local function field_of(id)
+    if FIELDS[id] == nil then
+        local mask = tdw.biome_mask(shape.node, id)
+        FIELDS[id] = mask and shape.compile("tp." .. id, mask) or false
+    end
+    return FIELDS[id]
+end
+
+-- A place well inside biome `id`, starting from (px, pz): x, z, or nil.
+local function locate(id, px, pz)
+    local biome = tdw.biomes[id]
+    local seed = world_seed()
+    if biome.locate then
+        return biome.locate(px, pz, seed)
+    end
+    local field = field_of(id)
+    if not field then
+        return nil
+    end
+    local lo, hi = tdw.biome_span_u(id)
+    local pu = u_at(px, pz)
+    local shares = { 0.5, 0.3, 0.7, 0.15, 0.85, 0.05, 0.95 }
+    local radii = {}
+    if pu > lo and pu < hi then
+        radii[1] = math.sqrt(pu) * R_BLOCKS
+    end
+    for _, f in ipairs(shares) do
+        radii[#radii + 1] = math.sqrt(lo + (hi - lo) * f) * R_BLOCKS
+    end
+    for _, d in ipairs(headings_from(px, pz)) do
+        for _, r in ipairs(radii) do
+            local x, z = d[1] * r, d[2] * r
+            local y = shape.Y0 + 1000 * shape.dome_at(u_at(x, z))
+            if field:at(x + 0.5, y + 0.5, z + 0.5, seed) > MARGIN then
+                return math.floor(x), math.floor(z)
+            end
+        end
+    end
+    return nil
+end
+
+-- Drops a player over (x, z) and lets the landing find the ground. The
+-- drop is over the highest thing that could be there: the alpine peaks in
+-- the cold core, SEEK_ABOVE over the dome elsewhere.
+local function drop(uuid, rec, x, z)
+    local u = u_at(x, z)
+    local above = SEEK_ABOVE
+    if u < shape.ALPINE_EDGE_U + shape.ALPINE_BLEND_U then
+        above = math.max(above, math.ceil((shape.ALPINE_PEAK or 0.4) * 1000) + 40)
+    end
+    rec.seeking = nil
+    rec.pending = { x = x + 0.5, y = shape.Y0 + 1000.0 * shape.dome_at(u) + above, z = z + 0.5 }
+    rec.landing = { ticks = 0 }
+end
+
+-- Sends a new player to a biome (tdw.config.spawn_biome). True if there is
+-- somewhere to send them.
 function tdw.seek_biome(uuid, id, rec)
-    local u = FIND_AT[id]
-    if u == nil then
+    if not tdw.biomes[id] or world_seed() == nil then
         return false
     end
-    rec.seeking = rec.seeking or { id = id, tries = 0, heading = nil }
-    local seeking = rec.seeking
-    local d, r
-    if SWEEP[id] then
-        -- A river is a LINE, not a band: turning round the same ring lands
-        -- between courses more often than not. One heading, stepped outward,
-        -- crosses every course there is — they are two and a half
-        -- kilometres apart, so a few steps of four hundred metres finds one.
-        seeking.heading = seeking.heading or (schem.hash(id:len(), seeking.tries, 7) % 16) + 1
-        d = schem.DIR16[seeking.heading]
-        r = math.sqrt(u) * shape.R_DISC * 1000 + seeking.tries * 400
-    else
-        d = schem.DIR16[(seeking.tries % 16) + 1]
-        r = math.sqrt(u) * shape.R_DISC * 1000
+    local x, z = locate(id, shape.SPAWN_X, shape.SPAWN_Z)
+    if x == nil then
+        return false
     end
-    rec.pending = {
-        x = r * d[1] + 0.5,
-        y = shape.Y0 + 1000.0 * shape.dome_at(u) + SEEK_SKY,
-        z = r * d[2] + 0.5,
-    }
-    rec.landing = { ticks = 0 }
+    drop(uuid, rec, x, z)
+    return true
+end
+-- The landing asks this of a seeker; nobody seeks by trial any more.
+function tdw.seek_landed()
     return true
 end
 
--- Called by the landing when a seeker touches ground. Returns whether to
--- keep the landing: false sends them round to the next azimuth.
-function tdw.seek_landed(uuid, rec, x, y, z)
-    local seeking = rec.seeking
-    if seeking == nil then
-        return true
-    end
-    local here = tdw.biome_under(x, y, z)
-    if here == seeking.id or seeking.tries >= SEEK_TRIES then
-        rec.seeking = nil
-        local biome = tdw.biomes[seeking.id]
-        game.log(string.format("tiamot_default_world: %s looked for %s and stopped in %s at %d, %d after %d tries",
-            uuid, biome and biome.name or seeking.id, tostring(here), x, z, seeking.tries))
-        return true
-    end
-    seeking.tries = seeking.tries + 1
-    tdw.seek_biome(uuid, seeking.id, rec)
-    return false
+local function here_of(uuid)
+    local body = game.player_entity(uuid)
+    local entity = body and game.entity(body)
+    return entity and entity.pos
 end
 
--- One chat word per placed biome. The dispatcher matches a whole message,
--- so these are words rather than a command with an argument.
-for word, id in pairs({
-    alpine = "alpine_highlands",
-    woodlands = "temperate_woodlands",
-    grasslands = "rolling_grasslands",
-    coast = "coastal_cliffs",
-    river = "river_valleys",
-    rainforest = "dense_rainforest_canopy",
-}) do
-    tdw.on_chat(word, function(player)
-        local rec = tdw.online[player]
-        if rec == nil then
-            return "you are not anywhere yet"
-        end
-        local biome = tdw.biomes[id]
-        local name = biome and biome.name or id
-        if not tdw.seek_biome(player, id, rec) then
-            return "there is nowhere to look for " .. name
-        end
-        if SWEEP[id] then
-            return "looking for " .. name .. ": walking outward until one turns up"
-        end
-        return "looking for " .. name .. ": trying the ring a stretch at a time"
-    end)
+local function distance_text(px, pz, x, z)
+    local d = math.sqrt((x - px) * (x - px) + (z - pz) * (z - pz))
+    return d >= 1000 and string.format("%.1f km", d / 1000) or string.format("%d blocks", math.floor(d))
 end
+
+local TP_USAGE = "/tp <biome | ring | spawn> or /tp <x> <z> or /tp <x> <y> <z> — /tp list for the names"
+
+tdw.on_command("tp", TP_USAGE, function(player, args)
+    local rec = tdw.online[player]
+    local p = here_of(player)
+    if rec == nil or p == nil then
+        return "you are not anywhere yet"
+    end
+    if #args == 0 then
+        return TP_USAGE
+    end
+    local numbers = {}
+    for i, a in ipairs(args) do
+        numbers[i] = tonumber(a)
+    end
+    -- Coordinates.
+    if #args == 3 and numbers[1] and numbers[2] and numbers[3] then
+        rec.seeking, rec.landing = nil, nil
+        rec.pending = { x = numbers[1], y = numbers[2], z = numbers[3] }
+        return string.format("to %.0f, %.0f, %.0f", numbers[1], numbers[2], numbers[3])
+    end
+    if #args == 2 and numbers[1] and numbers[2] then
+        drop(player, rec, math.floor(numbers[1]), math.floor(numbers[2]))
+        return string.format("to %d, %d — landing on the ground there", math.floor(numbers[1]), math.floor(numbers[2]))
+    end
+    local word = string.lower(args[1])
+    if word == "list" then
+        local placed, unplaced = {}, {}
+        for _, short in ipairs({ "alpine", "woodlands", "grasslands", "river", "rainforest", "coast", "ocean" }) do
+            local biome = tdw.biomes[BIOME_WORDS[short]]
+            if biome then
+                local list = (biome.built and biome.placed ~= false) and placed or unplaced
+                list[#list + 1] = short
+            end
+        end
+        local rings = {}
+        for _, ring in ipairs(tdw.layers.RINGS) do rings[#rings + 1] = ring.id end
+        return "biomes: " .. table.concat(placed, ", ") .. " — not placed yet: " .. table.concat(unplaced, ", ")
+            .. " — rings: " .. table.concat(rings, ", ") .. " — or spawn, or coordinates"
+    end
+    if word == "spawn" then
+        drop(player, rec, shape.SPAWN_X, shape.SPAWN_Z)
+        return "to the spawn"
+    end
+    -- A ring: its middle, on your own heading.
+    local ring = tdw.layers.ring_by_id[RING_WORDS[word] or word]
+    if ring then
+        local d = headings_from(p.x, p.z)[1]
+        local r = math.sqrt((ring.u[1] + ring.u[2]) / 2) * R_BLOCKS
+        local x, z = math.floor(d[1] * r), math.floor(d[2] * r)
+        drop(player, rec, x, z)
+        return string.format("to %s, at %d, %d (%s)", ring.name, x, z, distance_text(p.x, p.z, x, z))
+    end
+    -- A biome.
+    local id = BIOME_WORDS[word] or (tdw.biomes[word] and word)
+    local biome = id and tdw.biomes[id]
+    if biome == nil then
+        return "no biome or ring called `" .. args[1] .. "` — /tp list"
+    end
+    local only = tdw.config.everywhere
+    if only and only ~= id then
+        return biome.name .. " is not in this world: the dev switch puts " .. only .. " everywhere"
+    end
+    if not biome.built then
+        return biome.name .. " is not built yet"
+    end
+    if only == id then
+        return biome.name .. " is everywhere in this world — you are in it"
+    end
+    if biome.placed == false then
+        return biome.name .. " is built but not placed in the world; tdw.config.everywhere = \"" .. id .. "\" shows it"
+    end
+    if world_seed() == nil then
+        return "the world's seed is not known yet — try again in a moment"
+    end
+    local x, z = locate(id, p.x, p.z)
+    if x == nil then
+        return "found nowhere that is " .. biome.name
+    end
+    drop(player, rec, x, z)
+    game.log(string.format("tiamot_default_world: %s teleported to %s at %d, %d", player, biome.name, x, z))
+    return string.format("to %s, at %d, %d (%s)", biome.name, x, z, distance_text(p.x, p.z, x, z))
+end)

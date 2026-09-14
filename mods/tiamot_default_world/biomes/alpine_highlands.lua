@@ -1145,9 +1145,9 @@ local function carve_crevasse(x, y, z, rng, anywhere)
     return edits.commit(RESERVE.crevasse)
 end
 
--- Say `crevasse` in chat and one is carved where you stand, whatever the
--- ground: a way to look at one, and the way the headless test reaches it.
-tdw.on_chat("crevasse", function(player)
+-- `/crevasse`: one is carved where you stand, whatever the ground: a way to
+-- look at one, and the way the headless test reaches it.
+tdw.on_command("crevasse", "/crevasse — crack a crevasse open under you", function(player)
     local body = game.player_entity(player)
     local entity = body and game.entity(body)
     local p = entity and entity.pos

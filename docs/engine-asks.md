@@ -106,7 +106,7 @@ The coast works round it: the cliff's vertical structure is `contour`
 ribs, which are constant in y by construction, and the one term that does
 vary with height is coarsened in every axis to stretch it.
 
-## 21. The world seed in every VM (2026-09-13)
+## 21. The world seed in every VM (2026-09-13) — LANDED (engine fec84db): `/tp` samples biome fields with it
 
 Terrain generates off the tick now, in worker VMs, and the seed arrives
 there on each generator call's `pos`. The main VM never sees it: no hook

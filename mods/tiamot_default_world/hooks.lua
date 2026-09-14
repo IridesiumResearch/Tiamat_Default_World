@@ -12,7 +12,7 @@
 
 local M = {}
 local ticks = {}
-local words = {}
+local commands, command_order = {}, {}
 
 -- Runs `fn(dt_ticks)` every tick, after everything subscribed before it.
 ---@param fn fun(dt_ticks: integer)
@@ -20,21 +20,34 @@ function tdw.on_tick(fn)
     ticks[#ticks + 1] = fn
 end
 
--- Runs `fn(player)` when a player says exactly `word` (case-insensitive),
--- and swallows the message.
+-- A chat COMMAND: `/name args...` (2026-09-14: "have all the commands for
+-- this mod standardized with a / beforehand"). `fn(player, args)` gets the
+-- speaker's UUID and the words after the name, and the line is swallowed.
+-- The name is matched case-insensitively. `usage` is what `/help` prints.
 --
--- **A word answers.** The engine's chat hook takes `false` to mean "this
+-- **A command answers.** The engine's chat hook takes `false` to mean "this
 -- line is not going anywhere" and tells the speaker so — which comes out as
 -- "a mod refused that message", and reads as an error when it was a command
 -- being obeyed. A STRING stops the line the same way and shows the speaker
--- that string instead, so every word here returns one: what it did, or why
+-- that string instead, so every command returns one: what it did, or why
 -- it could not.
----@param word string
----@param fn fun(player: string): string?
-function tdw.on_chat(word, fn)
-    assert(not words[word], "chat word registered twice: " .. word)
-    words[word] = fn
+---@param name string
+---@param usage string
+---@param fn fun(player: string, args: string[]): string?
+function tdw.on_command(name, usage, fn)
+    name = string.lower(name)
+    assert(not commands[name], "command registered twice: /" .. name)
+    commands[name] = { fn = fn, usage = usage }
+    command_order[#command_order + 1] = name
 end
+
+tdw.on_command("help", "/help — these commands", function()
+    local lines = {}
+    for _, name in ipairs(command_order) do
+        lines[#lines + 1] = commands[name].usage
+    end
+    return table.concat(lines, "\n")
+end)
 
 -- Runs `fn(x, y, z)` when a block of `material` gets a random tick, until
 -- one subscriber returns true — two biomes share the grass block, and each
@@ -87,14 +100,25 @@ game.register_on_tick(function(dt_ticks)
     end
 end)
 
+-- A line that starts with `/` and names one of this mod's commands runs it.
+-- Anything else — plain chat, or a `/command` this mod does not have — is
+-- left alone, so another mod's commands still reach it.
 game.register_on_chat(function(event)
-    local fn = words[string.lower(event.text)]
-    if fn == nil then
+    local name, rest = string.match(event.text, "^%s*/(%S+)%s*(.-)%s*$")
+    if name == nil then
         return
     end
-    local ok, reply = pcall(fn, event.player)
+    local command = commands[string.lower(name)]
+    if command == nil then
+        return
+    end
+    local args = {}
+    for word in string.gmatch(rest, "%S+") do
+        args[#args + 1] = word
+    end
+    local ok, reply = pcall(command.fn, event.player, args)
     if not ok then
-        game.log("tiamot_default_world: the chat word `" .. event.text .. "` errored: " .. tostring(reply))
+        game.log("tiamot_default_world: the command `" .. event.text .. "` errored: " .. tostring(reply))
         return "that did not work — the log says why"
     end
     return type(reply) == "string" and reply or "done"

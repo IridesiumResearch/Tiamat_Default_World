@@ -208,9 +208,8 @@ tdw.on_tick(function(dt_ticks)
     end
 end)
 
--- Say "where" in chat to have the server log where you are, in the
--- Spindle's own terms. For checking the layers against the plan.
-tdw.on_chat("where", function(player)
+-- `/where`: where you are, in the Spindle's own terms, in chat and the log.
+tdw.on_command("where", "/where — where you are: the biome, the ring, how far under the dome", function(player)
     local p = where(player)
     if p == nil then
         return "you are not anywhere yet"

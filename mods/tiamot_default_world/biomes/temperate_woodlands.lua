@@ -1267,8 +1267,8 @@ tdw.on_tick(function(dt_ticks)
     end
 end)
 
--- Say "stats" in chat for the counts now, without waiting for the timer.
-tdw.on_chat("stats", function()
+-- `/stats`: the counts now, without waiting for the timer.
+tdw.on_command("stats", "/stats — write the woodland's growth figures to the server log", function()
     report()
     return "the woodland's figures are in the server log"
 end)

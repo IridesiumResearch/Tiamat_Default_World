@@ -1059,6 +1059,43 @@ engine commit they landed in, because the mod is written against them.
   fill moved; and the real world with three bots — no refused program, no
   error, and in the real world no over-budget tick.
 
+### Commands start with /, and /tp goes anywhere on the Spindle
+
+- "Make it so I can teleport to areas on the Spindle. I'm not finding the
+  biomes by flying in any meaningful amount of time. And let's have all the
+  commands for this mod standardized with a / beforehand."
+- **Every command is `/name args`** (`tdw.on_command` in hooks.lua, which
+  replaces the bare chat words). A line that starts with `/` and names one of
+  this mod's commands runs it and is swallowed; plain chat, and a `/command`
+  some other mod owns, pass through untouched. `/help` lists them all. The
+  old words are `/where`, `/roses`, `/crevasse` and `/stats`; `alpine`,
+  `river` and the rest are gone, into `/tp`.
+- **`/tp`**:
+  - `/tp <biome>` — `alpine`, `woodlands`, `grasslands`, `river`,
+    `rainforest` (and a few aliases: `forest`, `jungle`, `mountains`, …).
+    The engine now sets the world's seed in every VM (`game.world_seed`,
+    engine-asks 21), so the biome's own placement field — the mask its fills
+    use — is sampled here: out from your heading round sixty-four headings
+    and across the biome's rings, the first place clearly inside it. The
+    river answers for itself: from a start on its rings it steps straight at
+    the nearest course by the contour distance and its slope, then out onto
+    the bank. Headless: the rainforest found 16.9 km away, a river bank 238
+    blocks away, the alpine 6.4 km, the grassland 18.2 km.
+  - `/tp <ring>` — the middle of that ring on your heading.
+  - `/tp spawn`, `/tp <x> <z>` (dropped and landed on the ground), `/tp <x>
+    <y> <z>` (exactly there), `/tp list`.
+  - The Coastal Cliffs and the Deep Ocean answer that they are built and not
+    placed, and how to see them; under the dev switch every other biome says
+    it is not in that world.
+  - A drop is over the highest thing that could be there — the alpine peaks
+    in the cold core — and the landing aims at the ground the terrain field
+    puts under you, which works in the main VM now that the seed is there.
+- `tdw.config.spawn_biome` uses the same search; the old trial-and-error
+  seek (drop, land, read the ground, go round again) is gone.
+- Verified headless on the engine as of this afternoon (`game.world_seed`
+  present): every command and alias above, plain chat and an unknown
+  `/command` left alone, and the mod check.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

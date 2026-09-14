@@ -204,6 +204,57 @@ tdw.biomes.river_valleys.lazy = true                  -- its terms are this file
 -- diagonal. Without it every chunk of six rings would evaluate a terrain
 -- and a code field to paint nothing.
 local REACH = shape.compile("river.reach", course())
+-- Where a river is, for `/tp`: from a start on the river's rings, step
+-- straight at the nearest course — the contour distance says how far, its
+-- slope which way — until on the line, then back out onto the bank. A
+-- start that finds nothing within a few kilometres tries further round.
+tdw.biomes.river_valleys.locate = function(px, pz, seed)
+    local function dist(x, z)
+        return REACH:at(x + 0.5, 0.0, z + 0.5, seed)
+    end
+    local lo = tdw.layers.ring_by_id.temperate.u[1]
+    local r = math.sqrt(px * px + pz * pz)
+    local min_r = math.sqrt(lo) * shape.R_DISC * 1000 + RIM + 200
+    local starts = {}
+    local hx, hz = 1.0, 0.0
+    if r > 1 then hx, hz = px / r, pz / r end
+    local sr = math.max(r, min_r)
+    for k = 0, 8 do
+        local d = schem.DIR16[(k % 16) + 1]
+        -- Round the player's heading, a sixteenth of a turn at a time.
+        local ax = hx * d[1] - hz * d[2]
+        local az = hz * d[1] + hx * d[2]
+        starts[#starts + 1] = { ax * sr, az * sr }
+    end
+    for _, start in ipairs(starts) do
+        local x, z = start[1], start[2]
+        local gx, gz = 1.0, 0.0
+        for _ = 1, 16 do
+            local d = dist(x, z)
+            if d < 2.0 then
+                -- On the course: out onto the bank, the way we came.
+                local bank = CHANNEL + BANK_W + 2.0
+                local bx, bz = x + gx * bank, z + gz * bank
+                if math.sqrt(bx * bx + bz * bz) >= min_r - RIM then
+                    return math.floor(bx), math.floor(bz)
+                end
+                break
+            end
+            if d > 4000 then
+                break
+            end
+            local sx = dist(x + 4, z) - dist(x - 4, z)
+            local sz = dist(x, z + 4) - dist(x, z - 4)
+            local len = math.sqrt(sx * sx + sz * sz)
+            if len < 1e-6 then
+                break
+            end
+            gx, gz = sx / len, sz / len
+            x, z = x - gx * d, z - gz * d
+        end
+    end
+    return nil
+end
 tdw.biomes.river_valleys.present = function(pos)
     local x, z = pos.x * 16 + 8, pos.z * 16 + 8
     return REACH:at(x + 0.5, 0.0, z + 0.5, pos.seed) < shape.RIVER_REACH + 24

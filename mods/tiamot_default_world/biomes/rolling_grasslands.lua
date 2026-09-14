@@ -427,10 +427,10 @@ end
 local ROSE_BUSH, ROSE_BLOOMS_ID = "tiamot_default_world:rose_bush", "tiamot_default_world:rose_blooms"
 local first_bush = nil
 
--- Say `roses` in chat: the log prints where the first bush of this session
--- was planted and you are put down beside it. A way to go and look at one
--- (and the way the headless pick test finds one).
-tdw.on_chat("roses", function(player)
+-- `/roses`: the log prints where the first bush of this session was planted
+-- and you are put down beside it. A way to go and look at one (and the way
+-- the headless pick test finds one).
+tdw.on_command("roses", "/roses — go to the first rose bush that grew this session", function(player)
     if first_bush == nil then
         return "no rose bush has grown yet"
     end
