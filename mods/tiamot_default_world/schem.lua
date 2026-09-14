@@ -102,6 +102,121 @@ function M.push_ellipsoid(material, cx, cy, cz, rx, ry, rz, opts)
     end
 end
 
+-- **A trunk is a path with a thickness, not a stack of blocks.** Give a
+-- list of points — `{ x, y, z, r }` each, in blocks, `r` the radius there —
+-- and every cell within `r` of the line through them becomes the material,
+-- with the radius carried smoothly from one point to the next. A trunk
+-- tapers because its last point is thinner than its first; a branch leaves
+-- at whatever angle its points do; a frond droops because its points do.
+-- Stacked blocks can do none of that, which is why a palm built out of them
+-- looked like a signpost.
+--
+-- The distance from a cell to a segment, and nothing else: `t` is how far
+-- along the segment the nearest point is, clamped into it so the ends are
+-- round caps, and everything stays squared so there is no root to take.
+-- Plain + - * / and comparisons, as the rest of this file is.
+local function segment_mask(bx, by, bz, ax, ay, az, dx, dy, dz, len2, r0, dr, rough)
+    local mask = 0
+    for iz = 0, 2 do
+        local pz = bz + (iz + 0.5) / 3 - az
+        for iy = 0, 2 do
+            local py = by + (iy + 0.5) / 3 - ay
+            for ix = 0, 2 do
+                local px = bx + (ix + 0.5) / 3 - ax
+                local t = 0.0
+                if len2 > 0.0 then
+                    t = (px * dx + py * dy + pz * dz) / len2
+                    if t < 0.0 then t = 0.0 elseif t > 1.0 then t = 1.0 end
+                end
+                local ex, ey, ez = px - dx * t, py - dy * t, pz - dz * t
+                local r = r0 + dr * t
+                if rough then
+                    r = r * (1.0 + rough * ((hash(bx * 3 + ix, by * 3 + iy, bz * 3 + iz) % 9) - 4) / 4)
+                end
+                if ex * ex + ey * ey + ez * ez <= r * r then
+                    mask = mask | M.bit(ix, iy, iz)
+                end
+            end
+        end
+    end
+    return mask
+end
+
+-- A path of `material`, merged, one push per block however many segments
+-- cross it. `opts` is `push_ellipsoid`'s: `rough`, `carve`, `over_whole`,
+-- `blind`.
+---@param points number[][] `{ x, y, z, r }` each, in blocks
+---@param opts { rough: number?, carve: boolean?, over_whole: boolean?, blind: boolean? }?
+function M.push_path(material, points, opts)
+    opts = opts or {}
+    if #points < 2 then
+        return
+    end
+    -- Gathered per block first: two segments meeting at a point cover the
+    -- same blocks, and a schematic that names one block twice is a
+    -- schematic half again as big for nothing.
+    local masks, order = {}, {}
+    for i = 1, #points - 1 do
+        local a, b = points[i], points[i + 1]
+        local ax, ay, az, r0 = a[1], a[2], a[3], a[4]
+        local dx, dy, dz = b[1] - ax, b[2] - ay, b[3] - az
+        local dr = b[4] - r0
+        local len2 = dx * dx + dy * dy + dz * dz
+        local reach = (r0 > b[4] and r0 or b[4]) * (opts.rough and 1.6 or 1.05) + 0.5
+        local lo = function(p, q) return math.floor((p < q and p or q) - reach) end
+        local hi = function(p, q) return math.floor((p > q and p or q) + reach) end
+        for cz = lo(az, b[3]), hi(az, b[3]) do
+            for cy = lo(ay, b[2]), hi(ay, b[2]) do
+                for cx = lo(ax, b[1]), hi(ax, b[1]) do
+                    -- **The block before its cells.** Most blocks in a
+                    -- segment's box are nowhere near the segment — a trunk is
+                    -- slender and its box is not — and testing twenty-seven
+                    -- cells to find that out cost a tree a quarter of a
+                    -- million tests and the VM its instruction budget. The
+                    -- block's centre against the segment, plus half a block's
+                    -- diagonal, rejects them for ten.
+                    local px, py, pz = cx + 0.5 - ax, cy + 0.5 - ay, cz + 0.5 - az
+                    local t = 0.0
+                    if len2 > 0.0 then
+                        t = (px * dx + py * dy + pz * dz) / len2
+                        if t < 0.0 then t = 0.0 elseif t > 1.0 then t = 1.0 end
+                    end
+                    local ex, ey, ez = px - dx * t, py - dy * t, pz - dz * t
+                    local near = reach + 0.867
+                    local mask = 0
+                    if ex * ex + ey * ey + ez * ez <= near * near then
+                        mask = segment_mask(cx, cy, cz, ax, ay, az, dx, dy, dz, len2, r0, dr, opts.rough)
+                    end
+                    if mask ~= 0 then
+                        local key = cx .. ":" .. cy .. ":" .. cz
+                        if masks[key] == nil then
+                            order[#order + 1] = { cx, cy, cz, key }
+                            masks[key] = mask
+                        else
+                            masks[key] = masks[key] | mask
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for _, at in ipairs(order) do
+        local bx, by, bz, key = at[1], at[2], at[3], at[4]
+        local mask = masks[key]
+        local b = opts.blind and BLIND or M.at(bx, by, bz)
+        if b ~= nil then
+            if opts.carve then
+                mask = mask & b.occupancy
+                if mask ~= 0 then
+                    edits.push({ x = bx, y = by, z = bz }, material, mask, true)
+                end
+            elseif opts.over_whole or b.occupancy ~= FULL then
+                edits.push({ x = bx, y = by, z = bz }, material, mask, true)
+            end
+        end
+    end
+end
+
 -- Whether every chunk a box touches is loaded — `at` is nil in one that is
 -- not, and an edit into one is dropped. Sampled every eight blocks.
 function M.loaded_box(x0, y0, z0, x1, y1, z1)

@@ -751,6 +751,38 @@ engine commit they landed in, because the mod is written against them.
   the shelf's floor is sand and so is a river's, so it named every river
   bed the coast.
 
+### A trunk is a path with a thickness
+
+- "Would it be possible to generate them by first drawing a path and then
+  choosing a thickness and filling along that path?" Yes, and it is what
+  `schem.push_path` does now: a list of points, each with a radius, and
+  every cell within that radius of the line through them becomes the
+  material, the radius carried smoothly from one point to the next. A
+  trunk tapers because its last point is thinner than its first; a branch
+  leaves at whatever angle its points do; a frond droops because its
+  points droop. The distance from a cell to a segment and nothing else,
+  squared throughout so there is no root to take, in the same plain
+  arithmetic the ellipsoids use.
+- The river's trees are built from it. A palm is one bowing stem and seven
+  to nine fronds, each arcing up and out and drooping at the tip, where it
+  was a stack of blocks with three-block arms stuck on top — which is what
+  made it look like a signpost. A willow is four twisting stems, branches
+  arcing out of their tops with a clump of leaves on each, and curtains
+  hung from them, longer on the side the tree leans over. A snag is a
+  trunk lying on a bar, which is a line with a thickness too. Five
+  willows, four palms and five snags come to 3,156 blocks of schematic.
+- Two things the rasteriser needed. Most blocks in a segment's box are
+  nowhere near the segment — a trunk is slender and its box is not — so
+  the block's own centre is tested first and rejects them for ten
+  operations rather than twenty-seven cell tests. And the trees are built
+  at the first valley rather than at load: cutting them out of cells is
+  tens of thousands of operations, and the registration window's
+  instruction budget is a good deal smaller than a generator call's.
+- Looking for a river now walks outward on one heading rather than turning
+  round the ring. A river is a line: courses are two and a half kilometres
+  apart, so a few steps of four hundred metres crosses one, where turning
+  round the same ring lands between them more often than not.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

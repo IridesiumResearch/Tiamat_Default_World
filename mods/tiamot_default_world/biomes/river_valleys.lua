@@ -37,6 +37,7 @@ local blocks = tdw.blocks
 local shape = tdw.shape
 local n = shape.node
 local schem = tdw.schem
+local edits = tdw.edits
 
 -- The course, and the trough's cross-section. Distances in blocks from the
 -- line; heights in km, as the terrain has them.
@@ -79,7 +80,7 @@ local WILLOW_CELL, WILLOW_SQUARES, WILLOW_SALT = 5, 0.55, 41
 local PALM_CELL, PALM_SQUARES, PALM_SALT = 11, 0.30, 42
 local SNAG_CELL, SNAG_SQUARES, SNAG_SALT = 9, 0.35, 43
 local STEP_CELL, STEP_SQUARES, STEP_SALT = 14, 0.25, 44
-local WILLOW_TEMPLATES, PALM_TEMPLATES = 8, 5
+local WILLOW_TEMPLATES, PALM_TEMPLATES = 5, 4   -- each is thousands of cell tests to cut: enough for variety, not more
 
 -- The distance to the course, in blocks: unsigned for the profile, signed
 -- for the bends.
@@ -286,101 +287,123 @@ for cy = 0, 2 do
 end
 local DIR4 = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 
--- A willow: four stems on a two-by-two footprint, each twisting its own way
--- and the whole leaning, a broad crown over them, and curtains of leaves
--- hung from the crown's rim down toward the water.
-local function willow(rng)
-    local list = {}
-    local tall = 7 + rng:below(4)
-    local lean = DIR4[rng:below(4) + 1]
-    local stems = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } }
-    local top = {}
-    for s, base in ipairs(stems) do
-        local x, z = base[1], base[2]
-        local height = tall - rng:below(3)
-        for dy = -1, height do
-            -- The twist: a stem wanders a block every few, and the whole
-            -- tree leans the same way in its upper half.
-            if dy > 1 and dy % (2 + s % 3) == 0 then
-                local d = DIR4[rng:below(4) + 1]
-                x, z = x + d[1], z + d[2]
-            end
-            if dy > height // 2 and dy % 3 == 0 then
-                x, z = x + lean[1], z + lean[2]
-            end
-            list[#list + 1] = { x, dy, z, blocks.willow_wood, dy < 0 and FULL or PLUS }
-        end
-        top[#top + 1] = { x, height, z }
+-- **Every trunk, branch and frond here is a PATH with a thickness**, not a
+-- stack of blocks: `schem.push_path` takes a list of points with a radius
+-- at each and fills the cells within that radius of the line through them.
+-- A trunk tapers because its last point is thinner than its first, a branch
+-- leaves at whatever angle its points do, and a frond droops because its
+-- points droop. The palms were stacks of blocks with three-block arms
+-- stuck on the top, and looked it.
+--
+-- The geometry is pushed blind into an edit batch and taken back as a list
+-- (`edits.take`), which is the same trick the alpine firs use to build a
+-- schematic out of the shape code that grows them.
+local function schematic_of_batch()
+    local out = {}
+    for _, e in ipairs(edits.take()) do
+        local at, material, mask = e[1], e[2], e[3]
+        local id = type(material) == "number" and material or game.get_block_id(material)
+        out[#out + 1] = { at.x, at.y, at.z, id, mask or FULL }
     end
-    -- The crown: a flat wide mass over the stems.
-    local cx, cz = lean[1] * 2, lean[2] * 2
-    for dz = -3, 3 do
-        for dx = -3, 3 do
-            local far = dx * dx + dz * dz
-            if far <= 9 then
-                for dy = 0, (far <= 2 and 2 or 1) do
-                    list[#list + 1] = { cx + dx, tall + dy, cz + dz, blocks.willow_leaves, FULL }
-                end
-            end
-        end
-    end
-    -- The curtains: from the crown's rim, straight down, longest on the
-    -- side the tree leans over.
-    for _ = 1, 8 + rng:below(5) do
-        local a = rng:below(8)
-        local d = { { 3, 0 }, { 2, 2 }, { 0, 3 }, { -2, 2 }, { -3, 0 }, { -2, -2 }, { 0, -3 }, { 2, -2 } }
-        local dx, dz = d[a + 1][1], d[a + 1][2]
-        local toward = (dx * lean[1] + dz * lean[2]) > 0
-        local drop = (toward and 5 or 3) + rng:below(4)
-        for dy = 0, drop do
-            list[#list + 1] = { cx + dx, tall - dy, cz + dz, blocks.willow_leaves, dy == drop and CENTRE or PLUS }
-        end
-    end
-    return game.schematic(list)
+    return game.schematic(out)
 end
 
--- A palm: a bare stem with a slight lean and a crown of drooping fronds.
+-- A willow: four stems on a two-by-two footprint, each twisting its own way
+-- and the whole leaning, branches arcing out of their tops, a clump of
+-- leaves on each, and curtains hung from them — longest on the side the
+-- tree leans over, which is the side the water is on.
+local function willow(rng)
+    edits.begin()
+    local tall = 7 + rng:below(4)
+    local lean = DIR4[rng:below(4) + 1]
+    local tops = {}
+    for _, base in ipairs({ { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } }) do
+        local height = tall - rng:below(3)
+        local x, z = base[1] + 0.5, base[2] + 0.5
+        local points = { { x, -1.0, z, 0.8 } }
+        for i = 1, 4 do
+            local t = i / 4
+            x = x + (rng:below(3) - 1) * 0.4 + lean[1] * t * 0.8
+            z = z + (rng:below(3) - 1) * 0.4 + lean[2] * t * 0.8
+            points[#points + 1] = { x, -1.0 + t * (height + 1), z, 0.74 - 0.42 * t }
+        end
+        schem.push_path(blocks.willow_wood, points, { blind = true })
+        tops[#tops + 1] = points[#points]
+    end
+    -- The branches, and what hangs off them.
+    for _, top in ipairs(tops) do
+        for _ = 1, 1 + rng:below(2) do   -- branches per stem: four stems make a crown between them
+            local d = schem.DIR16[rng:below(16) + 1]
+            local reach = 2.4 + rng:below(4) * 0.5
+            local tip = { top[1] + d[1] * reach, top[2] + 1.0 + rng:below(3) * 0.4, top[3] + d[2] * reach, 0.2 }
+            schem.push_path(blocks.willow_wood, {
+                { top[1], top[2], top[3], 0.34 },
+                { top[1] + d[1] * reach * 0.5, top[2] + 0.9, top[3] + d[2] * reach * 0.5, 0.27 },
+                tip,
+            }, { blind = true })
+            schem.push_ellipsoid(blocks.willow_leaves, tip[1], tip[2], tip[3],
+                1.7 + rng:below(3) * 0.3, 1.1, 1.7 + rng:below(3) * 0.3, { rough = 0.3, blind = true })
+            -- The curtain: straight down from the branch end, wandering a
+            -- little, and longer over the water than away from it.
+            local toward = (d[1] * lean[1] + d[2] * lean[2]) > 0
+            local drop = (toward and 6 or 3) + rng:below(4)
+            local cx, cz = tip[1] + d[1] * 0.4, tip[3] + d[2] * 0.4
+            local curtain = { { cx, tip[2] - 0.6, cz, 0.4 } }
+            for i = 1, 3 do
+                cx = cx + (rng:below(3) - 1) * 0.25
+                cz = cz + (rng:below(3) - 1) * 0.25
+                curtain[#curtain + 1] = { cx, tip[2] - 0.6 - drop * i / 3, cz, 0.36 - 0.1 * i }
+            end
+            schem.push_path(blocks.willow_leaves, curtain, { blind = true })
+        end
+    end
+    return schematic_of_batch()
+end
+
+-- A palm: one bare stem bowing as it climbs, and a spray of fronds from its
+-- crown, each arcing up and out and then drooping at the tip.
 local function palm(rng)
-    local list = {}
+    edits.begin()
     local tall = 9 + rng:below(6)
     local lean = DIR4[rng:below(4) + 1]
-    local x, z = 0, 0
-    for dy = -1, tall do
-        if dy > tall // 2 and dy % 4 == 0 then
-            x, z = x + lean[1], z + lean[2]
-        end
-        list[#list + 1] = { x, dy, z, blocks.willow_wood, dy < 0 and FULL or CENTRE }
+    local points = {}
+    for i = 0, 5 do
+        local t = i / 5
+        local bow = t * t * (1.2 + rng:below(3) * 0.3)
+        points[#points + 1] = { 0.5 + lean[1] * bow, -1.0 + t * (tall + 1), 0.5 + lean[2] * bow,
+            0.66 - 0.28 * t }
     end
-    -- Six fronds, each an arm of three blocks that droops at its end.
-    local arms = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { -1, -1 } }
-    for _, a in ipairs(arms) do
-        for reach = 1, 3 do
-            local dy = tall - (reach == 3 and 1 or 0)
-            list[#list + 1] = { x + a[1] * reach, dy, z + a[2] * reach, blocks.oak_leaves,
-                reach == 3 and CENTRE or FULL }
-        end
+    schem.push_path(blocks.willow_wood, points, { blind = true })
+    local tip = points[#points]
+    local fronds = 7 + rng:below(3)
+    for f = 1, fronds do
+        local d = schem.DIR16[(f * 16 // fronds + rng:below(2)) % 16 + 1]
+        local reach = 3.0 + rng:below(5) * 0.4
+        schem.push_path(blocks.oak_leaves, {
+            { tip[1], tip[2], tip[3], 0.5 },
+            { tip[1] + d[1] * reach * 0.4, tip[2] + 1.0, tip[3] + d[2] * reach * 0.4, 0.45 },
+            { tip[1] + d[1] * reach * 0.8, tip[2] + 0.7, tip[3] + d[2] * reach * 0.8, 0.32 },
+            { tip[1] + d[1] * reach, tip[2] - 1.2, tip[3] + d[2] * reach, 0.18 },
+        }, { blind = true })
     end
-    list[#list + 1] = { x, tall + 1, z, blocks.oak_leaves, FULL }
-    return game.schematic(list)
+    return schematic_of_batch()
 end
 
 -- A snag or a drift jam: dead wood lying on a bar, a few trunks across one
 -- another and a tangle of branches.
 local function snag(rng)
-    local list = {}
-    local logs = 2 + rng:below(3)
-    for _ = 1, logs do
-        local along_x = rng:next_bool()
+    edits.begin()
+    for _ = 1, 2 + rng:below(3) do
+        local d = schem.DIR16[rng:below(16) + 1]
         local length = 3 + rng:below(5)
-        local ox, oz = rng:below(3) - 1, rng:below(3) - 1
-        local dy = rng:below(2)
-        for i = 0, length - 1 do
-            local x = ox + (along_x and i or 0)
-            local z = oz + (along_x and 0 or i)
-            list[#list + 1] = { x, dy, z, blocks.dead_wood, PLUS }
-        end
+        local ox, oz = rng:below(3) - 1 + 0.5, rng:below(3) - 1 + 0.5
+        local y = 0.3 + rng:below(2) * 0.6
+        schem.push_path(blocks.dead_wood, {
+            { ox, y, oz, 0.45 },
+            { ox + d[1] * length, y - 0.2, oz + d[2] * length, 0.3 },
+        }, { blind = true })
     end
-    return game.schematic(list)
+    return schematic_of_batch()
 end
 
 -- A stepping stone: one block of scoured rock standing just clear of the
@@ -389,7 +412,13 @@ local function stepping_stone()
     return game.schematic({ { 0, 0, 0, blocks.stone, FULL } })
 end
 
+-- Built once and kept: the scatter asks for them per mode, and cutting a
+-- willow out of cells eight times over is work nobody needs done twice.
+local BUILT = nil
 function tdw.river_schematics()
+    if BUILT then
+        return BUILT
+    end
     local out = { willows = {}, palms = {}, snags = {}, steps = {} }
     if not game.schematic then
         return out
@@ -401,5 +430,17 @@ function tdw.river_schematics()
     for i = 1, PALM_TEMPLATES do out.palms[i] = palm(rng_for("palm:" .. i)) end
     for i = 1, 5 do out.snags[i] = snag(rng_for("snag:" .. i)) end
     out.steps[1] = stepping_stone()
+    local total = 0
+    for _, list in pairs(out) do
+        for _, one in ipairs(list) do total = total + one:len() end
+    end
+    game.log(string.format("tiamot_default_world river: %d willows, %d palms, %d snags — %d blocks of schematic in all",
+        #out.willows, #out.palms, #out.snags, total))
+    BUILT = out
     return out
 end
+
+-- NOT built at load. Cutting a tree out of cells is tens of thousands of
+-- operations and the registration window's instruction budget is a good
+-- deal smaller than a generator call's; the first valley builds them, once,
+-- and the memo above keeps them.

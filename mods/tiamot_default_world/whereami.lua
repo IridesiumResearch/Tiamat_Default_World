@@ -19,7 +19,7 @@ local schem = tdw.schem
 local SAMPLE_EVERY = 10        -- ticks between looks at where a player is
 local SHOW_TICKS = 20          -- how long the name stays up: a second at 20 Hz
 local SCAN = 8                 -- blocks below the feet the ground is looked for
-local SEEK_TRIES = 12          -- azimuths tried before a search settles for what it found
+local SEEK_TRIES = 20          -- steps tried before a search settles for what it found
 local SEEK_SKY = 220           -- blocks over the base dome a seeker is dropped from
 
 -- What each biome's ground is made of. The alpine's entries win over the
@@ -143,6 +143,9 @@ end)
 
 -- Where to look for a biome: a radius its spans cover, preferring one no
 -- humidity split can take away.
+-- Biomes that are lines rather than bands, and are looked for by walking
+-- outward on one heading instead of round the ring.
+local SWEEP = { river_valleys = true }
 local FIND_AT = {
     alpine_highlands = 0.015,      -- u: the cold core, seven kilometres out
     rolling_grasslands = 0.149,    -- the middle of the hot rings, which are all grassland
@@ -160,9 +163,21 @@ function tdw.seek_biome(uuid, id, rec)
     if u == nil then
         return false
     end
-    rec.seeking = rec.seeking or { id = id, tries = 0 }
-    local d = schem.DIR16[(rec.seeking.tries % 16) + 1]
-    local r = math.sqrt(u) * shape.R_DISC * 1000
+    rec.seeking = rec.seeking or { id = id, tries = 0, heading = nil }
+    local seeking = rec.seeking
+    local d, r
+    if SWEEP[id] then
+        -- A river is a LINE, not a band: turning round the same ring lands
+        -- between courses more often than not. One heading, stepped outward,
+        -- crosses every course there is — they are two and a half
+        -- kilometres apart, so a few steps of four hundred metres finds one.
+        seeking.heading = seeking.heading or (schem.hash(id:len(), seeking.tries, 7) % 16) + 1
+        d = schem.DIR16[seeking.heading]
+        r = math.sqrt(u) * shape.R_DISC * 1000 + seeking.tries * 400
+    else
+        d = schem.DIR16[(seeking.tries % 16) + 1]
+        r = math.sqrt(u) * shape.R_DISC * 1000
+    end
     rec.pending = {
         x = r * d[1] + 0.5,
         y = shape.Y0 + 1000.0 * shape.dome_at(u) + SEEK_SKY,
