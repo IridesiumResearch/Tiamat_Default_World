@@ -199,6 +199,12 @@ block("wet_clay", "Wet clay", "Slick dark clay where the water sits: a ravine's 
 -- fine dark sand `black_mud`.
 block("bone", "Bone", "A whale's, long on the sea floor, broken across the basalt.", { hardness = 1.2, tint = ROCK })
 
+-- The Frozen Wastes (1.9). One new node, asked for by name (2026-09-14):
+-- clear ice, for the cryo-lakes. Everything else exists: `snow`, the blue
+-- glacial `ice`, `permafrost`, `creek_bed` (the frost-heaved gravel of the
+-- polygons), `granite` (the erratics) and `dead_wood` (the frozen snags).
+block("clear_ice", "Clear ice", "A frozen lake's top: deep, clear, and blue under it.", { hardness = 0.8, tint = COLD_BLUE, transparent = true })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

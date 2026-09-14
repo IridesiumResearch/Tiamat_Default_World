@@ -741,6 +741,9 @@ local function is_fir(b) return holds(b, blocks.fir_log) end
 local function mine(x, z)
     local only = tdw.config.everywhere
     if only then return only == "alpine_highlands" end
+    -- Not in Frostmoor, which is the Frozen Wastes' (1.9): no firs, no
+    -- boulders, nothing of the alpine's grows on its snow and permafrost.
+    if tdw.frozen_at and tdw.frozen_at(x, z) then return false end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
     -- The cold core, widened by the wobble: the edge wanders, and a tick
     -- refused on the wrong side of it is a tick wasted, not an error.

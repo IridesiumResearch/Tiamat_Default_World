@@ -165,6 +165,16 @@ drawn.
 |---|---|---|
 | `bone` | whale skeletons broken across the basalt reefs | asked for by name 2026-09-14 |
 
+### 1.9 Frozen Wastes (2026-09-14)
+
+Shares `snow`, `ice` (the blue glacial ice: ridges, glaciers, crevasse
+walls, under the lakes), `permafrost`, `creek_bed` (the polygons'
+frost-heaved gravel), `granite` (the erratics) and `dead_wood` (the snags).
+
+| Block | Where | Why |
+|---|---|---|
+| `clear_ice` | the top of a cryo-lake, over blue ice; transparent | asked for by name 2026-09-14 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:

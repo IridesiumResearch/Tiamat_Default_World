@@ -152,6 +152,14 @@ M.RING_WOBBLE = 0.010
 -- five hundred metres there.
 M.VERDANT_U = { 0.48 * 0.48, 0.60 * 0.60 }
 M.VERDANT_BLEND_U = 0.008
+-- The Frozen Wastes (1.9) take the frost ring's dry half — Frostmoor — from
+-- the alpine. Their flat permafrost fades into the alpine's mountains across
+-- the Crown's edge over FROZEN_RING_BLEND_U of radius, and across the
+-- humidity split over FROZEN_HUMIDITY_BLEND of the noise either side: much
+-- wider than the woodland/grassland blend, because a mountain range has a
+-- long way to come down.
+M.FROZEN_RING_BLEND_U = 0.003
+M.FROZEN_HUMIDITY_BLEND = 0.10
 M.RING_WOBBLE_FREQ = 1 / 5200
 M.RING_WOBBLE_OCTAVES = 2
 
@@ -255,8 +263,8 @@ local function abs(a) return { op = "abs", a = a } end
 -- with it the engine skips a chunk the surface cannot reach before any
 -- evaluation, for every fill, and the generator's gate reads the same bound.
 M.NOISE_RANGE = 0.5
-local function noise(stream, frequency, octaves, amplitude)
-    local raw = { op = "noise", stream = stream, frequency = frequency, octaves = octaves, amplitude = amplitude }
+local function noise(stream, frequency, octaves, amplitude, stretch)
+    local raw = { op = "noise", stream = stream, frequency = frequency, octaves = octaves, amplitude = amplitude, stretch = stretch }
     return { op = "clamp", a = raw, low = -M.NOISE_RANGE * amplitude, high = M.NOISE_RANGE * amplitude }
 end
 -- The distance, in blocks, from the zero contour of a 2D noise (engine
@@ -384,6 +392,10 @@ end
 --               Verdant Belt and a band either side of it
 --   "rainforest" the rainforest's terms alone (dev switch: the rainforest)
 --   "ocean"     the deep ocean's floor alone, on the coast's flat sea (dev switch: deep ocean)
+--   "frozen"    the Frozen Wastes' terms alone (dev switch: frozen wastes)
+-- The alpine terms, in "alpine" and "all", are the COLD terms
+-- (`cold_terms`): the alpine's mountains cross-faded into the Frozen
+-- Wastes' plains across Frostmoor.
 --   "all"       temperate and alpine cross-faded by the alpine weight: the
 --               band a few hundred metres wide at the frost ring's edge,
 --               and the only programs that carry every ring's noise.
@@ -404,6 +416,8 @@ function M.default_mode()
         return "rainforest"
     elseif only == "deep_ocean" then
         return "ocean"
+    elseif only == "frozen_wastes" then
+        return "frozen"
     end
     return "wet"
 end
@@ -444,6 +458,27 @@ local function verdant_weight()
     local mid, half = (M.VERDANT_U[1] + M.VERDANT_U[2]) / 2, (M.VERDANT_U[2] - M.VERDANT_U[1]) / 2
     local inside = mul(sub(abs(sub(u_biome(), const(mid))), const(half)), const(-1.0 / M.VERDANT_BLEND_U))
     return clamp(add(inside, const(0.5)), 0.0, 1.0)
+end
+
+-- The Frozen Wastes' weight: 0 in the Crown and the frost ring's wet half,
+-- 1 deep in its dry half, as the product of the ring's share (past the
+-- Crown's edge) and the dry side's (past the humidity split). The radius
+-- FIRST, it being the deeper operand.
+local function frozen_weight()
+    local ring = clamp(add(mul(sub(u_biome(), const(M.CROWN_U)), const(1.0 / M.FROZEN_RING_BLEND_U)), const(0.5)), 0.0, 1.0)
+    local dry = clamp(add(mul(sub(M.humidity(), const(M.HUMIDITY_SPLIT)), const(-0.5 / M.FROZEN_HUMIDITY_BLEND)), const(0.5)),
+        0.0, 1.0)
+    return mul(ring, dry)
+end
+-- The cold core's terms: the alpine's, and the Frozen Wastes' across
+-- Frostmoor, cross-faded by that weight. The alpine alone when the Wastes'
+-- file is not loaded.
+local function cold_terms()
+    if not M.frozen_terms then
+        return M.alpine_terms()
+    end
+    local w = frozen_weight()
+    return add(mul(M.alpine_terms(), add(mul(w, const(-1.0)), const(1.0))), mul(M.frozen_terms(), frozen_weight()))
 end
 
 -- A grassland ridge: positive along the zero contour of its noise.
@@ -523,7 +558,9 @@ function M.terrain(flank)
     elseif mode == "dry" then
         terms = swells()
     elseif mode == "alpine" then
-        terms = M.alpine_terms()
+        terms = cold_terms()
+    elseif mode == "frozen" then
+        terms = M.frozen_terms()
     elseif mode == "temperate" then
         terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
     elseif mode == "rainforest" then
@@ -539,7 +576,7 @@ function M.terrain(flank)
         -- cross-faded by the alpine weight against the alpine terms at the
         -- frost ring's edge, so neither ring steps at the border.
         local temperate = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
-        terms = add(mul(M.alpine_terms(), alpine_weight()),
+        terms = add(mul(cold_terms(), alpine_weight()),
             mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))))
     end
     local out = add(add(terms, shape), M.depth())
@@ -677,7 +714,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

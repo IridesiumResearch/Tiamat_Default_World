@@ -64,6 +64,7 @@ load("biomes.coastal_cliffs")        -- 1.4, the steep stretches of the Long Sho
 load("biomes.river_valleys")         -- 1.6, the troughs and their rivers, cut across every ring they cross
 load("biomes.dense_rainforest_canopy") -- 1.7, the Verdant Belt's wet half: karst under megatrees
 load("biomes.deep_ocean")            -- 1.8, abyssal plains under a flat sea (not placed)
+load("biomes.frozen_wastes")         -- 1.9, Frostmoor: the frost ring's dry half
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

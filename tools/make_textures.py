@@ -71,7 +71,8 @@ BLOCKS = {
     "kapok_leaves":   ( 86, 122,  58,  0),
     "kapok_planks":   (196, 180, 150,  0),
     "dry_clay":       (170, 142, 112,  0),
-    "bone":           (214, 204, 182,  0),   # the deep ocean (1.8): old, sea-stained bone
+    "bone":           (214, 204, 182,  0),
+    "clear_ice":      (196, 226, 240,  0),   # the frozen wastes (1.9): a cryo-lake's clear top   # the deep ocean (1.8): old, sea-stained bone
     "wet_clay":       (112,  90,  74,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
@@ -97,6 +98,7 @@ BLOCKS = {
 # Alpha per texture; everything not listed is opaque.
 ALPHA = {
     "water": 150,
+    "clear_ice": 120,
 }
 
 # Foliage: the share of pixels that are HOLES. A block face is three cells

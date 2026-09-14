@@ -1096,6 +1096,64 @@ engine commit they landed in, because the mod is written against them.
   present): every command and alias above, plain chat and an unknown
   `/command` left alone, and the mod check.
 
+### 1.9 Frozen Wastes, on Frostmoor
+
+- The brief: windswept permafrost plains, jagged pressure ridges, sudden
+  crevasses 15 to 30 deep with sheer blue ice walls, serac spires 10 to 25
+  tall, rolling snow dunes with sastrugi aligned with the wind; snow, blue
+  glacial ice and permafrost polygons; no grass, no needles, only solitary
+  frozen snags and tiny copses; cryo-lakes of clear ice* over blue ice; ice
+  caves under the glaciers, erratic boulders, and whiteout blizzards that
+  drift snow against windward things. `biomes/frozen_wastes.lua`.
+- **Where: Frostmoor, the frost ring's dry half** — the designer's choice.
+  The alpine keeps the Crown and the frost ring's wet half. In the alpine's
+  terrain modes ("alpine", and "all" at the frost ring's outer edge) the
+  terms are now `cold_terms`: the alpine's mountains cross-faded into the
+  Wastes' plains by a weight that is the ring's share past the Crown's edge
+  times the dry side's past the humidity split, over a much wider humidity
+  blend than the woodland/grassland one, so the range comes down to the
+  plain over a kilometre or two. The "all" programs are 867 operations of
+  the engine's 1,024; nothing was refused. A "frozen" mode is the dev switch.
+- **The ground**: a plain rolling ten blocks either way over kilometres;
+  dunes four blocks either way, drawn three times as long downwind; sastrugi
+  — sharp ridges of a noise stretched six times along the wind (the
+  engine's new per-axis `stretch`, now on `shape.node`'s `noise`) — on the
+  snowfields; pressure ridges with jagged crests; glaciers, sheets of ice
+  twelve blocks thick with steep fronts, with ice caves tunnelled through
+  their thick middles a block to five and a half over the plain; crevasses
+  15 to 30 deep, sheer, in stretches; flat cryo-lakes two blocks under the
+  plain; and the polygons' gravel borders heaved a little over the bare
+  ground.
+- **The materials**: snow on the snowfields; permafrost where the wind has
+  scoured it, with frost-heaved gravel (`creek_bed`) in a network of
+  polygons; blue `ice` in the pressure ridges, down the glaciers' fronts and
+  round their caves, and down the crevasses' walls; `clear_ice` over blue
+  ice on the lakes. No cover at all.
+- **Structures**, cut natively: serac clusters of two to six rough, leaning
+  ice spires with shards at their feet, on the glaciers; erratics of one to
+  three great half-sunk granite boulders with snow on top, on the plain;
+  and rarely a frozen snag or a copse of two to four, dead wood with snow on
+  the stubs and no needles.
+- **Blizzards**: a square of 192 blocks is in a whiteout for ten minutes
+  at a time, one square in four. There, a random tick on a snow surface
+  whose next block downwind holds something that is not snow — a boulder, a
+  snag, a serac, a wall — lays a layer of snow cells against that face,
+  until the drift is three blocks deep.
+- **The alpine stands back**: its random tick grows nothing in Frostmoor
+  (`tdw.frozen_at`, the Wastes' placement field sampled with the world's
+  seed and cached by eight-block square), and the HUD names Frostmoor's
+  snow and ice the Frozen Wastes rather than the alpine.
+- `/tp frozen` (or `wastes`, `tundra`, `frostmoor`) goes there.
+- One new node, asked for by name: `clear_ice`, transparent.
+- Not possible yet: slick ice walls (no friction per block — engine-asks
+  27) and the whiteout's snow in the air (particles, item 20).
+- Verified headless: the Wastes everywhere (488 operations; snow,
+  permafrost, gravel, ice and granite at the surface); the real world at a
+  fixed seed with the spawn moved to where `/tp frozen` found them (the HUD
+  said Frozen Wastes; alpine and "all" programs compiled); the real world at
+  the normal spawn with three bots, with and without the Wastes loaded at
+  one seed — no refused program, no error, no over-budget tick.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

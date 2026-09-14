@@ -16,6 +16,14 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+## 27. Friction per block (2026-09-14)
+
+The Frozen Wastes' crevasses have "slick, near-frictionless blue ice
+walls", and ice underfoot should slide. Nothing in `register_block` says how
+a body grips a block, so ice walks like stone. A `friction` on the block —
+a share of the normal grip, default 1 — read by the movement code for the
+block under a body and the block it is pressed against, is the ask.
+
 ## 26. A deep sea is heavy to load (2026-09-14)
 
 **Seen.** The deep ocean put everywhere, headless, one bot: 213 of the ticks
@@ -43,7 +51,7 @@ levels lost per block of it — would make the deep sea dark and a shallow one
 bright, which is the whole of it. Until then the plains are dark only in
 that nothing grows on them.
 
-## 24. Shade under a canopy (2026-09-14)
+## 24. Shade under a canopy (2026-09-14) — the chunk-arriving half LANDED (engine deba305); foliage still passes light as glass
 
 **Seen.** The rainforest's brief has its canopy block 85-90% of direct
 sunlight. Headless, round one spot 85% of the floor has a WHOLE leaf block

@@ -44,6 +44,7 @@ local OWNER = {
     [blocks.coast_turf] = "coastal_cliffs",
     [blocks.barnacles] = "coastal_cliffs",
     [blocks.bone] = "deep_ocean",
+    [blocks.clear_ice] = "frozen_wastes",
 }
 for _, material in ipairs(ALPINE_GROUND) do
     OWNER[material] = "alpine_highlands"
@@ -84,6 +85,15 @@ end
 -- The biome whose ground is under (x, y, z), or nil when the column is
 -- unloaded or made of nothing anybody claims.
 function tdw.biome_under(x, y, z)
+    local owner = tdw.biome_under_ground(x, y, z)
+    -- The alpine's snow, ice and permafrost are the Frozen Wastes' too:
+    -- which of them a place is, is the placement field's to say.
+    if owner == "alpine_highlands" and tdw.frozen_at and tdw.frozen_at(x, z) then
+        return "frozen_wastes"
+    end
+    return owner
+end
+function tdw.biome_under_ground(x, y, z)
     local first = nil
     for dy = 2, -SCAN, -1 do
         local list = {}
@@ -172,8 +182,9 @@ local BIOME_WORDS = {
     rainforest = "dense_rainforest_canopy", jungle = "dense_rainforest_canopy",
     coast = "coastal_cliffs", cliffs = "coastal_cliffs",
     ocean = "deep_ocean", sea = "deep_ocean",
+    frozen = "frozen_wastes", wastes = "frozen_wastes", tundra = "frozen_wastes", frostmoor = "frozen_wastes",
 }
-local RING_WORDS = { frostmoor = "frost", greensward = "temperate", firwold = "frost" }
+local RING_WORDS = { greensward = "temperate", firwold = "frost" }
 
 local function world_seed()
     return game.world_seed or tdw.seed
@@ -334,7 +345,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
     local word = string.lower(args[1])
     if word == "list" then
         local placed, unplaced = {}, {}
-        for _, short in ipairs({ "alpine", "woodlands", "grasslands", "river", "rainforest", "coast", "ocean" }) do
+        for _, short in ipairs({ "alpine", "frozen", "woodlands", "grasslands", "river", "rainforest", "coast", "ocean" }) do
             local biome = tdw.biomes[BIOME_WORDS[short]]
             if biome then
                 local list = (biome.built and biome.placed ~= false) and placed or unplaced

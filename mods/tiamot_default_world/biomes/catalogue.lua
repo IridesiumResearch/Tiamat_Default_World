@@ -35,8 +35,11 @@ biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
-    spans = { { "crown", "frost" } },
+    spans = { { "crown", "crown" }, { "frost", "frost", "wet" } },
     note = "1.3 — the cold core, both halves of it: the Crown and Frostmoor. Its terrain is a MAP, so it reaches exactly as far as that map does — see the map constants in its own file." }
+biome{ id = "frozen_wastes", name = "Frozen Wastes", area = "surface",
+    spans = { { "frost", "frost", "dry" } },
+    note = "1.9 — Frostmoor, the frost ring's dry half (2026-09-14, the designer's choice): permafrost plains, pressure ridges, crevasses, glaciers with ice caves, seracs, cryo-lakes. Its terrain is cross-faded into the alpine's mountains (shape.lua, cold_terms)." }
 biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
     ring = "shore", placed = false,
     note = "1.4 and the shelf. NOT placed in the world yet: its sea is flat and the world's rim is 2.5 km of dome above it, so the ocean needs the rim brought down to a sea level first. Look at it with tdw.config.everywhere." }

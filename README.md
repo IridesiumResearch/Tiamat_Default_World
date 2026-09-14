@@ -160,7 +160,8 @@ every ring its temperature suits until the biome that ring is for exists:
 
 | Rings | Radius | What stands there |
 |---|---|---|
-| Crown, Frostmoor | 0 to 10.6 km | Alpine Highlands, both halves: the cold core, mountains on the dome's own summit |
+| The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
+| Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), the Alpine Highlands on the wet |
 | The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
 | The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge, the Glass Waste | 20.7 to 28.3 km | Rolling Grasslands over the whole width: the dry band round the middle of the world, standing in for a desert |
@@ -380,6 +381,13 @@ built one at a time in its own file. Built so far:
       Cut natively with `game.schematic_shapes` and stamped at generation.
       The canopy's shade and the fog wait on the engine
       (`docs/engine-asks.md`, items 20, 23 and 24).
+- [x] 1.9 Frozen Wastes — Frostmoor, the frost ring's dry half
+      (`biomes/frozen_wastes.lua`), cross-faded into the alpine's mountains.
+      Permafrost plains with gravel polygons, dunes and wind-aligned
+      sastrugi, jagged pressure ridges, glaciers with ice caves, sheer blue
+      crevasses, clear-ice lakes; serac spires, erratics and rare frozen
+      snags; no grass, no needles; blizzards that drift snow against
+      whatever stands in the wind.
 
 ## Licence
 
