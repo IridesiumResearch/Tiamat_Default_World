@@ -194,8 +194,11 @@ belongs to is a field of the radius and the humidity noise; the HUD reads
 the ground instead, since every biome lays its own materials. `/tp <biome>`
 samples the field itself — the world's seed is in every VM now
 (`game.world_seed`) — walking out from your heading round the compass and
-across the biome's rings to the first place well inside it, and drops you
-there; a river is found by stepping straight at the nearest course.
+across the biome's rings, nearest first, to the first place well inside
+it, and drops you there; a river is found by stepping straight at the
+nearest course. On an engine older than `game.world_seed` it searches by
+landing instead: dropped at one heading after another, each landing reads
+the ground, and a wrong one moves you on.
 `tdw.config.spawn_biome` does the same for a new player before they
 arrive.
 

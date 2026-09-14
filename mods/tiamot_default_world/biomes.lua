@@ -217,6 +217,47 @@ function tdw.present_biomes_in(u_lo, u_hi, pos)
     return kept
 end
 
+-- **The meadow flowers** (2026-09-14: "add more grass as well as rare Roman
+-- chamomile and fairly common blue lunaria everywhere"): two cover fills a
+-- grassy biome adds after its grass, from the SAME noise as its grass. The
+-- grass takes a cell column where that noise is over its cut (0.12 and
+-- up); the flowers only where it is under -FLOWER_MIN, so a flower never
+-- stands on a tuft or a tuft on a flower — the engine's cover fill would
+-- stack a second run on the first inside a block. A second fine noise
+-- thins those columns to one in forty or so — a block has nine, and at one
+-- in seven nearly every block held a flower. Then a slow patch noise picks
+-- the lunaria on its high side and the chamomile on its low one, the
+-- chamomile thinned again by a finer noise into clumps. Measured headless
+-- over 65-block squares of grass: lunaria in one block in seven to
+-- fifteen, chamomile in one in sixty to a hundred.
+-- No terrain in these fields: a cover is only asked in blocks that hold a
+-- surface, and in the grassy rings the first caves are a hundred blocks
+-- down, so the woodlands' near-ground guard would cost a full terrain per
+-- cell for nothing here.
+--   `noise_name`, `freq`: the biome's grass noise, exactly as its grass has it.
+--   `gate(field)`: the biome's own limits (its mask, off the river, off ferns).
+local FLOWER_MIN = 0.45               -- about one column in seven off the grass side
+local BLOOM_FREQ, BLOOM_MIN = 1.5, 0.45  -- the second fine noise: one column in seven again
+local FLOWER_PATCH_FREQ = 1 / 40
+local LUNARIA_PATCH = 0.10            -- two fifths of the ground or so
+local CHAMOMILE_PATCH = 0.30          -- about a quarter of the ground...
+local CHAMOMILE_FREQ, CHAMOMILE_MIN = 1 / 9, 0.30   -- ...and a quarter of that, in clumps a few blocks across
+function tdw.flower_covers(prefix, noise_name, freq, gate)
+    local n, shape, blocks = tdw.shape.node, tdw.shape, tdw.blocks
+    local function off_grass()
+        return n.min(n.sub(n.mul(n.noise(noise_name, freq, 1, 1.0), n.const(-1.0)), n.const(FLOWER_MIN)),
+            n.sub(n.noise("bloom", BLOOM_FREQ, 1, 1.0), n.const(BLOOM_MIN)))
+    end
+    local function patch()
+        return n.noise("flower_patch", FLOWER_PATCH_FREQ, 1, 1.0)
+    end
+    local lunaria = n.min(off_grass(), n.sub(patch(), n.const(LUNARIA_PATCH)))
+    local chamomile = n.min(n.min(off_grass(), n.sub(n.mul(patch(), n.const(-1.0)), n.const(CHAMOMILE_PATCH))),
+        n.sub(n.noise("chamomile", CHAMOMILE_FREQ, 1, 1.0), n.const(CHAMOMILE_MIN)))
+    return { cover = blocks.blue_lunaria, cells = 3, take = shape.compile(prefix .. ".lunaria", gate(lunaria)) },
+        { cover = blocks.roman_chamomile, cells = 1, take = shape.compile(prefix .. ".chamomile", gate(chamomile)) }
+end
+
 -- The whole u range a biome can be found in, over all its spans.
 function tdw.biome_span_u(id)
     local lo, hi = nil, nil

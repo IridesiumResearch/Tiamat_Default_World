@@ -208,6 +208,17 @@ until named), `tall_grass`, and the mesa's `juniper_wood` and
 | `dried_mud` | dull lavender bands; cracked gully floors; the skirt round a stunted tree | asked for by name 2026-09-14 |
 | `dead_sagebrush` | brittle cards on the deep gully floors | asked for by name 2026-09-14 |
 
+### Meadow flowers (2026-09-14)
+
+In every grassy biome — the woodlands, the grasslands, the river valleys'
+terraces, the alpine meadows — beside the grass, in the cell columns it
+leaves (`tdw.flower_covers`). Both billboards, with a tone-only tint.
+
+| Block | Where | Why |
+|---|---|---|
+| `blue_lunaria` | tall violet-blue sprays, a block high, in patches: about one block in ten | asked for 2026-09-14 ("fairly common blue lunaria everywhere"); no block existed |
+| `roman_chamomile` | low white daisies, a third of a block, in rare clumps: about one block in eighty | asked for by name 2026-09-14 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:

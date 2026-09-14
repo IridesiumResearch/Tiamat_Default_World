@@ -43,6 +43,8 @@ BLOCKS = {
     "bramble":        ( 72,  60,  44,  0),
     "ladys_mantle":       ( 96, 124,  70,  0),
     "ladys_mantle_bloom": (172, 176,  92,  0),
+    "blue_lunaria":   (112, 122, 204,  0),   # the meadow flowers (2026-09-14)
+    "roman_chamomile":(238, 234, 214,  0),
     "rose_bush":      ( 58,  90,  46,  0),
     "slate":          ( 72,  78,  90,  0),
     "dark_basalt":    ( 44,  44,  48,  0),
@@ -196,6 +198,8 @@ ROSETTES = {
 }
 SPRAYS = {
     "ladys_mantle_bloom": 5,
+    "blue_lunaria": 4,       # a few tall stems, a card a block high
+    "roman_chamomile": 6,    # many short ones, a card a third of a block
 }
 
 

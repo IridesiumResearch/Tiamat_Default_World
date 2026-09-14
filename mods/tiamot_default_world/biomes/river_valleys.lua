@@ -97,7 +97,7 @@ local MINT_FREQ, MINT_MIN = 1.4, 0.28
 -- (half-width RIM), and with the river's 0.22 (32.5%) the valley carried
 -- 44% where woodland hosted it and 55% where grassland did. Theirs is kept
 -- out now, and 34% is 77% and 61% of those: 70% between them, as asked.
-local GRASS_FREQ, GRASS_MIN = 1.5, 0.20
+local GRASS_FREQ, GRASS_MIN = 1.5, 0.12   -- 0.20 until "more grass" (2026-09-14)
 -- The trees.
 local WILLOW_CELL, WILLOW_SQUARES, WILLOW_SALT = 5, 0.55, 41
 local PALM_CELL, PALM_SQUARES, PALM_SALT = 11, 0.30, 42
@@ -344,11 +344,18 @@ tdw.build_biome("river_valleys", function(ctx)
     local iris = tufts("iris", CHANNEL - 1.0, BAR + 4.0, IRIS_FREQ, IRIS_MIN)
     local mint = tufts("mint", BAR, TERRACE, MINT_FREQ, MINT_MIN)
     local grass = tufts("grass", BAR, RIM, GRASS_FREQ, GRASS_MIN)
+    -- The meadow flowers on the terraces and the valley slopes, past the
+    -- mint's band so they never stand on it.
+    local lunaria, chamomile = tdw.flower_covers("biome.river", "river_grass", GRASS_FREQ, function(field)
+        return masked(n.min(field, band(TERRACE, RIM)))
+    end)
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries },
         { cover = blocks.water_iris, cells = 3, take = iris },
         { cover = blocks.wild_mint, cells = 1, take = mint },
         { cover = blocks.tall_grass, cells = 2, take = grass },
+        lunaria,
+        chamomile,
     }
     if game.schematic and tdw.river_schematics then
         local trees = tdw.river_schematics()

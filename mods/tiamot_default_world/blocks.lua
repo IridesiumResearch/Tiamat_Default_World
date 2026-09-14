@@ -110,6 +110,13 @@ block("bramble", "Bramble", "Wild berry canes, tangled.", { hardness = 0.3, tint
 -- patch reads as leaves with blooms rising from them.
 block("ladys_mantle", "Lady's mantle", "A rosette of scalloped leaves.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
 block("ladys_mantle_bloom", "Blooming lady's mantle", "Sprays of tiny chartreuse flowers.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
+-- The meadow flowers (2026-09-14: "rare Roman chamomile* and fairly common
+-- blue lunaria everywhere"), in every grassy biome's cover beside the grass
+-- (`tdw.flower_covers`, biomes.lua). Chamomile asked for by name; lunaria
+-- had no block either. A tone-only tint, so the blue stays blue and the
+-- white white where the grass's hue shift would have greened them.
+block("blue_lunaria", "Blue lunaria", "Tall sprays of small violet-blue flowers.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+block("roman_chamomile", "Roman chamomile", "Low white daisies with yellow hearts; smells of apples when trodden.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 -- Rose bushes (grasslands, 2026-09-11). A bush is a rough ellipsoid of
 -- `rose_bush` cells with a few `rose_blooms` cells over its top: two
 -- materials in one block, because every texture is one colour (the blooms

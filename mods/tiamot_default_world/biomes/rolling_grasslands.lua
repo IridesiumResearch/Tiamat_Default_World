@@ -16,7 +16,7 @@
 -- tint field runs it from green to sun-bleached gold across the swells.
 
 local TUFT_FREQ = 1.5          -- as the woodlands: each cell nearly its own decision
-local TUFT_MIN = 0.20          -- as the woodlands: about one column in three blocks
+local TUFT_MIN = 0.12          -- as the woodlands (0.20 until "more grass", 2026-09-14)
 local COVER_CELL = 0.001 / 3
 
 local TRAIL_FREQ = 1 / 220
@@ -106,11 +106,19 @@ tdw.build_biome("rolling_grasslands", function(ctx)
         tufts = shape.river_exclude(tufts, shape.RIVER_RIM)
     end
     tufts = shape.compile("biome.grasslands.tufts", masked(tufts))
+    local lunaria, chamomile = tdw.flower_covers("biome.grasslands", "tuft", TUFT_FREQ, function(field)
+        if shape.river_exclude then
+            field = shape.river_exclude(field, shape.RIVER_RIM)
+        end
+        return masked(field)
+    end)
     return {
         { field = grass, material = blocks.grass },
         { field = trails, material = blocks.packed_dirt },
         { field = ledges, material = blocks.packed_dirt },
         { cover = blocks.tall_grass, cells = 2, take = tufts },
+        lunaria,
+        chamomile,
     }
 end)
 tdw.biomes.rolling_grasslands.soil = blocks.dirt

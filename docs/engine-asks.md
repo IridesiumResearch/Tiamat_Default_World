@@ -126,6 +126,10 @@ main thread, and so will anything that samples a field at runtime. A
 `set_fluid_ids`, in `handle.rs` and `worldgen.rs` — is the whole ask; the
 mod reads it already.
 
+A client built before fec84db runs its own server without it (2026-09-14:
+`/tp mesa` answered "the seed is not known yet"), so `/tp` falls back to
+searching by landing when `game.world_seed` is nil.
+
 ## 20. Particles (2026-09-13)
 
 The coast's blowholes should erupt with sea spray, and nothing in the API

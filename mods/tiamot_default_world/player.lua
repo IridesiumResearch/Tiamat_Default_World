@@ -32,6 +32,7 @@ local SAVE_EVERY = 400         -- ticks between writes to storage
 local SCAN_DOWN = 190          -- blocks searched below a landing player (within the vertical view)
 local AIM_ABOVE = 6            -- blocks over the ground the field finds that a new player is put, before the blocks confirm it
 local HOP = 160                -- blocks dropped when all of that is air
+local FALL_THROUGH = 32        -- blocks of seen air (or rock) a waiting player steps down (or up) through when what is past them is unloaded
 local GIVE_UP_AFTER = 1200     -- ticks (one minute) before a landing is abandoned
 
 local online = {}              -- uuid -> { pos, pending, landing, seeking }
@@ -131,6 +132,12 @@ local function land(uuid, rec)
         for _ = 1, 200 do
             local block = at(y)
             if block == nil then
+                -- Rock up to the edge of what is loaded: a seedless drop
+                -- inside a peak. Rise through what has been seen; the view
+                -- follows, as for the fall below.
+                if y - feet_y > FALL_THROUGH then
+                    game.move_player(uuid, { x = p.x, y = y - 1 + 0.01, z = p.z })
+                end
                 return
             end
             clear = block.occupancy == 0 and clear + 1 or 0
@@ -147,7 +154,15 @@ local function land(uuid, rec)
     for y = feet_y - 1, feet_y - SCAN_DOWN, -1 do
         local block = at(y)
         if block == nil then
-            return      -- the chunk below is still on its way
+            -- The chunk below is still on its way — or past the vertical
+            -- view, and never coming while the player hangs this high. With
+            -- no seed to aim by (an engine before `game.world_seed`), a drop
+            -- over the alpine peaks waited out the minute that way. So
+            -- step down through the air already seen, and the view follows.
+            if feet_y - y > FALL_THROUGH then
+                game.move_player(uuid, { x = p.x, y = y + 2.01, z = p.z })
+            end
+            return
         end
         if block.occupancy ~= 0 then
             local landed = { x = x + 0.5, y = y + 1.01, z = z + 0.5 }

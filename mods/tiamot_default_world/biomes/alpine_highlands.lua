@@ -213,7 +213,7 @@ local DETAIL_ROCK = 2.0                               -- ...and three times that
 -- clamped small-scale detail".
 local COVER_BAND = 0.010                              -- km: the cover stands within this of the map's surface — not on a cave's floor
 local TUFT_FREQ = 1.5                                 -- the grass: each cell nearly its own decision
-local TUFT_MIN = 0.30                                 -- sparse: a third of the 0.22 cut, a column in a dozen blocks
+local TUFT_MIN = 0.20                                 -- was 0.30 (a column in a dozen blocks) until "more grass" (2026-09-14)
 local STEP_FREQ = 1 / 18
 local STEP_H = 0.0012                                 -- km: a step of about a block
 local STEP_STEEP = 8.0                                -- how hard the clamp is: bigger is a sharper edge
@@ -494,7 +494,7 @@ tdw.biomes.alpine_highlands.lazy = true               -- its programs read the m
 -- nil on an engine without `game.schematic`: the tick alone, as before.
 local FIR_SCHEMATICS = nil
 local TREE_CELL = 3
-local TREE_SQUARES = 0.28     -- was 0.5, then 0.35 ("70%"), then this ("80% again"): a fir per thirty-two columns where the forest is
+local TREE_SQUARES = 0.07     -- was 0.5, then 0.35 ("70%"), then 0.28 ("80% again"), then a quarter of that ("reduce the trees in the alpine by about 75%", 2026-09-14): a fir per 130 columns where the forest is
 local TREE_SALT = 11
 -- Where the forest is, below the line: a coarse noise over FOREST_MIN,
 -- which leaves about three fifths of the ground forested — "the forested
@@ -550,6 +550,15 @@ tdw.build_biome("alpine_highlands", function(ctx)
         take = n.min(take, term)
     end
     local tufts = shape.compile("biome.alpine.tufts", masked(take))
+    -- The meadow flowers under the same limits as the grass, on the other
+    -- side of its noise.
+    local lunaria, chamomile = tdw.flower_covers("biome.alpine", "alp_tuft", TUFT_FREQ, function(field)
+        local gate = n.sub(n.const(COVER_BAND), n.abs(map_depth()))
+        for _, term in ipairs({ low(), dry(), faces_up(), n.sub(n.const(0.5), crest()) }) do
+            gate = n.min(gate, term)
+        end
+        return masked(n.min(field, gate))
+    end)
 
     -- Every other surface material from ONE evaluation of the terrain
     -- (`buf:fill_layers`, engine): a CODE field names, per block, which set
@@ -636,6 +645,9 @@ tdw.build_biome("alpine_highlands", function(ctx)
         -- runs no body fill of its own (generate.lua).
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
         { cover = blocks.alpine_grass, cells = 2, take = tufts },
+        -- The meadow flowers, where the grass could grow and does not.
+        lunaria,
+        chamomile,
         -- The forest, last: a trunk's base merges into the surface block
         -- over the grass cells the cover stood in it.
         FIR_SCHEMATICS and { scatter = true, depth = depth, stand = stand, schematics = FIR_SCHEMATICS,
@@ -672,7 +684,7 @@ local ROCK_R = { 0.5, 0.5 }    -- half-width, blocks: least and extra
 -- thin; one in three is a big one.
 local TREELINE_JITTER = 40
 local TREELINE_CELL = 24
-local TREE_CHANCE = 9          -- one surface block in this many, below the line: a thickener now the forest is stamped at generation (was 3: a third of all surface ticks were fir tries, most refused under the forest)
+local TREE_CHANCE = 36         -- one surface block in this many, below the line: a thickener now the forest is stamped at generation (was 3, then 9; a quarter of that with the scatter's quarter, 2026-09-14)
 local TREE_APART = 3           -- never within this many blocks of another fir's trunk
 local FIR_SMALL = { 8, 6 }     -- blocks of height: least and extra
 local FIR_BIG = { 18, 11 }

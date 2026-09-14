@@ -262,15 +262,26 @@ local function locate(id, px, pz)
     if not field then
         return nil
     end
-    local lo, hi = tdw.biome_span_u(id)
     local pu = u_at(px, pz)
     local shares = { 0.5, 0.3, 0.7, 0.15, 0.85, 0.05, 0.95 }
     local radii = {}
-    if pu > lo and pu < hi then
-        radii[1] = math.sqrt(pu) * R_BLOCKS
+    -- Span by span, the nearest first: the woodlands are the temperate
+    -- ring's wet half and the Long Shore's, and the shares of the two
+    -- together sent a player in the alpine forty kilometres out.
+    local spans = {}
+    for _, span in ipairs(tdw.biome_spans(id)) do
+        local lo = tdw.layers.ring_by_id[span[1]].u[1]
+        local hi = tdw.layers.ring_by_id[span[2]].u[2]
+        spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
     end
-    for _, f in ipairs(shares) do
-        radii[#radii + 1] = math.sqrt(lo + (hi - lo) * f) * R_BLOCKS
+    table.sort(spans, function(a, b) return a.away < b.away end)
+    for _, span in ipairs(spans) do
+        if pu > span.lo and pu < span.hi then
+            radii[#radii + 1] = math.sqrt(pu) * R_BLOCKS
+        end
+        for _, f in ipairs(shares) do
+            radii[#radii + 1] = math.sqrt(span.lo + (span.hi - span.lo) * f) * R_BLOCKS
+        end
     end
     for _, d in ipairs(headings_from(px, pz)) do
         for _, r in ipairs(radii) do
@@ -298,11 +309,62 @@ local function drop(uuid, rec, x, z)
     rec.landing = { ticks = 0, target = rec.pending }
 end
 
+-- **By trial, when the seed is not here.** An engine older than
+-- `game.world_seed` (engine fec84db) — a client built before it runs its
+-- own server, and that server's mods never hear the seed — cannot sample a
+-- field. It can still look: the player is dropped at the middle of the
+-- biome's rings on one heading after another, and each landing reads the
+-- ground it came down on (`tdw.biome_under`). A wrong place sends them on
+-- to the next heading; the right one ends it. Slower by a landing a try,
+-- and it finds a band a fraction of the ring wide within a few.
+local TRIAL_HEADINGS = 16
+local TRIAL_SHARES = { 0.5, 0.25, 0.75 }
+
+local function trial_places(id, px, pz)
+    -- The biome's spans nearest the player first: the woodlands are the
+    -- temperate ring's wet half AND the Long Shore's, and the middle of the
+    -- two together was forty kilometres out.
+    local pu = u_at(px, pz)
+    local spans = {}
+    for _, span in ipairs(tdw.biome_spans(id)) do
+        local lo = tdw.layers.ring_by_id[span[1]].u[1]
+        local hi = tdw.layers.ring_by_id[span[2]].u[2]
+        spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
+    end
+    table.sort(spans, function(a, b) return a.away < b.away end)
+    local places = {}
+    local headings = headings_from(px, pz)
+    for _, span in ipairs(spans) do
+        for _, f in ipairs(TRIAL_SHARES) do
+            local r = math.sqrt(span.lo + (span.hi - span.lo) * f) * R_BLOCKS
+            for k = 1, TRIAL_HEADINGS do
+                -- every fourth heading of the 64, nearest the player's first
+                local d = headings[(k - 1) * 4 + 1]
+                places[#places + 1] = { math.floor(d[1] * r), math.floor(d[2] * r) }
+            end
+        end
+    end
+    return places
+end
+
+local function trial_begin(uuid, rec, id, px, pz)
+    local places = trial_places(id, px, pz)
+    if #places == 0 then
+        return nil
+    end
+    drop(uuid, rec, places[1][1], places[1][2])
+    rec.seeking = { id = id, places = places, at = 1 }
+    return places[1]
+end
+
 -- Sends a new player to a biome (tdw.config.spawn_biome). True if there is
 -- somewhere to send them.
 function tdw.seek_biome(uuid, id, rec)
-    if not tdw.biomes[id] or world_seed() == nil then
+    if not tdw.biomes[id] then
         return false
+    end
+    if world_seed() == nil then
+        return trial_begin(uuid, rec, id, shape.SPAWN_X, shape.SPAWN_Z) ~= nil
     end
     local x, z = locate(id, shape.SPAWN_X, shape.SPAWN_Z)
     if x == nil then
@@ -311,9 +373,38 @@ function tdw.seek_biome(uuid, id, rec)
     drop(uuid, rec, x, z)
     return true
 end
--- The landing asks this of a seeker; nobody seeks by trial any more.
-function tdw.seek_landed()
-    return true
+
+-- The landing asks this of a seeker: true when the search is over (found,
+-- or out of places), false when the player has been sent on.
+function tdw.seek_landed(uuid, rec, x, y, z)
+    local seeking = rec.seeking
+    if seeking == nil then
+        return true
+    end
+    local biome = tdw.biomes[seeking.id]
+    if tdw.biome_under(x, y, z) == seeking.id then
+        rec.seeking = nil
+        game.log(string.format("tiamot_default_world: %s found %s by trial at %d, %d (try %d)", uuid, biome.name, x, z, seeking.at))
+        return true
+    end
+    -- The seed may have come since the search began: then aim properly.
+    if world_seed() ~= nil then
+        local fx, fz = locate(seeking.id, x, z)
+        if fx ~= nil then
+            drop(uuid, rec, fx, fz)
+            return false
+        end
+    end
+    seeking.at = seeking.at + 1
+    local place = seeking.places[seeking.at]
+    if place == nil then
+        rec.seeking = nil
+        game.log(string.format("tiamot_default_world: %s did not find %s by trial", uuid, biome.name))
+        return true
+    end
+    drop(uuid, rec, place[1], place[2])
+    rec.seeking = seeking
+    return false
 end
 
 local function here_of(uuid)
@@ -400,7 +491,15 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         return biome.name .. " is built but not placed in the world; tdw.config.everywhere = \"" .. id .. "\" shows it"
     end
     if world_seed() == nil then
-        return "the world's seed is not known yet — try again in a moment"
+        if biome.locate then
+            return biome.name .. " is found from the world's seed, and this engine has not told the mod it — rebuild the client (engine fec84db or later)"
+        end
+        local first = trial_begin(player, rec, id, p.x, p.z)
+        if first == nil then
+            return "found nowhere that is " .. biome.name
+        end
+        return string.format("looking for %s by landing, starting at %d, %d (%s) — this engine does not give the mod the world's seed, so each wrong landing moves you on; rebuild the client for a direct jump",
+            biome.name, first[1], first[2], distance_text(p.x, p.z, first[1], first[2]))
     end
     local x, z = locate(id, p.x, p.z)
     if x == nil then

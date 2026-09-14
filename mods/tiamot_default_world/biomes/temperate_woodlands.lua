@@ -56,7 +56,7 @@ local FERN_PATCH_MIN = 0.0     -- half the ground is fern country
 local FERN_FREQ = 1 / 4
 local FERN_MIN = 0.02          -- within it, a little under half the cells
 local TUFT_FREQ = 1.5          -- features under a block, so neighbouring cells decide on their own
-local TUFT_MIN = 0.20          -- far above the median: a card on about one column in three blocks (30% of the 0.10 cut, 2026-09-11)
+local TUFT_MIN = 0.12          -- over the median: was 0.20 (30% of the 0.10 cut, 2026-09-11), lowered for "more grass" (2026-09-14)
 
 local TREE_CHANCE = 5          -- one grass block in this many is a candidate
 local TREE_SPACING = 3         -- no other trunk within this many blocks (twice the trees of 4)
@@ -207,6 +207,11 @@ tdw.build_biome("temperate_woodlands", function(ctx)
         masked(off_river(n.min(n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
             n.mul(fern_patch, n.const(-1.0))),
             n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN))), shape.RIVER_RIM or 0)))
+    -- The flowers, in the columns the grass leaves: off the ferns and the
+    -- river valleys, as the grass is.
+    local lunaria, chamomile = tdw.flower_covers("biome.woodlands", "tuft", TUFT_FREQ, function(field)
+        return masked(off_river(n.min(field, n.mul(fern_patch, n.const(-1.0))), shape.RIVER_RIM or 0))
+    end)
     -- In order: turf everywhere, litter over it in patches, gravel over both
     -- along the creek floors; then the cover over all of it.
     return {
@@ -216,6 +221,8 @@ tdw.build_biome("temperate_woodlands", function(ctx)
         { field = creek, material = blocks.creek_bed },
         { field = ferns, material = blocks.fern },
         { cover = blocks.tall_grass, cells = 2, take = tufts },
+        lunaria,
+        chamomile,
     }
 end)
 tdw.biomes.temperate_woodlands.soil = blocks.loam

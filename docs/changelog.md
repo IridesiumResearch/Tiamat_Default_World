@@ -1290,6 +1290,65 @@ engine commit they landed in, because the mod is written against them.
   not the badlands' — the summaries' main-thread generation is worth a look
   in the engine as the programs grow.
 
+### Meadow flowers, more grass, fewer alpine firs, and /tp without the seed
+
+- **`/tp mesa` said "the world's seed is not known yet".** The engine sets
+  `game.world_seed` in the server's VM since fec84db; a client built before
+  it runs its own server without it, and every `/tp <biome>` refused. It
+  now searches by landing instead: the player is dropped at the middle of
+  the biome's rings on one heading after another, each landing reads the
+  ground it came down on, and a wrong one sends them on (sixteen headings
+  at three depths into each span, the nearest span first). The reply says
+  it is searching and that a rebuilt client jumps directly. The river,
+  which is found from its course field, still needs the seed and says so.
+  Headless with the seed hidden: the woodlands and the mesa on the first
+  or second landing, the alpine and the Frozen Wastes on the second.
+- A seedless landing has no aim, and a drop over the peaks either hung in
+  the air waiting on ground past the vertical view or sat inside a
+  mountain waiting on blocks above it, and gave up after a minute. A
+  landing now steps down through the air (or up through the rock) it has
+  already seen when what lies past it is not loaded, and the view follows.
+- `/tp <biome>` and the search both take a biome's spans nearest first.
+  The woodlands are the temperate ring's wet half and the Long Shore's, and
+  the shares of the two together sent a player in the alpine 42 km out;
+  now 18.
+- **Grass and trees vanishing mid-chunk (river and hills)** is not in the
+  generator. Headless at a fixed seed the grass cover runs 90 to 100% of
+  every chunk across the spawn, the grasslands and a river valley, with no
+  more one-block steps at chunk edges than inside them; the bare columns
+  are the river's bed and banks. What the screenshots look like (read from
+  them, not proven in the window): one-block square terraces with no trees
+  and no grass are the engine's horizon summaries, one cell per block,
+  which drop anything under
+  a third of a block — grass, thin trunks, the part-filled top block of
+  smooth ground, hence the step. They stand in for full chunks outside the
+  detail range, and flying puts ground chunks a layer or two below out of
+  the vertical view while the nearer layer is in it. A larger vertical view
+  distance, or the ground chunks arriving sooner, is the fix; nothing to
+  change in the mod.
+- **Alpine firs down 75%**: the scatter's 0.28 of squares to 0.07, and the
+  random tick's thickener from one surface block in 9 to one in 36.
+- **More grass**: the grass noise's cut from 0.20 to 0.12 in the woodlands,
+  the grasslands and the river valleys, 0.30 to 0.20 in the alpine.
+- **Roman chamomile\* and blue lunaria** in every grassy biome: the
+  woodlands, the grasslands, the river valleys' terraces and slopes, the
+  alpine meadows. Two cover fills per biome from one helper
+  (`tdw.flower_covers`, biomes.lua), from the same noise as that biome's
+  grass on its other side, so a flower never stands on a tuft (the cover
+  fill stacks a second run on the first inside a block); thinned by a
+  second fine noise; lunaria where a slow patch noise is high, chamomile
+  where it is low and a finer one clumps it. No terrain in the fields: the
+  woodlands' near-ground guard is a full terrain per cell, and the grassy
+  rings have no caves within a hundred blocks. Measured over 65-block
+  squares: lunaria in one block in seven to fifteen, chamomile in one in
+  sixty to a hundred. Lunaria a block tall, chamomile a third.
+- Two new nodes: `roman_chamomile` (asked for by name) and `blue_lunaria`
+  (named without the asterisk, but there was no block for it). A tone-only
+  tint, so the blue and the white are not greened.
+- Verified headless: the flowers in the spawn, the grasslands, the alpine
+  meadows; `/tp` with and without the seed; three bots at the spawn. No
+  refused program, no error, no over-budget tick outside the probes.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
