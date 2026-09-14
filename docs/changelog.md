@@ -525,6 +525,35 @@ engine commit they landed in, because the mod is written against them.
   `kelp`. Barnacles are a crust on rock, so a block laid by the layered
   fill and stamped on the boulders, not a card.
 
+### Coast, third cut: a calmer line with real detail, a jagged face, a smooth floor
+
+- The coastline is two octaves again (a kilometre and 550 m: the broad
+  sweep), and its detail is added to the DISTANCE rather than to the
+  noise. A coast noise with fine octaves has a steep gradient everywhere,
+  and the contour node divides by that gradient, so four octaves made the
+  line meander without ever getting small. Added to the signed distance
+  the line moves in and out by so many blocks at the scale asked for:
+  bites of a dozen blocks at a hundred and fifty metres, then
+  crenellations of two at nine, and the cliff edge follows every one.
+- The face is jagged over four fifths of the coast rather than most of
+  it, by four and a half blocks either way rather than two and a half,
+  at eleven metres and five and a half rather than seven, nine blocks in
+  from the line rather than six.
+- The sea floor was a set of holes with drop-offs round them: the flats
+  and the hollows were hard clamps, switching the bed between levels
+  over a block. Both come in softly now (a tenth as steep, so a flat's
+  edge is tens of blocks), the hollows are five blocks deep rather than
+  seven, the sandbars slope over nine blocks rather than five, and a
+  long swell of two and a half blocks at a hundred and ten metres runs
+  through the whole floor.
+- The pines are bigger and leafier — five to eight blocks of trunk, six
+  to nine clumps of needles at three cells in five rather than two —
+  and rarer: a square in seven at 0.22, where it was a square in six at
+  0.35.
+- The spawn headland is fifty-five blocks across rather than ninety: at
+  ninety the sea began past the view distance, and the dev world is here
+  to look at the sea.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

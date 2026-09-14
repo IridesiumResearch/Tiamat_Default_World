@@ -57,7 +57,18 @@ local SEA_BELOW_SPAWN = 0.008                         -- km: eight blocks under 
 local SEA_KM = shape.dome_at(shape.PLAIN_U) - SEA_BELOW_SPAWN
 -- The coastline.
 local COAST_FREQ = 1 / 1100
-local COAST_OCTAVES = 4                               -- a kilometre, 550, 275 and 137 m: bays, headlands, coves, and the coves' own bays
+local COAST_OCTAVES = 2                               -- a kilometre and 550 m: the broad sweep, bays and headlands. Four octaves made it meander
+-- The line's detail is added to the DISTANCE, not to the noise: a coast
+-- noise with fine octaves in it has a steep gradient everywhere, and the
+-- contour node divides by that gradient, so the cliff went thin and the
+-- line went wavy without ever getting small. Added to the signed distance
+-- the line simply moves in and out by so many blocks, at the scale asked
+-- for: bites of a dozen blocks at a hundred and fifty metres down to
+-- crenellations of two at nine, and the cliff edge follows every one.
+local SHORE_DETAIL = {
+    { 1 / 150, 3, 24.0 },                             -- freq, octaves, amplitude in blocks (+/- half)
+    { 1 / 9, 2, 5.0 },
+}
 -- The cliff.
 local CLIFF_MEAN = 0.045                              -- km: forty-five blocks over the sea...
 local CLIFF_VARY = 0.030                              -- ...thirty to sixty, by a slow noise
@@ -69,11 +80,12 @@ local PLATEAU_FREQ = 1 / 70
 -- JAG_REACH of the line, above the splash zone, over the areas JAG_AREA
 -- says — most of them. Ledges, overhangs, a face that is rock and not a
 -- wall.
-local JAG_FREQ = 1 / 7
-local JAG_AMP = 0.005                                 -- km: +/- two and a half blocks
-local JAG_REACH = 6.0
+local JAG_FREQ = 1 / 11
+local JAG_OCTAVES = 2                                 -- eleven metres and five and a half: ledges, and the notches in them
+local JAG_AMP = 0.009                                 -- km: +/- four and a half blocks
+local JAG_REACH = 9.0
 local JAG_AREA_FREQ = 1 / 300
-local JAG_AREA_MIN = -0.15                            -- most areas
+local JAG_AREA_MIN = -0.28                            -- four fifths of the coast
 -- The beaches: where a slow noise is over BEACH_MIN, the face is BEACH_W
 -- blocks wide instead — a short, abrupt shingle beach up to the cliff.
 local BEACH_FREQ = 1 / 700
@@ -90,14 +102,18 @@ local DROP_AT = 100.0                                 -- blocks out the ledge br
 local DROP_W = 14.0                                   -- ...over this many...
 local DROP_DEPTH = 0.030                              -- ...to this much deeper
 local BARS = { 28.0, 58.0 }                           -- blocks out: the sandbars, parallel to the coast
-local BAR_HALF = 5.0
+local BAR_HALF = 9.0                                  -- blocks: their half-width, and the length of their slope
 local BAR_HEIGHT = 0.0025
+local BED_WAVE_FREQ = 1 / 110
+local BED_WAVE = 0.005                                -- km: +/- two and a half blocks of long swell in the floor
 local FLAT_FREQ = 1 / 140
 local FLAT_MIN = 0.12                                 -- the flat noise over this: a rock flat, level...
 local FLAT_DEPTH = 0.004                              -- ...at this under the sea
+local FLAT_EDGE = 1.2                                 -- how hard the flat comes in: at 10 it was a drop-off round every flat
 local HOLLOW_FREQ = 1 / 60
 local HOLLOW_MIN = 0.16
-local HOLLOW_DEPTH = 0.007                            -- km: the hollows the kelp anchors in
+local HOLLOW_EDGE = 1.5                               -- likewise: at 6 the hollows were holes
+local HOLLOW_DEPTH = 0.005                            -- km: the hollows the kelp anchors in
 -- The undercut notch at the waterline: NOTCH_IN blocks into the face,
 -- NOTCH_HALF either side of the sea level.
 local NOTCH_IN = 3.5
@@ -165,8 +181,8 @@ local BARNACLE_MIN = 0.18
 -- PINE_RIM[2] blocks in from the coastline, in stands where the patch
 -- noise says, and always within PINE_FRACTURE of a crack line ("trees
 -- cling to fractures"). Never on the face: the rim band starts past it.
-local PINE_CELL = 6
-local PINE_SQUARES = 0.35
+local PINE_CELL = 7
+local PINE_SQUARES = 0.22                             -- rarer: a pine per thirty-two columns where the rim allows one
 local PINE_RIM = { 3.0, 26.0 }
 local PINE_PATCH_FREQ = 1 / 120
 local PINE_PATCH_MIN = 0.05
@@ -192,22 +208,34 @@ end
 -- contour, joined to whatever land the coast noise puts beside it. Its
 -- signed distance is the linearised (R^2 - d^2) / 2R, since the language
 -- has no square root; exact at the rim, which is where it matters.
-local ISLAND_R = 90.0
+local ISLAND_R = 55.0                                 -- blocks (was 90: the sea began past the view distance, and the dev world is here to look at the sea)
 local function island()
     local dx = n.sub(n.X(), n.const(shape.SPAWN_X + 0.5))
     local dz = n.sub(n.Z(), n.const(shape.SPAWN_Z + 0.5))
     local d2 = n.add(n.mul(dx, dx), n.mul(dz, dz))
     return n.mul(n.sub(n.const(ISLAND_R * ISLAND_R), d2), n.const(1.0 / (2.0 * ISLAND_R)))
 end
+-- The detail added to the line, blocks either way. See SHORE_DETAIL.
+local function shore_detail()
+    local acc = nil
+    for i, d in ipairs(SHORE_DETAIL) do
+        local term = n.noise("shore_detail" .. i, d[1], d[2], d[3])
+        acc = acc and n.add(acc, term) or term
+    end
+    return acc
+end
 -- The signed distance to the coastline, blocks: positive on land. The
 -- island first: it is the deeper operand.
 local function shore()
-    return n.max(island(), n.contour("coast", COAST_FREQ, COAST_OCTAVES, true))
+    return n.max(island(), n.add(n.contour("coast", COAST_FREQ, COAST_OCTAVES, true), shore_detail()))
 end
 -- The distance to the coast noise's line alone, unsigned: one buffer, for
 -- the shelf's shapes, which are only ever read at sea.
+-- The distance out to sea, blocks, for the shelf's own shapes: the same
+-- line, unsigned and without the detail — one buffer and one op, and the
+-- terrace is eighty blocks wide, so a dozen either way is no edge.
 local function offshore()
-    return n.contour("coast", COAST_FREQ, COAST_OCTAVES - 1)
+    return n.contour("coast", COAST_FREQ, COAST_OCTAVES)
 end
 -- 1 on land or a stack, 0 at sea. The shore first (deeper), then the
 -- stacks: a stack counts as land within STACK_NEAR of the shore.
@@ -240,8 +268,12 @@ local function seabed()
         bars = bars and n.max(bars, band) or band
     end
     local bed = n.add(n.add(terrace, ledge), n.mul(bars, n.const(BAR_HEIGHT)))
-    bed = n.sub(bed, n.mul(n.clamp(n.mul(n.sub(n.noise("hollow", HOLLOW_FREQ, 1, 1.0), n.const(HOLLOW_MIN)), n.const(6.0)), 0.0, 1.0), n.const(HOLLOW_DEPTH)))
-    local flat = n.clamp(n.mul(n.sub(n.noise("flat", FLAT_FREQ, 1, 1.0), n.const(FLAT_MIN)), n.const(10.0)), 0.0, 1.0)
+    -- A long swell in the floor, and the hollows taken out of it softly:
+    -- both of these were hard clamps, which is what made the floor a set of
+    -- holes with drop-offs round them instead of a sunlit terrace.
+    bed = n.add(bed, n.noise("bed_wave", BED_WAVE_FREQ, 2, BED_WAVE))
+    bed = n.sub(bed, n.mul(n.clamp(n.mul(n.sub(n.noise("hollow", HOLLOW_FREQ, 1, 1.0), n.const(HOLLOW_MIN)), n.const(HOLLOW_EDGE)), 0.0, 1.0), n.const(HOLLOW_DEPTH)))
+    local flat = n.clamp(n.mul(n.sub(n.noise("flat", FLAT_FREQ, 1, 1.0), n.const(FLAT_MIN)), n.const(FLAT_EDGE)), 0.0, 1.0)
     -- flat ? -FLAT_DEPTH : bed, as bed + flat * (-FLAT_DEPTH - bed).
     return n.add(n.mul(n.sub(n.const(-FLAT_DEPTH), bed), flat), bed)
 end
@@ -306,7 +338,7 @@ end
 local function jag()
     local near = n.clamp(n.mul(n.add(n.abs(shore()), n.const(-JAG_REACH)), n.const(-0.3)), 0.0, 1.0)
     local area = n.clamp(n.mul(n.sub(n.noise("jag_area", JAG_AREA_FREQ, 1, 1.0), n.const(JAG_AREA_MIN)), n.const(8.0)), 0.0, 1.0)
-    return n.mul(n.mul(n.mul(near, n.noise("jag", JAG_FREQ, 1, JAG_AMP)), above(SPLASH_HALF)), area)
+    return n.mul(n.mul(n.mul(near, n.noise("jag", JAG_FREQ, JAG_OCTAVES, JAG_AMP)), above(SPLASH_HALF)), area)
 end
 
 -- The coast's terms of the terrain, km: the land's height over the sea
@@ -351,9 +383,9 @@ end
 local DIR4 = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 local function pine(rng)
     local list = {}
-    local tall = 3 + rng:below(3)
+    local tall = 5 + rng:below(4)                     -- bigger: five to eight blocks of trunk
     local d = DIR4[rng:below(4) + 1]
-    local bend_at = math.max(1, tall - 2)
+    local bend_at = math.max(1, tall - 3)
     local x, z = 0, 0
     list[#list + 1] = { 0, -1, 0, blocks.fir_log, PLUS }
     for dy = 0, tall - 1 do
@@ -362,15 +394,15 @@ local function pine(rng)
         end
         list[#list + 1] = { x, dy, z, blocks.fir_log, PLUS }
     end
-    local clumps = 3 + rng:below(3)
+    local clumps = 6 + rng:below(4)                   -- leafier: six to nine clumps, and each fuller
     for _ = 1, clumps do
         local cx = x + rng:below(3) - 1
         local cz = z + rng:below(3) - 1
-        local cy = tall - 1 + rng:below(3) - 1
+        local cy = tall - 2 + rng:below(4) - 1
         if cx == x and cz == z then cy = tall end
         local mask = 0
         for bit = 0, 26 do
-            if rng:below(100) < 45 then mask = mask | (1 << bit) end
+            if rng:below(100) < 60 then mask = mask | (1 << bit) end
         end
         if mask ~= 0 then
             list[#list + 1] = { cx, cy, cz, blocks.fir_needles, mask }
