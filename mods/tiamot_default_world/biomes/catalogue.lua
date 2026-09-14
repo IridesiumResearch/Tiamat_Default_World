@@ -18,7 +18,7 @@ local area, biome = tdw.register_area, tdw.register_biome
 area{ id = "surface", name = "Surface", kind = "surface",
     note = "Rings by distance from the axis, split by humidity and altitude." }
 -- **Where the built biomes stand, until the unbuilt ones take their rings
--- back.** Four are built and eight rings are empty, so each built biome
+-- back.** Five are placed and seven rings are part-empty, so each built biome
 -- holds every ring its temperature suits (2026-09-14): the alpine has the
 -- cold core, and the woodland and the grassland share everything outside
 -- it by humidity — whose split moves toward dry as the world warms
@@ -27,9 +27,9 @@ area{ id = "surface", name = "Surface", kind = "surface",
 -- shape.RING_WOBBLE, the wet/dry line by the humidity noise, which is a
 -- blob field and never a circle.
 biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface",
-    spans = { { "temperate", "temperate", "wet" }, { "verdant", "hem", "wet" } },
+    spans = { { "temperate", "temperate", "wet" }, { "shore", "hem", "wet" } },
     humidity = { -0.05, 0.42 },
-    note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, and everything from the Verdant Belt out to the Hem. It skips the two hot rings, which are all grassland." }
+    note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, the Long Shore and the Hem. It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
     spans = { { "temperate", "hem", "dry" }, { "ember", "glass" } },
     humidity = { -0.42, -0.05 },
@@ -46,7 +46,8 @@ biome{ id = "river_valleys", name = "River Valleys", area = "surface",
     ring = "temperate",
     note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }
 biome{ id = "dense_rainforest_canopy", name = "Dense Rainforest Canopy", area = "surface",
-    ring = "verdant", humidity = { 0.05, 0.42 }, note = "The wet half of the Verdant Belt." }
+    spans = { { "verdant", "verdant", "wet" } },
+    ring = "verdant", humidity = { 0.05, 0.42 }, note = "1.7 — the wet half of the Verdant Belt: karst, ravines and sinkholes under megatrees." }
 biome{ id = "arid_mesa", name = "Arid Mesa", area = "surface",
     ring = "glass", humidity = { -0.42, 0.0 }, note = "The Glass Waste, dry half." }
 biome{ id = "badlands", name = "Badlands", area = "surface",

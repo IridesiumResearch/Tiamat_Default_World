@@ -886,6 +886,91 @@ engine commit they landed in, because the mod is written against them.
   golden tests fail on this machine because `game/` holds the junction to
   this mod, which replaces the reference world they check.
 
+### A straight river, and 1.7 Dense Rainforest Canopy
+
+- **The river's stone lips are gone** — "get rid of those stone pools and
+  just make it a straight river. I will fix the water physics so it doesn't
+  all flow away." The fluid fill takes no `lip`, so the river is one body of
+  water down its whole course, each column filled to its own level; keeping
+  it there is the engine's, which the designer is doing.
+- **1.7 Dense Rainforest Canopy**, the wet half of the Verdant Belt, which
+  the woodland gives up (it keeps the temperate ring, the Long Shore and the
+  Hem). `biomes/dense_rainforest_canopy.lua`.
+- **The ground** is terms of the terrain added to the wet half's own by a
+  verdant weight, in a new terrain mode, "verdant", for the belt and a band
+  either side of it, so the karst fades in over about five hundred metres:
+  an undulation of about nine blocks either way; karst ridges twelve high
+  with flat tops and steep sides; ravines sixteen deep with two-block walls;
+  round sinkholes ten deep; hummocks a block and a half high. Real-world
+  headless, the floor round one spot ran over fifty-six blocks of height.
+  The "verdant" programs are 432 operations and fit the eight buffers.
+- **The floor** is one layered fill: moss over saturated mud, patches of
+  grass and of bare mud, the clay of the ravines (as `mud`, as the river's
+  clay is), deep puddles of black mud in the sinkholes and the hollows
+  between hummocks, and stone outcrops on the ridge crests under a coat of
+  moss. Ferns in carpets and monsteras in stands are the cover.
+- **The megatrees** are ironwoods (44 to 57 blocks) and kapoks (54 to 66,
+  pale `birch_log` under `oak_leaves`), one to a square of twenty blocks in
+  three squares of four. A trunk two and a half to three blocks in radius
+  sunk into a wider foot; five to eight buttress walls a block thick
+  radiating from it, whose reach falls in three steps up their height, the
+  lowest digging into the ground; pitcher plants in some of the bays between
+  the walls; strips of climbing ivy up the trunk; limbs round the crown each
+  with a great clump of leaves and a smaller one, with ropes of vine hung
+  along them; and a TIMBER BRIDGE — one long near-level limb eighteen to
+  twenty-six blocks out from the middle of the trunk, sagging and lifting
+  at its end, so neighbouring megatrees' bridges cross and meet. Every
+  ironwood has one, every other kapok.
+- **The sub-canopy**: fan palms twelve to seventeen blocks tall with heads
+  of broad three-rayed fans, and giant tree ferns ten to fifteen tall with
+  long arching fronds, one to a square of seven in every other square.
+- **Hollow fallen logs**: ironwood trunks twelve to eighteen long, half sunk
+  in the floor and mossed along the top, with a tunnel three blocks across
+  through the middle, open at both ends; the hollow is written as AIR, so
+  it is clear of the ground it lies in.
+- **Seven new nodes, all asked for by name**: `moss`, `black_mud`,
+  `ironwood_log`, `ironwood_leaves`, `ironwood_planks`, `climbing_ivy`,
+  `monstera`. The pitcher plants stand in as `ladys_mantle` until a node is
+  named for them; the vines are `climbing_ivy`; the palms and ferns reuse
+  the river palm's and the woodland's nodes.
+- **The cut is the engine's now**: `game.schematic_shapes` (engine 2f2d18e)
+  rasterises paths, ellipsoids and single blocks natively, with a
+  priority per shape so wood keeps its cells from leaves and a log's hollow
+  takes them from the wood. Cut in Lua, the first megatree ran a generator
+  call past its instruction budget and the chunk came out air; `schem.lua`
+  gained a recording mode, so the same tree code hands the shapes to the
+  engine instead of testing cells. Eight megatrees are 73,811 blocks.
+- **Tall structures stand whole.** The generator returned early for a chunk
+  wholly over the ground, so nothing stamped into it: a megatree was cut
+  off at the first chunk boundary above its roots. A scatter fill that says
+  how far above the ground it reaches (`above`) now stamps into the chunks
+  of air within that reach (`structures_into`, generate.lua).
+- **A biome's fills compile for the chunk's own terrain mode**, not the
+  biome's (`tdw.fills_for`): the woodland's turf in a "verdant" chunk has to
+  be the shape of the ground the rainforest's terms moved, or it hangs in
+  the air — the roof-of-turf fault again.
+- **The noise, measured.** The engine's noise is clamped to +/-0.5 and
+  spends a lot of time there: one octave is over 0.35 on 22% of the ground
+  and at the clamp on 13%; two octaves over 0.35 on 14% and at the clamp on
+  6%. The first cut's thresholds assumed a narrower spread and put black mud
+  over a third of the floor. Nothing rarer than the clamp can come from one
+  noise, so the sinkholes are where two independent noises are both high.
+- **The twilight.** A chunk tint takes the rainforest's floor toward a
+  darker emerald. **The shade is not there yet, and it is the engine's**:
+  headless, 85% of the floor has a whole leaf block over it and most of
+  those columns still read full sun. Two causes, both in engine-asks item
+  24: foliage (`cutout`) passes light as glass does (`server/src/light.rs`,
+  contract §8.2), and a chunk that loads above an already-lit one never
+  darkens it. Fog, mist and drips are items 23 and 20.
+- `whereami.lua`: moss, black mud, ironwood, ivy and monstera say
+  rainforest, and say it over the woodland's birch and oak; `rainforest` in
+  chat goes looking for it.
+- Verified headless: the engine's shape tests and clippy; the mod check; the
+  rainforest put everywhere (megatrees whole, floor probed); the real world
+  at a fixed seed with the spawn moved into the Verdant Belt's wet half; and
+  the real world at the normal spawn with three bots for ninety seconds —
+  no refused program, no error, no over-budget tick.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

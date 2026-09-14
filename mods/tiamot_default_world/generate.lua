@@ -136,6 +136,28 @@ local function waters_into(buf, found, mode)
     end
 end
 
+-- The structures: every biome's `scatter` fills. `tmax` is the terrain's
+-- bound over the chunk, and a chunk of AIR over the ground (a negative
+-- tmax) runs only the fills that say how far above the ground they reach
+-- (`above`, km) and reach it. **Before this a chunk wholly over the ground
+-- stamped nothing**, since the generator returns early for air — so a
+-- rainforest megatree was cut off at the first chunk boundary above its
+-- roots, and seventy blocks of tree were fifteen.
+local STRUCTURE_ABOVE = 0.08               -- km: the tallest reach of any fill that says
+local function structures_into(buf, found, mode, tmax)
+    if not buf.scatter then
+        return
+    end
+    for _, biome in ipairs(found) do
+        for _, fill in ipairs(tdw.fills_for(biome, mode)) do
+            if fill.scatter and (tmax >= 0 or (fill.above and tmax > -fill.above)) then
+                stats.stamped = stats.stamped + buf:scatter({ depth = fill.depth, stand = fill.stand,
+                    schematics = fill.schematics, cell = fill.cell, chance = fill.chance, salt = fill.salt, sink = fill.sink })
+            end
+        end
+    end
+end
+
 -- The world seed in THIS VM. The generator runs in worker VMs now (engine:
 -- terrain generates off the tick), so the seed it records there never
 -- reaches the main VM, and the spawn's aim (`shape.ground_at_column`)
@@ -199,9 +221,14 @@ local function generate(buf, pos)
         -- The sea: a chunk of air over the seabed still gets its water.
         sea_into(buf, mode, y0)
         -- And a river's: its surface stands over the bed, which may be in
-        -- the chunk below.
-        if inside_body and tmax > -WATER_ABOVE then
-            waters_into(buf, tdw.present_biomes_in(ulo, uhi, pos), mode)
+        -- the chunk below. And the tops of tall structures standing on
+        -- ground under this chunk.
+        if inside_body and tmax > -math.max(WATER_ABOVE, STRUCTURE_ABOVE) then
+            local found = tdw.present_biomes_in(ulo, uhi, pos)
+            structures_into(buf, found, mode, tmax)
+            if tmax > -WATER_ABOVE then
+                waters_into(buf, found, mode)
+            end
         end
         return
     end
@@ -322,16 +349,7 @@ local function generate(buf, pos)
             -- the surface block over the grass cells stood in it. The
             -- engine's `scatter` does the whole neighbourhood pass — every
             -- chunk within reach derives the same trees and keeps its slice.
-            if buf.scatter then
-                for _, biome in ipairs(found) do
-                    for _, fill in ipairs(fills_of(biome)) do
-                        if fill.scatter then
-                            stats.stamped = stats.stamped + buf:scatter({ depth = fill.depth, stand = fill.stand,
-                                schematics = fill.schematics, cell = fill.cell, chance = fill.chance, salt = fill.salt, sink = fill.sink })
-                        end
-                    end
-                end
-            end
+            structures_into(buf, found, mode, math.huge)
             waters_into(buf, found, mode)
         end
     end

@@ -20,15 +20,13 @@
 -- the line meanders because a noise's contour does.
 --
 -- THE WATER is the engine's water FLUID, laid by `buf:fill_fluid_terraced`
--- (2026-09-14). It was the water BLOCK painted into the top of the channel's
--- ground, which looked like water and was a floor. A fluid cannot simply be
--- laid at the river's level, because that level falls as the river runs
--- down the dome and a conserved fluid on a slope runs to the bottom of its
--- valley the moment its chunk loads. So the level is read per column and
--- taken down to a whole block, and wherever a column's neighbour stands a
--- block higher the column gets a LIP of stone up to it: the river comes out
--- as level pools, each held up by a one-block step to the next, and none of
--- it moves. The lips are the riffles.
+-- (2026-09-14): the river's level read per column and taken down to a whole
+-- block, and every block under it in the channel filled. It is ONE river
+-- running the length of its course, with no lips. The first cut held each
+-- step of the level up with a one-block stone lip, because a conserved fluid
+-- on a slope runs to the bottom of its valley; the designer took the lips
+-- out ("just make it a straight river") and is making the water stay put in
+-- the engine instead.
 --
 -- THE CHANNEL is carved UNDER that level: a smooth U, deeper in the pools,
 -- with low humps in the bed here and there, and a short bank rising from
@@ -321,10 +319,11 @@ tdw.build_biome("river_valleys", function(ctx)
             STEP_CELL, STEP_SQUARES, STEP_SALT, 1)
     end
     -- The water, last: after the structures, so it takes the room they
-    -- leave. Within the channel and a block past the bank top, where the
-    -- bank's own ground is whole at the height of any lip beside it.
+    -- leave. Within the channel and a block past the bank top.
+    -- No `lip`: the designer's call (2026-09-14), the engine's fluid is to
+    -- keep a river where it is laid.
     fills[#fills + 1] = {
-        fluid = WATER, lip = blocks.stone,
+        fluid = WATER,
         level = shape.compile("biome.river.level", level_y()),
         within = shape.compile("biome.river.within",
             masked(n.add(n.mul(course(), n.const(-1.0)), n.const(CHANNEL + BANK_W + 1.0)))),

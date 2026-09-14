@@ -136,16 +136,25 @@ function tdw.build_biome(id, build)
     game.log(string.format("tiamot_default_world biome %-24s built, %d fill(s), mode %s", id, #biome.fills, own))
 end
 
--- A biome's fills for a terrain mode, compiled on first use if the biome
--- is lazy. Called per chunk by the generator.
+-- A biome's fills for the CHUNK's terrain mode, compiled on first use.
+-- Called per chunk by the generator. Keyed by the chunk's mode, not the
+-- biome's own (2026-09-14): a fill carries the terrain inside it, and the
+-- woodland in the Verdant Belt's chunks stands on ground the rainforest's
+-- terms have moved — compiled in its own mode, its turf was the shape of
+-- the ground without them, which is the roof-of-turf fault again.
 function tdw.fills_for(biome, mode)
-    local key = mode == "all" and "fills_all" or "fills"
-    if biome[key] == nil then
-        biome[key] = biome.compile_fills(mode == "all" and "all" or biome.own_mode)
-        game.log(string.format("tiamot_default_world biome %-24s compiled %d fill(s), mode %s", biome.id, #biome[key],
-            mode == "all" and "all" or biome.own_mode))
+    biome.fills_by_mode = biome.fills_by_mode or {}
+    local set = biome.fills_by_mode[mode]
+    if set == nil then
+        if biome.fills and mode == biome.own_mode then
+            set = biome.fills
+        else
+            set = biome.compile_fills(mode)
+            game.log(string.format("tiamot_default_world biome %-24s compiled %d fill(s), mode %s", biome.id, #set, mode))
+        end
+        biome.fills_by_mode[mode] = set
     end
-    return biome[key]
+    return set
 end
 
 -- A surface biome's placement mask for its fills: its ring, and its side

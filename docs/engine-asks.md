@@ -16,6 +16,53 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+## 24. Shade under a canopy (2026-09-14)
+
+**Seen.** The rainforest's brief has its canopy block 85-90% of direct
+sunlight. Headless, round one spot 85% of the floor has a WHOLE leaf block
+somewhere over it, and most of those columns read `sun = 15` at the floor.
+
+**Why, from the code (not changed):**
+
+1. **Foliage passes light the way glass does.** `see_through_from_rules`
+   (`crates/server/src/light.rs`, about line 558) puts every `cutout` rule
+   in the see-through table — "Contract §8.2: foliage passes light the way
+   glass does" — and `Lit::faces` answers `Faces::OPEN` for a uniform block
+   of it. Straight-down sun at 15 never attenuates
+   (`crates/core/src/light/propagate.rs`, `arriving`), so any depth of
+   leaves is open sky. Every leaf node in the world mod is `cutout`.
+2. **A chunk loaded ABOVE a lit one never darkens it.**
+   `Lighting::chunk_loaded` relights only the new chunk; `relight` clears
+   only that chunk and `flood` only brightens; `remove` runs only for
+   edits. `sky_reaches` counts an unloaded block above as open sky. The
+   floor loads first (it is nearest the player), takes full sun, and keeps
+   it when the canopy's chunks arrive. This is a bug whatever foliage does.
+
+**Ask.** (2) first: when a chunk arrives, run the sun channel's removal
+from the bottom layer of the new chunk into the chunk below wherever the
+new chunk's bottom is darker than 15, and re-flood. For (1), a decision
+for the contract: foliage that attenuates the sun by a level or two per
+block rather than passing it untouched, so a thick canopy is dim beneath
+and a thin one dappled. The mod cannot work round either: an opaque
+material inside every clump would be visible through the leaves' holes,
+and would still be undone by (2).
+
+## 23. Fog by place (2026-09-14)
+
+The rainforest's brief asks for "persistent humid ground fog or mist" and
+"deep emerald twilight" under its canopy. Fog is the sky's: `register_sky`
+keyframes set one distance fog for the whole world by time of day, and
+nothing sets it by place. A per-chunk answer like `register_chunk_tint` —
+a fog colour and density for the columns of a chunk, blended across chunk
+corners the way the tint is — is the ask; the mod would return a thick,
+low, green-grey fog for the rainforest's chunks and nothing elsewhere. A
+low-lying fog (thicker under a height over the ground) would be the ground
+fog exactly. Until then the canopy's own shade and a darker emerald chunk
+tint are all the twilight there is.
+
+The rainforest also wants ambient DRIPS from the canopy and drifting MIST
+particles, which are item 20. Its shade is item 24.
+
 ## 22. A noise stretched along one axis (2026-09-14)
 
 A cliff's roughness is not the same shape in every direction: rock flutes
@@ -50,6 +97,10 @@ The coast's blowholes should erupt with sea spray, and nothing in the API
 emits a particle: a burst of short-lived sprites at a position, in a
 colour, with a velocity and a lifetime, spawned by a mod on a tick. Until
 then a blowhole is a shaft with the sea at the bottom.
+
+The rainforest (2026-09-14) wants the same thing twice over: drops falling
+from the canopy's underside now and then near a player, and slow drifting
+mist over its floor.
 
 ## 19. One terrain evaluation for many materials (2026-09-12) — LANDED twice: `fill_palette` (engine 44e7790, one value against thresholds) and `fill_layers` (a code per block and depth bands, this tree); the alpine surface uses the latter
 

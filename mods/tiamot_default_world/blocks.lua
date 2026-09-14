@@ -168,6 +168,24 @@ block("willow_planks", "Willow planks", "Pale boards cut from a river willow.", 
 block("water_iris", "Water iris", "Blades and a flower, standing in the shallows.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
 block("wild_mint", "Wild mint", "Low, soft, and everywhere the bank is damp.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
 
+-- The Dense Rainforest Canopy (1.7). Seven new nodes, all asked for by name
+-- (2026-09-14): moss*, black mud*, ironwood* with its leaves and planks,
+-- climbing ivy* and monsteras*. Everything else the brief names is a node
+-- that already exists: the saturated mud and the clay are `mud`, the grass is
+-- `grass`, the rare outcrops `stone` under moss, the kapok's pale trunk is
+-- `birch_log` under `oak_leaves`, the fan palms are the river palm's
+-- `willow_wood` and `oak_leaves`, the tree ferns `oak_log` and `fern`, the
+-- hanging vines are `climbing_ivy`, and the pitcher plants stand in as
+-- `ladys_mantle` until the designer names a node for them.
+local EMERALD = { strength = 0.24, scale = 160, low = { 0.78, 1.0, 0.82 }, high = { 0.90, 1.0, 0.88 } }
+block("moss", "Moss", "A thick wet coat over the rainforest floor, and over nearly every stone in it.", { hardness = 0.3, tint = EMERALD })
+block("black_mud", "Black mud", "Deep sucking puddles of it in the hollows and the sinkholes.", { hardness = 0.4, tint = SOIL })
+block("ironwood_log", "Ironwood log", "A megatree's trunk: dark, dense, nearly as hard as stone.", { hardness = 2.2, tint = SOIL })
+block("ironwood_leaves", "Ironwood leaves", "The high canopy, dark and layered.", { hardness = 0.2, tint = EMERALD, cutout = true, sway = true })
+block("ironwood_planks", "Ironwood planks", "Heavy red-brown boards cut from an ironwood.", { hardness = 1.8, tint = SOIL })
+block("climbing_ivy", "Climbing ivy", "Up every trunk, and hanging in ropes from the limbs.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
+block("monstera", "Monstera", "Giant split leaves on the forest floor.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

@@ -154,6 +154,7 @@ every ring its temperature suits until the biome that ring is for exists:
 |---|---|---|
 | Crown, Frostmoor | 0 to 10.6 km | Alpine Highlands, both halves: the cold core, mountains on the dome's own summit |
 | The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
+| The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge, the Glass Waste | 20.7 to 28.3 km | Rolling Grasslands over the whole width: the dry band round the middle of the world, standing in for a desert |
 | The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity; the Coastal Cliffs are NOT here yet |
 | Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
@@ -172,10 +173,8 @@ the grassland alike and the uplands either side keep their own shape. A
 chunk answers `present` with one sample of its own course, so the chunks a
 river does not reach never evaluate it. Its water is the engine's fluid,
 laid by `buf:fill_fluid_terraced`: each column at its own level, taken down
-to a whole block, with a one-block stone lip wherever the next column
-stands higher — so a river running down the dome is a chain of level pools
-that holds still, sitting in a smooth channel a block or more under its
-banks.
+to a whole block, one body of water down the whole course, sitting in a
+smooth channel a block or more under its banks.
 
 **Knowing where you are, and getting somewhere.** The biome you walk into
 names itself on the HUD for a second, small and centred at the top: the
@@ -353,6 +352,19 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
+- [x] 1.7 Dense Rainforest Canopy — the Verdant Belt's wet half
+      (`biomes/dense_rainforest_canopy.lua`). Karst ridges, sheer ravines,
+      sinkholes and hummocks as terms of the terrain in the "verdant" mode;
+      moss over saturated mud with grass, bare mud, clay in the ravines,
+      black mud puddles and moss-masked outcrops. Megatrees — ironwoods and
+      pale kapoks forty-four to sixty-six blocks tall — on stepped buttress
+      walls, with pitcher plants in the bays, ivy up the trunks, vines from
+      the limbs and long timber-bridge limbs that meet between trees; a
+      sub-canopy of fan palms and giant tree ferns at twelve to eighteen;
+      hollow fallen logs to walk through; ferns and monsteras on the floor.
+      Cut natively with `game.schematic_shapes` and stamped at generation.
+      The canopy's shade and the fog wait on the engine
+      (`docs/engine-asks.md`, items 20, 23 and 24).
 
 ## Licence
 

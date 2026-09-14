@@ -59,6 +59,13 @@ BLOCKS = {
     "water_iris":     ( 74, 116,  64,  0),
     "wild_mint":      ( 86, 126,  78,  0),
     "kelp":           ( 96, 104,  40,  0),
+    "moss":           ( 70, 102,  54,  0),   # the rainforest (1.7): a deep wet green
+    "black_mud":      ( 34,  30,  28,  0),
+    "ironwood_log":   ( 62,  46,  40,  0),
+    "ironwood_leaves":( 42,  78,  48,  0),
+    "ironwood_planks":(122,  84,  62,  0),
+    "climbing_ivy":   ( 60,  98,  52,  0),
+    "monstera":       ( 58, 106,  56,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
     "ice":            (126, 172, 228,  0),   # cold blue (2026-09-12; was a grey-blue near the snow's)
@@ -109,12 +116,15 @@ DOTS = {
     "oak_leaves": (2.6, 0.4, 0.6),
     "rose_bush": (2.9, 0.4, 0.5),   # a denser, rounder leaf than the oak's
     "fir_needles": (2.3, 0.5, 0.7), # smaller, more scattered: needles in tufts
+    "ironwood_leaves": (2.8, 0.3, 0.5),  # big, crowded: the canopy lets little through
+    "climbing_ivy": (2.0, 0.5, 0.8),     # small leaves on a rope
 }
 
 # A single round BLOOM in the middle of the tile, a little high, with a
 # scalloped edge: the whole tile is one cell's card, so one flower a cell.
 BLOOMS = {
     "rose_blooms": 5.2,
+    "monstera": 7.0,     # one broad leaf the width of the card
 }
 
 # Items are PICTURES — a rose on its stem — because an item is never in the

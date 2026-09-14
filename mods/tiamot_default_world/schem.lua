@@ -26,6 +26,32 @@ function M.bit(cx, cy, cz)
     return 1 << (cx + 3 * cy + 9 * cz)
 end
 
+-- **Recording.** Between `record_begin` and `record_schematic`, the pushes
+-- below write nothing: each appends its SHAPE to a list, and
+-- `record_schematic` has the engine cut the list natively
+-- (`game.schematic_shapes`, 2026-09-14). The same tree code makes a
+-- schematic either way; a rainforest megatree cut cell by cell in Lua was
+-- past a generator call's instruction budget before the second one.
+-- `jitter` and `carve` mean nothing to a recording.
+M.recording = nil
+local function id_of(material)
+    return type(material) == "number" and material or game.get_block_id(material)
+end
+function M.record_begin()
+    M.recording = {}
+end
+-- The recorded shapes as a schematic. `priorities` maps a material id to its
+-- priority (default 0): a cell takes the highest-priority shape's material,
+-- the later shape winning a tie.
+function M.record_schematic(priorities)
+    local list = M.recording
+    M.recording = nil
+    for _, shape in ipairs(list) do
+        shape.priority = priorities[shape.material] or 0
+    end
+    return game.schematic_shapes(list)
+end
+
 local function hash(x, y, z)
     local h = (x * 73856093) ~ (y * 19349663) ~ (z * 83492791) ~ ((tdw.seed_int or 0) * 2654435761)
     return h ~ (h >> 17)
@@ -76,6 +102,11 @@ end
 ---@param opts { rough: number?, jitter: Tiamot.Stream?, carve: boolean?, over_whole: boolean? }?
 function M.push_ellipsoid(material, cx, cy, cz, rx, ry, rz, opts)
     opts = opts or {}
+    if M.recording then
+        M.recording[#M.recording + 1] = { kind = "ellipsoid", material = id_of(material),
+            centre = { cx, cy, cz }, radii = { rx, ry, rz }, rough = opts.rough }
+        return
+    end
     for bz = math.floor(cz - rz), math.floor(cz + rz) do
         for by = math.floor(cy - ry), math.floor(cy + ry) do
             for bx = math.floor(cx - rx), math.floor(cx + rx) do
@@ -150,6 +181,10 @@ end
 function M.push_path(material, points, opts)
     opts = opts or {}
     if #points < 2 then
+        return
+    end
+    if M.recording then
+        M.recording[#M.recording + 1] = { kind = "path", material = id_of(material), points = points, rough = opts.rough }
         return
     end
     -- Gathered per block first: two segments meeting at a point cover the
@@ -296,6 +331,15 @@ end
 -- The current batch as a schematic, taken rather than queued.
 function M.schematic_of_batch()
     return M.schematic_of(M.capture())
+end
+
+-- The named cells of one block, merged; recorded as cells when recording.
+function M.push_cells(material, x, y, z, mask)
+    if M.recording then
+        M.recording[#M.recording + 1] = { kind = "cells", material = id_of(material), at = { x, y, z }, mask = mask }
+        return
+    end
+    edits.push({ x = x, y = y, z = z }, material, mask, true)
 end
 
 -- Whether every chunk a box touches is loaded — `at` is nil in one that is

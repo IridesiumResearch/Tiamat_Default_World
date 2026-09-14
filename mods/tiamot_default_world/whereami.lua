@@ -50,8 +50,15 @@ end
 for _, material in ipairs(RIVER_GROUND) do
     OWNER[material] = "river_valleys"
 end
+-- The rainforest's own, which also decide: its kapoks are birch and its
+-- tree ferns oak, which the woodland claims, and the moss under them is
+-- the rainforest's and nobody else's.
+for _, material in ipairs({ blocks.moss, blocks.black_mud, blocks.ironwood_log, blocks.ironwood_leaves,
+    blocks.climbing_ivy, blocks.monstera }) do
+    OWNER[material] = "dense_rainforest_canopy"
+end
 -- Whose ground answers at once, wherever in the column it is found.
-local DECIDES = { alpine_highlands = true, river_valleys = true }
+local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -152,6 +159,7 @@ local FIND_AT = {
     temperate_woodlands = 0.067,   -- the temperate ring, at the spawn's own radius
     coastal_cliffs = 0.50,         -- the Long Shore, where it WOULD be if it were placed
     river_valleys = 0.067,         -- the temperate ring: a course crosses every ring, so any will do
+    dense_rainforest_canopy = 0.295, -- the middle of the Verdant Belt, thirty-two kilometres out
 }
 
 -- Sends a player looking for a biome. Which humidity half a place is in is a
@@ -215,6 +223,7 @@ for word, id in pairs({
     grasslands = "rolling_grasslands",
     coast = "coastal_cliffs",
     river = "river_valleys",
+    rainforest = "dense_rainforest_canopy",
 }) do
     tdw.on_chat(word, function(player)
         local rec = tdw.online[player]

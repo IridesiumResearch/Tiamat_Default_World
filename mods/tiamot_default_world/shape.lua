@@ -146,6 +146,12 @@ M.ALPINE_BLEND_U = 0.024
 -- Every Lua-side test against a ring widens by this, since a chunk within
 -- RING_WOBBLE of an edge may be either side of it.
 M.RING_WOBBLE = 0.010
+-- The Verdant Belt, whose wet half is the rainforest (1.7): its span in u,
+-- repeated from layers.lua (which loads after this file), and how wide the
+-- cross-fade into the rainforest's own terrain is at either edge — about
+-- five hundred metres there.
+M.VERDANT_U = { 0.48 * 0.48, 0.60 * 0.60 }
+M.VERDANT_BLEND_U = 0.008
 M.RING_WOBBLE_FREQ = 1 / 5200
 M.RING_WOBBLE_OCTAVES = 2
 
@@ -373,6 +379,10 @@ end
 --   "temperate" both halves cross-faded by humidity — the temperate ring
 --   "alpine"    the frost ring's terms alone
 --   "coast"     the shore ring's cliffs alone, on a flat sea (dev switch: coastal cliffs)
+--   "verdant"   the temperate pair as "temperate", with the rainforest's
+--               terms added to the wet half by the verdant weight: the
+--               Verdant Belt and a band either side of it
+--   "rainforest" the rainforest's terms alone (dev switch: the rainforest)
 --   "all"       temperate and alpine cross-faded by the alpine weight: the
 --               band a few hundred metres wide at the frost ring's edge,
 --               and the only programs that carry every ring's noise.
@@ -389,6 +399,8 @@ function M.default_mode()
         return "alpine"
     elseif only == "coastal_cliffs" then
         return "coast"
+    elseif only == "dense_rainforest_canopy" then
+        return "rainforest"
     end
     return "wet"
 end
@@ -406,6 +418,10 @@ function M.terrain_mode_for(u_lo, u_hi)
     if u_hi <= edge - half then
         return "alpine"
     elseif u_lo >= edge + half then
+        local reach = M.VERDANT_BLEND_U / 2 + M.RING_WOBBLE
+        if u_hi >= M.VERDANT_U[1] - reach and u_lo <= M.VERDANT_U[2] + reach then
+            return "verdant"
+        end
         return "temperate"
     end
     return "all"
@@ -415,6 +431,16 @@ end
 -- ALPINE_BLEND_U past its outer edge.
 local function alpine_weight()
     return clamp(add(mul(sub(u_biome(), const(M.ALPINE_EDGE_U)), const(-1.0 / M.ALPINE_BLEND_U)), const(0.5)), 0.0, 1.0)
+end
+
+-- The verdant weight: 1 inside the Verdant Belt, fading to 0 over
+-- VERDANT_BLEND_U across each edge, on the wobbled radius the biome masks
+-- use. Written `(|u - mid| - half) * -1` so the radius is evaluated first
+-- and once.
+local function verdant_weight()
+    local mid, half = (M.VERDANT_U[1] + M.VERDANT_U[2]) / 2, (M.VERDANT_U[2] - M.VERDANT_U[1]) / 2
+    local inside = mul(sub(abs(sub(u_biome(), const(mid))), const(half)), const(-1.0 / M.VERDANT_BLEND_U))
+    return clamp(add(inside, const(0.5)), 0.0, 1.0)
 end
 
 -- A grassland ridge: positive along the zero contour of its noise.
@@ -494,6 +520,14 @@ function M.terrain(flank)
         terms = M.alpine_terms()
     elseif mode == "temperate" then
         terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+    elseif mode == "rainforest" then
+        terms = M.rainforest_terms()
+    elseif mode == "verdant" then
+        -- The rainforest's karst, ravines and sinkholes over the wet half's
+        -- own gullies, weighted in across the belt's edges; the dry half is
+        -- the grassland's swells, as everywhere.
+        local wet = add(mul(M.rainforest_terms(), verdant_weight()), wet_terms())
+        terms = add(mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
     else
         -- The temperate pair cross-faded by humidity, and that whole
         -- cross-faded by the alpine weight against the alpine terms at the
@@ -627,7 +661,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then
