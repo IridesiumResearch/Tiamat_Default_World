@@ -1218,6 +1218,26 @@ engine commit they landed in, because the mod is written against them.
   refused program, no error, no over-budget tick. One tick in the mesa run
   spent 300 ms generating a distant summary on the main thread.
 
+### /tp brings you there
+
+- "The /tp command does tell me where the closest biome is seemingly but it
+  does not bring me there." It sent the move, and on the next tick the
+  landing undid it. `game.move_player` writes the body the tick steps, but
+  where a player IS (`game.entity`) is a mirror of that body taken during
+  the tick, so the tick after a teleport still reads the old place — and
+  the landing's first step aims the player at the ground under where they
+  are, with a move of its own. That aim only runs once the world's seed is
+  known in the main VM, which it has been since `game.world_seed` landed,
+  so every teleport since was put straight back.
+- A landing now carries its target and does nothing until the player is
+  within four blocks of it, asking for the move again once a second in case
+  one did not take. The join's drop to the spawn does the same.
+- This was also why the headless bots never moved on a teleport; it was not
+  the bot client.
+- Verified headless: a bot said `/tp mesa` and landed at the mesa 10 km
+  away, then `/tp river` and landed on a bank 19 km on; `/where` agreed each
+  time.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

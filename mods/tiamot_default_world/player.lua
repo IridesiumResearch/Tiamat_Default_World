@@ -82,6 +82,22 @@ local function land(uuid, rec)
     if p == nil then
         return
     end
+    -- **Not until the body is there.** `game.move_player` writes the body the
+    -- tick steps, and where a player IS (`game.entity`) is a mirror of it
+    -- taken during the tick — so on the tick after a teleport this still
+    -- reads the old place. The aim below then put the player on the ground
+    -- THERE, which undid every `/tp` the moment the world's seed reached this
+    -- VM and the aim began to run (2026-09-14: "it tells me where the biome
+    -- is but does not bring me there"). So a landing that knows where it is
+    -- going waits until the player is within a few blocks of it, and asks for
+    -- the move again once a second in case one did not take.
+    local target = rec.landing.target
+    if target and (math.abs(p.x - target.x) > 4 or math.abs(p.z - target.z) > 4) then
+        if rec.landing.ticks % 20 == 0 then
+            game.move_player(uuid, target)
+        end
+        return
+    end
     local x, z = math.floor(p.x), math.floor(p.z)
     -- First, aim: the ground under the spawn from the terrain field itself
     -- (`shape.ground_at_column`), the moment the seed is known — the first
@@ -172,7 +188,7 @@ game.register_on_player_join(function(event)
             event.name, tdw.config.spawn_biome))
     else
         rec.pending = SPAWN
-        rec.landing = { ticks = 0 }
+        rec.landing = { ticks = 0, target = SPAWN }
         game.log(string.format("tiamot_default_world: %s is new here; dropping them at the woodlands", event.name))
     end
 end)

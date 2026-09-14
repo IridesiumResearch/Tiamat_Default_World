@@ -291,7 +291,7 @@ local function drop(uuid, rec, x, z)
     end
     rec.seeking = nil
     rec.pending = { x = x + 0.5, y = shape.Y0 + 1000.0 * shape.dome_at(u) + above, z = z + 0.5 }
-    rec.landing = { ticks = 0 }
+    rec.landing = { ticks = 0, target = rec.pending }
 end
 
 -- Sends a new player to a biome (tdw.config.spawn_biome). True if there is
