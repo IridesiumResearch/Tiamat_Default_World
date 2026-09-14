@@ -356,8 +356,9 @@ built one at a time in its own file. Built so far:
       (`biomes/dense_rainforest_canopy.lua`). Karst ridges, sheer ravines,
       sinkholes and hummocks as terms of the terrain in the "verdant" mode;
       moss over saturated mud with grass, bare mud, clay in the ravines,
-      black mud puddles and moss-masked outcrops. Megatrees — ironwoods and
-      pale kapoks forty-four to sixty-six blocks tall — on stepped buttress
+      black mud puddles and moss-masked outcrops; dry clay up the ravines'
+      walls and wet clay on their floors. Megatrees — ironwoods and pale
+      kapoks forty-four to sixty-six blocks tall — on stepped buttress
       walls, with pitcher plants in the bays, ivy up the trunks, vines from
       the limbs and long timber-bridge limbs that meet between trees; a
       sub-canopy of fan palms and giant tree ferns at twelve to eighteen;

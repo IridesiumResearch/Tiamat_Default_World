@@ -121,7 +121,7 @@ local AIR = game.AIR
 -- Priorities for the engine's cut: wood keeps its cells from the leaves and
 -- the ivy pushed across it, and a log's hollow of air takes them from the
 -- wood.
-local PRIORITY = { [blocks.ironwood_log] = 1, [blocks.birch_log] = 1, [blocks.willow_wood] = 1, [blocks.oak_log] = 1, [AIR] = 2 }
+local PRIORITY = { [blocks.ironwood_log] = 1, [blocks.kapok_wood] = 1, [blocks.willow_wood] = 1, [blocks.oak_log] = 1, [AIR] = 2 }
 local BLIND = { blind = true }
 
 local function pick(rng, range)
@@ -144,7 +144,7 @@ local IRONWOOD = {
 -- The kapok: an emergent, taller and paler, its buttresses the biggest in
 -- the forest, branching only near the top into flat tiers of limbs.
 local KAPOK = {
-    log = blocks.birch_log, leaves = blocks.oak_leaves,
+    log = blocks.kapok_wood, leaves = blocks.kapok_leaves,
     height = { 54, 12 }, r = { 2.8, 1.1 },
     fins = { 6, 2 }, fin_h = { 10, 4 }, fin_reach = { 9, 3 },
     limbs = { 6, 2 }, limb_from = 0.78, limb_reach = { 11, 5 }, limb_rise = { 1, 2 },
@@ -206,13 +206,13 @@ local function megatree(rng, sp)
     end
     -- Pitcher plants in the root hollows: in some of the bays between two
     -- walls, against the trunk, two cells tall in the block over the ground.
-    local stand_in = schem.bit(1, 0, 1) | schem.bit(1, 1, 1) | schem.bit(0, 0, 1) | schem.bit(2, 0, 1)
+    local pitchers = schem.bit(1, 0, 1) | schem.bit(1, 1, 1) | schem.bit(0, 0, 1) | schem.bit(2, 0, 1)
     for f = 1, #headings do
         if rng:below(2) == 0 then
             local mid = (headings[f] + 8 // #headings) % 16
             local d = schem.DIR16[mid + 1]
             local px, pz = 0.5 + d[1] * (r0 + 1.4), 0.5 + d[2] * (r0 + 1.4)
-            schem.push_cells(blocks.ladys_mantle, math.floor(px), 1, math.floor(pz), stand_in)
+            schem.push_cells(blocks.pitcher_plant, math.floor(px), 1, math.floor(pz), pitchers)
         end
     end
     -- Climbing ivy up the trunk in a few strips, from the ground to a third
@@ -416,7 +416,7 @@ tdw.build_biome(ID, function(ctx)
         n.sub(n.noise("rf_grass", GRASS_PATCH_FREQ, 2, 1.0), n.const(GRASS_PATCH_MIN)),
         -- 3: patches of bare saturated mud.
         n.sub(n.noise("rf_mud", MUD_PATCH_FREQ, 1, 1.0), n.const(MUD_PATCH_MIN)),
-        -- 4: the clay of the ravines, floor and walls.
+        -- 4: dry clay up the ravines' walls.
         n.sub(ravine_w(), n.const(0.2)),
         -- 5: a stone outcrop on a ridge's crest, under a coat of moss.
         n.min(n.sub(ridge_w(), n.const(0.9)), n.sub(n.noise("rf_outcrop", OUTCROP_FREQ, 1, 1.0), n.const(OUTCROP_MIN))),
@@ -424,6 +424,8 @@ tdw.build_biome(ID, function(ctx)
         -- hollows between the hummocks where a puddle noise says.
         n.max(n.sub(sink_w(), n.const(0.6)),
             n.min(n.sub(n.noise("rf_puddle", PUDDLE_FREQ, 2, 1.0), n.const(PUDDLE_MIN)), n.sub(n.const(0.1), hummock_w()))),
+        -- 7: wet clay on the ravines' floors, where the water sits.
+        n.sub(ravine_w(), n.const(0.75)),
     }
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
@@ -442,11 +444,13 @@ tdw.build_biome(ID, function(ctx)
         { code = 2, to = 1 * km, material = blocks.grass },
         { code = 2, from = 1 * km, to = 4 * km, material = blocks.mud },
         { code = 3, to = 4 * km, material = blocks.mud },
-        { code = 4, to = 4 * km, material = blocks.mud },
+        { code = 4, to = 4 * km, material = blocks.dry_clay },
         { code = 5, to = 1 * km, material = blocks.moss },
         { code = 5, from = 1 * km, to = 6 * km, material = blocks.stone },
         { code = 6, to = 3 * km, material = blocks.black_mud },
         { code = 6, from = 3 * km, to = 5 * km, material = blocks.mud },
+        { code = 7, to = 2 * km, material = blocks.wet_clay },
+        { code = 7, from = 2 * km, to = 5 * km, material = blocks.dry_clay },
     }
     -- The cover: ferns in carpets, monsteras in stands. Not in a river's
     -- valley, whose ground cover is the river's.
@@ -518,4 +522,3 @@ if game.register_chunk_tint then
         return TINT_EDGE[1], TINT_EDGE[2], TINT_EDGE[3]
     end)
 end
-

@@ -66,6 +66,12 @@ BLOCKS = {
     "ironwood_planks":(122,  84,  62,  0),
     "climbing_ivy":   ( 60,  98,  52,  0),
     "monstera":       ( 58, 106,  56,  0),
+    "pitcher_plant":  (122,  98,  56,  0),   # green going to red-brown at the mouths
+    "kapok_wood":     (170, 164, 150,  0),
+    "kapok_leaves":   ( 86, 122,  58,  0),
+    "kapok_planks":   (196, 180, 150,  0),
+    "dry_clay":       (170, 142, 112,  0),
+    "wet_clay":       (112,  90,  74,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
     "ice":            (126, 172, 228,  0),   # cold blue (2026-09-12; was a grey-blue near the snow's)
@@ -118,6 +124,7 @@ DOTS = {
     "fir_needles": (2.3, 0.5, 0.7), # smaller, more scattered: needles in tufts
     "ironwood_leaves": (2.8, 0.3, 0.5),  # big, crowded: the canopy lets little through
     "climbing_ivy": (2.0, 0.5, 0.8),     # small leaves on a rope
+    "kapok_leaves": (2.4, 0.5, 0.7),     # lighter and more open than the ironwood's
 }
 
 # A single round BLOOM in the middle of the tile, a little high, with a
@@ -163,6 +170,7 @@ BLADES = {
     "wild_mint": (6, 5, 9),      # low and bushy
     "seagrass": (5, 12, 16),     # long, most of the card
     "kelp": (3, 14, 16),         # three broad-ish stems the height of the card
+    "pitcher_plant": (3, 9, 14), # three fat tubes
 }
 
 # Rosettes and sprays, for the mantle: a rosette is a few round leaves

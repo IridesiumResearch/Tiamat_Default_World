@@ -114,8 +114,8 @@ coastal pines on the rim).
 
 ### 1.6 River Valleys (2026-09-14)
 
-Shares `sand` (the bed and the bars, from the shelf), `mud` (the clay beds
-at the water line), `creek_bed` (gravel banks and riffles), `stone` (the
+Shares `sand` (the bed and the bars, from the shelf), `wet_clay` (the clay
+beds at the water line, since 2026-09-14; `mud` before, and never shown), `creek_bed` (gravel banks and riffles), `stone` (the
 scoured bedrock shelves), `water` (the channel: the fluid since
 2026-09-14, the block before), `dead_wood` (snags and drift jams), `grass` and `tall_grass`
 (the terraces), and `oak_leaves` (the palms' fronds: the willow is the new
@@ -131,11 +131,9 @@ tree, and a palm's crown is a shape rather than a material).
 
 ### 1.7 Dense Rainforest Canopy (2026-09-14)
 
-Shares `mud` (the saturated floor, and the ravines' clay), `grass`, `stone`
-(the outcrops, under moss), `birch_log` and `oak_leaves` (the kapoks: a pale
-trunk), `willow_wood` and `oak_leaves` (the fan palms, as the river's), `oak_log`
-and `fern` (the tree ferns), and `ladys_mantle` (standing in for the pitcher
-plants until a node is named for them). The vines are `climbing_ivy`.
+Shares `mud` (the saturated floor), `grass`, `stone` (the outcrops, under
+moss), `willow_wood` and `oak_leaves` (the fan palms, as the river's), and
+`oak_log` and `fern` (the tree ferns). The vines are `climbing_ivy`.
 
 | Block | Where | Why |
 |---|---|---|
@@ -146,6 +144,12 @@ plants until a node is named for them). The vines are `climbing_ivy`.
 | `ironwood_planks` | not generated: the crafted board, registered with its tree | asked for by name 2026-09-14 |
 | `climbing_ivy` | strips up the megatrees' trunks, and ropes hung from their limbs | asked for by name 2026-09-14 |
 | `monstera` | stands of giant split leaves on the floor, three cells tall | asked for by name 2026-09-14 |
+| `pitcher_plant` ("Pitcher Plants") | in the bays between a megatree's buttress walls | asked for by name 2026-09-14, replacing the `ladys_mantle` stand-in |
+| `kapok_wood` | the kapoks' trunks, buttresses and limbs | asked for by name 2026-09-14, replacing `birch_log` |
+| `kapok_leaves` | the kapoks' flat tiers of canopy | asked for by name 2026-09-14, replacing `oak_leaves` |
+| `kapok_planks` | not generated: the crafted board, registered with its tree | asked for by name 2026-09-14 |
+| `dry_clay` | up the ravines' walls, and under the wet clay of their floors | asked for by name 2026-09-14 |
+| `wet_clay` | the ravines' floors; also the river's clay beds at the water line | asked for by name 2026-09-14 |
 
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up

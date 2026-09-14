@@ -238,11 +238,13 @@ tdw.build_biome("river_valleys", function(ctx)
         inside(),
         -- 2: the gravel of the banks and the bars.
         chain(inside(), { n.add(n.mul(course(), n.const(-1.0)), n.const(BAR + BAR * BEND_BIAS)) }),
-        -- 3: the clay beds along the water line.
+        -- 3: the moist sand of the wet bank.
+        chain(inside(), { n.add(n.mul(course(), n.const(-1.0)), n.const(BAR)) }),
+        -- 4: the clay beds along the water line, wet clay. After the sand
+        -- (2026-09-14): the sand's band holds the clay's, and as code 3 under
+        -- the sand's 4 the clay never showed.
         chain(inside(), { n.add(n.mul(course(), n.const(-1.0)), n.const(CHANNEL + CLAY_HALF)),
             n.add(n.mul(n.abs(water_level()), n.const(-1.0)), n.const(0.003)) }),
-        -- 4: the moist sand of the wet bank.
-        chain(inside(), { n.add(n.mul(course(), n.const(-1.0)), n.const(BAR)) }),
         -- 5: bedrock shelves, scoured bare where the flow is fast — the
         -- riffles, and the patches a slow noise picks.
         chain(inside(), { n.add(n.mul(course(), n.const(-1.0)), n.const(BAR)),
@@ -272,8 +274,8 @@ tdw.build_biome("river_valleys", function(ctx)
         { code = 1, to = SOIL_DEPTH, material = blocks.grass },
         { code = 1, from = SOIL_DEPTH, to = 4 * km, material = blocks.dirt },
         { code = 2, to = 3 * km, material = blocks.creek_bed },
-        { code = 3, to = 3 * km, material = blocks.mud },
-        { code = 4, to = SAND_DEPTH, material = blocks.sand },
+        { code = 3, to = SAND_DEPTH, material = blocks.sand },
+        { code = 4, to = 3 * km, material = blocks.wet_clay },
         { code = 5, to = 4 * km, material = blocks.stone },
         { code = 6, to = 3 * km, material = blocks.mud },
         { code = 7, to = 3 * km, material = blocks.creek_bed },

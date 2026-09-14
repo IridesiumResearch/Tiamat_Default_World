@@ -50,11 +50,11 @@ end
 for _, material in ipairs(RIVER_GROUND) do
     OWNER[material] = "river_valleys"
 end
--- The rainforest's own, which also decide: its kapoks are birch and its
--- tree ferns oak, which the woodland claims, and the moss under them is
--- the rainforest's and nobody else's.
+-- The rainforest's own, which also decide: its tree ferns are oak, which
+-- the woodland claims, and the moss under them is the rainforest's and
+-- nobody else's. The clays are shared with the river and say nothing.
 for _, material in ipairs({ blocks.moss, blocks.black_mud, blocks.ironwood_log, blocks.ironwood_leaves,
-    blocks.climbing_ivy, blocks.monstera }) do
+    blocks.climbing_ivy, blocks.monstera, blocks.pitcher_plant, blocks.kapok_wood, blocks.kapok_leaves }) do
     OWNER[material] = "dense_rainforest_canopy"
 end
 -- Whose ground answers at once, wherever in the column it is found.

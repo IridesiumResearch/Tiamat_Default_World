@@ -160,8 +160,8 @@ block("kelp", "Kelp", "Ten blocks of it from a hollow, swaying.", { hardness = 0
 
 -- The river valleys (1.6). Five new nodes, asked for by name: the willow's
 -- wood, its leaves and its planks, and the two flowering herbs of the bank.
--- The clay beds are `mud`, the gravel is `creek_bed` and the bedrock shelves
--- are `stone`, all of which already exist and mean what they mean.
+-- The clay beds are `wet_clay` (since 2026-09-14; `mud` before), the gravel
+-- is `creek_bed` and the bedrock shelves are `stone`.
 block("willow_wood", "Willow wood", "Grey-brown, twisted, and always leaning over the water.", { hardness = 0.9, tint = SOIL })
 block("willow_leaves", "Willow leaves", "Long curtains of it, dipping into the current.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 block("willow_planks", "Willow planks", "Pale boards cut from a river willow.", { hardness = 0.8, tint = SOIL })
@@ -170,13 +170,12 @@ block("wild_mint", "Wild mint", "Low, soft, and everywhere the bank is damp.", {
 
 -- The Dense Rainforest Canopy (1.7). Seven new nodes, all asked for by name
 -- (2026-09-14): moss*, black mud*, ironwood* with its leaves and planks,
--- climbing ivy* and monsteras*. Everything else the brief names is a node
--- that already exists: the saturated mud and the clay are `mud`, the grass is
--- `grass`, the rare outcrops `stone` under moss, the kapok's pale trunk is
--- `birch_log` under `oak_leaves`, the fan palms are the river palm's
--- `willow_wood` and `oak_leaves`, the tree ferns `oak_log` and `fern`, the
--- hanging vines are `climbing_ivy`, and the pitcher plants stand in as
--- `ladys_mantle` until the designer names a node for them.
+-- climbing ivy* and monsteras*; and six more named the same evening: the
+-- pitcher plants, the kapok's wood, leaves and planks, and dry and wet clay.
+-- The rest of the brief is nodes that already exist: the saturated mud is
+-- `mud`, the grass `grass`, the rare outcrops `stone` under moss, the fan
+-- palms the river palm's `willow_wood` and `oak_leaves`, the tree ferns
+-- `oak_log` and `fern`, and the hanging vines `climbing_ivy`.
 local EMERALD = { strength = 0.24, scale = 160, low = { 0.78, 1.0, 0.82 }, high = { 0.90, 1.0, 0.88 } }
 block("moss", "Moss", "A thick wet coat over the rainforest floor, and over nearly every stone in it.", { hardness = 0.3, tint = EMERALD })
 block("black_mud", "Black mud", "Deep sucking puddles of it in the hollows and the sinkholes.", { hardness = 0.4, tint = SOIL })
@@ -185,6 +184,12 @@ block("ironwood_leaves", "Ironwood leaves", "The high canopy, dark and layered."
 block("ironwood_planks", "Ironwood planks", "Heavy red-brown boards cut from an ironwood.", { hardness = 1.8, tint = SOIL })
 block("climbing_ivy", "Climbing ivy", "Up every trunk, and hanging in ropes from the limbs.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
 block("monstera", "Monstera", "Giant split leaves on the forest floor.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
+block("pitcher_plant", "Pitcher Plants", "Carnivorous tubes huddled in the hollows between a megatree's roots.", { hardness = 0.1, tint = EMERALD, passable = true, billboard = "cross" })
+block("kapok_wood", "Kapok wood", "The emergent's trunk: pale, smooth and grey.", { hardness = 1.0, tint = ROCK })
+block("kapok_leaves", "Kapok leaves", "Flat tiers of lighter green high over the canopy.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
+block("kapok_planks", "Kapok planks", "Light, pale boards cut from a kapok.", { hardness = 0.7, tint = SOIL })
+block("dry_clay", "Dry clay", "Cracked pale clay, up the walls of the ravines.", { hardness = 0.8, tint = SOIL })
+block("wet_clay", "Wet clay", "Slick dark clay where the water sits: a ravine's floor, a river's bank.", { hardness = 0.5, tint = SOIL })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",

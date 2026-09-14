@@ -971,6 +971,33 @@ engine commit they landed in, because the mod is written against them.
   the real world at the normal spawn with three bots for ninety seconds —
   no refused program, no error, no over-budget tick.
 
+### Pitcher Plants, kapok wood, dry and wet clay
+
+- "pitcher plants should be Pitcher Plants; kapoks should be kapok wood,
+  leaf and plank; let's add a dry clay and wet clay block." Six nodes:
+  `pitcher_plant` (named "Pitcher Plants"), `kapok_wood`, `kapok_leaves`,
+  `kapok_planks`, `dry_clay` and `wet_clay`, with textures (the pitchers are
+  three fat tubes on a cross card; the kapok's leaves are lighter and more
+  open than the ironwood's).
+- The rainforest's stand-ins are gone: the pitcher plants in the megatrees'
+  root bays are `pitcher_plant`, not `ladys_mantle`, and the kapoks are
+  `kapok_wood` under `kapok_leaves`, not birch under oak. Headless, round the
+  dev spawn: 5,056 blocks of kapok wood and 14,268 of its leaves, and no
+  birch or lady's mantle left anywhere in the rainforest.
+- The ravines are clay now instead of mud: `dry_clay` up their walls and
+  `wet_clay` on their floors, over dry clay. 467 and 251 blocks in the same
+  sample.
+- The river's clay beds at the water line are `wet_clay`. They were `mud`,
+  and they never showed: the bank's sand was a later code over the same
+  band, so it painted over them everywhere. The clay's condition now comes
+  after the sand's.
+- Kapok and pitcher blocks say "rainforest" on the HUD; the clays are shared
+  with the river and say nothing.
+- Verified headless: the mod check; the rainforest everywhere with a block
+  count; the real world with three bots; a fixed-seed world whose river
+  compiled with the reordered codes (275 operations). No refused program,
+  no error, no over-budget tick.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
