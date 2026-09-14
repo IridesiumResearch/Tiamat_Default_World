@@ -576,6 +576,17 @@ engine commit they landed in, because the mod is written against them.
   design — and never a slab. The pavement, the moss and the barnacles
   still follow the same noise, so the flats are still there to find.
 
+### Coast: half the throw on the face, and the grain twice as tall
+
+- "Dial back the noise on the cliff face to about 50% and stretch it out
+  on the vertical axis about 2 times." The ribs and the fluting are half
+  what they were — two and a quarter blocks and three quarters — and the
+  grain, which is the only part of the jag that varies with height (the
+  ribs run the cliff's whole height already), is half as strong and half
+  the frequency: twice as tall, and twice as wide, which the fine rib at
+  five blocks covers. A per-axis noise scale would stretch it in y alone
+  and is written down as engine-asks 22.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

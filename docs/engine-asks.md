@@ -16,6 +16,22 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+## 22. A noise stretched along one axis (2026-09-14)
+
+A cliff's roughness is not the same shape in every direction: rock flutes
+and weathers vertically, strata run horizontally, and a noise that is
+round in every axis reads as lumps. `Op::Noise` samples at `(x, y, z)`
+with one frequency, so the only way to make a feature taller is to make it
+wider by the same amount. A per-axis scale on the noise node — sample at
+`y * y_scale`, default 1 — is the whole ask, and the bounds path scales
+the same interval. `FractalParams` is built in thirty-one places, so the
+field belongs on `Op::Noise` (or its own stretched variant) rather than in
+the params.
+
+The coast works round it: the cliff's vertical structure is `contour`
+ribs, which are constant in y by construction, and the one term that does
+vary with height is coarsened in every axis to stretch it.
+
 ## 21. The world seed in every VM (2026-09-13)
 
 Terrain generates off the tick now, in worker VMs, and the seed arrives

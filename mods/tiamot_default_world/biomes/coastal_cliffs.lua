@@ -91,12 +91,18 @@ local PLATEAU_FREQ = 1 / 70
 -- height so a rib is not a cast column.
 local JAG_RIB_FREQ = 1 / 13                           -- lines of the ground plane, about thirteen blocks apart
 local JAG_RIB_W = 5.0                                 -- blocks either side of a line the rib reaches
-local JAG_RIB_AMP = 0.009                             -- km: +/- four and a half blocks of buttress and flute
+local JAG_RIB_AMP = 0.0045                            -- km: +/- two and a quarter blocks of buttress and flute (half of what it was)
 local JAG_FINE_FREQ = 1 / 5
 local JAG_FINE_W = 2.0
-local JAG_FINE_AMP = 0.003                            -- km: +/- a block and a half of fluting inside that
-local JAG_GRAIN_FREQ = 1 / 9
-local JAG_GRAIN = 0.0016                              -- km: +/- three quarters of a block, and the only part that varies with height
+local JAG_FINE_AMP = 0.0015                           -- km: +/- three quarters of a block of fluting inside that (half)
+-- The grain is the ONLY part of the jag that varies with height, so it is
+-- the only part a vertical stretch can apply to — the ribs run the whole
+-- height of the cliff already. The language has no per-axis noise scale
+-- (engine-asks 22), and halving the frequency stretches a noise in every
+-- axis at once; here that is the stretch asked for, because the fine rib
+-- above carries the horizontal detail the coarser grain gives up.
+local JAG_GRAIN_FREQ = 1 / 18                         -- was 1/9: twice as tall, and twice as wide, which the fine rib covers
+local JAG_GRAIN = 0.0008                              -- km: +/- three eighths of a block (half)
 local JAG_REACH = 9.0
 local JAG_AREA_FREQ = 1 / 300
 local JAG_AREA_MIN = -0.28                            -- four fifths of the coast
