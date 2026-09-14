@@ -101,17 +101,19 @@ local function seed_int(seed)
     return math.tointeger(seed % 4294967296.0) or 0
 end
 
--- The coast's sea: the engine's water below the biome's sea level, in
--- every chunk of the coast mode that reaches it. `fill_fluid_below` takes a
--- level and a fluid and fills the air under the level; the terrain keeps
--- its cells. The coast is the one mode with a flat sea to fill — see
+-- The sea: the engine's water below the biome's sea level, in every chunk
+-- of a sea mode that reaches it. `fill_fluid_below` takes a level and a
+-- fluid and fills the air under the level; the terrain keeps its cells.
+-- The coast and the deep ocean are the modes with a flat sea to fill — see
 -- biomes/coastal_cliffs.lua for why a sea cannot lie on the dome.
 local WATER = "tiamot_default_world:water"
+local SEA_OF_MODE = { coast = "coastal_cliffs", ocean = "deep_ocean" }
 local function sea_into(buf, mode, y_lo)
-    if mode ~= "coast" then
+    local owner = SEA_OF_MODE[mode]
+    if owner == nil then
         return
     end
-    local sea = tdw.biomes.coastal_cliffs.sea_y
+    local sea = tdw.biomes[owner].sea_y
     if sea == nil or y_lo > sea then
         return
     end
@@ -202,6 +204,11 @@ local function generate(buf, pos)
     -- that turns out to be air, never "air" about one that is not.
     local t = T.solid:bounds(pos)
     local tmin, tmax = t.low, t.high
+    -- A sea floor's deep bands are measured from the terrain (shape.lua,
+    -- `BANDS_BY_TERRAIN`): the gate's depths are the terrain's there too.
+    if shape.BANDS_BY_TERRAIN[mode] then
+        dmin, dmax = tmin, tmax
+    end
 
     -- Bounds on the body: W is non-decreasing in Y.
     local w_hi = shape.half_width_at(Yhi) * WARP_HI + SAFETY
@@ -218,17 +225,18 @@ local function generate(buf, pos)
     -- Air: above the surface, beyond the body, or wholly inside the Hollow.
     if tmax < 0 or outside_body then
         stats.air = stats.air + 1
-        -- The sea: a chunk of air over the seabed still gets its water.
-        sea_into(buf, mode, y0)
-        -- And a river's: its surface stands over the bed, which may be in
-        -- the chunk below. And the tops of tall structures standing on
-        -- ground under this chunk.
+        -- The tops of tall structures standing on ground under this chunk;
+        -- then the sea, which a chunk of air over the seabed still gets;
+        -- then a river's or a pool's, whose surface stands over a bed that
+        -- may be in the chunk below.
+        local found = nil
         if inside_body and tmax > -math.max(WATER_ABOVE, STRUCTURE_ABOVE) then
-            local found = tdw.present_biomes_in(ulo, uhi, pos)
+            found = tdw.present_biomes_in(ulo, uhi, pos)
             structures_into(buf, found, mode, tmax)
-            if tmax > -WATER_ABOVE then
-                waters_into(buf, found, mode)
-            end
+        end
+        sea_into(buf, mode, y0)
+        if found and tmax > -WATER_ABOVE then
+            waters_into(buf, found, mode)
         end
         return
     end
@@ -342,14 +350,16 @@ local function generate(buf, pos)
                     end
                 end
             end
-            -- The sea, after the terrain: the fluid fill leaves the terrain
-            -- its cells and takes the air below the level.
-            sea_into(buf, mode, y0)
             -- The structures, after the covers: a trunk's base merges into
             -- the surface block over the grass cells stood in it. The
             -- engine's `scatter` does the whole neighbourhood pass — every
             -- chunk within reach derives the same trees and keeps its slice.
             structures_into(buf, found, mode, math.huge)
+            -- The sea, after the terrain AND the structures: the fluid fill
+            -- takes only the room they leave (it was before the structures,
+            -- which put water inside every kelp stand and boulder).
+            sea_into(buf, mode, y0)
+            -- Then rivers and brine pools, which take the sea's place.
             waters_into(buf, found, mode)
         end
     end

@@ -16,6 +16,33 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+## 26. A deep sea is heavy to load (2026-09-14)
+
+**Seen.** The deep ocean put everywhere, headless, one bot: 213 of the ticks
+in ninety seconds ran over budget, and the log put the fluid tick at 45 to
+100 ms of each. The sea is 60 to 120 blocks deep, and its trenches 350.
+
+**Why, from the code.** `Fluidics::chunk_loaded` touches every non-empty
+block of a loaded chunk's fluid layer ("milk saved mid-flow has to carry on
+flowing"), so a chunk of open sea puts 4,096 blocks in the solver's active
+set, and a player's view of ocean is hundreds of such chunks. Each is found
+settled and dropped, but finding it is the cost.
+
+**Ask.** A generated or saved layer that is known to be at rest should not
+be woken whole: only its blocks next to something that can move (air
+beside a partial surface, an unloaded neighbour becoming loaded, an edit).
+The designer is working in the fluid code now; this is the number to watch.
+
+## 25. Light in water (2026-09-14)
+
+The deep ocean's brief has "total light extinction" on its plains, a
+hundred blocks down. Water is `transparent` and a fluid is a layer over air
+blocks, so sunlight falls through a hundred blocks of sea at full strength.
+A fluid that attenuates the sun — `light_falloff` on `register_fluid`,
+levels lost per block of it — would make the deep sea dark and a shallow one
+bright, which is the whole of it. Until then the plains are dark only in
+that nothing grows on them.
+
 ## 24. Shade under a canopy (2026-09-14)
 
 **Seen.** The rainforest's brief has its canopy block 85-90% of direct

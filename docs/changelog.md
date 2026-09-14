@@ -998,6 +998,67 @@ engine commit they landed in, because the mod is written against them.
   compiled with the reordered codes (275 operations). No refused program,
   no error, no over-budget tick.
 
+### 1.8 Deep Ocean, built and not placed
+
+- The brief: abyssal plains 60 to 120+ blocks under the sea, trenches into
+  near-bottomless chasms, flat-topped volcanic guyots, pillow-lava ridges;
+  sand, white sand, mud, basalt crusts, rippled gravel drifts, fine dark sand
+  round tectonic cracks with magma in them; no life on the deep plains, but
+  sea growth round vents and chimneys; whale skeletons broken across basalt
+  reefs, brine pools, and basalt pillars rising to within a few blocks of
+  the surface. `biomes/deep_ocean.lua`.
+- **Not placed, like the Coastal Cliffs.** Its sea is flat — the coast's
+  level, so the two will meet — and a flat sea cannot lie on the dome.
+  `tdw.config.everywhere = "deep_ocean"` shows it. Where the seas go is
+  still the open question from the coast.
+- **The floor** is a new terrain mode, "ocean", whose terms cancel the dome
+  as the coast's do: a plain wandering between 60 and 120 blocks down;
+  guyots rising 55 blocks to flat tops where a slow noise saturates; pillow
+  ridges along a contour, lumpy with pillows; trenches 350 blocks deep with
+  three-block walls, in stretches; basalt pillars where two noises are both
+  high, topped four blocks under the surface; brine pools four blocks deep;
+  cracks a block and a half wide; rippled gravel drifts. Headless the floor
+  ran from 4 blocks down (a pillar's top) to 95 over a 480-block square.
+- **The materials**: mud on the plains; sand patches; gravel drifts;
+  `dark_basalt` on the ridges, reefs, guyot flanks, trench walls and
+  pillars, all the way down their sides; white sand on the guyots' tops;
+  fine dark sand round the live cracks, `magma` (it glows) in their floors
+  and a moss crust near them; a salt crust round each brine pool; barnacles
+  on a pillar's top near the light.
+- **Life only where the brief allows it**: seagrass cover and kelp stands
+  round the live cracks and on the pillars' shallow tops, and nowhere on the
+  plains.
+- **Structures**, cut natively: vents of one to three leaning basalt
+  chimneys eight to eighteen tall with magma mouths, crusted with barnacles
+  and moss and a garden of kelp and seagrass round their feet, near the
+  cracks; whale skeletons 24 to 34 blocks long, the spine in three pieces
+  with the middle knocked aside, ribs up the front half some missing and
+  some collapsed, a skull, the jaws fallen apart, and basalt reef boulders
+  half sunk round them, on the reefs.
+- **Brine pools are a second fluid**, `brine` — slow, dark from inside, and
+  drawn as the water block. The engine's fluids do not mix (a block holding
+  one accepts none of another), so a pool laid in a hollow under the sea
+  keeps the sea off it. Laid by `fill_fluid_terraced` after the sea.
+- **One new node, asked for by name**: `bone`. Stand-ins until named: the
+  white sand and the salt crust are `limestone`, the fine dark sand
+  `black_mud`, the brine's block `water`. `magma` already existed.
+- **The generator, for seas**: the sea fill is per mode now (the coast's and
+  the ocean's), and runs after the structures so it takes only the room they
+  leave — it used to run before them and put water inside every kelp stand
+  and boulder. In the ocean mode the deep bands are measured down from the
+  terrain, not the dome (`shape.BANDS_BY_TERRAIN`), or the trenches would be
+  white placeholder from a hundred blocks under the dome down.
+- **What the engine has to do** (docs/engine-asks.md): light does not fade
+  in water (item 25), so the "total light extinction" of the plains is only
+  in where things grow; and a deep sea is heavy to load (item 26) — headless,
+  213 ticks in ninety seconds ran over budget with the fluid tick alone at
+  45 to 100 ms, because every generated block of water is woken when its
+  chunk loads.
+- Verified headless: the mod check; the ocean everywhere at view distances 6
+  and 16 with a floor probe; the coast everywhere again after the sea
+  fill moved; and the real world with three bots — no refused program, no
+  error, and in the real world no over-budget tick.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

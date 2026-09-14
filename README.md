@@ -197,6 +197,11 @@ placeholder block now, everywhere below the surface band (a hundred blocks
 down), so what is left to build is visible from inside any hole.
 `tdw.config.white_unbuilt = false` puts the rock back.
 
+**The Deep Ocean (1.8) is built but not placed either**, for the same
+reason: abyssal plains, guyots, pillow ridges, trenches, basalt pillars,
+vents with magma, whale bones and brine pools, all under the coast's flat
+sea. `tdw.config.everywhere = "deep_ocean"` shows it.
+
 **The Coastal Cliffs and their shelf are built but not placed.** Their sea
 is flat, and the world's rim is 2.5 km of dome above where a flat sea would
 sit, with about 180 m of relief on top of that; putting the ocean in the

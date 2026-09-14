@@ -56,6 +56,9 @@ biome{ id = "taiga", name = "Taiga", area = "surface",
     ring = "frost", humidity = { -0.05, 0.42 }, note = "Firwold: the wet half of the frost ring." }
 biome{ id = "volcanic_foothills", name = "Volcanic Foothills", area = "surface",
     ring = "ember", note = "The Ember Ridge, the only surface sign of the magma shell." }
+biome{ id = "deep_ocean", name = "Deep Ocean", area = "surface",
+    ring = "hem", placed = false,
+    note = "1.8 — abyssal plains under a hundred blocks of sea: guyots, pillow ridges, trenches, basalt pillars, vents, whale bones, brine pools. NOT placed: its sea is flat, as the coast's is. Look at it with tdw.config.everywhere." }
 biome{ id = "coral_fringed_shallows", name = "Coral-Fringed Shallows", area = "surface",
     ring = "shore", note = "Needs generated water (fill_fluid_below at a sea level)." }
 

@@ -383,6 +383,7 @@ end
 --               terms added to the wet half by the verdant weight: the
 --               Verdant Belt and a band either side of it
 --   "rainforest" the rainforest's terms alone (dev switch: the rainforest)
+--   "ocean"     the deep ocean's floor alone, on the coast's flat sea (dev switch: deep ocean)
 --   "all"       temperate and alpine cross-faded by the alpine weight: the
 --               band a few hundred metres wide at the frost ring's edge,
 --               and the only programs that carry every ring's noise.
@@ -401,6 +402,8 @@ function M.default_mode()
         return "coast"
     elseif only == "dense_rainforest_canopy" then
         return "rainforest"
+    elseif only == "deep_ocean" then
+        return "ocean"
     end
     return "wet"
 end
@@ -501,6 +504,9 @@ function M.terrain(flank)
         -- with the depth held first they reached the eighth buffer.
         return add(M.coast_terms(), M.depth())
     end
+    if mode == "ocean" then
+        return add(M.ocean_terms(), M.depth())
+    end
     -- **The ring's own terms FIRST, the hills after, the depth last.** The
     -- stack machine holds every pending operand in one of eight buffers, so
     -- `add(a, b)` peaks at the deeper of `peak(a)` and `1 + peak(b)`: the
@@ -547,7 +553,7 @@ function M.terrain(flank)
     -- The terrain FIRST and the trough second: `min(a, b)` peaks at the
     -- deeper of `peak(a)` and `1 + peak(b)`, and the terrain is much the
     -- deeper of the two, so this costs no buffer at all.
-    if not flank and mode ~= "alpine" and mode ~= "coast" and M.river_valley then
+    if not flank and mode ~= "alpine" and mode ~= "coast" and mode ~= "ocean" and M.river_valley then
         local trough = M.river_valley()
         if mode == "all" then
             -- Not into the mountains: where the alpine weight is up, the
@@ -640,6 +646,11 @@ local P = M.programs
 local deep = compile("top.deep", sub(M.depth(), const(M.SURFACE_BAND_D)))
 local gloam = compile("top.gloam", sub(M.depth(), const(M.GLOAM_D)))
 local abyss = compile("top.abyss", sub(M.depth(), const(M.ABYSS_D)))
+-- Modes whose deep bands are measured down from the TERRAIN rather than the
+-- dome: an ocean floor stands a hundred blocks under the dome and its
+-- trenches hundreds more, and bands by the dome would paint them white.
+-- The generator reads the same table for its gate.
+M.BANDS_BY_TERRAIN = { ocean = true }
 local function top_programs(mode)
     M.terrain_mode = mode
     local set = {
@@ -649,6 +660,11 @@ local function top_programs(mode)
         gloam = gloam,
         abyss = abyss,
     }
+    if M.BANDS_BY_TERRAIN[mode] then
+        set.deep = compile("top." .. mode .. ".deep", sub(M.terrain(false), const(M.SURFACE_BAND_D)))
+        set.gloam = compile("top." .. mode .. ".gloam", sub(M.terrain(false), const(M.GLOAM_D)))
+        set.abyss = compile("top." .. mode .. ".abyss", sub(M.terrain(false), const(M.ABYSS_D)))
+    end
     M.terrain_mode = nil
     return set
 end
@@ -661,7 +677,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

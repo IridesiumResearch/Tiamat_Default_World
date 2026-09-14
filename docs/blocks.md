@@ -151,6 +151,20 @@ moss), `willow_wood` and `oak_leaves` (the fan palms, as the river's), and
 | `dry_clay` | up the ravines' walls, and under the wet clay of their floors | asked for by name 2026-09-14 |
 | `wet_clay` | the ravines' floors; also the river's clay beds at the water line | asked for by name 2026-09-14 |
 
+### 1.8 Deep Ocean (2026-09-14; not placed)
+
+Shares `mud`, `sand`, `creek_bed` (the gravel drifts), `dark_basalt` (crusts,
+reefs, ridges, pillars, chimneys), `magma` (in the cracks and the chimneys'
+mouths), and the coast's `barnacles`, `ocean_moss`, `kelp` and `seagrass`
+(round the vents and on the pillars' tops). Stand-ins until named:
+`limestone` for the white sand and the brine pools' salt crust, `black_mud`
+for the fine dark sand, and the `water` block for how the `brine` fluid is
+drawn.
+
+| Block | Where | Why |
+|---|---|---|
+| `bone` | whale skeletons broken across the basalt reefs | asked for by name 2026-09-14 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:

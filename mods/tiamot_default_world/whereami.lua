@@ -43,6 +43,7 @@ local OWNER = {
     [blocks.dark_basalt] = "coastal_cliffs",
     [blocks.coast_turf] = "coastal_cliffs",
     [blocks.barnacles] = "coastal_cliffs",
+    [blocks.bone] = "deep_ocean",
 }
 for _, material in ipairs(ALPINE_GROUND) do
     OWNER[material] = "alpine_highlands"

@@ -191,6 +191,14 @@ block("kapok_planks", "Kapok planks", "Light, pale boards cut from a kapok.", { 
 block("dry_clay", "Dry clay", "Cracked pale clay, up the walls of the ravines.", { hardness = 0.8, tint = SOIL })
 block("wet_clay", "Wet clay", "Slick dark clay where the water sits: a ravine's floor, a river's bank.", { hardness = 0.5, tint = SOIL })
 
+-- The Deep Ocean (1.8). One new node, asked for by name (2026-09-14): bone,
+-- for the whale skeletons. Everything else is a node that exists: `sand`,
+-- `mud`, `dark_basalt`, `creek_bed` (the gravel drifts), `magma` (in the
+-- cracks: it already glows), and the vents' `barnacles`, `ocean_moss`,
+-- `kelp` and `seagrass`. Stand-ins until named: white sand is `limestone`,
+-- fine dark sand `black_mud`.
+block("bone", "Bone", "A whale's, long on the sea floor, broken across the basalt.", { hardness = 1.2, tint = ROCK })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })
@@ -200,6 +208,17 @@ game.register_fluid{
     tick_rate = 2,
     evaporates = 0,
     color = { r = 40, g = 90, b = 140 },
+}
+-- Brine: the deep ocean's pools. A second fluid, because fluids do not mix
+-- (a block holding one accepts none of another), so a pool of it under the
+-- sea stays a pool. Heavy and slow, and dark from inside. Drawn as the water
+-- block until the designer names one for it.
+game.register_fluid{
+    id = "brine",
+    material = "water",
+    tick_rate = 8,
+    evaporates = 0,
+    color = { r = 24, g = 44, b = 52 },
 }
 
 -- Depth bands -----------------------------------------------------------
