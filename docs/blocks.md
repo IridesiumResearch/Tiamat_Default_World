@@ -193,6 +193,21 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 2.1 Badlands (2026-09-14)
+
+Shares `sand` (soft sandstone bands, until named), `dry_clay` (clay bands,
+the popcorn crust and the runoffs, until named), `creek_bed` (chert, until
+named), `mud` (the gully floors' middles), `granite` (petrified trunks,
+until named), `tall_grass`, and the mesa's `juniper_wood` and
+`juniper_needles` (the stunted trees).
+
+| Block | Where | Why |
+|---|---|---|
+| `volcanic_ash` | pale grey bands | asked for by name 2026-09-14 |
+| `charcoal` | stark near-black bands | asked for by name 2026-09-14 |
+| `dried_mud` | dull lavender bands; cracked gully floors; the skirt round a stunted tree | asked for by name 2026-09-14 |
+| `dead_sagebrush` | brittle cards on the deep gully floors | asked for by name 2026-09-14 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:

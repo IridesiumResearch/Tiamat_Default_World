@@ -66,6 +66,7 @@ load("biomes.dense_rainforest_canopy") -- 1.7, the Verdant Belt's wet half: kars
 load("biomes.deep_ocean")            -- 1.8, abyssal plains under a flat sea (not placed)
 load("biomes.frozen_wastes")         -- 1.9, Frostmoor: the frost ring's dry half
 load("biomes.arid_mesa")             -- 2.0, the Glass Waste's dry half: benches and canyons
+load("biomes.badlands")              -- 2.1, the Glass Waste's wet half: fins, rills and gullies
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

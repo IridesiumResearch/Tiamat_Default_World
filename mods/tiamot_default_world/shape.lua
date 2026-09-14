@@ -396,6 +396,8 @@ end
 --               mesa's to the dry half by the glass weight: the Glass Waste
 --               and the Verdant Belt, and a band either side of them
 --   "mesa"      the Arid Mesa's terms alone (dev switch: the mesa)
+--   "badlands"  the Badlands' terms alone (dev switch: the badlands); in
+--               "verdant" they are added to the Glass Waste's wet half
 --   "rainforest" the rainforest's terms alone (dev switch: the rainforest)
 --   "ocean"     the deep ocean's floor alone, on the coast's flat sea (dev switch: deep ocean)
 --   "frozen"    the Frozen Wastes' terms alone (dev switch: frozen wastes)
@@ -426,6 +428,8 @@ function M.default_mode()
         return "frozen"
     elseif only == "arid_mesa" then
         return "mesa"
+    elseif only == "badlands" then
+        return "badlands"
     end
     return "wet"
 end
@@ -578,6 +582,8 @@ function M.terrain(flank)
         terms = M.frozen_terms()
     elseif mode == "mesa" then
         terms = M.mesa_terms()
+    elseif mode == "badlands" then
+        terms = M.badlands_terms()
     elseif mode == "temperate" then
         terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
     elseif mode == "rainforest" then
@@ -589,7 +595,11 @@ function M.terrain(flank)
         -- And the mesa's benches and canyons over the dry half's swells,
         -- weighted in across the Glass Waste's edges. The dry side FIRST: the
         -- mesa is the deepest term in the program.
-        local wet = add(mul(M.rainforest_terms(), verdant_weight()), wet_terms())
+        local wet = mul(M.rainforest_terms(), verdant_weight())
+        if M.badlands_terms then
+            wet = add(wet, mul(M.badlands_terms(), glass_weight()))
+        end
+        wet = add(wet, wet_terms())
         local dry = swells()
         if M.mesa_terms then
             dry = add(mul(M.mesa_terms(), glass_weight()), dry)
@@ -738,7 +748,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

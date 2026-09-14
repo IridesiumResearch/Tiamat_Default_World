@@ -1238,6 +1238,58 @@ engine commit they landed in, because the mod is written against them.
   away, then `/tp river` and landed on a bank 19 km on; `/where` agreed each
   time.
 
+### 2.1 Badlands, on the Glass Waste's wet half
+
+- The brief: razor crests and steep fluted mud hills in a labyrinth of
+  gullies, slopes of 35 to 60 degrees cut by rills into razorback fins and
+  small clay canyons; wavy horizontal bands of sandstone, clay, volcanic
+  ash*, charcoal* and dull lavender dried mud*; popcorn clay crust and
+  chert; 95% barren, dead sagebrush* and grass only in the deep gullies,
+  stunted mesa trees in drying mud; dry clay runoffs, mud-choked gully
+  floors, piping voids; knife-edge ridges, mud-crack flats, petrified trunks
+  bridging gullies. Not tall; a place for erosion. `biomes/badlands.lua`.
+- **Where**: the Glass Waste's wet half, as the catalogue planned. The
+  grassland now holds the temperate ring's dry half, the Ember Ridge, and
+  the dry half from the Verdant Belt out. The "verdant" mode adds the
+  badlands' terms to the Glass Waste's wet half by the glass weight: 928
+  operations of 1,024, the most of any program in the world. A "badlands"
+  mode is the dev switch (358).
+- **The ground, as the shapes water cuts**: hills as a tent on a slow noise
+  (`1 - 2|n|`, a crest and never a dome); razorback fins, a finer tent over
+  their upper parts, whose crests are the knife-edge paths; rills from a
+  noise stretched four times up y, so each groove runs straight down its
+  slope; a labyrinth of gullies from two contours, eight blocks deep with
+  flat floors; and piping voids where two 3D noises are both near zero, cut
+  into the terrain field by twenty blocks, which only ever opens ground
+  within twenty blocks of the surface. Headless over a 200-block square the
+  ground ran over about 55 blocks of height, with a quarter of it at 45
+  degrees or steeper.
+- **The bands** are the mesa's fold with a two-block wave, rounded to five
+  materials. Found on the way: a fold only zig-zags over zero to twice its
+  first point, and the badlands' ground below the smooth height fell off the
+  end and rounded to the last material, which was a third of the surface in
+  dry clay. It is lifted into range first now; the five come out even.
+- **The surface**: popcorn crust (dry clay) and chert (gravel) in patches
+  over the bands; dry clay runoff down the lower gully walls; cracked dried
+  mud on the gully floors with mud choking their middles.
+- **Growth**: dead sagebrush and grass on the deep gully floors only;
+  stunted mesa junipers there in a skirt of dried mud; petrified trunks
+  (granite, until named) eighteen blocks long lying at the gully rims, so
+  those that fell across one bridge it.
+- Four new nodes, asked for by name: `volcanic_ash`, `charcoal`,
+  `dried_mud`, `dead_sagebrush`. Stand-ins until named: soft sandstone
+  `sand`, clay and popcorn crust `dry_clay`, chert `creek_bed`, petrified
+  wood `granite`.
+- `/tp badlands`; the HUD names it.
+- Verified headless: the badlands everywhere with a probe of heights,
+  slopes and surfaces; the real world at a fixed seed, teleported in with
+  `/tp badlands` (verdant programs compiled, nothing refused); the normal
+  spawn with three bots. One random-seed run had ten ticks of 100 to 1,500
+  ms, all the server generating distant summaries on its main thread; the
+  same seed with and without the badlands gave none and two, so they are
+  not the badlands' — the summaries' main-thread generation is worth a look
+  in the engine as the programs grow.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

@@ -219,6 +219,16 @@ block("juniper_wood", "Juniper wood", "Crooked, split and weathered grey.", { ha
 block("juniper_needles", "Juniper needles", "Flat, sparse pads of dark evergreen.", { hardness = 0.2, tint = COLD_GREEN, cutout = true, sway = true })
 block("columnar_cactus", "Columnar cactus", "Ribbed green columns with right-angle arms.", { hardness = 0.4, tint = GREEN })
 
+-- The Badlands (2.1). Four new nodes, asked for by name (2026-09-14):
+-- volcanic ash*, charcoal*, dull lavender dried mud* and dead sagebrush*.
+-- Stand-ins until named: soft sandstone `sand`, clay and the popcorn crust
+-- `dry_clay`, chert `creek_bed`, the petrified trunks `granite`; the stunted
+-- trees are the mesa's juniper nodes.
+block("volcanic_ash", "Volcanic ash", "Pale grey bands of old ash between the clays.", { hardness = 0.6, tint = ROCK })
+block("charcoal", "Charcoal clay", "Stark near-black bands in the badlands' hills.", { hardness = 0.7, tint = ROCK })
+block("dried_mud", "Dried mud", "Dull lavender, cracked into plates.", { hardness = 0.6, tint = SOIL })
+block("dead_sagebrush", "Dead sagebrush", "Brittle grey sticks at the bottom of a gully.", { hardness = 0.1, tint = SOIL, passable = true, billboard = "cross" })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

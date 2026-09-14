@@ -64,8 +64,11 @@ for _, material in ipairs({ blocks.rust_red_sandstone, blocks.ochre_sandstone, b
     blocks.juniper_wood, blocks.juniper_needles, blocks.columnar_cactus }) do
     OWNER[material] = "arid_mesa"
 end
+for _, material in ipairs({ blocks.volcanic_ash, blocks.charcoal, blocks.dried_mud, blocks.dead_sagebrush }) do
+    OWNER[material] = "badlands"
+end
 -- Whose ground answers at once, wherever in the column it is found.
-local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true }
+local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true, badlands = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -189,6 +192,7 @@ local BIOME_WORDS = {
     ocean = "deep_ocean", sea = "deep_ocean",
     frozen = "frozen_wastes", wastes = "frozen_wastes", tundra = "frozen_wastes", frostmoor = "frozen_wastes",
     mesa = "arid_mesa", desert = "arid_mesa", canyon = "arid_mesa", canyons = "arid_mesa",
+    badlands = "badlands", badland = "badlands",
 }
 local RING_WORDS = { greensward = "temperate", firwold = "frost" }
 
@@ -351,7 +355,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
     local word = string.lower(args[1])
     if word == "list" then
         local placed, unplaced = {}, {}
-        for _, short in ipairs({ "alpine", "frozen", "woodlands", "grasslands", "mesa", "river", "rainforest", "coast", "ocean" }) do
+        for _, short in ipairs({ "alpine", "frozen", "woodlands", "grasslands", "mesa", "badlands", "river", "rainforest", "coast", "ocean" }) do
             local biome = tdw.biomes[BIOME_WORDS[short]]
             if biome then
                 local list = (biome.built and biome.placed ~= false) and placed or unplaced

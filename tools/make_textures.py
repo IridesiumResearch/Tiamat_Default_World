@@ -78,7 +78,11 @@ BLOCKS = {
     "pale_terracotta": (198, 158, 128, 0),
     "juniper_wood":   (128, 122, 112,  0),
     "juniper_needles":( 44,  66,  50,  0),
-    "columnar_cactus":( 84, 112,  68,  0),   # the deep ocean (1.8): old, sea-stained bone
+    "columnar_cactus":( 84, 112,  68,  0),
+    "volcanic_ash":   (196, 192, 184,  0),   # the badlands (2.1)
+    "charcoal":       ( 58,  56,  60,  0),
+    "dried_mud":      (148, 132, 148,  0),
+    "dead_sagebrush": (138, 128, 110,  0),   # the deep ocean (1.8): old, sea-stained bone
     "wet_clay":       (112,  90,  74,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
@@ -181,6 +185,7 @@ BLADES = {
     "seagrass": (5, 12, 16),     # long, most of the card
     "kelp": (3, 14, 16),         # three broad-ish stems the height of the card
     "pitcher_plant": (3, 9, 14), # three fat tubes
+    "dead_sagebrush": (7, 5, 11), # brittle, many short sticks
 }
 
 # Rosettes and sprays, for the mantle: a rosette is a few round leaves
