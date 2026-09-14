@@ -39,7 +39,6 @@ local OWNER = {
     [blocks.birch_log] = "temperate_woodlands",
     [blocks.dirt] = "rolling_grasslands",
     [blocks.packed_dirt] = "rolling_grasslands",
-    [blocks.sand] = "coastal_cliffs",
     [blocks.dead_coral] = "coastal_cliffs",
     [blocks.dark_basalt] = "coastal_cliffs",
     [blocks.coast_turf] = "coastal_cliffs",

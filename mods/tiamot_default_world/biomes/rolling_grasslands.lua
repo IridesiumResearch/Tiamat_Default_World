@@ -68,6 +68,12 @@ local shape = tdw.shape
 local edits = tdw.edits
 local FULL = game.OCCUPANCY_FULL
 
+-- Lazy like the rest: a biome's fills carry the terrain INSIDE them, and
+-- the river valleys are a term of that terrain (shape.river_valley) defined
+-- by a file that loads after this one. Built at load, this biome's grass
+-- band was the shape of the ground BEFORE the rivers were cut out of it —
+-- which hung a roof of turf over every valley.
+tdw.biomes.rolling_grasslands.lazy = true
 tdw.build_biome("rolling_grasslands", function(ctx)
     local n = ctx.node
     local function masked(field)

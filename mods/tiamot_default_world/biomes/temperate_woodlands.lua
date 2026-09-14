@@ -133,6 +133,12 @@ local layers = tdw.layers
 local shape = tdw.shape
 local edits = tdw.edits
 
+-- Lazy like the rest: a biome's fills carry the terrain INSIDE them, and
+-- the river valleys are a term of that terrain (shape.river_valley) defined
+-- by a file that loads after this one. Built at load, this biome's grass
+-- band was the shape of the ground BEFORE the rivers were cut out of it —
+-- which hung a roof of turf over every valley.
+tdw.biomes.temperate_woodlands.lazy = true
 tdw.build_biome("temperate_woodlands", function(ctx)
     local n = ctx.node
     -- Where the biome is — the temperate ring's wet half — unless it is

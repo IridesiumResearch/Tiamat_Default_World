@@ -732,6 +732,25 @@ engine commit they landed in, because the mod is written against them.
 - Saying `river` in chat looks for one, and the ground identifies it by
   its willows and its iris.
 
+### A roof of turf over every river valley
+
+- Every biome's fills carry the terrain INSIDE them — a grass band is the
+  shape of the ground, three blocks deep — and a fill writes its material
+  wherever its field is positive, whether or not there is ground under it.
+  The woodland and the grassland built their fills at LOAD, which is before
+  the river valleys file had defined the trough it cuts into the terrain,
+  so their bands were the shape of the ground before the rivers were taken
+  out of it: a slab of soil and turf hanging over each valley, with trees
+  growing on it.
+- Both are built on demand now, like the alpine, the coast and the river.
+  The flag has to be set BEFORE `build_biome`, which reads it when it runs;
+  set after, as it was first tried, it changed nothing at all. The
+  grassland's grass field went from 228 operations to 373, and the 145 are
+  the valley cut that was missing from it.
+- `sand` is nobody's marker for the "which biome am I in" lookup any more:
+  the shelf's floor is sand and so is a river's, so it named every river
+  bed the coast.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
