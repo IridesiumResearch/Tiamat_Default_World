@@ -1151,11 +1151,12 @@ tdw.on_chat("crevasse", function(player)
     local body = game.player_entity(player)
     local entity = body and game.entity(body)
     local p = entity and entity.pos
-    if p == nil then return end
+    if p == nil then return "you are not anywhere yet" end
     local x, y, z = math.floor(p.x), math.floor(p.y) - 1, math.floor(p.z)
     local rng = game.rng_stream({ x = x // 16, y = y // 16, z = z // 16, seed = tdw.seed or 0 }, "crevasse:chat:" .. x .. ":" .. z)
     local ok = carve_crevasse(x, y, z, rng, true)
     game.log(string.format("tiamot_default_world alpine: crevasse at %d, %d, %d: %s", x, y, z, ok and "carved" or "refused"))
+    return ok and "a crevasse, cracked open under you" or "nothing here to crack — stand on ground that is loaded"
 end)
 
 local function try(name, fn, x, y, z)

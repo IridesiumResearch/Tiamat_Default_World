@@ -1162,6 +1162,9 @@ tdw.on_tick(function(dt_ticks)
 end)
 
 -- Say "stats" in chat for the counts now, without waiting for the timer.
-tdw.on_chat("stats", report)
+tdw.on_chat("stats", function()
+    report()
+    return "the woodland's figures are in the server log"
+end)
 
 game.log("tiamot_default_world: woodlands grow oaks, birches, dead wood, rocks, root nodes and pools by random tick")

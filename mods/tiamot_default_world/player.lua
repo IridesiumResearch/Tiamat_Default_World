@@ -213,7 +213,7 @@ end)
 tdw.on_chat("where", function(player)
     local p = where(player)
     if p == nil then
-        return
+        return "you are not anywhere yet"
     end
     local shape = tdw.shape
     local r2 = (p.x * p.x + p.z * p.z) * 1e-6
@@ -221,9 +221,13 @@ tdw.on_chat("where", function(player)
     local Y = (p.y - shape.Y0) * shape.SCALE
     local ring = tdw.layers.rings_overlapping(u, u)[1]
     local depth = shape.dome_at(u) - Y
-    game.log(string.format(
-        "tiamot_default_world where: y=%.0f  Spindle Y=%.2f km  r^2=%.1f km^2 (u=%.4f, ring %s)  ~%.2f km below the base dome",
-        p.y, Y, r2, u, ring and ring.id or "beyond the rim", depth))
+    local line = string.format(
+        "y=%.0f, Spindle Y=%.2f km, u=%.4f (ring %s), %.2f km below the base dome",
+        p.y, Y, u, ring and ring.id or "beyond the rim", depth)
+    local here = tdw.biome_under and tdw.biome_under(math.floor(p.x), math.floor(p.y), math.floor(p.z))
+    local biome = here and tdw.biomes[here]
+    game.log("tiamot_default_world where: " .. line)
+    return (biome and (biome.name .. " — ") or "") .. line
 end)
 
 game.log("tiamot_default_world: player positions are remembered")

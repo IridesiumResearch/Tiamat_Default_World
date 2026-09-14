@@ -783,6 +783,20 @@ engine commit they landed in, because the mod is written against them.
   apart, so a few steps of four hundred metres crosses one, where turning
   round the same ring lands between them more often than not.
 
+### A chat word answers instead of being refused
+
+- Typing a biome's name gave back "a mod refused that message". The engine
+  takes `false` from a chat hook to mean the line is going nowhere and
+  tells the speaker so, which reads as an error when it was a command being
+  obeyed. A STRING stops the line the same way and shows the speaker that
+  string instead, so every word this mod registers returns one: `river`
+  says it is walking outward until one turns up, `roses` gives the bush's
+  position or says none has grown, `crevasse` says whether it cracked the
+  ground under you, `stats` says the figures are in the log, and `where`
+  answers with the biome you are in and the Spindle's own coordinates.
+- A word that errors is caught and says so rather than taking the tick
+  handler down with it.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

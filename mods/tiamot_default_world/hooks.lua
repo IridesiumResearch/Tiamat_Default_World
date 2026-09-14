@@ -22,8 +22,15 @@ end
 
 -- Runs `fn(player)` when a player says exactly `word` (case-insensitive),
 -- and swallows the message.
+--
+-- **A word answers.** The engine's chat hook takes `false` to mean "this
+-- line is not going anywhere" and tells the speaker so — which comes out as
+-- "a mod refused that message", and reads as an error when it was a command
+-- being obeyed. A STRING stops the line the same way and shows the speaker
+-- that string instead, so every word here returns one: what it did, or why
+-- it could not.
 ---@param word string
----@param fn fun(player: string)
+---@param fn fun(player: string): string?
 function tdw.on_chat(word, fn)
     assert(not words[word], "chat word registered twice: " .. word)
     words[word] = fn
@@ -85,8 +92,12 @@ game.register_on_chat(function(event)
     if fn == nil then
         return
     end
-    fn(event.player)
-    return false
+    local ok, reply = pcall(fn, event.player)
+    if not ok then
+        game.log("tiamot_default_world: the chat word `" .. event.text .. "` errored: " .. tostring(reply))
+        return "that did not work — the log says why"
+    end
+    return type(reply) == "string" and reply or "done"
 end)
 
 return M

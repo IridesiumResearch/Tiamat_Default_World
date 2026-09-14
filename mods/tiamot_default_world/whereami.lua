@@ -218,8 +218,17 @@ for word, id in pairs({
 }) do
     tdw.on_chat(word, function(player)
         local rec = tdw.online[player]
-        if rec then
-            tdw.seek_biome(player, id, rec)
+        if rec == nil then
+            return "you are not anywhere yet"
         end
+        local biome = tdw.biomes[id]
+        local name = biome and biome.name or id
+        if not tdw.seek_biome(player, id, rec) then
+            return "there is nowhere to look for " .. name
+        end
+        if SWEEP[id] then
+            return "looking for " .. name .. ": walking outward until one turns up"
+        end
+        return "looking for " .. name .. ": trying the ring a stretch at a time"
     end)
 end

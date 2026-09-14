@@ -427,11 +427,11 @@ local first_bush = nil
 -- (and the way the headless pick test finds one).
 tdw.on_chat("roses", function(player)
     if first_bush == nil then
-        game.log("tiamot_default_world grasslands: no rose bush planted yet")
-        return
+        return "no rose bush has grown yet"
     end
     game.log(string.format("tiamot_default_world grasslands: first rose bush at %d, %d, %d", first_bush.x, first_bush.y, first_bush.z))
     game.move_player(player, { x = first_bush.x + 2.5, y = first_bush.y + 0.5, z = first_bush.z + 2.5 })
+    return string.format("the first rose bush, at %d, %d, %d", first_bush.x, first_bush.y, first_bush.z)
 end)
 
 local function is_bush(b)
