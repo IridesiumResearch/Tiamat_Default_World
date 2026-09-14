@@ -175,6 +175,24 @@ frost-heaved gravel), `granite` (the erratics) and `dead_wood` (the snags).
 |---|---|---|
 | `clear_ice` | the top of a cryo-lake, over blue ice; transparent | asked for by name 2026-09-14 |
 
+### 2.0 Arid Mesa (2026-09-14)
+
+Shares `sand` (the red sand of the plains and talus, and the desert
+sandstone patches, until named), `dry_clay` (terracotta strata until named,
+and the arroyos' banks), `limestone` (pale tan sandstone until named),
+`dirt`, `creek_bed`, `mud`, `wet_clay`, `bramble` (sagebrush until named),
+`dead_wood` and `bone` (the nests), and `willow_wood` and `oak_leaves` (the
+palms).
+
+| Block | Where | Why |
+|---|---|---|
+| `rust_red_sandstone` | strata; under the plains and talus | asked for by name 2026-09-14 |
+| `ochre_sandstone` | strata; hoodoo bands | asked for by name 2026-09-14 |
+| `pale_terracotta` | the cap on every bench top and hoodoo | asked for by name 2026-09-14 |
+| `juniper_wood` | the junipers' and pines' crooked grey trunks | asked for by name 2026-09-14 |
+| `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
+| `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:

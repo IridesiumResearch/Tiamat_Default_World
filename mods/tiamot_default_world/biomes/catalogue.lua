@@ -31,7 +31,7 @@ biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface
     humidity = { -0.05, 0.42 },
     note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, the Long Shore and the Hem. It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    spans = { { "temperate", "hem", "dry" }, { "ember", "glass" } },
+    spans = { { "temperate", "temperate", "dry" }, { "ember", "ember" }, { "glass", "glass", "wet" }, { "verdant", "hem", "dry" } },
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
@@ -52,7 +52,8 @@ biome{ id = "dense_rainforest_canopy", name = "Dense Rainforest Canopy", area = 
     spans = { { "verdant", "verdant", "wet" } },
     ring = "verdant", humidity = { 0.05, 0.42 }, note = "1.7 — the wet half of the Verdant Belt: karst, ravines and sinkholes under megatrees." }
 biome{ id = "arid_mesa", name = "Arid Mesa", area = "surface",
-    ring = "glass", humidity = { -0.42, 0.0 }, note = "The Glass Waste, dry half." }
+    spans = { { "glass", "glass", "dry" } },
+    ring = "glass", humidity = { -0.42, 0.0 }, note = "2.0 — the Glass Waste's dry half: benches, box canyons, buttes, arches, hoodoos." }
 biome{ id = "badlands", name = "Badlands", area = "surface",
     ring = "glass", humidity = { 0.0, 0.42 }, note = "The Glass Waste, less dry half." }
 biome{ id = "taiga", name = "Taiga", area = "surface",

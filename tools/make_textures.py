@@ -72,7 +72,13 @@ BLOCKS = {
     "kapok_planks":   (196, 180, 150,  0),
     "dry_clay":       (170, 142, 112,  0),
     "bone":           (214, 204, 182,  0),
-    "clear_ice":      (196, 226, 240,  0),   # the frozen wastes (1.9): a cryo-lake's clear top   # the deep ocean (1.8): old, sea-stained bone
+    "clear_ice":      (196, 226, 240,  0),   # the frozen wastes (1.9): a cryo-lake's clear top
+    "rust_red_sandstone": (146, 74, 52, 0),   # the arid mesa (2.0)
+    "ochre_sandstone": (178, 132, 70,  0),
+    "pale_terracotta": (198, 158, 128, 0),
+    "juniper_wood":   (128, 122, 112,  0),
+    "juniper_needles":( 44,  66,  50,  0),
+    "columnar_cactus":( 84, 112,  68,  0),   # the deep ocean (1.8): old, sea-stained bone
     "wet_clay":       (112,  90,  74,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
@@ -128,6 +134,7 @@ DOTS = {
     "ironwood_leaves": (2.8, 0.3, 0.5),  # big, crowded: the canopy lets little through
     "climbing_ivy": (2.0, 0.5, 0.8),     # small leaves on a rope
     "kapok_leaves": (2.4, 0.5, 0.7),     # lighter and more open than the ironwood's
+    "juniper_needles": (2.2, 0.6, 0.8),  # sparse, scattered
 }
 
 # A single round BLOOM in the middle of the tile, a little high, with a

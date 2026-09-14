@@ -1154,6 +1154,70 @@ engine commit they landed in, because the mod is written against them.
   the normal spawn with three bots, with and without the Wastes loaded at
   one seed — no refused program, no error, no over-budget tick.
 
+### 2.0 Arid Mesa, on the Glass Waste's dry half
+
+- The brief: elevated tablelands with sheer cliffs stepping down in benches
+  to flat canyon floors, box canyons and buttes; rust-red*, ochre*,
+  terracotta and pale tan sandstone strata; pale terracotta* caps with
+  desert sandstone and rare dirt; talus of red sand, gravel and dirt at
+  cliff bases; sparse crooked grey junipers* and pines; columnar cacti*,
+  barrel cacti, prickly pear, sagebrush; dry arroyos with clay, sand,
+  gravel, rare puddles and a palm or two; hoodoos and spires, arches over
+  canyon cuts, alcoves in cliff faces, raptor nests with bone.
+  `biomes/arid_mesa.lua`.
+- **Where**: the Glass Waste's dry half, as the catalogue planned. The
+  grassland keeps the Ember Ridge and the Glass Waste's wet half. The
+  "verdant" terrain mode now covers the Glass Waste too, with the mesa's
+  terms added to the dry half by a glass weight, as the rainforest's are to
+  the wet half by the verdant weight: 828 operations. A "mesa" mode is the
+  dev switch.
+- **Not a map.** "Another excellent biome for erosion" — but a map is at
+  most 1,024 samples a side and the Glass Waste is a ring 150 km round, so
+  no map covers it at a useful grain. The forms erosion leaves are written as
+  terms instead: five benches on a slow three-octave plateau noise, each a
+  sheer cliff a block and a bit wide over a talus apron a quarter of the
+  step high and six blocks out, the highest ground flat where the noise
+  saturates (the buttes); box canyons along a contour in stretches, taking
+  the plateau's whole height away so their floors are the plain's; arches,
+  where a rare blob crosses a canyon, as the top five blocks of the plateau
+  left standing over the cut; arroyos along a fine contour on the plains and
+  canyon floors. If the tiled, eroded map is wanted, that is an engine
+  change (a map node that repeats), and this file is where it would go.
+- **The strata** are horizontal over the smooth ground (dome and relief),
+  parallel to the benches: the height folded three times by absolute
+  values into a zig-zag the engine's code rounding turns into rust-red,
+  ochre, terracotta, pale tan and back. The first cut stepped each band and
+  its code field was 1,296 operations of 1,024; the fold is one evaluation.
+- **The surface**: pale terracotta caps with desert-sandstone patches and
+  rare dirt on every bench top; strata down the faces; red sand on the
+  plains, the canyon floors and the talus, with gravel and dirt spots in it;
+  arroyos with clay banks, gravel beds and rare muddy puddles; sagebrush
+  sparse on the flats.
+- **Structures**, cut natively: columnar cacti five to nine tall with
+  right-angle arms on the flats; barrel cacti and prickly pear clumps in the
+  talus; junipers — short, crooked, often split, grey, with flat pads of
+  dark needles — in the talus and singly on the tops; a palm or two by the
+  washes; banded hoodoos and spires with pale terracotta caps on the plains
+  and canyon floors; raptor nests of dead sticks and bleached bone just over
+  the highest cliff edges; and the alcoves, hollows of air stamped at the
+  feet of the three lower cliffs that carve into the face (a term for them
+  needed the ground's height twice more than the program had room for).
+- Six new nodes, all asked for by name: `rust_red_sandstone`,
+  `ochre_sandstone`, `pale_terracotta`, `juniper_wood`, `juniper_needles`,
+  `columnar_cactus`. Stand-ins until named: terracotta `dry_clay`, pale tan
+  sandstone `limestone`, desert sandstone and red sand `sand`, sagebrush
+  `bramble`; barrel cacti and prickly pear are the columnar cactus; the
+  pines share the juniper's nodes; the palms are the river's.
+- `/tp mesa` (or `desert`, `canyon`) goes there; the mesa's rock, trees and
+  cacti name it on the HUD.
+- Verified headless: the mesa everywhere (654 and 344 operations; a probe
+  of a 300-block square found pale terracotta the commonest top, strata on
+  the faces and 95 blocks of height); the real world at a fixed seed spawned
+  where `/tp mesa` found it (verdant programs compiled, a river valley
+  cutting through the tablelands); the normal spawn with three bots — no
+  refused program, no error, no over-budget tick. One tick in the mesa run
+  spent 300 ms generating a distant summary on the main thread.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

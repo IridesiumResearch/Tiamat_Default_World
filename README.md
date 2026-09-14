@@ -164,7 +164,8 @@ every ring its temperature suits until the biome that ring is for exists:
 | Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), the Alpine Highlands on the wet |
 | The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
 | The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
-| The Ember Ridge, the Glass Waste | 20.7 to 28.3 km | Rolling Grasslands over the whole width: the dry band round the middle of the world, standing in for a desert |
+| The Ember Ridge | 20.7 to 24.8 km | Rolling Grasslands over the whole width, standing in for a desert |
+| The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Rolling Grasslands on the wet |
 | The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity; the Coastal Cliffs are NOT here yet |
 | Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
 
@@ -381,6 +382,13 @@ built one at a time in its own file. Built so far:
       Cut natively with `game.schematic_shapes` and stamped at generation.
       The canopy's shade and the fog wait on the engine
       (`docs/engine-asks.md`, items 20, 23 and 24).
+- [x] 2.0 Arid Mesa — the Glass Waste's dry half (`biomes/arid_mesa.lua`).
+      Tablelands of five benches with sheer cliffs over talus aprons, box
+      canyons with flat floors, buttes, arches over canyon cuts, arroyos;
+      horizontal strata of rust-red, ochre, terracotta and pale tan under
+      pale terracotta caps; columnar cacti, barrel cacti and prickly pear,
+      crooked junipers, sagebrush, a palm or two by the washes; hoodoos,
+      spires, alcoves and raptor nests with bone.
 - [x] 1.9 Frozen Wastes — Frostmoor, the frost ring's dry half
       (`biomes/frozen_wastes.lua`), cross-faded into the alpine's mountains.
       Permafrost plains with gravel polygons, dunes and wind-aligned

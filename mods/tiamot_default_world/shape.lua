@@ -152,6 +152,10 @@ M.RING_WOBBLE = 0.010
 -- five hundred metres there.
 M.VERDANT_U = { 0.48 * 0.48, 0.60 * 0.60 }
 M.VERDANT_BLEND_U = 0.008
+-- The Glass Waste, whose dry half is the Arid Mesa (2.0): its span in u, and
+-- the cross-fade into the mesa's terrain at its edges, as the rainforest's.
+M.GLASS_U = { 0.42 * 0.42, 0.48 * 0.48 }
+M.GLASS_BLEND_U = 0.008
 -- The Frozen Wastes (1.9) take the frost ring's dry half — Frostmoor — from
 -- the alpine. Their flat permafrost fades into the alpine's mountains across
 -- the Crown's edge over FROZEN_RING_BLEND_U of radius, and across the
@@ -388,8 +392,10 @@ end
 --   "alpine"    the frost ring's terms alone
 --   "coast"     the shore ring's cliffs alone, on a flat sea (dev switch: coastal cliffs)
 --   "verdant"   the temperate pair as "temperate", with the rainforest's
---               terms added to the wet half by the verdant weight: the
---               Verdant Belt and a band either side of it
+--               terms added to the wet half by the verdant weight and the
+--               mesa's to the dry half by the glass weight: the Glass Waste
+--               and the Verdant Belt, and a band either side of them
+--   "mesa"      the Arid Mesa's terms alone (dev switch: the mesa)
 --   "rainforest" the rainforest's terms alone (dev switch: the rainforest)
 --   "ocean"     the deep ocean's floor alone, on the coast's flat sea (dev switch: deep ocean)
 --   "frozen"    the Frozen Wastes' terms alone (dev switch: frozen wastes)
@@ -418,6 +424,8 @@ function M.default_mode()
         return "ocean"
     elseif only == "frozen_wastes" then
         return "frozen"
+    elseif only == "arid_mesa" then
+        return "mesa"
     end
     return "wet"
 end
@@ -435,8 +443,8 @@ function M.terrain_mode_for(u_lo, u_hi)
     if u_hi <= edge - half then
         return "alpine"
     elseif u_lo >= edge + half then
-        local reach = M.VERDANT_BLEND_U / 2 + M.RING_WOBBLE
-        if u_hi >= M.VERDANT_U[1] - reach and u_lo <= M.VERDANT_U[2] + reach then
+        local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
+        if u_hi >= M.GLASS_U[1] - reach and u_lo <= M.VERDANT_U[2] + reach then
             return "verdant"
         end
         return "temperate"
@@ -457,6 +465,13 @@ end
 local function verdant_weight()
     local mid, half = (M.VERDANT_U[1] + M.VERDANT_U[2]) / 2, (M.VERDANT_U[2] - M.VERDANT_U[1]) / 2
     local inside = mul(sub(abs(sub(u_biome(), const(mid))), const(half)), const(-1.0 / M.VERDANT_BLEND_U))
+    return clamp(add(inside, const(0.5)), 0.0, 1.0)
+end
+
+-- The glass weight: the same for the Glass Waste.
+local function glass_weight()
+    local mid, half = (M.GLASS_U[1] + M.GLASS_U[2]) / 2, (M.GLASS_U[2] - M.GLASS_U[1]) / 2
+    local inside = mul(sub(abs(sub(u_biome(), const(mid))), const(half)), const(-1.0 / M.GLASS_BLEND_U))
     return clamp(add(inside, const(0.5)), 0.0, 1.0)
 end
 
@@ -561,6 +576,8 @@ function M.terrain(flank)
         terms = cold_terms()
     elseif mode == "frozen" then
         terms = M.frozen_terms()
+    elseif mode == "mesa" then
+        terms = M.mesa_terms()
     elseif mode == "temperate" then
         terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
     elseif mode == "rainforest" then
@@ -569,8 +586,15 @@ function M.terrain(flank)
         -- The rainforest's karst, ravines and sinkholes over the wet half's
         -- own gullies, weighted in across the belt's edges; the dry half is
         -- the grassland's swells, as everywhere.
+        -- And the mesa's benches and canyons over the dry half's swells,
+        -- weighted in across the Glass Waste's edges. The dry side FIRST: the
+        -- mesa is the deepest term in the program.
         local wet = add(mul(M.rainforest_terms(), verdant_weight()), wet_terms())
-        terms = add(mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+        local dry = swells()
+        if M.mesa_terms then
+            dry = add(mul(M.mesa_terms(), glass_weight()), dry)
+        end
+        terms = add(mul(dry, dry_weight()), mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))))
     else
         -- The temperate pair cross-faded by humidity, and that whole
         -- cross-faded by the alpine weight against the alpine terms at the
@@ -714,7 +738,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

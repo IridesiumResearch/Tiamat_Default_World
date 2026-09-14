@@ -205,6 +205,20 @@ block("bone", "Bone", "A whale's, long on the sea floor, broken across the basal
 -- polygons), `granite` (the erratics) and `dead_wood` (the frozen snags).
 block("clear_ice", "Clear ice", "A frozen lake's top: deep, clear, and blue under it.", { hardness = 0.8, tint = COLD_BLUE, transparent = true })
 
+-- The Arid Mesa (2.0). Six new nodes, asked for by name (2026-09-14):
+-- rust-red* and ochre* sandstone, pale terracotta*, the juniper's* wood and
+-- needles, and the columnar cactus*. Stand-ins until named: terracotta is
+-- `dry_clay`, pale tan sandstone `limestone`, desert sandstone and red sand
+-- `sand`, sagebrush `bramble`; the barrel cacti and prickly pear are cut
+-- from the columnar cactus; the palms are the river's `willow_wood` and
+-- `oak_leaves`; the pines share the juniper's nodes.
+block("rust_red_sandstone", "Rust-red sandstone", "The mesa's reddest strata.", { hardness = 1.3, tint = ROCK })
+block("ochre_sandstone", "Ochre sandstone", "Yellow-brown bands between the red.", { hardness = 1.3, tint = ROCK })
+block("pale_terracotta", "Pale terracotta", "The hard cap on a mesa's top, and on a hoodoo's.", { hardness = 1.6, tint = ROCK })
+block("juniper_wood", "Juniper wood", "Crooked, split and weathered grey.", { hardness = 1.0, tint = ROCK })
+block("juniper_needles", "Juniper needles", "Flat, sparse pads of dark evergreen.", { hardness = 0.2, tint = COLD_GREEN, cutout = true, sway = true })
+block("columnar_cactus", "Columnar cactus", "Ribbed green columns with right-angle arms.", { hardness = 0.4, tint = GREEN })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })
