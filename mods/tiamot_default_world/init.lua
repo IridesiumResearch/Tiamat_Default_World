@@ -30,6 +30,11 @@ tdw.config = {
     -- the surface band (a hundred blocks down, layers.DEPTH) takes it. Set
     -- this to false for a world that looks like a world.
     white_unbuilt = true,
+    -- Which biome a NEW player starts in, by id, or nil for the fixed spawn
+    -- in the woodlands. The landing hunts for it: it drops them on one
+    -- azimuth of that biome's ring, reads the ground, and goes round again
+    -- if the humidity put something else there (whereami.lua).
+    spawn_biome = nil,
 }
 
 -- The host reports a failed load as "errored in init.lua" and nothing more,
@@ -56,6 +61,12 @@ load("biomes.temperate_woodlands")   -- 1.1, the first one built
 load("biomes.rolling_grasslands")    -- 1.2, the dry half of the same ring
 load("biomes.alpine_highlands")      -- 1.3, the frost ring's dry half
 load("biomes.coastal_cliffs")        -- 1.4, the steep stretches of the Long Shore
+load("whereami")                     -- the biome you are in, on the HUD and from chat
+
+-- The HUD script runs on the CLIENT, once a frame, and sees only what
+-- `game.set_hud` sent that player. It draws the biome's name; whereami.lua
+-- decides what the name is and how long it stays up.
+game.register_hud_script("hud.lua")
 load("generate")
 load("player")
 load("rules")             -- leaves and water, and other rules of the whole world

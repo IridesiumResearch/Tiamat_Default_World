@@ -34,7 +34,8 @@ local AIM_ABOVE = 6            -- blocks over the ground the field finds that a 
 local HOP = 160                -- blocks dropped when all of that is air
 local GIVE_UP_AFTER = 1200     -- ticks (one minute) before a landing is abandoned
 
-local online = {}              -- uuid -> { pos, pending, landing }
+local online = {}              -- uuid -> { pos, pending, landing, seeking }
+tdw.online = online            -- whereami.lua reads it: who is here, and who is looking for a biome
 local tick = 0
 
 local function key(uuid)
@@ -135,6 +136,13 @@ local function land(uuid, rec)
         if block.occupancy ~= 0 then
             local landed = { x = x + 0.5, y = y + 1.01, z = z + 0.5 }
             if game.move_player(uuid, landed) then
+                -- A player looking for a biome has landed somewhere: the
+                -- ground says whether it is the right one, and if it is not
+                -- `seek_landed` sends them round to the next azimuth and
+                -- leaves the landing running.
+                if rec.seeking and tdw.seek_landed and not tdw.seek_landed(uuid, rec, x, y + 1, z) then
+                    return
+                end
                 rec.landing = nil
                 rec.pos = landed
                 game.log(string.format("tiamot_default_world: %s landed at %d, %d, %d", uuid, x, y + 1, z))
@@ -155,6 +163,13 @@ game.register_on_player_join(function(event)
         rec.pending = pos
         rec.pos = pos
         game.log(string.format("tiamot_default_world: %s returns to %s", event.name, saved))
+    elseif tdw.config.spawn_biome and tdw.seek_biome
+        and tdw.seek_biome(event.player, tdw.config.spawn_biome, rec) then
+        -- The dev switch picks where a new player starts: they are dropped
+        -- into that biome and the landing hunts for it, rather than at the
+        -- fixed spawn (tdw.config.spawn_biome).
+        game.log(string.format("tiamot_default_world: %s is new here; looking for %s",
+            event.name, tdw.config.spawn_biome))
     else
         rec.pending = SPAWN
         rec.landing = { ticks = 0 }

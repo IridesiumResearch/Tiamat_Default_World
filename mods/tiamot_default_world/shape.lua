@@ -460,23 +460,34 @@ function M.terrain(flank)
         -- with the depth held first they reached the eighth buffer.
         return add(M.coast_terms(), M.depth())
     end
+    -- **The ring's own terms FIRST, the hills after, the depth last.** The
+    -- stack machine holds every pending operand in one of eight buffers, so
+    -- `add(a, b)` peaks at the deeper of `peak(a)` and `1 + peak(b)`: the
+    -- deepest operand belongs first, where nothing is held while it runs.
+    -- Written the other way round — the hills first and the ring's terms
+    -- inside — the "all" mode needed NINE, and every chunk of the band
+    -- where the frost ring meets the temperate one failed to generate and
+    -- took the whole mod down with it. It was never compiled until the
+    -- world had both rings live: the dev switch had pinned every world to
+    -- one ring, and one ring's terms fit.
+    local terms
     if mode == "wet" then
-        shape = add(shape, wet_terms())
+        terms = wet_terms()
     elseif mode == "dry" then
-        shape = add(shape, swells())
+        terms = swells()
     elseif mode == "alpine" then
-        shape = add(shape, M.alpine_terms())
+        terms = M.alpine_terms()
     elseif mode == "temperate" then
-        shape = add(shape, add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight())))
+        terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
     else
         -- The temperate pair cross-faded by humidity, and that whole
         -- cross-faded by the alpine weight against the alpine terms at the
         -- frost ring's edge, so neither ring steps at the border.
         local temperate = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
-        shape = add(shape, add(mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))),
-            mul(M.alpine_terms(), alpine_weight())))
+        terms = add(mul(M.alpine_terms(), alpine_weight()),
+            mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))))
     end
-    return add(M.depth(), shape)
+    return add(add(terms, shape), M.depth())
 end
 
 -- A band of T between two depths, at ONE evaluation of the terrain:

@@ -164,6 +164,18 @@ line is the humidity noise, which is a blob field and was never a ring. The
 world's own shape — the dome, the relief, the depth bands — still goes by
 the true radius, so nothing about its form depends on the wobble.
 
+**Knowing where you are, and getting somewhere.** The biome you walk into
+names itself on the HUD for a second, small and centred at the top: the
+server reads the ground under you every half second, and a name only
+appears when it changes (`whereami.lua`, `hud.lua`). Which biome a place
+belongs to is a field of the radius and the humidity noise, and the seed
+those need is not in the main VM, so the ground is read instead — every
+biome lays its own materials. Saying `alpine`, `woodlands`, `grasslands`
+or `coast` in chat sends you looking for that one: you are dropped on one
+azimuth of its ring, and if the humidity put something else there the
+landing goes round to the next, up to sixteen. `tdw.config.spawn_biome`
+does the same for a new player before they arrive.
+
 **What no biome claims is white.** Four surface biomes are built; every
 other area in the catalogue — the three cave bands, the five shells, the
 tail below the apex — has a registered biome and no code behind it. The

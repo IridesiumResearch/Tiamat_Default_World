@@ -648,6 +648,34 @@ engine commit they landed in, because the mod is written against them.
   itself is `shape.SURFACE_BAND_D`, which layers.lua asserts against the
   surface band's own bottom so the two cannot drift.
 
+### The biome you are in, on the HUD and from chat — and the blend band that could not generate
+
+- **A chunk in the band where the frost ring meets the temperate one could
+  not be generated at all.** The cross-faded program that carries both
+  rings' terms needed nine of the engine's eight buffers, so every chunk
+  there failed and the failure disabled the whole mod. It had never been
+  compiled before: the dev switch pinned every world to one ring, and one
+  ring's terms fit. The fix is the order the terms are added in — the
+  stack machine holds every pending operand, so `add(a, b)` peaks at the
+  deeper of `peak(a)` and `1 + peak(b)`, and the ring's own terms belong
+  first, the world's hills after, the depth last. The same reordering the
+  coast needed when it was written. `top.all.solid` is 378 ops and eight
+  buffers now.
+- The biome you walk into names itself on the HUD for a second, small and
+  centred at the top. The server reads the ground under each player every
+  half second and speaks only on a change; unloaded ground says nothing
+  rather than blanking the name. Which biome a place belongs to is a field
+  of the radius and the humidity noise, and the seed those need is not in
+  this VM (engine-asks 21), so the ground is read instead — every biome
+  lays its own materials, and the alpine's win over the rest because it
+  lays thin dirt in its hollows and dirt is the grassland's own soil.
+- Saying `alpine`, `woodlands`, `grasslands` or `coast` in chat sends you
+  looking for that biome. The humidity half cannot be evaluated here
+  either, so the search is by trial: dropped on one azimuth of the
+  biome's ring, landed, the ground read, and round to the next azimuth if
+  it is the wrong one, up to sixteen. `tdw.config.spawn_biome` runs the
+  same search for a new player instead of the fixed spawn.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
