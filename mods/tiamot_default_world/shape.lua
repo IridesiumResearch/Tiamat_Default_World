@@ -277,8 +277,13 @@ M.sub = { r2 = r2, u = u, ys = ys }
 -- H(u) = SUMMIT - u * (2*DROP - DROP*u), with u evaluated second in the
 -- product so the peak stays at six buffers.
 local function dome()
-    local inner = sub(const(2.0 * M.DOME_DROP), mul(const(M.DOME_DROP), u()))
-    return sub(const(M.SUMMIT), mul(inner, u()))
+    -- **The radius first in both terms.** Written with the constants pushed
+    -- before it, the radius — three buffers of its own — was evaluated with
+    -- two already held, and the dome is inside every program in the world:
+    -- it cost two of the engine's eight everywhere, which is what stopped
+    -- the river's code field compiling at all.
+    local inner = add(mul(u(), const(-M.DOME_DROP)), const(2.0 * M.DOME_DROP))
+    return add(mul(mul(inner, u()), const(-1.0)), const(M.SUMMIT))
 end
 
 -- D: km below the base dome, smooth. The proxy for the deep bands.
@@ -288,7 +293,10 @@ end
 
 -- mask(u) = clamp(1 + RAMP*CROWN_U - RAMP*u, FLOOR, 1)
 local function relief_mask()
-    return clamp(sub(const(1.0 + M.RELIEF_RAMP * M.CROWN_U), mul(const(M.RELIEF_RAMP), u())),
+    -- The radius FIRST: with the constant pushed before it, the radius —
+    -- which is three buffers of its own — was evaluated with two already
+    -- held, and this mask is inside every surface program in the world.
+    return clamp(add(mul(u(), const(-M.RELIEF_RAMP)), const(1.0 + M.RELIEF_RAMP * M.CROWN_U)),
         M.RELIEF_FLOOR, 1.0)
 end
 
@@ -307,7 +315,7 @@ M.PLAIN_U = (M.SPAWN_X * M.SPAWN_X + M.SPAWN_Z * M.SPAWN_Z) * 1e-6 / (M.R_DISC *
 local function plain_mask()
     local function du() return sub(u(), const(M.PLAIN_U)) end
     local ramp = clamp(mul(mul(du(), du()), const(1 / (M.PLAIN_HALF_WIDTH_U * M.PLAIN_HALF_WIDTH_U))), 0.0, 1.0)
-    return add(const(M.PLAIN_FLOOR), mul(ramp, const(1.0 - M.PLAIN_FLOOR)))
+    return add(mul(ramp, const(1.0 - M.PLAIN_FLOOR)), const(M.PLAIN_FLOOR))
 end
 
 -- How deep in a gully a point is, 0..1: 1 on the creek line, 0 at the
@@ -442,6 +450,13 @@ end
 -- are in play — a noise node each, every time it is evaluated. `flank`
 -- programs run only near the rim and the underside, far from the plain, so
 -- they leave the plain and the blend out and keep the ops for the body.
+-- The world's hills on their own, for anything that wants the smooth height
+-- without the fine detail: the river cuts its valley from this, so a trough
+-- has a smooth floor whatever the ground above it is doing.
+function M.relief_node()
+    return mul(mul(relief_mask(), noise("relief", M.RELIEF_FREQ, M.RELIEF_OCTAVES, M.RELIEF_AMP)), plain_mask())
+end
+
 function M.terrain(flank)
     local relief = mul(relief_mask(), noise("relief", M.RELIEF_FREQ, M.RELIEF_OCTAVES, M.RELIEF_AMP))
     -- The world's own hills: two octaves every surface program pays. The
@@ -487,7 +502,27 @@ function M.terrain(flank)
         terms = add(mul(M.alpine_terms(), alpine_weight()),
             mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))))
     end
-    return add(add(terms, shape), M.depth())
+    local out = add(add(terms, shape), M.depth())
+    -- **The river valleys are SUBTRACTED from whatever is there**, rather
+    -- than being a mode of their own: a river crosses biomes, and the
+    -- uplands either side keep their own shape. The terrain is the lesser
+    -- of itself and the trough's surface, which is the smooth height minus
+    -- the valley's depth plus the profile — and the profile rises a
+    -- kilometre past the rim, so beyond the valley the trough never bites.
+    --
+    -- The terrain FIRST and the trough second: `min(a, b)` peaks at the
+    -- deeper of `peak(a)` and `1 + peak(b)`, and the terrain is much the
+    -- deeper of the two, so this costs no buffer at all.
+    if not flank and mode ~= "alpine" and mode ~= "coast" and M.river_valley then
+        local trough = M.river_valley()
+        if mode == "all" then
+            -- Not into the mountains: where the alpine weight is up, the
+            -- trough's surface is put a kilometre out of reach.
+            trough = add(trough, mul(alpine_weight(), const(1.0)))
+        end
+        out = min(out, trough)
+    end
+    return out
 end
 
 -- A band of T between two depths, at ONE evaluation of the terrain:
@@ -588,7 +623,11 @@ end
 -- needs them (`top_for`); the rest are compiled here, at load, where
 -- `--check-mods` sees them.
 P.top = {}
-local LAZY = { alpine = true, all = true, coast = true }
+-- Every mode is built on demand now. The temperate set used to be built
+-- here, at load, which was before the river valleys had defined the trough
+-- they cut into it — so the world's most common programs were the only ones
+-- without a river in them.
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then
@@ -602,8 +641,6 @@ if tdw.config.everywhere then
     if not LAZY[mode] then
         P.top[mode] = top_programs(mode)
     end
-else
-    P.top.temperate = top_programs("temperate")
 end
 P.flank = {
     deep = compile("flank.deep", min(sub(M.depth(), const(M.SURFACE_BAND_D)), M.body())),

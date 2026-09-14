@@ -53,6 +53,11 @@ BLOCKS = {
     "ocean_moss":     ( 40,  78,  62,  0),
     "barnacles":      (170, 166, 154,  0),
     "seagrass":       ( 66, 118,  58,  0),
+    "willow_wood":    ( 92,  82,  66,  0),
+    "willow_leaves":  ( 96, 124,  62,  0),
+    "willow_planks":  (176, 156, 120,  0),
+    "water_iris":     ( 74, 116,  64,  0),
+    "wild_mint":      ( 86, 126,  78,  0),
     "kelp":           ( 96, 104,  40,  0),
     "permafrost":     (118, 108,  98,  0),
     "snow":           (228, 232, 236,  0),
@@ -97,6 +102,9 @@ CELL_EDGES = [0, 5, 11, 16]     # the three cells across a 16-pixel face
 # Read as round leaf clusters at a distance and as a cloud of dots up close,
 # in the game's crisp style rather than a painterly one. Binary alpha.
 # name -> (radius in pixels, radius jitter, centre jitter)
+# The willow's leaves are the dot look, finer and denser than an oak's: a
+# curtain read close up is many small leaves, not a few big ones.
+DOTS_EXTRA = {"willow_leaves": (2.1, 0.5, 0.8)}
 DOTS = {
     "oak_leaves": (2.6, 0.4, 0.6),
     "rose_bush": (2.9, 0.4, 0.5),   # a denser, rounder leaf than the oak's
@@ -135,10 +143,14 @@ FRONDS = {"fern"}
 # a blade, not a stroke. Five of them per card, one to a fifth of the tile
 # and jittered inside it so they never bunch, most reaching near the top,
 # each leaning and bending its own way. Binary alpha.
+DOTS.update(DOTS_EXTRA)
+
 BLADES = {
     "tall_grass": (5, 11, 16),   # blades per card; shortest, tallest in pixels
     "alpine_grass": (5, 8, 13),  # shorter: wind-flattened
     "coast_grass": (5, 7, 12),   # shorter still: wind-scoured
+    "water_iris": (4, 12, 16),   # tall blades, few of them
+    "wild_mint": (6, 5, 9),      # low and bushy
     "seagrass": (5, 12, 16),     # long, most of the card
     "kelp": (3, 14, 16),         # three broad-ish stems the height of the card
 }

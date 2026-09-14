@@ -190,6 +190,23 @@ function tdw.biome_spans(id)
     return { { ring, ring } }
 end
 
+-- The biomes of a chunk: those whose rings reach it, less any that says it
+-- is not in THIS chunk. A biome that covers its rings only here and there —
+-- a river, which is a line across them — answers `present(pos)` with one
+-- sample of its own course, and a chunk it is not near does not evaluate
+-- its fills at all. Without it a river's terrain and code fields would be
+-- evaluated in every chunk of six rings to paint nothing.
+function tdw.present_biomes_in(u_lo, u_hi, pos)
+    local found = tdw.surface_biomes_in(u_lo, u_hi)
+    local kept = {}
+    for _, biome in ipairs(found) do
+        if biome.present == nil or biome.present(pos) then
+            kept[#kept + 1] = biome
+        end
+    end
+    return kept
+end
+
 -- The whole u range a biome can be found in, over all its spans.
 function tdw.biome_span_u(id)
     local lo, hi = nil, nil

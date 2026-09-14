@@ -43,7 +43,8 @@ biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
 biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
     ring = "shore", note = "Gentle stretches of the Long Shore." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
-    ring = "temperate", note = "Needs the map pre-pass (rivers are global facts)." }
+    ring = "temperate",
+    note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }
 biome{ id = "dense_rainforest_canopy", name = "Dense Rainforest Canopy", area = "surface",
     ring = "verdant", humidity = { 0.05, 0.42 }, note = "The wet half of the Verdant Belt." }
 biome{ id = "arid_mesa", name = "Arid Mesa", area = "surface",

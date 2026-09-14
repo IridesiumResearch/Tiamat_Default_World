@@ -676,6 +676,62 @@ engine commit they landed in, because the mod is written against them.
   it is the wrong one, up to sixteen. `tdw.config.spawn_biome` runs the
   same search for a new player instead of the fixed spawn.
 
+### 1.6 River Valleys, and the dome that cost two buffers everywhere
+
+- Troughs cut across every ring from the temperate one outward, with a
+  river down the middle. The course is the zero contour of a slow noise
+  read as a distance in blocks, and everything reads that one distance:
+  the channel nine blocks either side of it, the gravel bank and the point
+  bars to seventeen, the alluvial terrace to fifty-eight, the valley rim
+  at a hundred and fifty and twenty-six blocks above the water. A slow
+  noise along the course decides which bank is the undercut bluff and
+  which the wide point bar, by stretching the bank on one side and
+  squeezing it on the other.
+- The valley is SUBTRACTED from the terrain rather than being a mode of
+  its own (`shape.river_valley`, called from `M.terrain`): the trough's
+  surface is the world's smooth height minus the profile, and the terrain
+  is the lesser of itself and that. So a river crosses biomes and the
+  uplands keep their shape; past the rim the profile rises a kilometre so
+  the trough never bites. It is kept out of the mountains by the alpine
+  weight, and off the coast, which has a sea of its own.
+- The water is the water BLOCK, as the alpine lakes are. A fluid has to be
+  flat and a river that runs across a 2.5 km dome cannot be; a block takes
+  whatever height the valley floor has, and because a block's height is an
+  integer the surface comes out as a staircase of one-block steps — which,
+  with the riffles laid on them, is what a river does. Pools are five
+  blocks deep over sand, riffles one over gravel, by a noise along the
+  course.
+- Materials by the layered fill: moist sand for the bed and the wet bank,
+  clay (mud) along the water line, gravel on the banks and bars, bedrock
+  shelves scoured bare where the flow is fast, turf over soil on the
+  terraces and slopes, and spring seeps weeping from the valley walls.
+  Cover: dense water iris in the shallows, wild mint on the damp ground
+  behind it, grass over the terraces.
+- Trees and accents by the scatter: eight willows — four stems on a
+  two-by-two footprint, each twisting its own way, the whole leaning, a
+  broad crown and eight to twelve curtains of leaves hung from its rim
+  and longest on the side it leans over — hugging the shoreline; five
+  palms standing back on the terraces; snags and drift jams of two to
+  four crossed trunks lodged on the bars; stepping stones in the
+  shallows.
+- Five blocks, all asked for by name: `willow_wood`, `willow_leaves`,
+  `willow_planks`, `water_iris`, `wild_mint`.
+- A river is a LINE, so the biome answers `present(pos)` with one sample
+  of its own course at the chunk's centre; a chunk no course reaches never
+  evaluates its terrain or its code field. `tdw.present_biomes_in` is what
+  the generator asks now.
+- **The dome was built constant-first and cost two of the engine's eight
+  buffers in every program in the world.** The radius is three buffers of
+  its own, and it was evaluated with two already held. Written
+  radius-first the dome peaks at four instead of six — which is what
+  stopped the river's code field compiling, and is a saving everywhere.
+  The relief mask and the plain mask had the same fault and are fixed with
+  it. Every mode's programs are built on demand now, too: the temperate
+  set used to be built at load, which was before the river had defined the
+  trough it cuts into them.
+- Saying `river` in chat looks for one, and the ground identifies it by
+  its willows and its iris.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

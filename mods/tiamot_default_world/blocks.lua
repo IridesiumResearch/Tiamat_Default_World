@@ -158,6 +158,16 @@ block("barnacles", "Barnacles", "A pale crust on the rock flats and the wave-rou
 block("seagrass", "Seagrass", "Two to four blocks of it, swaying with the current.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
 block("kelp", "Kelp", "Ten blocks of it from a hollow, swaying.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
 
+-- The river valleys (1.6). Five new nodes, asked for by name: the willow's
+-- wood, its leaves and its planks, and the two flowering herbs of the bank.
+-- The clay beds are `mud`, the gravel is `creek_bed` and the bedrock shelves
+-- are `stone`, all of which already exist and mean what they mean.
+block("willow_wood", "Willow wood", "Grey-brown, twisted, and always leaning over the water.", { hardness = 0.9, tint = SOIL })
+block("willow_leaves", "Willow leaves", "Long curtains of it, dipping into the current.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
+block("willow_planks", "Willow planks", "Pale boards cut from a river willow.", { hardness = 0.8, tint = SOIL })
+block("water_iris", "Water iris", "Blades and a flower, standing in the shallows.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
+block("wild_mint", "Wild mint", "Low, soft, and everywhere the bank is damp.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

@@ -28,6 +28,10 @@ local SEEK_SKY = 220           -- blocks over the base dome a seeker is dropped 
 -- whatever else is in it.
 local ALPINE_GROUND = { blocks.granite, blocks.slate, blocks.permafrost, blocks.snow,
     blocks.ice, blocks.alpine_turf, blocks.alpine_grass, blocks.fir_log, blocks.fir_needles }
+-- The river's own, which win for the same reason the alpine's do: a valley
+-- is cut through another biome, and its floor is sand and gravel that
+-- belong to half the world. A willow or an iris belongs to one river.
+local RIVER_GROUND = { blocks.willow_wood, blocks.willow_leaves, blocks.water_iris, blocks.wild_mint }
 local OWNER = {
     [blocks.loam] = "temperate_woodlands",
     [blocks.leaf_litter] = "temperate_woodlands",
@@ -44,6 +48,11 @@ local OWNER = {
 for _, material in ipairs(ALPINE_GROUND) do
     OWNER[material] = "alpine_highlands"
 end
+for _, material in ipairs(RIVER_GROUND) do
+    OWNER[material] = "river_valleys"
+end
+-- Whose ground answers at once, wherever in the column it is found.
+local DECIDES = { alpine_highlands = true, river_valleys = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -74,7 +83,7 @@ function tdw.biome_under(x, y, z)
         materials_of(game.get_block{ x = x, y = y + dy, z = z }, list)
         for _, m in ipairs(list) do
             local owner = OWNER[m]
-            if owner == "alpine_highlands" then
+            if owner and DECIDES[owner] then
                 return owner
             end
             if owner and first == nil then
@@ -140,6 +149,7 @@ local FIND_AT = {
     rolling_grasslands = 0.149,    -- the middle of the hot rings, which are all grassland
     temperate_woodlands = 0.067,   -- the temperate ring, at the spawn's own radius
     coastal_cliffs = 0.50,         -- the Long Shore, where it WOULD be if it were placed
+    river_valleys = 0.067,         -- the temperate ring: a course crosses every ring, so any will do
 }
 
 -- Sends a player looking for a biome. Which humidity half a place is in is a
@@ -190,6 +200,7 @@ for word, id in pairs({
     woodlands = "temperate_woodlands",
     grasslands = "rolling_grasslands",
     coast = "coastal_cliffs",
+    river = "river_valleys",
 }) do
     tdw.on_chat(word, function(player)
         local rec = tdw.online[player]

@@ -212,7 +212,7 @@ local function generate(buf, pos)
     -- evaluations of the terrain a chunk were one, and the coast at
     -- forty-eight milliseconds a chunk asked for it. A chunk two biomes
     -- share keeps the old path: a wildcard cannot know whose ground it is.
-    local found = (skin and inside_body and tmin < shape.SKIN_TOP) and tdw.surface_biomes_in(ulo, uhi) or nil
+    local found = (skin and inside_body and tmin < shape.SKIN_TOP) and tdw.present_biomes_in(ulo, uhi, pos) or nil
     local body_by_layers = nil
     if found and #found == 1 then
         for _, fill in ipairs(tdw.fills_for(found[1], mode)) do
@@ -254,7 +254,7 @@ local function generate(buf, pos)
         end
         if skin and inside_body and tmin < shape.SKIN_TOP then
             -- The biome's own top.
-            local found = tdw.surface_biomes_in(ulo, uhi)
+            local found = tdw.present_biomes_in(ulo, uhi, pos)
             local function fills_of(biome)
                 return tdw.fills_for(biome, mode)
             end

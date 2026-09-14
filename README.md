@@ -156,6 +156,7 @@ every ring its temperature suits until the biome that ring is for exists:
 | The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
 | The Ember Ridge, the Glass Waste | 20.7 to 28.3 km | Rolling Grasslands over the whole width: the dry band round the middle of the world, standing in for a desert |
 | The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity; the Coastal Cliffs are NOT here yet |
+| Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
 
 **No edge of any of it is a circle.** The radius the biomes are placed by is
 the true radius pushed in and out by a slow noise (`shape.RING_WOBBLE`), so
@@ -163,6 +164,13 @@ every ring's edge wanders by up to about two kilometres, and the wet/dry
 line is the humidity noise, which is a blob field and was never a ring. The
 world's own shape — the dome, the relief, the depth bands — still goes by
 the true radius, so nothing about its form depends on the wobble.
+
+**A river is a line, not a band.** The River Valleys are not a ring: their
+course is the zero contour of a slow noise, and the trough is SUBTRACTED
+from whatever terrain it crosses, so a river cuts through the woodland and
+the grassland alike and the uplands either side keep their own shape. A
+chunk answers `present` with one sample of its own course, so the chunks a
+river does not reach never evaluate it.
 
 **Knowing where you are, and getting somewhere.** The biome you walk into
 names itself on the HUD for a second, small and centred at the top: the

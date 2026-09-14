@@ -61,6 +61,7 @@ load("biomes.temperate_woodlands")   -- 1.1, the first one built
 load("biomes.rolling_grasslands")    -- 1.2, the dry half of the same ring
 load("biomes.alpine_highlands")      -- 1.3, the frost ring's dry half
 load("biomes.coastal_cliffs")        -- 1.4, the steep stretches of the Long Shore
+load("biomes.river_valleys")         -- 1.6, the troughs and their rivers, cut across every ring they cross
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

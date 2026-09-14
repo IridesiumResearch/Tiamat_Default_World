@@ -112,6 +112,23 @@ coastal pines on the rim).
 | `seagrass` | cross cards two to four blocks tall over the terrace, in prairies | asked for by name 2026-09-13 |
 | `kelp` | cross cards eight to twelve tall in the hollows and off the ledge | asked for by name 2026-09-13 |
 
+### 1.6 River Valleys (2026-09-14)
+
+Shares `sand` (the bed and the bars, from the shelf), `mud` (the clay beds
+at the water line), `creek_bed` (gravel banks and riffles), `stone` (the
+scoured bedrock shelves), `water` (the channel, as the BLOCK, as the alpine
+lakes are), `dead_wood` (snags and drift jams), `grass` and `tall_grass`
+(the terraces), and `oak_leaves` (the palms' fronds: the willow is the new
+tree, and a palm's crown is a shape rather than a material).
+
+| Block | Where | Why |
+|---|---|---|
+| `willow_wood` | the twisted multi-stem trunks leaning over the current | asked for by name 2026-09-14 |
+| `willow_leaves` | the sweeping curtains, hung from the crown into the water | asked for by name 2026-09-14 |
+| `willow_planks` | not generated: the crafted board, registered with its tree | asked for by name 2026-09-14 |
+| `water_iris` | dense in the shallows and on the wet bank | asked for by name 2026-09-14 |
+| `wild_mint` | low and soft wherever the bank is damp | asked for by name 2026-09-14 |
+
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:
