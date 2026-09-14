@@ -629,6 +629,25 @@ engine commit they landed in, because the mod is written against them.
 - Small kelp groves on the shelf, as the design says: a sixth of the deep
   floor rather than half.
 
+### What no biome claims is white
+
+- Four surface biomes are built and every other area in the catalogue has
+  a registered biome and no code behind it: the three cave bands, the five
+  shells of the core stack, the tail below the apex. All of it was filled
+  with the layer table's stand-in rock — stone, gloam stone, abyss stone,
+  magma crust, marrow, apex stone — which looks like rock and reads as
+  finished work.
+- It is the core mod's white placeholder block now, everywhere below the
+  surface band: the one depth band whose area has biomes is the top
+  hundred blocks, and the normal caves begin under it. A chunk wholly
+  below the line takes white as the material it is filled from; one
+  straddling the line takes a fill of its own (`top.deep`, the depth
+  against the band's bottom, which the flank set carries too). The shells
+  and the tail take it wherever they are.
+- `tdw.config.white_unbuilt = false` puts every stand-in back. The line
+  itself is `shape.SURFACE_BAND_D`, which layers.lua asserts against the
+  surface band's own bottom so the two cannot drift.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

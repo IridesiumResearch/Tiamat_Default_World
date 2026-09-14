@@ -213,6 +213,7 @@ M.HOLLOW_R = 37.0
 -- block from every surface block, and the two edges coincide exactly.
 M.SKIN_TOP = 0.003       -- km: the biome's own material, three blocks
 M.SKIN_DIRT = 0.005      -- km: soil under it, stone below that
+M.SURFACE_BAND_D = 0.10  -- km: the bottom of the surface depth band; layers.lua asserts it against the band's own
 M.GLOAM_D = 1.6          -- km below the base dome
 M.ABYSS_D = 4.0
 
@@ -553,6 +554,10 @@ local P = M.programs
 -- The top programs, one set per terrain mode the world needs: the dev
 -- switch's one mode, or the three of the real world. The deep bands follow
 -- D alone and are the same programs in every set.
+-- The bottom of the surface band: everything under it belongs to an area
+-- whose biomes are not built, and the generator paints that white while
+-- that is true (generate.lua, tdw.config.white_unbuilt).
+local deep = compile("top.deep", sub(M.depth(), const(M.SURFACE_BAND_D)))
 local gloam = compile("top.gloam", sub(M.depth(), const(M.GLOAM_D)))
 local abyss = compile("top.abyss", sub(M.depth(), const(M.ABYSS_D)))
 local function top_programs(mode)
@@ -560,6 +565,7 @@ local function top_programs(mode)
     local set = {
         solid = compile("top." .. mode .. ".solid", M.terrain(false)),
         stone = compile("top." .. mode .. ".stone", sub(M.terrain(false), const(M.SKIN_DIRT))),
+        deep = deep,
         gloam = gloam,
         abyss = abyss,
     }
@@ -589,6 +595,7 @@ else
     P.top.temperate = top_programs("temperate")
 end
 P.flank = {
+    deep = compile("flank.deep", min(sub(M.depth(), const(M.SURFACE_BAND_D)), M.body())),
     solid = compile("flank.solid", min(M.terrain(true), M.body())),
     stone = compile("flank.stone", min(sub(M.terrain(true), const(M.SKIN_DIRT)), M.body())),
     gloam = compile("flank.gloam", min(sub(M.depth(), const(M.GLOAM_D)), M.body())),

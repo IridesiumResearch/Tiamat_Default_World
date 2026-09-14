@@ -74,4 +74,10 @@ M.TAIL = {
     { id = "below_apex", y = { shape.APEX_Y, -70.0 }, material = "apex_stone" },
 }
 
+-- shape.lua carries the surface band's bottom itself (it loads first); the
+-- two must not drift apart, since the generator paints everything below it
+-- as unbuilt.
+assert(math.abs(M.DEPTH[1].d[2] - shape.SURFACE_BAND_D) < 1e-12,
+    "shape.SURFACE_BAND_D is not the surface band's bottom")
+
 return M

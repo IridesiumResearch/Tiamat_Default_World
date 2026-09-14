@@ -164,6 +164,15 @@ line is the humidity noise, which is a blob field and was never a ring. The
 world's own shape — the dome, the relief, the depth bands — still goes by
 the true radius, so nothing about its form depends on the wobble.
 
+**What no biome claims is white.** Four surface biomes are built; every
+other area in the catalogue — the three cave bands, the five shells, the
+tail below the apex — has a registered biome and no code behind it. The
+generator used to fill all of that with the layer table's stand-in rock,
+which looks like rock and reads as finished work. It is the white
+placeholder block now, everywhere below the surface band (a hundred blocks
+down), so what is left to build is visible from inside any hole.
+`tdw.config.white_unbuilt = false` puts the rock back.
+
 **The Coastal Cliffs and their shelf are built but not placed.** Their sea
 is flat, and the world's rim is 2.5 km of dome above where a flat sea would
 sit, with about 180 m of relief on top of that; putting the ocean in the

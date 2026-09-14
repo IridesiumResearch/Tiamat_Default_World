@@ -21,6 +21,15 @@ tdw = {}
 -- looked at on its own while it is being made. Set it to nil for the world.
 tdw.config = {
     everywhere = nil,
+    -- **What no biome has claimed is WHITE.** Four surface biomes are built
+    -- and every other area in the catalogue — the three cave bands, the five
+    -- shells, the tail below the apex — has a registered biome and no code
+    -- behind it, and until now the generator filled all of it with the
+    -- layer table's stand-in rock, which looks like rock and reads as
+    -- finished work. White reads as what it is: unclaimed. Everything below
+    -- the surface band (a hundred blocks down, layers.DEPTH) takes it. Set
+    -- this to false for a world that looks like a world.
+    white_unbuilt = true,
 }
 
 -- The host reports a failed load as "errored in init.lua" and nothing more,

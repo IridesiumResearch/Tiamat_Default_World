@@ -62,9 +62,30 @@ end
 
 -- The deepest band a chunk is guaranteed to be in, from the smooth depth:
 -- its material and how many of the band fills it already implies.
+-- The white placeholder, and what it stands for: see tdw.config. Nil when
+-- the switch is off or the core mod is not in the set, and then every
+-- material below is the one the layer table names.
+local WHITE = nil
+if tdw.config.white_unbuilt then
+    local ok, id = pcall(game.get_block_id, "core:white")
+    if ok and id then
+        WHITE = id
+        game.log("tiamot_default_world: everything under the surface band is white — no biome claims it yet (tdw.config.white_unbuilt)")
+    end
+end
+-- The material for a part of the world no biome has claimed.
+local function unclaimed(material)
+    return WHITE or material
+end
+
+local DEEP_D = shape.SURFACE_BAND_D
+
 local function band_for(dmin)
-    if dmin > shape.ABYSS_D + SAFETY then return blocks.abyss_stone, 2 end
-    if dmin > shape.GLOAM_D + SAFETY then return blocks.gloam_stone, 1 end
+    if dmin > shape.ABYSS_D + SAFETY then return unclaimed(blocks.abyss_stone), 2 end
+    if dmin > shape.GLOAM_D + SAFETY then return unclaimed(blocks.gloam_stone), 1 end
+    -- The surface band is the one depth band whose area has biomes; below
+    -- it the normal caves begin, and nothing is built there.
+    if dmin > DEEP_D + SAFETY then return unclaimed(blocks.stone), 0 end
     return blocks.stone, 0
 end
 
@@ -171,9 +192,9 @@ local function generate(buf, pos)
     local base, level = band_for(dmin)
     local tail = false
     if Yhi < shape.APEX_Y then
-        base, tail = blocks.apex_stone, true
+        base, tail = unclaimed(blocks.apex_stone), true
     elseif Yhi < shape.TAIL_Y then
-        base, tail = blocks.marrow, true
+        base, tail = unclaimed(blocks.marrow), true
     end
     -- Within reach of the skin, the body is painted as the biome's soil
     -- first and stone is put back from five blocks down: that keeps the
@@ -219,12 +240,17 @@ local function generate(buf, pos)
                 buf:fill_density(V.stone, blocks.stone, DETAIL)
             end
         end
-        -- The deep bands, exact and free of noise.
+        -- The deep bands, exact and free of noise. The first of them is the
+        -- top of what no biome claims: a chunk wholly below it took the
+        -- placeholder as its base, and one straddling it takes this fill.
+        if WHITE and dmin <= DEEP_D + SAFETY and dmax > DEEP_D - SAFETY then
+            buf:fill_density(V.deep, WHITE, DETAIL)
+        end
         if level < 1 and dmax > shape.GLOAM_D - SAFETY then
-            buf:fill_density(V.gloam, blocks.gloam_stone, DETAIL)
+            buf:fill_density(V.gloam, unclaimed(blocks.gloam_stone), DETAIL)
         end
         if level < 2 and dmax > shape.ABYSS_D - SAFETY then
-            buf:fill_density(V.abyss, blocks.abyss_stone, DETAIL)
+            buf:fill_density(V.abyss, unclaimed(blocks.abyss_stone), DETAIL)
         end
         if skin and inside_body and tmin < shape.SKIN_TOP then
             -- The biome's own top.
@@ -291,7 +317,7 @@ local function generate(buf, pos)
     for _, shell in ipairs(shape.SHELLS) do
         local id, outer, inner = shell[1], shell[2], shell[3]
         if e2lo < outer * outer and e2hi > inner * inner then
-            buf:fill_density(P.shells[id], blocks[layers.SHELL_MATERIAL[id]], DETAIL)
+            buf:fill_density(P.shells[id], unclaimed(blocks[layers.SHELL_MATERIAL[id]]), DETAIL)
             touched = true
         end
     end
