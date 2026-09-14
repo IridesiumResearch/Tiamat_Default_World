@@ -81,6 +81,14 @@ local OAK = {
     flat = 0.7,                    -- clump height as a share of its width
     flares = { 2, 3 },
     hollow_one_in = HOLLOW_ONE_IN,  -- a den under the roots, now and then
+    -- The path tree (2026-09-14): the trunk's radius at the foot and at the
+    -- top, in blocks; how far it leans each step of four; a twig and a
+    -- smaller clump off some branches; and how many shapes to cut.
+    name = "oak",
+    trunk_r = { 0.7, 0.42 },
+    lean = 0.18,
+    twigs = true,
+    templates = 12,
 }
 -- Aspen: tall and narrow, and leafy the way a column is leafy — three to
 -- five short branches stacked up the top half of the trunk, each with a
@@ -96,6 +104,11 @@ local ASPEN = {
     crown = { 1.5, 0.6 },
     flat = 1.25,
     flares = { 0, 2 },
+    name = "aspen",
+    trunk_r = { 0.46, 0.24 },
+    lean = 0.06,
+    twigs = false,
+    templates = 6,
 }
 local BIRCH = ASPEN                -- the block is still called birch_log
 
@@ -132,6 +145,7 @@ local blocks = tdw.blocks
 local layers = tdw.layers
 local shape = tdw.shape
 local edits = tdw.edits
+local schem = tdw.schem
 
 -- Lazy like the rest: a biome's fills carry the terrain INSIDE them, and
 -- the river valleys are a term of that terrain (shape.river_valley) defined
@@ -165,8 +179,15 @@ tdw.build_biome("temperate_woodlands", function(ctx)
         return shape.terrain_band(-COVER_CELL * cells, 0.0, false)
     end
     local fern_patch = n.sub(n.noise("fern_patch", FERN_PATCH_FREQ, 1, 1.0), n.const(FERN_PATCH_MIN))
+    -- Neither ferns nor tufts in a river valley: they stood on the river's
+    -- bed, and in strips across its channel. The ferns keep the valley's
+    -- slopes; the grass there is the river's own.
+    local function off_river(field, blocks_out)
+        return shape.river_exclude and shape.river_exclude(field, blocks_out) or field
+    end
     local ferns = shape.compile("biome.woodlands.ferns",
-        masked(n.min(n.min(over(2), fern_patch), n.sub(n.noise("fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN)))))
+        masked(off_river(n.min(n.min(over(2), fern_patch), n.sub(n.noise("fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))),
+            shape.RIVER_BAR or 0)))
     -- Tufts: the engine's cover fill stands them on the surface the fills
     -- above made — two cells tall, one where the surface is a block's top
     -- cell, always inside ONE block (never two stacked blocks, which
@@ -183,9 +204,9 @@ tdw.build_biome("temperate_woodlands", function(ctx)
     -- block each way. The card turns to face the camera until the engine's
     -- fixed cards land (engine-asks, item 9).
     local tufts = shape.compile("biome.woodlands.tufts",
-        masked(n.min(n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
+        masked(off_river(n.min(n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
             n.mul(fern_patch, n.const(-1.0))),
-            n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))))
+            n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN))), shape.RIVER_RIM or 0)))
     -- In order: turf everywhere, litter over it in patches, gravel over both
     -- along the creek floors; then the cover over all of it.
     return {
@@ -251,7 +272,7 @@ local function candidate(x, y, z, one_in)
 end
 
 -- Counts, for the log.
-local stats = { turns = 0, candidates = 0, attempts = 0, grown = 0, rocks = 0, pools = 0, pool_tries = 0, pool_slope = 0, brambles = 0, mantle = 0,
+local stats = { turns = 0, candidates = 0, attempts = 0, grown = 0, cut = 0, rocks = 0, pools = 0, pool_tries = 0, pool_slope = 0, brambles = 0, mantle = 0,
     no_room = 0, headroom = 0, spacing = 0, unloaded = 0, errors = 0, head_by = {} }
 local last_error = nil
 
@@ -530,120 +551,204 @@ local function clump(leaf_masks, cx, cy, cz, r, flat, rng)
     end
 end
 
-local DIRS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+-- **Every trunk, branch and root is a PATH with a thickness**
+-- (`schem.push_path`), as the river's willows and palms are — "switch the
+-- regular oak trees over to that technique" (2026-09-14). The blocky tree
+-- was a column of rounded blocks with bars for branches; this one tapers
+-- from a flared foot, leans and wanders as it climbs, and its branches
+-- leave the trunk at whatever angle and height they do, each with a clump
+-- of leaves on the end and now and then a twig with a smaller clump off
+-- its middle. Root flares run down and out into the turf round the foot.
+--
+-- A tree is CUT once into a template — `{dx, dy, dz, material, mask, wood}`
+-- from a root at the grass block, wood first (`schem.merged`) — and a tree
+-- that grows is a template STAMPED where it stands, read against the world
+-- as the blocky tree was: its trunk always, its other wood where the block
+-- is open, its leaves where the column is clear at its lowest leaf. The
+-- templates are cut as the trees are first asked for, one a call and up to
+-- `species.templates` of each, so no one tick pays for the lot; after that
+-- a tree costs its reads and nothing to cut.
+local TEMPLATES = {}
+local WOODY = { [blocks.oak_log] = true, [blocks.birch_log] = true }
+local BLIND = { blind = true }
+
+local function cut_tree(rng, species)
+    local height = pick(rng, species.trunk)
+    local r0, r1 = species.trunk_r[1], species.trunk_r[2]
+    edits.begin()
+    -- The trunk: flared into the ground, climbing with a lean of its own
+    -- and a little wander, thinner at the top.
+    local lean = schem.DIR16[rng:below(16) + 1]
+    local tx, tz = 0.5, 0.5
+    local trunk = { { tx, -1.5, tz, r0 * 1.2 }, { tx, 0.3, tz, r0 } }
+    for i = 1, 4 do
+        local t = i / 4
+        tx = tx + lean[1] * species.lean + (rng:below(3) - 1) * 0.12
+        tz = tz + lean[2] * species.lean + (rng:below(3) - 1) * 0.12
+        trunk[#trunk + 1] = { tx, 0.3 + t * (height - 0.3), tz, r0 + (r1 - r0) * t }
+    end
+    schem.push_path(species.log, trunk, BLIND)
+    -- The root flares, down and out into the turf.
+    local flares = pick(rng, species.flares)
+    local first = rng:below(16)
+    for i = 0, flares - 1 do
+        local d = schem.DIR16[(first + i * 16 // flares + rng:below(2)) % 16 + 1]
+        local reach = 1.6 + rng:below(3) * 0.3
+        schem.push_path(species.log, {
+            { 0.5, 0.7, 0.5, r0 * 0.55 },
+            { 0.5 + d[1] * reach * 0.6, -0.05, 0.5 + d[2] * reach * 0.6, 0.3 },
+            { 0.5 + d[1] * reach, -0.7, 0.5 + d[2] * reach, 0.16 },
+        }, BLIND)
+    end
+    local function clump(cx, cy, cz, r)
+        schem.push_ellipsoid(species.leaves, cx, cy, cz, r, r * species.flat, r, { rough = 0.35, jitter = rng, blind = true })
+    end
+    -- A fork: a second leader leaving at about half height, with a crown
+    -- of its own.
+    if rng:below(species.fork_one_in) == 0 then
+        local d = schem.DIR16[rng:below(16) + 1]
+        local fx, fy, fz, fr = schem.path_point(trunk, math.max(2, height // 2))
+        local rise = 3 + rng:below(2)
+        local tip = { fx + d[1] * 2.0, fy + rise, fz + d[2] * 2.0, math.max(0.2, fr * 0.45) }
+        schem.push_path(species.log, {
+            { fx, fy, fz, fr * 0.8 },
+            { fx + d[1] * 1.1, fy + rise * 0.55, fz + d[2] * 1.1, math.max(0.22, fr * 0.6) },
+            tip,
+        }, BLIND)
+        clump(tip[1], tip[2] + 0.5, tip[3], pick(rng, species.clump))
+    end
+    -- The main branches off the upper trunk, round the compass, each rising
+    -- as it goes out and carrying a clump at its end.
+    local count = pick(rng, species.branches)
+    local start = rng:below(16)
+    for i = 0, count - 1 do
+        local heading = start + i * 16 // count
+        local d = schem.DIR16[(heading + rng:below(3) - 1) % 16 + 1]
+        local h = math.min(height - 0.5, math.max(2, height * 0.55) + rng:below(math.max(1, height * 2 // 5)))
+        local bx, by, bz, br = schem.path_point(trunk, h)
+        local out = pick(rng, species.branch_out) + 0.5
+        local up = pick(rng, species.branch_up)
+        local mid = { bx + d[1] * out * 0.55, by + up * 0.3 + 0.2, bz + d[2] * out * 0.55, math.max(0.2, br * 0.5) }
+        local tip = { bx + d[1] * out, by + up, bz + d[2] * out, 0.2 }
+        schem.push_path(species.log, { { bx, by, bz, math.max(0.25, br * 0.75) }, mid, tip }, BLIND)
+        clump(tip[1], tip[2] + 0.7, tip[3], pick(rng, species.clump))
+        if species.twigs and rng:below(2) == 0 then
+            local side = schem.DIR16[(heading + (rng:below(2) == 0 and 3 or 13)) % 16 + 1]
+            local twig = { mid[1] + side[1] * 1.4, mid[2] + 1.3, mid[3] + side[2] * 1.4, 0.15 }
+            schem.push_path(species.log, { mid, twig }, BLIND)
+            clump(twig[1], twig[2] + 0.4, twig[3], pick(rng, species.clump) * 0.7)
+        end
+    end
+    -- The crown on the trunk's top.
+    local top = trunk[#trunk]
+    clump(top[1], top[2] + 0.6, top[3], pick(rng, species.crown))
+
+    -- By name: a runtime edit takes a block's name, not its id.
+    local names = { [game.get_block_id(species.log)] = species.log, [game.get_block_id(species.leaves)] = species.leaves }
+    local list = schem.merged(schem.capture(), WOODY)
+    local reach, tallest = 0, 0
+    for _, e in ipairs(list) do
+        e[4] = names[e[4]] or e[4]
+        reach = math.max(reach, math.abs(e[1]), math.abs(e[3]))
+        tallest = math.max(tallest, e[2])
+    end
+    return { blocks = list, trunk = height, reach = reach, top = tallest }
+end
+
+-- A template of `species`: a new one while there are fewer than it keeps,
+-- one of those after. At most ONE is cut a tick, whatever the species: the
+-- random tick calls this for many blocks a tick, and a world's first
+-- seconds cut eighteen shapes in one of them, a sixty-millisecond tick.
+-- Nil when this tick has cut one already and the species has none yet.
+local now, cut_at = 0, -1
+local function template_for(species, rng)
+    local list = TEMPLATES[species.name]
+    if list == nil then
+        list = {}
+        TEMPLATES[species.name] = list
+    end
+    if #list < species.templates and cut_at ~= now then
+        cut_at = now
+        local shape_rng = game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 },
+            "woodland_template:" .. species.name .. ":" .. (#list + 1))
+        list[#list + 1] = cut_tree(shape_rng, species)
+        stats.cut = stats.cut + 1
+        return list[#list]
+    end
+    if #list == 0 then
+        return nil
+    end
+    return list[rng:below(#list) + 1]
+end
 
 local function grow_tree(x, y, z, rng, species)
-    -- No room on the queue is the cheapest refusal, so it comes first: a
-    -- canopy is a few thousand cell tests, not worth doing to throw away.
+    -- No room on the queue is the cheapest refusal, so it comes first.
     if not edits.room() then
         stats.no_room = stats.no_room + 1
         return false
     end
-    local height = pick(rng, species.trunk)
-    if not clear_for(x, y, z, height) then
+    local tree = template_for(species, rng)
+    if tree == nil then
+        return false
+    end
+    if not clear_for(x, y, z, tree.trunk) then
         return false
     end
     local base = footing(x, y, z)
-    if base == nil or not loaded_box(x - 8, base - 2, z - 8, x + 8, y + height + 8, z + 8) then
+    local r = tree.reach + 1
+    if base == nil or not loaded_box(x - r, base - 2, z - r, x + r, y + tree.top + 1, z + r) then
         stats.unloaded = stats.unloaded + 1
         return false
     end
-
-    local wood = {}          -- key -> { mask, y }
-    local leaf_masks = {}
-    local top = y + height
-
-    -- The trunk: whole in the ground, rounded above it.
-    for by = base, top do
-        local mask = by <= y and FULL or trunk_mask(rng)
-        wood[x .. ":" .. by .. ":" .. z] = { mask = mask, y = by }
-    end
-    -- A fork: a second leader leaving diagonally at about half height and
-    -- rising three or four blocks, with a crown of its own.
-    if rng:below(species.fork_one_in) == 0 then
-        local d = DIRS[rng:below(4) + 1]
-        local fy = y + math.max(2, height // 2)
-        local fx, fz = x, z
-        local rise = 3 + rng:below(2)
-        for i = 1, rise do
-            if i <= 2 then
-                fx, fz = fx + d[1], fz + d[2]
+    -- Leaves go only where there is air, and one read per COLUMN, at its
+    -- lowest leaf, decides the column: terrain does not overhang a canopy.
+    local lowest = {}
+    for _, e in ipairs(tree.blocks) do
+        if not e[6] then
+            local key = e[1] * 4096 + e[3]
+            local col = lowest[key]
+            if col == nil then
+                lowest[key] = { e[1], e[3], e[2] }
+            elseif e[2] < col[3] then
+                col[3] = e[2]
             end
-            fy = fy + 1
-            wood[fx .. ":" .. fy .. ":" .. fz] = { mask = trunk_mask(rng), y = fy }
         end
-        clump(leaf_masks, fx + 0.5, fy + 0.5, fz + 0.5, pick(rng, species.clump), species.flat, rng)
     end
-    -- Main branches off the upper trunk, each with a clump at its tip. They
-    -- leave in different directions: the first is random, the rest go round.
-    local count = pick(rng, species.branches)
-    local first = rng:below(4)
-    for i = 0, count - 1 do
-        local d = DIRS[(first + i) % 4 + 1]
-        local from = y + math.max(2, height * 3 // 5) + rng:below(math.max(1, height * 2 // 5))
-        local tx, ty, tz = branch(wood, x, math.min(from, top - 1), z, d[1], d[2],
-            pick(rng, species.branch_out), pick(rng, species.branch_up), rng)
-        clump(leaf_masks, tx + 0.5, ty + 1.0, tz + 0.5, pick(rng, species.clump), species.flat, rng)
+    local clear = {}
+    for key, col in pairs(lowest) do
+        clear[key] = is_open(at(x + col[1], y + col[3], z + col[2]))
     end
-    -- The crown on the trunk top.
-    clump(leaf_masks, x + 0.5, top + 0.5, z + 0.5, pick(rng, species.crown), species.flat, rng)
 
-    -- One batch: wood from the ground up (so the tree reads as growing),
-    -- the root flare, then leaves wherever there is air and no wood.
     edits.begin()
-    local keys = {}
-    for key, entry in pairs(wood) do
-        keys[#keys + 1] = { key = key, y = entry.y, mask = entry.mask }
+    -- The root: whole log from a block under the footing up to the grass
+    -- block, so on a slope the trunk is planted rather than perched.
+    for by = base - 1, y - 1 do
+        edits.push({ x = x, y = by, z = z }, species.log)
     end
-    table.sort(keys, function(p, q) return p.y < q.y or (p.y == q.y and p.key < q.key) end)
-    -- The root: a block of trunk under the footing, whole.
-    edits.push({ x = x, y = base - 1, z = z }, species.log)
-    for _, item in ipairs(keys) do
-        local bx, by, bz = item.key:match("^(-?%d+):(-?%d+):(-?%d+)$")
-        bx, by, bz = tonumber(bx), tonumber(by), tonumber(bz)
-        if by <= y and bx == x and bz == z then
-            edits.push({ x = bx, y = by, z = bz }, species.log)
+    for _, e in ipairs(tree.blocks) do
+        local dx, dy, dz = e[1], e[2], e[3]
+        local pos = { x = x + dx, y = y + dy, z = z + dz }
+        if not e[6] then
+            if clear[dx * 4096 + dz] then
+                edits.push(pos, e[4], e[5], true)
+            end
+        elseif dx == 0 and dz == 0 then
+            -- The trunk's own column: always, from the grass block up.
+            if dy >= 0 then
+                edits.push(pos, e[4], e[5], true)
+            end
         else
-            local b = at(bx, by, bz)
-            if is_open(b) or (bx == x and bz == z) then
-                edits.push({ x = bx, y = by, z = bz }, species.log, item.mask == FULL and nil or item.mask, true)
+            -- Other wood: into open air, and at or under the grass block
+            -- into anything that is not whole ground (the root flares).
+            local b = at(pos.x, pos.y, pos.z)
+            if b ~= nil and (is_open(b) or (dy <= 0 and b.occupancy ~= FULL)) then
+                edits.push(pos, e[4], e[5], true)
             end
         end
     end
     local hollow = species.hollow_one_in ~= nil and rng:below(species.hollow_one_in) == 0
-    push_flares(x, y, z, base, species.log, math.max(pick(rng, species.flares), hollow and 1 or 0), rng, hollow)
-    -- Leaves go only where there is air, but reading every leaf block back
-    -- is three hundred calls a tree and was most of the mod's tick. Terrain
-    -- does not overhang a canopy from above, so one read per COLUMN, at its
-    -- lowest leaf, decides the column: empty there, empty above.
-    local columns = {}
-    for key in pairs(leaf_masks) do
-        local bx, by, bz = key:match("^(-?%d+):(-?%d+):(-?%d+)$")
-        bx, by, bz = tonumber(bx), tonumber(by), tonumber(bz)
-        local ck = bx .. ":" .. bz
-        local col = columns[ck]
-        if col == nil then
-            columns[ck] = { x = bx, z = bz, low = by }
-        elseif by < col.low then
-            col.low = by
-        end
-    end
-    local clear = {}
-    for ck, col in pairs(columns) do
-        clear[ck] = is_open(at(col.x, col.low, col.z))
-    end
-    -- Merged, so a block that holds branch wood takes leaves in the cells
-    -- the wood does not — a named cell is taken whatever was in it, so the
-    -- wood's cells are left out of the mask rather than trusted to survive.
-    for key, mask in pairs(leaf_masks) do
-        local bx, by, bz = key:match("^(-?%d+):(-?%d+):(-?%d+)$")
-        bx, by, bz = tonumber(bx), tonumber(by), tonumber(bz)
-        if wood[key] then
-            mask = mask & ~wood[key].mask
-        end
-        if mask ~= 0 and (clear[bx .. ":" .. bz] or wood[key]) then
-            edits.push({ x = bx, y = by, z = bz }, species.leaves, mask, true)
-        end
+    if hollow then
+        push_flares(x, y, z, base, species.log, 1, rng, true)
     end
     return edits.commit()
 end
@@ -1138,8 +1243,8 @@ end)
 
 local function report()
     game.log(string.format(
-        "tiamot_default_world woodlands: %d grass turns, %d candidates, %d tree attempts, %d grown, %d rocks, %d brambles, %d mantle, %d pools of %d tried (%d not flat); refused: room %d, headroom %d, spacing %d, unloaded %d; errors %d (%s); batches waiting %d",
-        stats.turns, stats.candidates, stats.attempts, stats.grown, stats.rocks, stats.brambles, stats.mantle, stats.pools, stats.pool_tries, stats.pool_slope,
+        "tiamot_default_world woodlands: %d grass turns, %d candidates, %d tree attempts, %d grown (%d shapes cut), %d rocks, %d brambles, %d mantle, %d pools of %d tried (%d not flat); refused: room %d, headroom %d, spacing %d, unloaded %d; errors %d (%s); batches waiting %d",
+        stats.turns, stats.candidates, stats.attempts, stats.grown, stats.cut, stats.rocks, stats.brambles, stats.mantle, stats.pools, stats.pool_tries, stats.pool_slope,
         stats.no_room, stats.headroom, stats.spacing, stats.unloaded, stats.errors, last_error or "none",
         edits.waiting()))
     local parts = {}
@@ -1154,6 +1259,7 @@ end
 
 local ticks = 0
 tdw.on_tick(function(dt_ticks)
+    now = now + dt_ticks
     ticks = ticks + dt_ticks
     if ticks >= STATS_EVERY then
         ticks = 0

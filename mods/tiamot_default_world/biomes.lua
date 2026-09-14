@@ -107,8 +107,9 @@ function tdw.build_biome(id, build)
             -- run of cells on the surface the fills made, where its take is.
             assert((fill.field and fill.material) or (fill.cover and fill.take)
                 or (fill.layers and fill.depth and fill.code and fill.entries)
-                or (fill.scatter and fill.depth and fill.schematics),
-                "fill " .. i .. " of " .. id .. " needs field and material, cover and take, layers with depth, code and entries, or scatter with depth and schematics")
+                or (fill.scatter and fill.depth and fill.schematics)
+                or (fill.fluid and fill.level),
+                "fill " .. i .. " of " .. id .. " needs field and material, cover and take, layers with depth, code and entries, scatter with depth and schematics, or fluid with level")
         end
         return fills
     end

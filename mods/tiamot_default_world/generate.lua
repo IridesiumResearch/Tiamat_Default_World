@@ -118,6 +118,24 @@ local function sea_into(buf, mode, y_lo)
     buf:fill_fluid_below(sea, WATER)
 end
 
+-- The rivers' water: a biome's `fluid` fill, laid per column at its own
+-- level and held up by lips (engine `fill_fluid_terraced`; see
+-- biomes/river_valleys.lua). After the structures, so it takes the room
+-- they leave.
+local WATER_ABOVE = 0.008                  -- km: how far over the ground a river's surface can stand
+local function waters_into(buf, found, mode)
+    if not buf.fill_fluid_terraced then
+        return
+    end
+    for _, biome in ipairs(found) do
+        for _, fill in ipairs(tdw.fills_for(biome, mode)) do
+            if fill.fluid then
+                buf:fill_fluid_terraced({ level = fill.level, within = fill.within, fluid = fill.fluid, lip = fill.lip })
+            end
+        end
+    end
+end
+
 -- The world seed in THIS VM. The generator runs in worker VMs now (engine:
 -- terrain generates off the tick), so the seed it records there never
 -- reaches the main VM, and the spawn's aim (`shape.ground_at_column`)
@@ -180,6 +198,11 @@ local function generate(buf, pos)
         stats.air = stats.air + 1
         -- The sea: a chunk of air over the seabed still gets its water.
         sea_into(buf, mode, y0)
+        -- And a river's: its surface stands over the bed, which may be in
+        -- the chunk below.
+        if inside_body and tmax > -WATER_ABOVE then
+            waters_into(buf, tdw.present_biomes_in(ulo, uhi, pos), mode)
+        end
         return
     end
     if e2hi < HOLLOW_IN then
@@ -309,6 +332,7 @@ local function generate(buf, pos)
                     end
                 end
             end
+            waters_into(buf, found, mode)
         end
     end
 

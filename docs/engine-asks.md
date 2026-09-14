@@ -77,7 +77,7 @@ and the palette) instead of ten, and the chunk five times cheaper.
 Failing that, a per-generate cache keyed by program identity would help
 less and cost nothing in the API.
 
-## 18. A fluid fill by heightmap (2026-09-12)
+## 18. A fluid fill by heightmap (2026-09-12) — LANDED another way, for the rivers: `buf:fill_fluid_terraced{ level, within, fluid, lip }` (engine 81ba792, 2026-09-14) takes the level as a density read per column and holds a sloping body up with lips; the alpine lakes could use it with a flat level per lake, and still hold the water block
 
 **Wanted.** Frozen lakes on the alpine valley floors: an ice sheet with
 water under it, each lake at its own level. The floors are a map, so a

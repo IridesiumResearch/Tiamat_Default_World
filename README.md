@@ -170,7 +170,12 @@ course is the zero contour of a slow noise, and the trough is SUBTRACTED
 from whatever terrain it crosses, so a river cuts through the woodland and
 the grassland alike and the uplands either side keep their own shape. A
 chunk answers `present` with one sample of its own course, so the chunks a
-river does not reach never evaluate it.
+river does not reach never evaluate it. Its water is the engine's fluid,
+laid by `buf:fill_fluid_terraced`: each column at its own level, taken down
+to a whole block, with a one-block stone lip wherever the next column
+stands higher — so a river running down the dome is a chain of level pools
+that holds still, sitting in a smooth channel a block or more under its
+banks.
 
 **Knowing where you are, and getting somewhere.** The biome you walk into
 names itself on the HUD for a second, small and centred at the top: the
@@ -215,7 +220,8 @@ them with `tdw.config.everywhere = "coastal_cliffs"` until that is decided.
       drops eight hundred metres across its width and where its sea sits is
       an open design question. The face is jagged over most of its length,
       flooded caves tunnel inland under the tops with blowholes up from
-      them, small wind-bent pines stand along the rim (never on the face),
+      them, small wind-bent pines stand along the rim (never on the face) —
+      paths with a thickness, bowed downwind, with flat pads of needles —
       and the turf and its tufts are a light yellow-green.
 - [x] 1.5 Coastal Shelf — the same biome's sea side. A sunlit terrace two
       to twelve blocks under the sea over the first eighty blocks out,
@@ -242,9 +248,11 @@ built one at a time in its own file. Built so far:
       camera; standing it at its own fixed angle is the engine's
       (`docs/engine-asks.md`, item 9).
       Grown by random tick on grass, each structure one merged batch: oaks
-      and aspens in the Better Trees idiom (rounded trunks, a fork in one
-      oak in four, branches that each carry a ragged clump of leaves, a
-      crown on top), dead wood one tree in forty-two (snags with a broken
+      and aspens in the Better Trees idiom, every trunk, branch and root a
+      path with a thickness (a tapering, leaning trunk from a flared foot,
+      a fork in one oak in four, branches that each carry a ragged clump of
+      leaves and sometimes a twig with a smaller one, a crown on top; cut
+      once as templates and stamped), dead wood one tree in forty-two (snags with a broken
       top, fallen trunks sunk into the turf), rock clusters of weathered
       limestone or granite from the shared `rocks.lua`, woody root nodes,
       bramble tangles in patches, lady's mantle in patches and round dead

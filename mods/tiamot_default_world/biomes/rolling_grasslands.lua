@@ -98,9 +98,14 @@ tdw.build_biome("rolling_grasslands", function(ctx)
     -- engine's cover fill, two cells tall inside one block, never stacked.
     -- This field says where — one or two of a block's nine columns, and
     -- within a sixth of a block of the ground so cave floors get none.
-    local tufts = shape.compile("biome.grasslands.tufts",
-        masked(n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
-            n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))))
+    -- Not in a river valley: the river's own grass is the valley's, and
+    -- this grass stood on the river's bed.
+    local tufts = n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
+        n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))
+    if shape.river_exclude then
+        tufts = shape.river_exclude(tufts, shape.RIVER_RIM)
+    end
+    tufts = shape.compile("biome.grasslands.tufts", masked(tufts))
     return {
         { field = grass, material = blocks.grass },
         { field = trails, material = blocks.packed_dirt },

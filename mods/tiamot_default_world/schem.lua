@@ -217,6 +217,87 @@ function M.push_path(material, points, opts)
     end
 end
 
+-- The point on a path at height `h`: between the two points that bracket
+-- it, the radius too. For a branch leaving a trunk at a height.
+function M.path_point(points, h)
+    for i = 2, #points do
+        local a, b = points[i - 1], points[i]
+        if h <= b[2] or i == #points then
+            local t = b[2] ~= a[2] and (h - a[2]) / (b[2] - a[2]) or 0.0
+            if t < 0.0 then t = 0.0 elseif t > 1.0 then t = 1.0 end
+            return a[1] + (b[1] - a[1]) * t, h, a[3] + (b[3] - a[3]) * t, a[4] + (b[4] - a[4]) * t
+        end
+    end
+    local p = points[1]
+    return p[1], p[2], p[3], p[4]
+end
+
+-- The current edit batch, TAKEN rather than queued, as a plain list:
+-- `{dx, dy, dz, material id, mask}` each. A shape pushed blind at a root of
+-- (0, 0, 0) comes back as a structure to stamp.
+function M.capture()
+    local out = {}
+    for _, e in ipairs(edits.take()) do
+        local at, material, mask = e[1], e[2], e[3]
+        local id = type(material) == "number" and material or game.get_block_id(material)
+        out[#out + 1] = { at.x, at.y, at.z, id, mask or FULL }
+    end
+    return out
+end
+
+-- One entry per block and material, WOOD FIRST, and nothing else in a cell
+-- the wood holds: a clump of leaves pushed over a branch's tip took the
+-- branch's cells, since a merge write takes every cell it names. `woody` is
+-- a set of material ids. Each entry gains a sixth field, whether it is wood.
+function M.merged(list, woody)
+    local order, by_block = {}, {}
+    for _, e in ipairs(list) do
+        local key = e[1] .. ":" .. e[2] .. ":" .. e[3]
+        local masks = by_block[key]
+        if masks == nil then
+            masks = {}
+            by_block[key] = masks
+            order[#order + 1] = { e[1], e[2], e[3], masks }
+        end
+        masks[e[4]] = (masks[e[4]] or 0) | e[5]
+    end
+    local out = {}
+    for _, o in ipairs(order) do
+        local masks, wood = o[4], 0
+        local ids = {}
+        for id in pairs(masks) do ids[#ids + 1] = id end
+        table.sort(ids)
+        for _, id in ipairs(ids) do
+            if woody[id] then
+                wood = wood | masks[id]
+                out[#out + 1] = { o[1], o[2], o[3], id, masks[id], true }
+            end
+        end
+        for _, id in ipairs(ids) do
+            local rest = masks[id] & ~wood
+            if not woody[id] and rest ~= 0 then
+                out[#out + 1] = { o[1], o[2], o[3], id, rest, false }
+            end
+        end
+    end
+    return out
+end
+
+-- A list of `{dx, dy, dz, material id, mask, ...}` as a schematic for the
+-- scatter.
+function M.schematic_of(list)
+    local out = {}
+    for i, e in ipairs(list) do
+        out[i] = { e[1], e[2], e[3], e[4], e[5] }
+    end
+    return game.schematic(out)
+end
+
+-- The current batch as a schematic, taken rather than queued.
+function M.schematic_of_batch()
+    return M.schematic_of(M.capture())
+end
+
 -- Whether every chunk a box touches is loaded — `at` is nil in one that is
 -- not, and an edit into one is dropped. Sampled every eight blocks.
 function M.loaded_box(x0, y0, z0, x1, y1, z1)

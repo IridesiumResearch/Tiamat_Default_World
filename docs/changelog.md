@@ -797,6 +797,95 @@ engine commit they landed in, because the mod is written against them.
 - A word that errors is caught and says so rather than taking the tick
   handler down with it.
 
+### River water that is water, a channel it sits down in, and path-built oaks and pines
+
+- **The river's water is the engine's water fluid** — "water there does not
+  seem to be registered as a fluid, it is just a block". It was the water
+  BLOCK painted into the top of the channel's ground: it looked like water
+  and it was a floor. The fluid could not simply be laid at the river's
+  level, because that level falls as the river runs down the dome — about
+  one block in twenty on the steepest rings — and a conserved fluid on a
+  slope runs to the bottom of its valley the moment its chunk loads (every
+  generated block of fluid is woken on load). So the engine gained
+  `buf:fill_fluid_terraced{ level, within, fluid, lip }` (engine 81ba792):
+  the level is a density read once per column and taken down to a
+  whole block, every block below it is filled around the terrain as a sea
+  is, and wherever a neighbouring column stands a block higher this column
+  gets a LIP of `lip` material up to it. The river comes out as level pools
+  held up by one-block stone steps — the riffles — and nothing in it can
+  move: every block of fluid has fluid or a whole block beside it at its own
+  height and under it, whatever path you take. An engine test asserts
+  exactly that. Headless, 2,288 blocks of river beside the spawn held a
+  volume of 57,918 cells at one reading and 57,918 thirty seconds later.
+- **The channel is carved under the water's level**: a smooth U, 2.5 blocks
+  deep at the middle and 4.5 in the pools (which fade in over a few blocks
+  instead of being five-block holes with walls), rounded humps up to 1.2
+  blocks high in the bed here and there, and a three-block bank up out of
+  the water to 2.2 blocks over the level. A column's water fills whole
+  blocks up to the block its level is in, so the surface stands at least
+  1.2 blocks under the bank top: "the water can sit down in the creek at
+  least a block". The drop-off and the full-height sand banks were the
+  painted water: a staircase of water blocks laid on flat ground, with the
+  pools painted five blocks down into it.
+- **No grass across the river.** The woodland's and the grassland's tufts
+  (and the woodland's ferns) stood on whatever surface the river left,
+  including its water blocks, which is what the strips were; with the water
+  a fluid they would have stood on the bed under it. `shape.river_exclude`
+  keeps them out: the tufts from the whole valley (150 blocks either side
+  of the course), the ferns from the channel and the banks (17).
+- **70% the grass.** The valley carried the river's own grass (a card on
+  32.5% of cell columns at `GRASS_MIN` 0.22, measured over 20,000 samples)
+  and its host biome's on top — 44% of columns where woodland hosted it,
+  55% where grassland did. With the hosts' kept out, the river's own at
+  0.20 is 34%: 77% and 61% of those, 70% between them.
+- **70% fewer drift piles, lying in the ground.** `SNAG_SQUARES` 0.35 to
+  0.105. Each pile is one to three short trunks (two to four blocks, was
+  three to seven); the first runs a tenth of a block over the surface
+  block's floor, so its lower half is in the ground, any others lie across
+  it a third of a block higher, and each dips half a block to its far end
+  so it digs into a slope rather than sticking out over it. They lie on the dry bank and the bars, never in the
+  channel or on the steep bank out of it, and the scatter sinks their root
+  into the surface block (`sink` 1, was 0: they stood on top of it).
+- Stepping stones are columns of three or four blocks from the bed of a
+  riffle up through the water, since a one-block stone would be under it
+  now. Seeps on the valley walls are wet mud; they painted water blocks
+  too.
+- **The woodland's oaks and aspens are paths with a thickness**, as the
+  river's trees are — "I want regular oak trees to be switched over to that
+  technique". The trunk tapers from a flared foot (radius 0.84, 0.7 at the
+  grass, 0.42 at the top), leans its own way and wanders a little as it
+  climbs; branches leave it at their own heights and angles, rise as they go
+  out and carry a ragged clump at the end, and one oak branch in two has a
+  twig off its middle with a smaller clump, so the canopy is lumps and
+  gaps; root flares run down and out into the turf; a fork in one oak in
+  four has a crown of its own. Aspens are the same code with a slender
+  trunk and short branches up a tall one. They still grow by random tick
+  and are read against the world as the blocky ones were — trunk always,
+  other wood into open air, leaves where the column is clear — but each is
+  a TEMPLATE cut once (twelve oaks, six aspens, one cut a tick at most) and
+  stamped, so a grown tree costs its reads and nothing to cut. Wood takes
+  its cells before leaves in every block (`schem.merged`); a clump over a
+  branch tip used to take the branch's cells.
+- **A bug found testing it, before it shipped**: a runtime edit takes a
+  block's NAME, and a template holds ids, so the first headless run "grew"
+  160 oaks in ten seconds and wrote none. The templates carry names.
+- **The coast's pines are paths** too: a trunk that climbs from a flared
+  foot and bows over downwind for its top three blocks, four to six flat
+  pads of needles swept the same way off short limbs up its upper part, and
+  a broader pad on the tip. They are cut at the first coast chunk rather
+  than at load, like the river's trees. The coast is still not placed; seen
+  with `everywhere = "coastal_cliffs"`, headless.
+- `schem.lua` gained `path_point` (the point on a path at a height, for a
+  branch off a trunk), `capture`, `merged`, `schematic_of` and
+  `schematic_of_batch`; the river's own copy of the last is gone.
+- Verified headless: the engine's unit tests (the two new ones included)
+  and clippy; the mod check; a river at a fixed seed with the spawn moved
+  onto it; the woodland and the coast each put everywhere; and the real
+  world with a three-bot swarm for ninety seconds, with no over-budget tick,
+  no refused program and no error. The engine's two reference-generator
+  golden tests fail on this machine because `game/` holds the junction to
+  this mod, which replaces the reference world they check.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

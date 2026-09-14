@@ -407,45 +407,46 @@ local function column(material, tall)
     end
     return game.schematic(list)
 end
--- A pine: a trunk three to five tall, bent over sideways near the top by
--- a block or two, a block of root under it, and three to five clumps of
--- needles about the top and the bend, each a block with about half its
--- cells — sparse and chaotic.
-local PLUS = 0
-for cy = 0, 2 do
-    for _, c in ipairs({ { 1, 1 }, { 0, 1 }, { 2, 1 }, { 1, 0 }, { 1, 2 } }) do
-        PLUS = PLUS | (1 << (c[1] + 3 * cy + 9 * c[2]))
-    end
-end
-local DIR4 = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+-- A pine: small and wind-bent, and a PATH with a thickness, as the river's
+-- trees are (2026-09-14). The trunk climbs from a flared foot and bows
+-- over downwind for its top few blocks; flat pads of needles are swept the
+-- same way off short limbs up its upper half, and one sits on the tip —
+-- the shape the wind leaves a pine on a cliff top. It was a column of plus
+-- blocks with the top shunted sideways and random half-blocks of needles.
+local schem = tdw.schem
+local edits = tdw.edits
+local BLIND = { blind = true }
 local function pine(rng)
-    local list = {}
-    local tall = 5 + rng:below(4)                     -- bigger: five to eight blocks of trunk
-    local d = DIR4[rng:below(4) + 1]
-    local bend_at = math.max(1, tall - 3)
-    local x, z = 0, 0
-    list[#list + 1] = { 0, -1, 0, blocks.fir_log, PLUS }
-    for dy = 0, tall - 1 do
-        if dy >= bend_at then
-            x, z = x + d[1], z + d[2]
-        end
-        list[#list + 1] = { x, dy, z, blocks.fir_log, PLUS }
+    edits.begin()
+    local tall = 5 + rng:below(4)                     -- five to eight blocks of trunk
+    local heading = rng:below(16)
+    local d = schem.DIR16[heading + 1]
+    local bend_at = math.max(2, tall - 3)
+    local over = 1.2 + rng:below(3) * 0.4
+    local trunk = {
+        { 0.5, -1.5, 0.5, 0.5 },
+        { 0.5, 0.3, 0.5, 0.42 },
+        { 0.5, bend_at, 0.5, 0.34 },
+        { 0.5 + d[1] * over * 0.45, bend_at + (tall - bend_at) * 0.7, 0.5 + d[2] * over * 0.45, 0.27 },
+        { 0.5 + d[1] * over, tall, 0.5 + d[2] * over, 0.2 },
+    }
+    schem.push_path(blocks.fir_log, trunk, BLIND)
+    local function pad(cx, cy, cz, r)
+        schem.push_ellipsoid(blocks.fir_needles, cx, cy, cz, r, 0.75, r, { rough = 0.4, jitter = rng, blind = true })
     end
-    local clumps = 6 + rng:below(4)                   -- leafier: six to nine clumps, and each fuller
-    for _ = 1, clumps do
-        local cx = x + rng:below(3) - 1
-        local cz = z + rng:below(3) - 1
-        local cy = tall - 2 + rng:below(4) - 1
-        if cx == x and cz == z then cy = tall end
-        local mask = 0
-        for bit = 0, 26 do
-            if rng:below(100) < 60 then mask = mask | (1 << bit) end
-        end
-        if mask ~= 0 then
-            list[#list + 1] = { cx, cy, cz, blocks.fir_needles, mask }
-        end
+    local pads = 4 + rng:below(3)
+    for i = 1, pads do
+        local h = bend_at * 0.8 + (tall - bend_at * 0.8) * (i - 1) / pads
+        local sx, sy, sz = schem.path_point(trunk, h)
+        local w = schem.DIR16[(heading + (rng:below(3) - 1) * 2) % 16 + 1]
+        local reach = 1.0 + rng:below(3) * 0.5
+        local tip = { sx + w[1] * reach, sy + 0.3, sz + w[2] * reach, 0.14 }
+        schem.push_path(blocks.fir_log, { { sx, sy, sz, 0.2 }, tip }, BLIND)
+        pad(tip[1], tip[2] + 0.3, tip[3], 1.5 + rng:below(3) * 0.3)
     end
-    return game.schematic(list)
+    local top = trunk[#trunk]
+    pad(top[1], top[2] + 0.4, top[3], 2.0 + rng:below(3) * 0.3)
+    return schem.schematic_of(schem.merged(schem.capture(), { [blocks.fir_log] = true }))
 end
 -- A boulder cluster: a three-by-three footprint two tall with the blocks
 -- picked by chance, barnacles on the tops of some.
@@ -483,7 +484,6 @@ local function burrow()
 end
 local PINES, SEAGRASS, KELP, BOULDERS, BURROWS = {}, {}, {}, {}, {}
 if game.schematic then
-    for i = 1, PINE_TEMPLATES do PINES[i] = pine(rng_for("pine:" .. i)) end
     for _, tall in ipairs({ 2, 3, 3, 4 }) do SEAGRASS[#SEAGRASS + 1] = column(blocks.seagrass, tall) end
     for _, tall in ipairs({ 8, 10, 12 }) do KELP[#KELP + 1] = column(blocks.kelp, tall) end
     for i = 1, 6 do BOULDERS[i] = boulders(rng_for("boulders:" .. i)) end
@@ -634,6 +634,12 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         { cover = blocks.coast_grass, cells = 2, take = tufts },
     }
     if game.schematic then
+        -- The pines are cut here, at the first coast chunk, not at load:
+        -- a path tree is tens of thousands of operations, and the
+        -- registration window's budget is smaller than a generator call's.
+        if #PINES == 0 then
+            for i = 1, PINE_TEMPLATES do PINES[i] = pine(rng_for("pine:" .. i)) end
+        end
         local function scatter(stand, list, cell, chance, salt, sink)
             fills[#fills + 1] = { scatter = true, depth = depth, stand = stand, schematics = list, cell = cell, chance = chance, salt = salt, sink = sink }
         end
