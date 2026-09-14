@@ -554,6 +554,28 @@ engine commit they landed in, because the mod is written against them.
   ninety the sea began past the view distance, and the dev world is here
   to look at the sea.
 
+### Coast, fourth cut: the jag runs down the face, and the sea floor has no slabs
+
+- "The cliffside needs to be jagged on a primarily vertical axis; right
+  now it's jagged on every axis." A term that varies with x and z but not
+  with y moves a vertical face in and out by the same amount at every
+  height — a rib the height of the cliff — where a 3D noise moves it by a
+  different amount at every height, which is a lumpy face. The engine's
+  noise node is 3D, and the one field of the ground plane alone the
+  language has is `contour`, so the ribs are its lines: rock out along
+  each, recessed between, at thirteen blocks and five, four and a half
+  blocks and a block and a half of throw. The only part that still varies
+  with height is three quarters of a block of grain, so a rib is not a
+  cast column. Cheaper than what it replaces, too: a contour is five
+  fills of the ground plane where a 3D octave is a fill of the volume.
+- "Under the water there are some completely flat noise shapes." The rock
+  flats set the floor TO a depth, so each was a dead-level slab in the
+  shape of the noise that chose it. A flat pulls the floor a little over
+  half the way to a level that is itself rippled by most of a block, so
+  it is flatter than the floor round it — wave-scoured, which is the
+  design — and never a slab. The pavement, the moss and the barnacles
+  still follow the same noise, so the flats are still there to find.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

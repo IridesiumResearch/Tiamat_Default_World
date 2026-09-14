@@ -80,9 +80,23 @@ local PLATEAU_FREQ = 1 / 70
 -- JAG_REACH of the line, above the splash zone, over the areas JAG_AREA
 -- says — most of them. Ledges, overhangs, a face that is rock and not a
 -- wall.
-local JAG_FREQ = 1 / 11
-local JAG_OCTAVES = 2                                 -- eleven metres and five and a half: ledges, and the notches in them
-local JAG_AMP = 0.009                                 -- km: +/- four and a half blocks
+-- The jag runs DOWN the face, not across it. A term that varies with x and
+-- z but not with y moves a vertical face in and out by the same amount at
+-- every height — a rib the height of the cliff. A 3D noise moves it by a
+-- different amount at every height, which is a lumpy face, "jagged on
+-- every axis". The engine's noise node is 3D; the one field of the ground
+-- plane alone the language has is `contour`, the distance to a 2D noise's
+-- zero contour, so the ribs are its lines: rock out along each line,
+-- recessed between, at two scales, with a little grain that does vary with
+-- height so a rib is not a cast column.
+local JAG_RIB_FREQ = 1 / 13                           -- lines of the ground plane, about thirteen blocks apart
+local JAG_RIB_W = 5.0                                 -- blocks either side of a line the rib reaches
+local JAG_RIB_AMP = 0.009                             -- km: +/- four and a half blocks of buttress and flute
+local JAG_FINE_FREQ = 1 / 5
+local JAG_FINE_W = 2.0
+local JAG_FINE_AMP = 0.003                            -- km: +/- a block and a half of fluting inside that
+local JAG_GRAIN_FREQ = 1 / 9
+local JAG_GRAIN = 0.0016                              -- km: +/- three quarters of a block, and the only part that varies with height
 local JAG_REACH = 9.0
 local JAG_AREA_FREQ = 1 / 300
 local JAG_AREA_MIN = -0.28                            -- four fifths of the coast
@@ -110,6 +124,9 @@ local FLAT_FREQ = 1 / 140
 local FLAT_MIN = 0.12                                 -- the flat noise over this: a rock flat, level...
 local FLAT_DEPTH = 0.004                              -- ...at this under the sea
 local FLAT_EDGE = 1.2                                 -- how hard the flat comes in: at 10 it was a drop-off round every flat
+local FLAT_PULL = 0.55                                -- how far toward the level a flat pulls the floor: at 1 the flats were dead-level slabs in the shape of a noise
+local FLAT_RIPPLE_FREQ = 1 / 14
+local FLAT_RIPPLE = 0.0018                            -- km: +/- most of a block of wave-scour across a flat
 local HOLLOW_FREQ = 1 / 60
 local HOLLOW_MIN = 0.16
 local HOLLOW_EDGE = 1.5                               -- likewise: at 6 the hollows were holes
@@ -274,8 +291,14 @@ local function seabed()
     bed = n.add(bed, n.noise("bed_wave", BED_WAVE_FREQ, 2, BED_WAVE))
     bed = n.sub(bed, n.mul(n.clamp(n.mul(n.sub(n.noise("hollow", HOLLOW_FREQ, 1, 1.0), n.const(HOLLOW_MIN)), n.const(HOLLOW_EDGE)), 0.0, 1.0), n.const(HOLLOW_DEPTH)))
     local flat = n.clamp(n.mul(n.sub(n.noise("flat", FLAT_FREQ, 1, 1.0), n.const(FLAT_MIN)), n.const(FLAT_EDGE)), 0.0, 1.0)
-    -- flat ? -FLAT_DEPTH : bed, as bed + flat * (-FLAT_DEPTH - bed).
-    return n.add(n.mul(n.sub(n.const(-FLAT_DEPTH), bed), flat), bed)
+    -- A flat pulls the floor PART of the way to a level that is itself
+    -- rippled, rather than setting it to one depth: `bed + flat * PULL *
+    -- (level - bed)`. Set to the depth, every flat was a dead-level slab in
+    -- the shape of the noise that chose it, which is what the flats looked
+    -- like from under the water. Pulled, a flat is flatter than the floor
+    -- round it — wave-scoured, which is the design — and never a slab.
+    local level = n.add(n.const(-FLAT_DEPTH), n.noise("flat_ripple", FLAT_RIPPLE_FREQ, 2, FLAT_RIPPLE))
+    return n.add(n.mul(n.mul(n.sub(level, bed), flat), n.const(FLAT_PULL)), bed)
 end
 -- The land's height over the sea, km: the seabed, and on land the plateau
 -- through its face. The rise first (it is the deeper), then the gate.
@@ -335,10 +358,18 @@ local function cracks()
 end
 -- The jag, km, either sign: within JAG_REACH of the line, above the splash
 -- zone, over most areas.
+-- One rib scale: +1 along the contour's lines, -1 `w` blocks off them.
+-- The contour first, it being the deeper operand.
+local function rib(stream, freq, w)
+    return n.clamp(n.mul(n.add(n.contour(stream, freq), n.const(-w)), n.const(-1.0 / w)), -1.0, 1.0)
+end
 local function jag()
     local near = n.clamp(n.mul(n.add(n.abs(shore()), n.const(-JAG_REACH)), n.const(-0.3)), 0.0, 1.0)
     local area = n.clamp(n.mul(n.sub(n.noise("jag_area", JAG_AREA_FREQ, 1, 1.0), n.const(JAG_AREA_MIN)), n.const(8.0)), 0.0, 1.0)
-    return n.mul(n.mul(n.mul(near, n.noise("jag", JAG_FREQ, JAG_OCTAVES, JAG_AMP)), above(SPLASH_HALF)), area)
+    local throw = n.mul(rib("jag_rib", JAG_RIB_FREQ, JAG_RIB_W), n.const(JAG_RIB_AMP))
+    throw = n.add(throw, n.mul(rib("jag_fine", JAG_FINE_FREQ, JAG_FINE_W), n.const(JAG_FINE_AMP)))
+    throw = n.add(throw, n.noise("jag_grain", JAG_GRAIN_FREQ, 1, JAG_GRAIN))
+    return n.mul(n.mul(n.mul(near, throw), above(SPLASH_HALF)), area)
 end
 
 -- The coast's terms of the terrain, km: the land's height over the sea
