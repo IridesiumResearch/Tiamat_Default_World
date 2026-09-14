@@ -129,7 +129,32 @@ M.HOLLOW_DEEPEN = 0.35    -- the swell's low side is this much deeper than its h
 -- ALPINE_EDGE_U is the frost ring's outer edge from layers.lua, repeated
 -- here because shape.lua loads first; layers.lua asserts they agree.
 M.ALPINE_EDGE_U = 0.18 * 0.18
-M.ALPINE_BLEND_U = 0.003
+-- Wide enough to cover the wobble below and still fade: the alpine edge is
+-- no longer a circle, so the band the blended programs cover has to hold
+-- every place the edge can be.
+M.ALPINE_BLEND_U = 0.024
+
+-- **The rings are not circles.** A world of perfect rings reads as a
+-- target, so the radius the BIOMES are placed by is the true radius pushed
+-- in and out by a slow noise: every ring's edge wanders by up to
+-- RING_WOBBLE in u, which near the frost edge is about two kilometres of
+-- coast either way. The terrain's own shape (the dome, the relief, the
+-- depth bands) still goes by the true radius — only the question "which
+-- biome is here" takes the wandering one, so nothing about the world's
+-- form depends on it.
+--
+-- Every Lua-side test against a ring widens by this, since a chunk within
+-- RING_WOBBLE of an edge may be either side of it.
+M.RING_WOBBLE = 0.010
+M.RING_WOBBLE_FREQ = 1 / 5200
+M.RING_WOBBLE_OCTAVES = 2
+
+-- (A warmth field that moved the wet/dry split with the radius was tried
+-- and taken out: it sits inside `dry_weight`, which the temperate terrain
+-- evaluates while it holds the wet terms, and that came to ten live
+-- buffers against the engine's eight. Which biome is warm enough for
+-- which ring is a fact about biomes, and it lives in their ring spans —
+-- see biomes/catalogue.lua.)
 M.RIDGE_FREQ = 1 / 650
 M.RIDGE_WIDTH = 0.16      -- noise units: about fifty blocks from crest to foot
 -- The plain. Nothing in Lua can evaluate the relief, so the one place a
@@ -241,6 +266,11 @@ M.node = { const = const, X = X, Y = Y, Z = Z, add = add, sub = sub, mul = mul, 
 local function r2() return mul(add(mul(X(), X()), mul(Z(), Z())), const(M.SCALE * M.SCALE)) end
 local function u() return mul(r2(), const(1 / (M.R_DISC * M.R_DISC))) end
 local function ys() return mul(sub(Y(), const(M.Y0)), const(M.SCALE)) end
+-- The radius the BIOMES are placed by: the true one, pushed in and out by
+-- a slow noise so no ring edge is a circle. See M.RING_WOBBLE.
+local function u_biome()
+    return add(u(), noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE))
+end
 M.sub = { r2 = r2, u = u, ys = ys }
 
 -- H(u) = SUMMIT - u * (2*DROP - DROP*u), with u evaluated second in the
@@ -305,6 +335,7 @@ function M.humidity()
     return noise("humidity", M.HUMIDITY_FREQ, M.HUMIDITY_OCTAVES, 1.0)
 end
 
+
 -- Which half of the split a biome takes, as a mask positive on its side:
 -- the humidity plus the dither against the split, so the two sides are
 -- exact complements and the edge is speckled rather than drawn.
@@ -359,7 +390,10 @@ function M.terrain_mode_for(u_lo, u_hi)
     if tdw.config.everywhere then
         return M.default_mode()
     end
-    local edge, half = M.ALPINE_EDGE_U, M.ALPINE_BLEND_U / 2
+    -- Widened by the wobble: a chunk within RING_WOBBLE of the edge may be
+    -- either side of it, and the programs it gets have to carry both.
+    local edge = M.ALPINE_EDGE_U
+    local half = M.ALPINE_BLEND_U / 2 + M.RING_WOBBLE
     if u_hi <= edge - half then
         return "alpine"
     elseif u_lo >= edge + half then
@@ -371,7 +405,7 @@ end
 -- The alpine weight: 1 through the frost ring, fading to 0 over
 -- ALPINE_BLEND_U past its outer edge.
 local function alpine_weight()
-    return clamp(add(mul(sub(u(), const(M.ALPINE_EDGE_U)), const(-1.0 / M.ALPINE_BLEND_U)), const(0.5)), 0.0, 1.0)
+    return clamp(add(mul(sub(u_biome(), const(M.ALPINE_EDGE_U)), const(-1.0 / M.ALPINE_BLEND_U)), const(0.5)), 0.0, 1.0)
 end
 
 -- A grassland ridge: positive along the zero contour of its noise.
@@ -489,8 +523,12 @@ function M.inside(radius)
 end
 
 -- Ring mask on u: positive between two thresholds.
+-- Positive inside the ring, written `half - |u - mid|` so the radius is
+-- evaluated ONCE: `min(u - lo, hi - u)` evaluates it twice, and this is
+-- read by every biome mask in every fill.
 function M.ring(u_lo, u_hi)
-    return min(sub(u(), const(u_lo)), sub(const(u_hi), u()))
+    local mid, half = (u_lo + u_hi) / 2, (u_hi - u_lo) / 2
+    return sub(const(half), abs(sub(u_biome(), const(mid))))
 end
 
 -- Compiled programs -----------------------------------------------------------

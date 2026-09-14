@@ -217,7 +217,7 @@ local SEAGRASS_DEPTH = { 0.003, 0.010 }
 local PRAIRIE_FREQ, PRAIRIE_MIN = 1 / 150, -0.05
 local KELP_CELL, KELP_SQUARES = 4, 0.35
 local KELP_DEPTH = 0.008                              -- km: at least this deep — the hollows and off the ledge
-local KELP_GROVE_FREQ, KELP_GROVE_MIN = 1 / 90, 0.0
+local KELP_GROVE_FREQ, KELP_GROVE_MIN = 1 / 90, 0.16   -- small groves: a sixth of the deep floor, not half of it
 local BOULDER_CELL, BOULDER_SQUARES = 18, 0.3
 local BURROW_CELL, BURROW_SQUARES = 8, 0.15
 local BURROW_DEPTH = { 0.002, 0.008 }
@@ -495,7 +495,7 @@ tdw.biomes.coastal_cliffs.lazy = true                 -- its terms are this file
 tdw.biomes.coastal_cliffs.sea_y = math.floor(shape.Y0 + SEA_KM * 1000)
 tdw.build_biome("coastal_cliffs", function(ctx)
     local function masked(field)
-        local mask = tdw.biome_mask(n, "shore", false)
+        local mask = tdw.biome_mask(n, "coastal_cliffs", false)
         return mask and n.min(field, mask) or field
     end
     -- Every surface material from one evaluation of the terrain and one of
@@ -576,7 +576,7 @@ tdw.build_biome("coastal_cliffs", function(ctx)
     for _, over in ipairs({ splash_codes(), n.mul(step(beach()), n.const(7)), n.mul(step(turf()), n.const(8)), shelf_codes(), flat_codes() }) do
         code = n.max(code, over)
     end
-    local mask = tdw.biome_mask(n, "shore", false)
+    local mask = tdw.biome_mask(n, "coastal_cliffs", false)
     if mask then
         code = n.mul(code, step(mask))
     end

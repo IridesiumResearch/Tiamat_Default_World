@@ -64,10 +64,27 @@ local n = shape.node
 
 -- The map: where and how fine. Changing any of these makes a NEW map; a
 -- world made with the old one keeps generating against the old one.
+-- **The map reaches exactly as far as the biome does, and no further.**
+-- The alpine holds the cold core — the Crown and Frostmoor, u up to
+-- shape.ALPINE_EDGE_U, which the ring wobble can push to about twelve
+-- kilometres from the axis — so the map is centred on the AXIS and a
+-- thousand and twenty-four samples across at twenty-four blocks each:
+-- 24.6 km, a hair over the twenty-four the core can reach. (It was
+-- centred on the spawn at sixteen blocks a sample while the dev switch
+-- put the alpine over the whole world; the spawn is fifteen kilometres
+-- out, which is nowhere near the core.) Twenty-four blocks a sample
+-- rather than sixteen costs the map's own resolution, so the blurs below
+-- are in fewer samples to keep them the same distance in blocks.
+--
+-- The dev switch still centres it on the spawn: with the alpine
+-- everywhere, the core is wherever the player is.
 local MAP_SIDE = 1024
-local MAP_SCALE = 16                                  -- blocks per sample
-local MAP_ORIGIN_X = shape.SPAWN_X - MAP_SIDE * MAP_SCALE // 2
-local MAP_ORIGIN_Z = shape.SPAWN_Z - MAP_SIDE * MAP_SCALE // 2
+local MAP_SCALE = 24                                  -- blocks per sample
+local MAP_ON_SPAWN = tdw.config.everywhere == "alpine_highlands"
+local MAP_CENTRE_X = MAP_ON_SPAWN and shape.SPAWN_X or 0
+local MAP_CENTRE_Z = MAP_ON_SPAWN and shape.SPAWN_Z or 0
+local MAP_ORIGIN_X = MAP_CENTRE_X - MAP_SIDE * MAP_SCALE // 2
+local MAP_ORIGIN_Z = MAP_CENTRE_Z - MAP_SIDE * MAP_SCALE // 2
 local MAP_SEED = 1303                                 -- mixed with the world's own by the engine
 
 -- The range. Four ridged octaves, each a crest along its noise's zero
@@ -98,11 +115,11 @@ local BASE_AMP = 0.15
 -- erosion does: convex ground (arêtes, spurs) stands up, concave ground
 -- (gullies, cirque floors) cuts down. Sharper shapes, from the erosion.
 -- Then the peak cap and the floor smoothing, a little stronger again.
-local SHARPEN_BLUR = 2                                -- samples (32 blocks): the scale the sharpening works at
+local SHARPEN_BLUR = 1                                -- samples (24 blocks): the scale the sharpening works at
 local SHARPEN = 0.6                                   -- share of (h - blur) added back
-local PEAK_BLUR = 4                                   -- samples (64 blocks): the neighbourhood a peak is judged against
+local PEAK_BLUR = 3                                   -- samples (72 blocks): the neighbourhood a peak is judged against
 local PEAK_OVER = 0.030                               -- km: how far a peak may stand over that mean
-local FLOOR_BLUR = 5                                  -- samples (80 blocks): how smooth a valley floor is
+local FLOOR_BLUR = 3                                  -- samples (72 blocks): how smooth a valley floor is
 -- Where the crests are, for the rock: the primary ridge term over this.
 local CREST_FROM = 0.78
 local CREST_K = 8
@@ -112,7 +129,7 @@ local CREST_K = 8
 local LAKE_FREQ = 1 / 700
 local LAKE_T = 0.06
 local LAKE_K = 15
-local LAKE_BLUR = 14                                  -- samples (224 blocks): a lake lies level
+local LAKE_BLUR = 9                                   -- samples (216 blocks): a lake lies level
 local LAKE_DEPTH = 0.008                              -- km: eight blocks of water under the ice
 local LAKE_ICE = 0.001                                -- km: one block of ice on top
 
@@ -489,7 +506,7 @@ local FOREST_MIN = -0.04
 
 tdw.build_biome("alpine_highlands", function(ctx)
     local function masked(field)
-        local mask = tdw.biome_mask(n, "frost", false)
+        local mask = tdw.biome_mask(n, "alpine_highlands")
         return mask and n.min(field, mask) or field
     end
     local function top()
@@ -578,7 +595,7 @@ tdw.build_biome("alpine_highlands", function(ctx)
     for k, condition in ipairs(conditions) do
         code = n.max(code, n.mul(step(condition), n.const(k)))
     end
-    local mask = tdw.biome_mask(n, "frost", false)
+    local mask = tdw.biome_mask(n, "alpine_highlands")
     if mask then
         code = n.mul(code, step(mask))
     end
@@ -725,8 +742,9 @@ local function mine(x, z)
     local only = tdw.config.everywhere
     if only then return only == "alpine_highlands" end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
-    local ring = tdw.layers.ring_by_id.frost
-    return u >= ring.u[1] and u < ring.u[2]
+    -- The cold core, widened by the wobble: the edge wanders, and a tick
+    -- refused on the wrong side of it is a tick wasted, not an error.
+    return u < shape.ALPINE_EDGE_U + shape.RING_WOBBLE
 end
 -- The ground is flat about (x, z): the surface within two blocks of its
 -- height three blocks out each way — the ledges and steps make even a

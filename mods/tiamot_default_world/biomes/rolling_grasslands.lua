@@ -71,7 +71,7 @@ local FULL = game.OCCUPANCY_FULL
 tdw.build_biome("rolling_grasslands", function(ctx)
     local n = ctx.node
     local function masked(field)
-        local mask = tdw.biome_mask(n, "temperate", false)
+        local mask = tdw.biome_mask(n, "rolling_grasslands", false)
         return mask and n.min(field, mask) or field
     end
     local function top()

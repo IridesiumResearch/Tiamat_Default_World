@@ -138,7 +138,7 @@ tdw.build_biome("temperate_woodlands", function(ctx)
     -- Where the biome is — the temperate ring's wet half — unless it is
     -- everywhere.
     local function masked(field)
-        local mask = tdw.biome_mask(n, "temperate", true)
+        local mask = tdw.biome_mask(n, "temperate_woodlands", true)
         return mask and n.min(field, mask) or field
     end
     -- The top blocks under the real surface: one terrain evaluation each.

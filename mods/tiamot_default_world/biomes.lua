@@ -49,6 +49,18 @@ function tdw.register_biome(spec)
     if spec.ring then
         assert(tdw.layers.ring_by_id[spec.ring], "biome " .. spec.id .. " names an unknown ring " .. spec.ring)
     end
+    -- `spans` is where a biome stands: a list of { innermost, outermost,
+    -- half }, each a run of rings (they are contiguous in u, so a run is
+    -- one band and one test) and which humidity half of it — "wet", "dry",
+    -- or nil for the whole width.
+    if spec.spans then
+        for _, span in ipairs(spec.spans) do
+            assert(tdw.layers.ring_by_id[span[1]] and tdw.layers.ring_by_id[span[2]],
+                "biome " .. spec.id .. " names an unknown ring in a span")
+            assert(span[3] == nil or span[3] == "wet" or span[3] == "dry",
+                "biome " .. spec.id .. ": a span's half is \"wet\", \"dry\" or nothing")
+        end
+    end
     spec.fills = nil
     tdw.biomes[spec.id] = spec
     tdw.biome_list[#tdw.biome_list + 1] = spec
@@ -141,12 +153,52 @@ end
 ---@param n table The node builders (ctx.node).
 ---@param ring_id string
 ---@param wet boolean Which side of the split.
-function tdw.biome_mask(n, ring_id, wet)
+-- Where a biome stands, as a field: the union of its spans, each a band of
+-- rings narrowed to one humidity half. `id` is the biome's own id; the
+-- second argument is ignored and kept so the older call reads the same.
+--
+-- Written union-first so the deepest term is evaluated with the least
+-- held: a band is the radius (three buffers) and a half is the humidity
+-- noise, and a mask is itself the shallow half of `min(field, mask)` in
+-- every fill that uses one.
+function tdw.biome_mask(n, id, _)
     if tdw.config.everywhere then
         return nil
     end
-    local ring = tdw.layers.ring_by_id[ring_id]
-    return n.min(tdw.shape.ring(ring.u[1], ring.u[2]), tdw.shape.humidity_mask(wet))
+    local spans = tdw.biome_spans(id)
+    local acc = nil
+    for _, span in ipairs(spans) do
+        local first, last = tdw.layers.ring_by_id[span[1]], tdw.layers.ring_by_id[span[2]]
+        local band = tdw.shape.ring(first.u[1], last.u[2])
+        if span[3] then
+            band = n.min(band, tdw.shape.humidity_mask(span[3] == "wet"))
+        end
+        acc = acc and n.max(acc, band) or band
+    end
+    return acc
+end
+
+-- A biome's spans, defaulting to the one ring it names; a ring's id works
+-- too, for a caller that wants a bare ring.
+function tdw.biome_spans(id)
+    local biome = tdw.biomes[id]
+    if biome and biome.spans then
+        return biome.spans
+    end
+    local ring = biome and biome.ring or id
+    assert(tdw.layers.ring_by_id[ring], "no rings for " .. tostring(id))
+    return { { ring, ring } }
+end
+
+-- The whole u range a biome can be found in, over all its spans.
+function tdw.biome_span_u(id)
+    local lo, hi = nil, nil
+    for _, span in ipairs(tdw.biome_spans(id)) do
+        local first, last = tdw.layers.ring_by_id[span[1]], tdw.layers.ring_by_id[span[2]]
+        lo = lo and math.min(lo, first.u[1]) or first.u[1]
+        hi = hi and math.max(hi, last.u[2]) or last.u[2]
+    end
+    return lo, hi
 end
 
 -- Which biome a grass block belongs to, at runtime, from what is under the
@@ -199,11 +251,17 @@ function tdw.surface_biomes_in(u_lo, u_hi)
         end
         return found
     end
+    -- Widened by the wobble, as `rings_overlapping` is: a biome's band has
+    -- a wandering edge, so a chunk this close to one may be inside it.
+    local w = tdw.shape.RING_WOBBLE
     for _, biome in ipairs(tdw.areas.surface.biomes) do
-        if biome.built and biome.ring then
-            local ring = tdw.layers.ring_by_id[biome.ring]
-            if ring.u[1] <= u_hi and ring.u[2] >= u_lo then
-                found[#found + 1] = biome
+        if biome.built and biome.placed ~= false and (biome.spans or biome.ring) then
+            for _, span in ipairs(tdw.biome_spans(biome.id)) do
+                local first, last = tdw.layers.ring_by_id[span[1]], tdw.layers.ring_by_id[span[2]]
+                if first.u[1] - w <= u_hi and last.u[2] + w >= u_lo then
+                    found[#found + 1] = biome
+                    break
+                end
             end
         end
     end

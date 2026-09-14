@@ -20,7 +20,7 @@ tdw = {}
 -- over the WHOLE surface, ignoring its ring and humidity, so one biome can be
 -- looked at on its own while it is being made. Set it to nil for the world.
 tdw.config = {
-    everywhere = "coastal_cliffs",
+    everywhere = nil,
 }
 
 -- The host reports a failed load as "errored in init.lua" and nothing more,

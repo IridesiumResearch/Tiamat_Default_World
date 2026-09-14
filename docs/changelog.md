@@ -587,6 +587,48 @@ engine commit they landed in, because the mod is written against them.
   five blocks covers. A per-axis noise scale would stretch it in y alone
   and is written down as engine-asks 22.
 
+### The world, not one biome: every built biome placed by temperature
+
+- The dev switch is off. `tdw.config.everywhere = nil`, and the world is
+  the rings again.
+- Four biomes are built against eight rings, so each holds every ring its
+  temperature suits, which is what "score them by how cold or warm they
+  are" comes to: the alpine has the cold core (the Crown and Frostmoor,
+  both humidity halves); the grassland has the dry half of everything
+  outside it AND the whole width of the two hot rings, the Ember Ridge and
+  the Glass Waste, which is the dry band round the middle of the world
+  until there is a desert; the woodland has the wet half of the mild rings
+  either side of that. A biome's `spans` in the catalogue say which rings
+  and which humidity half of each, and its mask is their union.
+- No edge is a circle. The radius the BIOMES are placed by is the true
+  radius pushed in and out by a slow noise — `shape.RING_WOBBLE`, ten
+  thousandths of u at five kilometres, which near the frost edge is about
+  two kilometres of wander either way — while the world's own shape keeps
+  the true radius, so nothing about its form depends on it. Every Lua-side
+  ring test widens by the wobble, and the alpine's blend band widened with
+  it (0.003 to 0.024 of u) so the cross-faded programs cover every place
+  the edge can be. The wet/dry line was never a ring: it is the humidity
+  noise.
+- The alpine's map moved. Its terrain IS a map, so the biome reaches
+  exactly as far as the map does, and the map was centred on the spawn —
+  fifteen kilometres out, nowhere near the cold core. It is centred on the
+  axis now and 24.6 km across (1024 samples at 24 blocks, from 16), a hair
+  over the twelve kilometres the core can reach once the wobble has pushed
+  it. The blurs are in fewer samples to keep them the same distance in
+  blocks: sharpen 2 to 1, peak 4 to 3, floor 5 to 3, lake 14 to 9. The dev
+  switch still centres it on the spawn.
+- A biome is found where one of its SPANS is, not over the whole range its
+  spans cover: the grassland alone holds the two hot rings, and the
+  woodland would otherwise have been found there, run its fills, painted
+  nothing, and cost those chunks their one-evaluation body.
+- A warmth field that moved the wet/dry split with the radius was tried
+  and taken out: it sits inside `dry_weight`, which the temperate terrain
+  evaluates while it holds the wet terms, and that came to ten live
+  buffers against the engine's eight. Which ring a biome is warm enough
+  for is a fact about the biome, and it lives in its spans.
+- Small kelp groves on the shelf, as the design says: a sixth of the deep
+  floor rather than half.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

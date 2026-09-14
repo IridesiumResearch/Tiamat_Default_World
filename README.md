@@ -146,6 +146,31 @@ new material, and additions are flagged before they land.
 
 ## Biomes
 
+**Where they stand (2026-09-14).** The world is rings by distance from the
+axis, and four biomes are built against eight rings, so each built one holds
+every ring its temperature suits until the biome that ring is for exists:
+
+| Rings | Radius | What stands there |
+|---|---|---|
+| Crown, Frostmoor | 0 to 10.6 km | Alpine Highlands, both halves: the cold core, mountains on the dome's own summit |
+| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
+| The Ember Ridge, the Glass Waste | 20.7 to 28.3 km | Rolling Grasslands over the whole width: the dry band round the middle of the world, standing in for a desert |
+| The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity; the Coastal Cliffs are NOT here yet |
+
+**No edge of any of it is a circle.** The radius the biomes are placed by is
+the true radius pushed in and out by a slow noise (`shape.RING_WOBBLE`), so
+every ring's edge wanders by up to about two kilometres, and the wet/dry
+line is the humidity noise, which is a blob field and was never a ring. The
+world's own shape — the dome, the relief, the depth bands — still goes by
+the true radius, so nothing about its form depends on the wobble.
+
+**The Coastal Cliffs and their shelf are built but not placed.** Their sea
+is flat, and the world's rim is 2.5 km of dome above where a flat sea would
+sit, with about 180 m of relief on top of that; putting the ocean in the
+world means bringing the rim down to a sea level and damping the relief into
+it, which is a change to the world's shape rather than to a biome. Look at
+them with `tdw.config.everywhere = "coastal_cliffs"` until that is decided.
+
 - [x] 1.4 Coastal Cliffs — sheer precipices thirty to sixty blocks into open
       water or a short shingle beach, on a FLAT sea: the biome's terms cancel
       the world's dome and the generator fills the engine's water below one

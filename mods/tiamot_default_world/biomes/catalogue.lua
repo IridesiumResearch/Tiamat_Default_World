@@ -17,14 +17,29 @@ local area, biome = tdw.register_area, tdw.register_biome
 -- 1. The surface --------------------------------------------------------------
 area{ id = "surface", name = "Surface", kind = "surface",
     note = "Rings by distance from the axis, split by humidity and altitude." }
+-- **Where the built biomes stand, until the unbuilt ones take their rings
+-- back.** Four are built and eight rings are empty, so each built biome
+-- holds every ring its temperature suits (2026-09-14): the alpine has the
+-- cold core, and the woodland and the grassland share everything outside
+-- it by humidity — whose split moves toward dry as the world warms
+-- (shape.WARM_DRY_PUSH), so the hot rings in the middle are grassland and
+-- the mild ones are mostly woodland. Every edge wanders: the ring span by
+-- shape.RING_WOBBLE, the wet/dry line by the humidity noise, which is a
+-- blob field and never a circle.
 biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface",
-    ring = "temperate", humidity = { -0.05, 0.42 }, note = "1.1 — oak woodland, the first biome built." }
+    spans = { { "temperate", "temperate", "wet" }, { "verdant", "hem", "wet" } },
+    humidity = { -0.05, 0.42 },
+    note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, and everything from the Verdant Belt out to the Hem. It skips the two hot rings, which are all grassland." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    ring = "temperate", humidity = { -0.42, -0.05 }, note = "The dry half of the temperate ring." }
+    spans = { { "temperate", "hem", "dry" }, { "ember", "glass" } },
+    humidity = { -0.42, -0.05 },
+    note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
-    ring = "frost", humidity = { -0.42, -0.05 }, note = "1.3 — the frost ring's dry half; the mountain form (anywhere more than ~1.2 km up) is still to come." }
+    spans = { { "crown", "frost" } },
+    note = "1.3 — the cold core, both halves of it: the Crown and Frostmoor. Its terrain is a MAP, so it reaches exactly as far as that map does — see the map constants in its own file." }
 biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
-    ring = "shore", note = "Steep stretches of the Long Shore." }
+    ring = "shore", placed = false,
+    note = "1.4 and the shelf. NOT placed in the world yet: its sea is flat and the world's rim is 2.5 km of dome above it, so the ocean needs the rim brought down to a sea level first. Look at it with tdw.config.everywhere." }
 biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
     ring = "shore", note = "Gentle stretches of the Long Shore." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
