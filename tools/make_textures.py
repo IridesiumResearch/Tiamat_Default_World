@@ -49,8 +49,6 @@ BLOCKS = {
     "slate":          ( 72,  78,  90,  0),
     "dark_basalt":    ( 44,  44,  48,  0),
     "dead_coral":     (178, 166, 150,  0),
-    "coast_turf":     (142, 148,  66,  0),
-    "coast_grass":    (156, 162,  70,  0),
     "sand":           (194, 180, 138,  0),
     "ocean_moss":     ( 40,  78,  62,  0),
     "barnacles":      (170, 166, 154,  0),
@@ -88,6 +86,8 @@ BLOCKS = {
     "lava_rock":      ( 52,  44,  46,  0),   # the volcanic foothills (2.3)
     "pumice":         (178, 172, 162,  0),
     "sulfur":         (226, 184,  62,  0),
+    "lava":           (214,  84,  22,  0),   # the fluid's block
+    "glow_cap":       (150, 224, 226,  0),   # the river's mushrooms (2026-09-15)
     "charcoal":       ( 58,  56,  60,  0),
     "dried_mud":      (148, 132, 148,  0),
     "dead_sagebrush": (138, 128, 110,  0),   # the deep ocean (1.8): old, sea-stained bone
@@ -187,7 +187,6 @@ DOTS.update(DOTS_EXTRA)
 BLADES = {
     "tall_grass": (5, 11, 16),   # blades per card; shortest, tallest in pixels
     "alpine_grass": (5, 8, 13),  # shorter: wind-flattened
-    "coast_grass": (5, 7, 12),   # shorter still: wind-scoured
     "water_iris": (4, 12, 16),   # tall blades, few of them
     "wild_mint": (6, 5, 9),      # low and bushy
     "seagrass": (5, 12, 16),     # long, most of the card
@@ -203,6 +202,11 @@ BLADES = {
 # the bottom edge ending in small dot clusters high in the tile.
 ROSETTES = {
     "ladys_mantle": 5,
+}
+# Mushrooms as a SPRITE: a few thin stems from the bottom edge, each under
+# a flat cap a few pixels wide, the tallest reaching half the tile.
+CAPS = {
+    "glow_cap": 3,
 }
 SPRAYS = {
     "ladys_mantle_bloom": 5,
@@ -296,6 +300,25 @@ def texture(name, r, g, b, grain):
                     for px, v in enumerate(row):
                         if v == "#" and x0 + px < SIZE and y0 + py < SIZE:
                             on[y0 + py][x0 + px] = True
+        rows = [[v for x in range(SIZE) for v in (r, g, b, 255 if on[y][x] else 0)] for y in range(SIZE)]
+        return png(SIZE, SIZE, rows)
+    caps = CAPS.get(name)
+    if caps is not None:
+        rng = lcg(sum(ord(c) * 31 ** i for i, c in enumerate(name)) + 7)
+        on = [[False] * SIZE for _ in range(SIZE)]
+        slot = SIZE / caps
+        for i in range(caps):
+            x = int(slot * (i + 0.5) + ((next(rng) % 1000) / 1000 - 0.5) * 2.0)
+            tall = 3 + next(rng) % 5                      # the stem, pixels
+            wide = 1 + next(rng) % 2                      # the cap's half-width
+            for h in range(tall):
+                if 0 <= x < SIZE:
+                    on[SIZE - 1 - h][x] = True
+            for dx in range(-wide, wide + 1):
+                if 0 <= x + dx < SIZE:
+                    on[SIZE - 1 - tall][x + dx] = True
+                    if abs(dx) < wide and SIZE - 2 - tall >= 0:
+                        on[SIZE - 2 - tall][x + dx] = True
         rows = [[v for x in range(SIZE) for v in (r, g, b, 255 if on[y][x] else 0)] for y in range(SIZE)]
         return png(SIZE, SIZE, rows)
     blades = BLADES.get(name)

@@ -110,7 +110,14 @@ local BAYS_FREQ, BAYS_OCTAVES, BAYS_AMP = 1 / 700, 2, 90.0
 -- The shore's detail under the map's scale, added in the programs: the
 -- coast's own numbers (bites of a dozen blocks, crenellations of two).
 local FINE_DETAIL = { { 1 / 150, 3, 24.0 }, { 1 / 9, 2, 5.0 } }
-M.DIST_FAR = 400.0                                      -- blocks: the map's clamp
+-- The map's clamp. Past the shore's reach (FADE + 20 = 920 blocks): at 400
+-- (until 2026-09-15) EVERY land chunk read as within reach of a shore, so
+-- the whole of every ring in a sea mode ran the shore program, and
+-- `near()` — which lifts the river trough out of reach toward a shore —
+-- never fell under 0.56: no river anywhere in those modes had its valley,
+-- only its bed painted on the uplands, with a 27-block step where a sea
+-- mode met one that is not.
+M.DIST_FAR = 1100.0
 M.SILL_HALF = 130.0                                     -- blocks: a sill's land either side of its circle: more than a map sample
 M.PLAIN_W = 130.0                                       -- blocks: inland of any shore the ground keeps to the level plus a beach this far (a sill, whole)
 M.FADE = 900.0                                          -- blocks: past PLAIN_W the floor falls away from the level over this; the rivers stop over it

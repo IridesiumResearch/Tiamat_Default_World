@@ -118,7 +118,7 @@ density field; what the options are and what each needs is in
   - `/tp <biome>` — the biome's file name with spaces for underscores:
     `/tp temperate woodlands`, `/tp rolling grasslands`, `/tp alpine
     highlands`, `/tp frozen wastes`, `/tp river valleys`, `/tp dense
-    rainforest canopy`, `/tp arid mesa`, `/tp badlands` — worked out from
+    jungle`, `/tp arid mesa`, `/tp badlands` — worked out from
     the world's seed and dropped onto the ground there; `/tp <ring>`
     (`crown`, `frost`, `temperate`, `ember`,
     `glass`, `verdant`, `shore`, `hem`) to the middle of a ring on your own
@@ -166,7 +166,7 @@ every ring its temperature suits until the biome that ring is for exists:
 | The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), Taiga on the wet (Firwold) |
 | The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore and the Deep Ocean past every shelf |
-| The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
+| The Verdant Belt | 28.3 to 35.4 km | Jungle on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills over the whole width: stepped basalt ridges and cinder cones on the inner side, foothills on the outer third |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies) |
 | The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity, three lanes of sea |
@@ -371,8 +371,8 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
-- [x] 1.7 Dense Rainforest Canopy — the Verdant Belt's wet half
-      (`biomes/dense_rainforest_canopy.lua`). Karst ridges, sheer ravines,
+- [x] 1.7 Jungle — the Verdant Belt's wet half (`biomes/jungle.lua`; the
+      Dense Rainforest Canopy until 2026-09-15). Karst ridges, sheer ravines,
       sinkholes and hummocks as terms of the terrain in the "verdant" mode;
       moss over saturated mud with grass, bare mud, clay in the ravines,
       black mud puddles and moss-masked outcrops; dry clay up the ravines'

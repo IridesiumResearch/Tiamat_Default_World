@@ -42,7 +42,6 @@ local OWNER = {
     [blocks.packed_dirt] = "rolling_grasslands",
     [blocks.dead_coral] = "coastal_cliffs",
     [blocks.dark_basalt] = "coastal_cliffs",
-    [blocks.coast_turf] = "coastal_cliffs",
     [blocks.barnacles] = "coastal_cliffs",
     [blocks.bone] = "deep_ocean",
     [blocks.clear_ice] = "frozen_wastes",
@@ -53,12 +52,13 @@ end
 for _, material in ipairs(RIVER_GROUND) do
     OWNER[material] = "river_valleys"
 end
+OWNER[blocks.glow_cap] = "river_valleys"
 -- The rainforest's own, which also decide: its tree ferns are oak, which
 -- the woodland claims, and the moss under them is the rainforest's and
 -- nobody else's. The clays are shared with the river and say nothing.
 for _, material in ipairs({ blocks.moss, blocks.black_mud, blocks.ironwood_log, blocks.ironwood_leaves,
     blocks.climbing_ivy, blocks.monstera, blocks.pitcher_plant, blocks.kapok_wood, blocks.kapok_leaves }) do
-    OWNER[material] = "dense_rainforest_canopy"
+    OWNER[material] = "jungle"
 end
 -- The mesa's own, which decide: its dirt, sand and clay are other biomes'.
 for _, material in ipairs({ blocks.rust_red_sandstone, blocks.ochre_sandstone, blocks.pale_terracotta,
@@ -71,11 +71,11 @@ end
 for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lichen }) do
     OWNER[material] = "taiga"
 end
-for _, material in ipairs({ blocks.lava_rock, blocks.pumice, blocks.sulfur }) do
+for _, material in ipairs({ blocks.lava_rock, blocks.pumice, blocks.lava }) do   -- not the sulfur: the mesa has spots of it
     OWNER[material] = "volcanic_foothills"
 end
 -- Whose ground answers at once, wherever in the column it is found.
-local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true, badlands = true, taiga = true, volcanic_foothills = true }
+local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true, taiga = true, volcanic_foothills = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -119,6 +119,11 @@ function tdw.biome_under(x, y, z)
     -- which of them a place is, is the placement field's to say.
     if owner == "alpine_highlands" and tdw.frozen_at and tdw.frozen_at(x, z) then
         return "frozen_wastes"
+    end
+    -- The Jungle's floor is moss, but its ravines are clay and its hollows
+    -- mud, which say nothing: the placement field says.
+    if owner == nil and tdw.jungle_at and tdw.jungle_at(x, z) then
+        return "jungle"
     end
     return owner
 end

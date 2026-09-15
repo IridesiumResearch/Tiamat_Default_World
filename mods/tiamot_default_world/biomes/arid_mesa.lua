@@ -72,8 +72,8 @@ local CLIFF_K = 150.0                                   -- a cliff a block and a
 -- few blocks of height, the harder beds standing proud of the softer, as
 -- in the strata. Only the cliffs take it: the aprons, the zones and the
 -- structures read the plain plateau value.
-local FACE_FREQ, FACE_STRETCH, FACE_AMP = 1 / 4, 10, 0.010
-local CANYON_FACE_AMP = 3.0                              -- the same on a box canyon's walls, in blocks of the contour: a block and a half either way
+local FACE_FREQ, FACE_STRETCH, FACE_AMP = 1 / 4, 10, 0.006              -- 0.010 until 2026-09-15: the ledges cut the little mesas through and left their caps floating
+local CANYON_FACE_AMP = 2.0                              -- the same on a box canyon's walls, in blocks of the contour: a block and a half either way
 local TALUS_REACH, TALUS_SHARE = 0.03, 0.25              -- an apron a quarter of the step high, six blocks or so out
 local CANYON_FREQ, CANYON_W, CANYON_SEG_FREQ, CANYON_SEG_MIN = 1 / 350, 6.0, 1 / 500, 0.0
 local ARCH_FREQ, ARCH_MIN, ARCH_T = 1 / 70, 0.28, 0.005
@@ -93,7 +93,8 @@ local SAGE_THIN = 0.29                                   -- a third noise over t
 -- halves, so the bands come out of uneven thickness.
 local STRATA_FOLDS = { 0.036, 0.0165, 0.0092 }
 -- The structures: cell, share of squares, salt.
-local CACTUS_CELL, CACTUS_SQUARES = 14, 0.25
+local CACTUS_CELL, CACTUS_SQUARES = 14, 0.125        -- 0.25 until "half the amount of big cactuses" (2026-09-15)
+local SULFUR_FREQ, SULFUR_MIN = 1 / 55, 0.36              -- very rare spots of sulfur on the flats (2026-09-15)
 local CRANNY_CELL, CRANNY_SQUARES = 6, 0.15
 local TREE_TALUS_CELL, TREE_TALUS_SQUARES = 18, 0.2
 local TREE_TOP_CELL, TREE_TOP_SQUARES = 40, 0.12
@@ -176,6 +177,30 @@ end
 tdw.biomes[ID].ring_mode = "verdant"
 tdw.biomes[ID].lazy = true
 tdw.biomes[ID].soil = blocks.rust_red_sandstone
+
+-- The dust (2026-09-15, "add that same fog to the mesa biome"): the
+-- badlands' haze at the same strength, thinner in a chunk the biome only
+-- partly covers.
+local DUST = { r = 0.78, g = 0.68, b = 0.56 }
+local DUST_VISIBILITY, DUST_EDGE_VISIBILITY = 440, 880
+local place_mask = nil
+if tdw.on_chunk_fog then
+    tdw.on_chunk_fog(function(pos)
+        local only = tdw.config.everywhere
+        local c
+        if only then
+            c = only == ID and 1.0 or 0.0
+        else
+            place_mask = place_mask or shape.compile("mesa.place", tdw.biome_mask(n, ID))
+            local b = place_mask:bounds(pos)
+            c = b.high <= 0 and 0.0 or (b.low > 0 and 1.0 or 0.5)
+        end
+        if c == 0.0 then
+            return nil
+        end
+        return { r = DUST.r, g = DUST.g, b = DUST.b, visibility = c == 1.0 and DUST_VISIBILITY or DUST_EDGE_VISIBILITY }
+    end)
+end
 
 -- ------------------------------------------------------------ the structures
 
@@ -408,6 +433,8 @@ tdw.build_biome(ID, function(ctx)
         n.sub(lowland(), n.const(0.5)))), n.const(18)))
     -- 19: its gravel bed; 20: a rare muddy puddle in it.
     code = n.max(code, n.mul(step(wash_bed()), n.add(step(n.sub(n.noise("ms_puddle", PUDDLE_FREQ, 1, 1.0), n.const(PUDDLE_MIN))), n.const(19))))
+    -- 21: a very rare spot of sulfur on the flats: two noises both high.
+    code = n.max(code, n.mul(step(n.min(lowland(), n.sub(both("ms_sulfur", SULFUR_FREQ, SULFUR_MIN, 12.0), n.const(0.5)))), n.const(21)))
     local mask = tdw.biome_mask(n, ID)
     if mask then
         code = n.mul(code, step(mask))
@@ -445,6 +472,8 @@ tdw.build_biome(ID, function(ctx)
         { code = 20, to = 1 * km, material = blocks.mud },
         { code = 20, from = 1 * km, to = 2 * km, material = blocks.wet_clay },
         { code = 20, from = 2 * km, to = deep, material = blocks.rust_red_sandstone },
+        { code = 21, to = 1 * km, material = blocks.sulfur },
+        { code = 21, from = 1 * km, to = deep, material = blocks.rust_red_sandstone },
     }
     for _, e in ipairs(more) do entries[#entries + 1] = e end
 

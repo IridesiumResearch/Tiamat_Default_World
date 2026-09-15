@@ -43,8 +43,8 @@
 -- grows, that block of the log says why.
 
 
-local LITTER_FREQ = 1 / 14     -- patches a dozen or so blocks across
-local LITTER_MIN = 0.13        -- the noise (+/-0.42) must exceed this: a fifth of the ground
+local LITTER_FREQ = 1 / 6      -- patches five or six blocks across, ragged (a dozen until 2026-09-15: "the mud spots quite a bit smaller and more broken up")
+local LITTER_MIN = 0.21        -- the noise (+/-0.42) must exceed this: a tenth of the ground
 
 -- Ground cover, as fills in the shell of air just over the surface: ferns
 -- two cells tall in carpets (a slow noise says where a carpet is, a fast

@@ -63,9 +63,9 @@ local FACE_W = 2.0                                    -- blocks from the coastli
 -- vary with height so a rib is not a cast column.
 local JAG_RIB_FREQ = 1 / 13                           -- lines of the ground plane, about thirteen blocks apart
 local JAG_RIB_W = 5.0                                 -- blocks either side of a line the rib reaches
-local JAG_RIB_AMP = 0.0045                            -- km: +/- two and a quarter blocks of buttress and flute
+local JAG_RIB_AMP = 0.0015                            -- km: +/- three quarters of a block of buttress and flute (0.0045 until 2026-09-15: "tone those structures way down")
 local JAG_GRAIN_FREQ = 1 / 18
-local JAG_GRAIN = 0.0008                              -- km: +/- three eighths of a block
+local JAG_GRAIN = 0.0004                              -- km: +/- a fifth of a block
 local JAG_REACH = 9.0
 local JAG_AREA_FREQ = 1 / 300
 local JAG_AREA_MIN = -0.28                            -- four fifths of the coast
@@ -107,7 +107,7 @@ local NOTCH_HALF = 0.0025
 -- the coastline, between ARCH_LO and ARCH_HI over the sea. A cave in a
 -- thick cliff; through a thin headland, an arch.
 local ARCH_FREQ = 1 / 16
-local ARCH_MIN = 0.22
+local ARCH_MIN = 0.34                                 -- 0.22 until 2026-09-15: fewer arches
 local ARCH_LO, ARCH_HI = 0.002, 0.016
 -- The flooded caves: tunnels along the contour lines of a slow noise,
 -- TUNNEL_W blocks half-width, from TUNNEL_LO to TUNNEL_HI about the sea
@@ -123,7 +123,7 @@ local TUNNEL_AREA_MIN = 0.0
 -- for what they cost. They wanted the engine's particles anyway.)
 -- How much is taken out of the terrain where a cut is: more than the
 -- cliff is tall, so the cut is air to its bottom.
-local CUT = 0.08
+local CUT = 0.05                                      -- 0.08 until 2026-09-15
 -- The materials.
 local STRATA = {                                      -- the strata, bottom up from STRATA_BASE below the sea: km thick, material code
     { 0.006, 1 }, { 0.004, 2 }, { 0.003, 3 }, { 0.005, 4 }, { 0.003, 1 }, { 0.006, 2 }, { 0.002, 3 },
@@ -139,7 +139,7 @@ local CORAL_MIN = 0.12                                -- the splash noise over t
 local GRAVEL_MIN = 0.12                               -- ...under minus this: gravel; between: the strata's own stone and slate
 local BEACH_IN = 14.0                                 -- blocks from the coastline the beach's gravel reaches
 local TUFT_FREQ = 1.5
-local TUFT_MIN = 0.35                                 -- sparse
+local TUFT_MIN = 0.28                                 -- sparse
 local SAND_DEPTH = 0.004                              -- km: the sand over the shelf's rock
 local GRAVEL_BED_FREQ = 1 / 60
 local GRAVEL_BED_MIN = 0.2
@@ -264,7 +264,9 @@ local function rib(stream, freq, w)
     return n.clamp(n.mul(n.add(n.contour(stream, freq), n.const(-w)), n.const(-1.0 / w)), -1.0, 1.0)
 end
 local function jag()
-    local near = n.clamp(n.mul(n.add(n.abs(shore()), n.const(-JAG_REACH)), n.const(-0.3)), 0.0, 1.0)
+    -- On land only (2026-09-15): thrown either side of the line, the jag
+    -- lifted the seabed off the coast into ribs that read as floating.
+    local near = n.clamp(n.min(n.mul(shore(), n.const(0.5)), n.mul(n.add(shore(), n.const(-JAG_REACH)), n.const(-0.3))), 0.0, 1.0)
     local area = n.clamp(n.mul(n.sub(n.noise("jag_area", JAG_AREA_FREQ, 1, 1.0), n.const(JAG_AREA_MIN)), n.const(8.0)), 0.0, 1.0)
     local throw = n.mul(rib("jag_rib", JAG_RIB_FREQ, JAG_RIB_W), n.const(JAG_RIB_AMP))
     throw = n.add(throw, n.noise("jag_grain", JAG_GRAIN_FREQ, 1, JAG_GRAIN))
@@ -513,7 +515,7 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         { code = 5, to = 2 * km, material = blocks.dead_coral },
         { code = 6, to = 2 * km, material = blocks.creek_bed },
         { code = 7, to = 3 * km, material = blocks.creek_bed },
-        { code = 8, to = 1 * km, material = blocks.coast_turf },
+        { code = 8, to = 1 * km, material = blocks.moss },          -- moss, not the coast turf ("i did not ok that block", 2026-09-15)
         { code = 8, from = 1 * km, to = 12 * km, material = blocks.stone },
         { code = 9, to = SAND_DEPTH, material = blocks.sand },
         { code = 10, to = 3 * km, material = blocks.creek_bed },
@@ -548,7 +550,7 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         depth_between(BURROW_DEPTH[1], BURROW_DEPTH[2])), n.sub(n.const(FLAT_MIN), n.noise("flat", FLAT_FREQ, 1, 1.0)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries },
-        { cover = blocks.coast_grass, cells = 2, take = tufts },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
     }
     if game.schematic and game.schematic_shapes then
         -- The pines are cut here, at the first coast chunk, not at load.

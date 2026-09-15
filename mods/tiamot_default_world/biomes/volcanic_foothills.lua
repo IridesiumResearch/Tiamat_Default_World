@@ -45,9 +45,9 @@ local ID = "volcanic_foothills"
 -- The ground, km. Thresholds against the measured noise: one octave over
 -- 0.35 on 22% of the ground, at the +0.5 clamp on 13%; two over 0.3 on 18%.
 local UNDULATE_FREQ, UNDULATE_AMP = 1 / 260, 0.006        -- the foothills: three blocks either way
-local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 420, 22.0, 0.042 -- the ridges: tents forty-two blocks over, twenty-two either side of a contour
+local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 420, 22.0, 0.034 -- the ridges: tents thirty-four blocks over, twenty-two either side of a contour (forty-two until 2026-09-15: "about 20% too extreme")
 local TERRACE_STEP, TERRACE_K = 0.007, 260.0              -- the ridges climb in steps seven blocks tall, each a couple of blocks wide
-local CONE_FREQ, CONE_MIN, CONE_EDGE, CONE_H = 1 / 700, 0.30, 4.0, 0.055   -- cinder cones: two noises both high, fifty-five blocks, a crater in the top
+local CONE_FREQ, CONE_MIN, CONE_EDGE, CONE_H = 1 / 700, 0.30, 4.0, 0.045   -- cinder cones: two noises both high, forty-five blocks, a crater in the top
 local APRON_EDGE, APRON_H = 1.2, 0.012                    -- the same blobs at a softer edge: the inclined aprons round the cones
 local LEVEE_FREQ, LEVEE_W, LEVEE_H = 1 / 230, 5.0, 0.004  -- lava levees: low ridges along a contour, in stretches
 local LEVEE_SEG_FREQ, LEVEE_SEG_MIN = 1 / 300, 0.05
@@ -57,6 +57,16 @@ local GULLY_FREQ, GULLY_W, GULLY_D = 1 / 60, 2.5, 0.004   -- rain-carved ash gul
 local TUFF_FREQ, TUFF_MIN = 1 / 150, 0.05
 local FISSURE_FREQ, FISSURE_W, FISSURE_D = 1 / 210, 0.9, 0.006   -- thermal fissures: a block wide, six deep, in stretches
 local FISSURE_SEG_FREQ, FISSURE_SEG_MIN = 1 / 260, 0.18
+local GRAIN_FREQ, GRAIN_AMP = 1 / 7, 0.0015                -- fine grain over everything, a block and a half either way (2026-09-15, "a little more detailed with noise")
+-- The lava (2026-09-15, "a very rare flowing lava channel or boiling lava
+-- pit"): pits where two noises are both high, channels along a contour in
+-- rare stretches; either flattens the ground to a floor PIT_D under the
+-- foothills and holds the lava fluid LAVA_FILL deep over it.
+local PIT_FREQ, PIT_MIN, PIT_EDGE, PIT_D = 1 / 380, 0.32, 10.0, 0.008
+local CHANNEL_FREQ, CHANNEL_W, CHANNEL_SEG_FREQ, CHANNEL_SEG_MIN = 1 / 520, 3.0, 1 / 700, 0.28
+local PIT_RAMP = 0.02                                      -- km: the cap's slope in from the pit's edge — twenty blocks over p, so the rim is a bowl's
+local LAVA_FILL = 0.004
+local LAVA = "tiamot_default_world:lava"
 -- The surface.
 local LOBE_FREQ, LOBE_MIN = 1 / 90, 0.28                 -- fresh lava lobes: nothing grows
 local ASH_FREQ, ASH_MIN = 1 / 45, 0.08                   -- ash drifts
@@ -103,6 +113,14 @@ end
 local function fissure_d()
     return n.contour("vf_fissure", FISSURE_FREQ, 2)
 end
+-- Where the lava is: a pit or a channel, and only where the ridge's terms
+-- stand at full weight, so the floor they flatten is the whole ground.
+local function pit_w()
+    local pit = both("vf_pit", PIT_FREQ, PIT_MIN, PIT_EDGE)
+    local channel = n.mul(tent("vf_lava_ch", CHANNEL_FREQ, CHANNEL_W), seg("vf_lava_seg", CHANNEL_SEG_FREQ, CHANNEL_SEG_MIN, 8.0))
+    local core = n.clamp(n.mul(n.sub(shape.ember_weight(), n.const(0.9)), n.const(10.0)), 0.0, 1.0)
+    return n.mul(n.max(pit, channel), core)
+end
 -- The ridges' height, terraced: the tent's height climbed in TERRACE_STEP
 -- steps, each a hard clamp, so the flanks are stepped basalt.
 local function ridges()
@@ -130,7 +148,16 @@ function shape.volcanic_terms()
     -- The gouges, the gullies through the tuff, the fissures.
     acc = n.sub(acc, n.mul(n.mul(cut("vf_gouge", GOUGE_FREQ, GOUGE_W, 0.5), seg("vf_gouge_seg", GOUGE_SEG_FREQ, GOUGE_SEG_MIN, 6.0)), n.const(GOUGE_D)))
     acc = n.sub(acc, n.mul(n.mul(cut("vf_gully", GULLY_FREQ, GULLY_W, 1.0), seg("vf_tuff", TUFF_FREQ, TUFF_MIN, 5.0)), n.const(GULLY_D)))
-    return n.sub(acc, n.mul(n.mul(n.clamp(n.mul(n.add(fissure_d(), n.const(-FISSURE_W)), n.const(-2.0)), 0.0, 1.0), fissure_live()), n.const(FISSURE_D)))
+    acc = n.sub(acc, n.mul(n.mul(n.clamp(n.mul(n.add(fissure_d(), n.const(-FISSURE_W)), n.const(-2.0)), 0.0, 1.0), fissure_live()), n.const(FISSURE_D)))
+    return n.add(acc, n.noise("vf_grain", GRAIN_FREQ, 2, GRAIN_AMP))
+end
+-- The lava pits and channels: a CAP on the whole terrain (the ridge's terms
+-- and the temperate pair's, shape.lua), a floor PIT_D under the foothills
+-- where p is 1, rising PIT_RAMP per unit of (1 - p) so it is out of reach
+-- off a pit and a bowl's slope at the rim. One evaluation of p, where a
+-- blend of the terms cost three.
+function shape.volcanic_cap()
+    return n.add(n.sub(undulate(), n.const(PIT_D)), n.mul(n.add(n.mul(pit_w(), n.const(-1.0)), n.const(1.0)), n.const(PIT_RAMP)))
 end
 
 tdw.biomes[ID].ring_mode = "ember"
@@ -325,6 +352,8 @@ tdw.build_biome(ID, function(ctx)
         n.sub(lobe_w(), n.const(0.5)),
         -- 6: sulfur crust ringing a live fissure.
         n.min(n.add(n.mul(fissure_d(), n.const(-1.0)), n.const(SULFUR_RING)), n.sub(fissure_live(), n.const(0.4))),
+        -- 7: a lava pit's floor and rim: lava rock.
+        n.sub(pit_w(), n.const(0.5)),
     }
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
@@ -350,6 +379,8 @@ tdw.build_biome(ID, function(ctx)
         { code = 5, from = 4 * km, to = 6 * km, material = blocks.dark_basalt },
         { code = 6, to = 1 * km, material = blocks.sulfur },
         { code = 6, from = 1 * km, to = 6 * km, material = blocks.dark_basalt },
+        { code = 7, to = 3 * km, material = blocks.lava_rock },
+        { code = 7, from = 3 * km, to = 6 * km, material = blocks.dark_basalt },
     }
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
@@ -358,7 +389,7 @@ tdw.build_biome(ID, function(ctx)
         local built = structures()
         local function scatter(name, list, field, cell, chance, salt, sink, above)
             fills[#fills + 1] = { scatter = true, depth = depth, schematics = list, cell = cell, chance = chance, salt = salt,
-                sink = sink, above = above, stand = shape.compile("biome.volcanic.stand_" .. name, masked(field)) }
+                sink = sink, above = above, stand = shape.compile("biome.volcanic.stand_" .. name, masked(n.min(field, n.sub(n.const(0.05), pit_w())))) }
         end
         local function off_lobes(field)
             return n.min(field, n.sub(n.const(0.2), lobe_w()))
@@ -375,6 +406,15 @@ tdw.build_biome(ID, function(ctx)
         scatter("snag", built.snags, off_lobes(n.min(flats(), n.sub(ash(), n.const(0.15)))), SNAG_CELL, SNAG_SQUARES, 135, 1, 0.008)
         scatter("pine", built.pines, off_lobes(n.min(flats(), n.sub(n.const(HOLLOW), undulate()))), PINE_CELL, PINE_SQUARES, 136, 1, 0.014)
     end
+    -- The lava, last: the terraced fluid (as the rivers' water) LAVA_FILL
+    -- over a pit's floor, inside the pit, wherever the flattened ground is
+    -- under that level.
+    fills[#fills + 1] = {
+        fluid = LAVA,
+        level = shape.compile("biome.volcanic.lava_level", n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()), undulate()),
+            n.const(1.0 / shape.SCALE)), n.const(shape.Y0 + (LAVA_FILL - PIT_D) / shape.SCALE))),
+        within = shape.compile("biome.volcanic.lava_within", masked(n.sub(pit_w(), n.const(0.8)))),
+    }
     return fills
 end)
 

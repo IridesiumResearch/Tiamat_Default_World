@@ -1,7 +1,8 @@
 -- SPDX-FileCopyrightText: Iridesium
 -- SPDX-License-Identifier: GPL-3.0-only
 --
--- 1.7 Dense Rainforest Canopy: the wet half of the Verdant Belt.
+-- 1.7 Jungle (the Dense Rainforest Canopy until 2026-09-15: "let's change
+-- the name to just 'Jungle'"): the wet half of the Verdant Belt.
 --
 -- The brief (2026-09-14):
 --
@@ -50,7 +51,7 @@ local shape = tdw.shape
 local n = shape.node
 local schem = tdw.schem
 
-local ID = "dense_rainforest_canopy"
+local ID = "jungle"
 
 -- The ground's terms. Heights in km, distances in blocks.
 local UNDULATE_FREQ, UNDULATE_AMP = 1 / 90, 0.022     -- about nine blocks either way
@@ -152,12 +153,15 @@ local KAPOK = {
     bridge_one_in = 2,
 }
 
--- Vines: ropes of ivy hung from a limb, straight down with a little wander.
+-- Vines (2026-09-15: "links of vine that grow after some amount of ticks
+-- one at a time, not really long single vines"): the template hangs the
+-- first two links under a limb; the rest grow by the random tick at the
+-- end of this file, a link at a time. `drop` is what it may grow to, and
+-- is the tick's business now.
 local function vine(x, y, z, drop, rng)
     schem.push_path(blocks.climbing_ivy, {
-        { x, y - 0.4, z, 0.32 },
-        { x + (rng:below(3) - 1) * 0.3, y - drop * 0.5, z + (rng:below(3) - 1) * 0.3, 0.28 },
-        { x + (rng:below(3) - 1) * 0.3, y - drop, z + (rng:below(3) - 1) * 0.3, 0.22 },
+        { x, y - 0.3, z, 0.3 },
+        { x + (rng:below(3) - 1) * 0.2, y - 1.8, z + (rng:below(3) - 1) * 0.2, 0.26 },
     }, BLIND)
 end
 
@@ -178,10 +182,13 @@ local function megatree(rng, sp)
     end
     schem.push_path(sp.log, trunk, BLIND)
 
-    -- The buttresses: thin walls of wood radiating from the foot, each a
-    -- stack of horizontal paths half a block apart whose reach falls in
-    -- three STEPS toward the top, so a wall's edge is a staircase. The
-    -- lowest reach a block and a half into the ground at their far ends.
+    -- The roots (2026-09-15: "draw the roots with a path just like the
+    -- rest of the tree trunks and then have the thickness scale up toward
+    -- the base"): each a path leaving the trunk a few blocks up, thick as
+    -- half the trunk there, out and down over the ground with a kink at
+    -- its knee, thinning to a tip that dives a block and a half under; a
+    -- smaller side root off most of them at the knee. Gnarly, not a wall
+    -- (the buttresses were stacks of horizontal paths, a staircase edge).
     local fins = pick(rng, sp.fins)
     local first = rng:below(16)
     local headings = {}
@@ -189,19 +196,25 @@ local function megatree(rng, sp)
         local heading = (first + f * 16 // fins + rng:below(2)) % 16
         headings[#headings + 1] = heading
         local d = schem.DIR16[heading + 1]
-        local fin_h = pick(rng, sp.fin_h)
-        local fin_reach = pick(rng, sp.fin_reach)
-        for level = -3, fin_h * 2 do
-            local h = level * 0.5
-            local share = math.ceil(math.max(0.0, 1.0 - h / fin_h) * 3.0) / 3.0
-            if share > 0 then
-                local reach = r0 * 0.6 + fin_reach * share
-                local dip = h < 1.0 and 0.9 or 0.0
-                schem.push_path(sp.log, {
-                    { 0.5 + d[1] * r0 * 0.5, h, 0.5 + d[2] * r0 * 0.5, 0.45 },
-                    { 0.5 + d[1] * reach, h - dip, 0.5 + d[2] * reach, 0.4 },
-                }, BLIND)
-            end
+        local side = schem.DIR16[(heading + 4) % 16 + 1]
+        local reach = pick(rng, sp.fin_reach) + 2
+        local rise = pick(rng, sp.fin_h) * 0.35
+        local kink = (rng:below(3) - 1) * 1.2
+        local root = {
+            { 0.5 + d[1] * r0 * 0.5, rise, 0.5 + d[2] * r0 * 0.5, r0 * 0.55 },
+            { 0.5 + d[1] * reach * 0.35 + side[1] * kink, rise * 0.45, 0.5 + d[2] * reach * 0.35 + side[2] * kink, r0 * 0.38 },
+            { 0.5 + d[1] * reach * 0.7 + side[1] * kink * 0.5, 0.2, 0.5 + d[2] * reach * 0.7 + side[2] * kink * 0.5, 0.55 },
+            { 0.5 + d[1] * reach, -1.5, 0.5 + d[2] * reach, 0.35 },
+        }
+        schem.push_path(sp.log, root, BLIND)
+        if rng:below(3) > 0 then
+            local s = schem.DIR16[(heading + 3 + rng:below(2) * 10) % 16 + 1]
+            local kx, ky, kz = root[2][1], root[2][2], root[2][3]
+            schem.push_path(sp.log, {
+                { kx, ky, kz, r0 * 0.3 },
+                { kx + s[1] * reach * 0.3, ky * 0.5 + 0.1, kz + s[2] * reach * 0.3, 0.42 },
+                { kx + s[1] * reach * 0.55, -1.0, kz + s[2] * reach * 0.55, 0.3 },
+            }, BLIND)
         end
     end
     -- Pitcher plants in the root hollows: in some of the bays between two
@@ -231,8 +244,20 @@ local function megatree(rng, sp)
         end
     end
 
+    -- A clump of leaves (2026-09-15: "a tad bigger, deformed or broken up
+    -- with noise and more shapes"): a fifth larger, and not one ellipsoid
+    -- but a core with two to three more thrown off it, each its own size
+    -- and flatness, all rough-edged.
     local function clump(x, y, z, r)
-        schem.push_ellipsoid(sp.leaves, x, y, z, r, r * sp.flat, r, { rough = 0.22, blind = true })
+        r = r * 1.2
+        schem.push_ellipsoid(sp.leaves, x, y, z, r * 0.85, r * sp.flat * 0.9, r * 0.85, { rough = 0.3, blind = true })
+        for _ = 1, 2 + rng:below(2) do
+            local d = schem.DIR16[rng:below(16) + 1]
+            local k = 0.45 + rng:below(4) * 0.1
+            local off = r * (0.45 + rng:below(3) * 0.15)
+            schem.push_ellipsoid(sp.leaves, x + d[1] * off, y + (rng:below(5) - 2) * 0.35 * r * sp.flat, z + d[2] * off,
+                r * k, r * sp.flat * (k + 0.15), r * k * (0.8 + rng:below(3) * 0.15), { rough = 0.35, blind = true })
+        end
     end
     -- The limbs of the crown, round the compass, each with a great clump of
     -- leaves on its end and a smaller one off its middle, and ropes of vine
@@ -364,6 +389,40 @@ local function hollow_log(rng)
     schem.push_path(blocks.moss, { { ax, cy + 0.7, az, 2.1 }, { bx, cy + 0.4, bz, 1.9 } }, BLIND)
     schem.push_path(AIR, { { ax - d[1] * 2.5, cy, az - d[2] * 2.5, 1.45 }, { bx + d[1] * 2.5, cy - 0.3, bz + d[2] * 2.5, 1.45 } }, BLIND)
     return schem.record_schematic(PRIORITY)
+end
+
+-- Whether (x, z) is the Jungle's, by its placement field, cached by
+-- eight-block square as the cold biomes' tests are: the HUD asks when the
+-- ground under a player says nothing (a ravine's clay, a mud patch).
+local FIELD = nil
+local cache, cached = {}, 0
+function tdw.jungle_at(x, z)
+    local only = tdw.config.everywhere
+    if only then
+        return only == ID
+    end
+    local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+    local ring = tdw.layers.ring_by_id.verdant
+    if u < ring.u[1] - shape.RING_WOBBLE or u > ring.u[2] + shape.RING_WOBBLE then
+        return false
+    end
+    local seed = game.world_seed or tdw.seed
+    if seed == nil then
+        return false
+    end
+    local key = (x // 8) * 65536 + (z // 8)
+    local hit = cache[key]
+    if hit == nil then
+        if cached > 20000 then
+            cache, cached = {}, 0
+        end
+        FIELD = FIELD or shape.compile("jungle.at", tdw.biome_mask(n, ID))
+        local y = shape.Y0 + 1000 * shape.dome_at(u)
+        hit = FIELD:at(x + 0.5, y + 0.5, z + 0.5, seed) > 0
+        cache[key] = hit
+        cached = cached + 1
+    end
+    return hit
 end
 
 -- Cut once, at the first rainforest chunk, and kept: the scatter asks for
@@ -528,3 +587,69 @@ if tdw.on_chunk_tint then
         return TINT_EDGE[1], TINT_EDGE[2], TINT_EDGE[3]
     end)
 end
+
+-- ------------------------------------------------------------ the vines' growth
+
+-- A rope of ivy grows a link at a time: a random tick on an ivy block that
+-- hangs (no wood beside it — the strips up a trunk stay as they are) and
+-- has air under it sets the rope growing, a link every VINE_TICKS, until it
+-- is VINE_MAX links long or meets something. The tick offers any one block
+-- about every twenty minutes, so a rope takes its time to start and then
+-- comes down over a quarter of a minute.
+local VINE_MAX, VINE_TICKS = 12, 30
+local IVY = "tiamot_default_world:climbing_ivy"
+local CENTRE_COLUMN = (1 << 4) | (1 << 13) | (1 << 22)   -- the middle cell column of a block: one card the block's height
+local WOOD = { [blocks.ironwood_log] = true, [blocks.kapok_wood] = true, [blocks.willow_wood] = true, [blocks.oak_log] = true }
+local edits = tdw.edits
+local function has(b, material)
+    if b == nil then
+        return false
+    end
+    if b.material then
+        return b.material == material
+    end
+    if b.cells then
+        for _, c in ipairs(b.cells) do
+            if c == material then
+                return true
+            end
+        end
+    end
+    return false
+end
+local function beside_wood(x, y, z)
+    for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+        local b = schem.at(x + d[1], y, z + d[2])
+        for material in pairs(WOOD) do
+            if has(b, material) then
+                return true
+            end
+        end
+    end
+    return false
+end
+local function grow(x, y, z, links)
+    if links >= VINE_MAX or not edits.room(2) then
+        return
+    end
+    local below = schem.at(x, y - 1, z)
+    if below == nil or below.occupancy ~= 0 then
+        return
+    end
+    edits.begin()
+    edits.push({ x = x, y = y - 1, z = z }, IVY, CENTRE_COLUMN)
+    edits.commit(2)
+    edits.later(VINE_TICKS, function() grow(x, y - 1, z, links + 1) end)
+end
+tdw.on_random_tick(blocks.climbing_ivy, function(x, y, z)
+    if beside_wood(x, y, z) then
+        return true
+    end
+    -- How long the rope is already: the links up to the limb.
+    local links = 1
+    while links < VINE_MAX and has(schem.at(x, y + links, z), blocks.climbing_ivy) do
+        links = links + 1
+    end
+    grow(x, y, z, links)
+    return true
+end)

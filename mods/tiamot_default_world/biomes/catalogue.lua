@@ -49,9 +49,9 @@ biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
     ring = "temperate",
     note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }
-biome{ id = "dense_rainforest_canopy", name = "Dense Rainforest Canopy", area = "surface",
+biome{ id = "jungle", name = "Jungle", area = "surface",
     spans = { { "verdant", "verdant", "wet" } },
-    ring = "verdant", humidity = { 0.05, 0.42 }, note = "1.7 — the wet half of the Verdant Belt: karst, ravines and sinkholes under megatrees." }
+    ring = "verdant", humidity = { 0.05, 0.42 }, note = "1.7 — the wet half of the Verdant Belt: karst, ravines and sinkholes under megatrees. The Dense Rainforest Canopy until 2026-09-15." }
 biome{ id = "arid_mesa", name = "Arid Mesa", area = "surface",
     spans = { { "glass", "glass", "dry" } },
     ring = "glass", humidity = { -0.42, 0.0 }, note = "2.0 — the Glass Waste's dry half: benches, box canyons, buttes, arches, hoodoos." }

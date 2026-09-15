@@ -150,8 +150,6 @@ block("dead_coral", "Dead coral", "Bleached, pitted, slick: the splash zone's cr
 -- hue is a block (as the alpine's cold green was), and the chunk tint
 -- would carry the strata with it.
 local YELLOW_GREEN = { strength = 0.22, scale = 160, low = { 0.92, 1.0, 0.62 }, high = { 1.0, 0.96, 0.70 } }
-block("coast_turf", "Coastal turf", "Thin, wind-scoured, light yellow-green.", { hardness = 0.5, tint = YELLOW_GREEN })
-block("coast_grass", "Coastal grass", "Sparse tufts on the cliff rim, light yellow-green.", { hardness = 0.1, tint = YELLOW_GREEN, passable = true, sway = true, billboard = "cross" })
 -- The coastal shelf, the coast's sea side (2026-09-13). Four asked for by
 -- name — the moss, the barnacles, the seagrass and the kelp — and sand,
 -- which the shelf's floor is and nothing here could stand in for. The
@@ -250,7 +248,22 @@ block("hanging_lichen", "Hanging lichen", "Pale grey-green strands dripping from
 -- badlands' `charcoal`.
 block("lava_rock", "Lava rock", "Porous, dark, sharp: a lobe of it cooled where it ran.", { hardness = 1.3, tint = ROCK })
 block("pumice", "Pumice", "Pale, light, full of holes; pebbles of it in the ash.", { hardness = 0.4, tint = ROCK })
-block("sulfur", "Sulfur", "Bright orange-yellow crust round a thermal fissure.", { hardness = 0.5, tint = { strength = 0.10, scale = 64 } })
+block("sulfur", "Sulfur", "Bright orange-yellow crust round a thermal fissure; it glows a little.",
+    { hardness = 0.5, tint = { strength = 0.10, scale = 64 }, light_emit = { r = 3, g = 2, b = 0 } })
+-- Lava (2026-09-15, "a very rare flowing lava channel or boiling lava
+-- pit"): the block a full block of the fluid is drawn as, lit, and the
+-- fluid — slow and heavy, orange from inside.
+block("lava", "Lava", "Drawn wherever lava is. Not something you place.", { hardness = 4.0, light_emit = { r = 15, g = 8, b = 1 } })
+game.register_fluid{
+    id = "lava",
+    material = "lava",
+    tick_rate = 10,
+    evaporates = 0,
+    color = { r = 240, g = 96, b = 16 },
+}
+-- Bioluminescent mushrooms (2026-09-15) on the river's wet banks.
+block("glow_cap", "Glow caps", "Small pale mushrooms that glow blue-green after dark.",
+    { hardness = 0.1, passable = true, billboard = "cross", light_emit = { r = 2, g = 6, b = 8 } })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",

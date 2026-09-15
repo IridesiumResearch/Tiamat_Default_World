@@ -49,12 +49,12 @@ local schem = tdw.schem
 
 local ID = "badlands"
 
-local HILL_FREQ, HILL_H = 1 / 100, 0.020
-local FIN_FREQ, FIN_H = 1 / 28, 0.014                  -- fine and steep: the razorbacks
-local RILL_FREQ, RILL_STRETCH, RILL_D = 1 / 7, 4.0, 0.0014     -- 0.0025 until 2026-09-15 ("some of the noise is a little too crazy"): the rills are 3D and left clumps floating
+local HILL_FREQ, HILL_H = 1 / 100, 0.017                 -- 0.020 until 2026-09-15 ("tone down the noise a little")
+local FIN_FREQ, FIN_H = 1 / 28, 0.011                  -- fine and steep: the razorbacks (0.014 until 2026-09-15)
+local RILL_FREQ, RILL_STRETCH, RILL_D = 1 / 7, 4.0, 0.0010     -- 0.0025 until 2026-09-15 ("some of the noise is a little too crazy"): the rills are 3D and left clumps floating
 local GULLY_A_FREQ, GULLY_B_FREQ, GULLY_W, GULLY_D = 1 / 90, 1 / 150, 4.0, 0.008
 local PIPE_FREQ, PIPE_W, PIPE_CUT = 1 / 24, 0.022, 0.012        -- was 0.035, 0.020: smaller and shallower, for the same reason
-local WAVE_FREQ, WAVE_AMP = 1 / 60, 0.004
+local WAVE_FREQ, WAVE_AMP = 1 / 60, 0.003
 -- The fold only zig-zags over 0 to twice its first point, so the height is
 -- lifted by BAND_LIFT into that range first: without it everything under
 -- the smooth ground folded to one side and rounded to the fifth material.
@@ -106,7 +106,7 @@ tdw.biomes[ID].soil = blocks.dry_clay
 local TINT_IN = { 1.0, 0.86, 0.70 }
 local TINT_EDGE = { 1.0, 0.93, 0.85 }
 local DUST = { r = 0.78, g = 0.68, b = 0.56 }
-local DUST_VISIBILITY, DUST_EDGE_VISIBILITY = 110, 220
+local DUST_VISIBILITY, DUST_EDGE_VISIBILITY = 440, 880    -- a quarter of the strength of 110/220 (2026-09-15)
 local place_mask = nil
 local function covers(pos)
     local only = tdw.config.everywhere

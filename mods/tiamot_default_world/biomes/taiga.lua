@@ -43,11 +43,11 @@ local WATER = "tiamot_default_world:water"
 
 -- The ground, km. Thresholds against the measured noise: one octave over 0.35
 -- on 22% of the ground and at the +0.5 clamp on 13%; two over 0.3 on 18%.
-local UPLAND_FREQ, UPLAND_AMP = 1 / 650, 0.040          -- the rolling uplands: twenty blocks either way
-local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 420, 18.0, 0.011 -- glacial ridges: eleven blocks over, eighteen either side of the crest
-local HUMMOCK_FREQ, HUMMOCK_AMP = 1 / 9, 0.005           -- the hummocks: two or three blocks, heaviest on the ridges
-local BASIN_FREQ, BASIN_MIN, BASIN_EDGE, BASIN_DROP = 1 / 300, 0.14, 7.0, 0.012
-local CHANNEL_FREQ, CHANNEL_W, CHANNEL_D = 1 / 160, 1.3, 0.0025
+local UPLAND_FREQ, UPLAND_AMP = 1 / 650, 0.022          -- the rolling uplands: eleven blocks either way (twenty until 2026-09-15: "toned down about 45%")
+local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 420, 18.0, 0.006 -- glacial ridges: six blocks over, eighteen either side of the crest
+local HUMMOCK_FREQ, HUMMOCK_AMP = 1 / 9, 0.00275         -- the hummocks: a block or two, heaviest on the ridges
+local BASIN_FREQ, BASIN_MIN, BASIN_EDGE, BASIN_DROP = 1 / 300, 0.14, 7.0, 0.0066
+local CHANNEL_FREQ, CHANNEL_W, CHANNEL_D = 1 / 160, 1.3, 0.0014
 local POOL_FILL = -0.0003                                -- the stagnant water's level against the basin's own floor: the dips and the channels hold it
 -- The surface.
 local MOSS_FREQ, MOSS_MIN = 1 / 16, 0.26
@@ -62,7 +62,7 @@ local RUBBLE_CELL, RUBBLE_SQUARES = 7, 0.35
 local LOG_CELL, LOG_SQUARES = 64, 0.3
 -- The fog: how far one sees into it, and how far over the basins' floors it lies.
 local FOG = { r = 0.70, g = 0.75, b = 0.74 }
-local FOG_VISIBILITY, FOG_EDGE_VISIBILITY, FOG_ABOVE, FOG_READS = 42, 90, 14, 4
+local FOG_VISIBILITY, FOG_EDGE_VISIBILITY, FOG_ABOVE, FOG_READS = 280, 600, 14, 4   -- 15% of the strength of 42/90 (2026-09-15)
 
 -- ------------------------------------------------------------ the ground
 

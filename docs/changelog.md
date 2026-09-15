@@ -1745,6 +1745,69 @@ engine commit they landed in, because the mod is written against them.
   woodland, dry) come up whole; no errors, nothing refused. **A fresh
   world is needed**: the sea maps are filled once, at world init.
 
+### The rivers back, the Jungle, lava, and a round of look-and-feel
+
+- **The rivers had no water and no valley anywhere in a sea mode** ("the
+  rivers seem to be filled in", with "a very harsh line"). The sea
+  distance map was clamped at 400 blocks and the shore class reaches 920,
+  so EVERY land chunk in the temperate, belt and coast modes read as
+  within reach of a shore: the whole of every ring ran the shore program
+  (797 ops, not 361), and `seas.near()`, which lifts the river trough
+  toward a shore, never fell under 0.56 — the trough was lifted 560
+  blocks everywhere, and the river's bed and irises were painted on the
+  uplands where its valley should have been. Where a sea mode met one
+  that is not (the Ember Ridge, the Glass Waste) the valley dropped 27
+  blocks at the chunk line: the harsh line. The clamp is 1,100 now
+  (`seas.DIST_FAR`). Headless, on a live reach: 1,606 blocks of water in
+  the channel, 27 blocks of valley.
+- **The river's fade toward a shore is gentle now**: the trough is lifted
+  60 blocks over the 900-block band (`shape.RIVER_LIFT_KM`), not a
+  kilometre, so a valley shallows and is gone half way across it instead
+  of ending in a wall; the river's bed, banks and trees stop where the
+  valley is gone, and its irises and glow caps where the water does.
+  `/tp river valleys` lands on a live reach, not in the band.
+- **Jungle**: the Dense Rainforest Canopy renamed (`biomes/jungle.lua`,
+  `/tp jungle`). Its megatrees' roots are PATHS now — each leaves the
+  trunk a few blocks up at half its width, out and down with a kink at
+  the knee, thinning to a tip that dives under, with a side root off most
+  — gnarly, not the staircase-edged walls. The leaf clumps a fifth bigger
+  and each a core with two or three rough ellipsoids thrown off it, their
+  own sizes and flatness. The vines hang two links from a limb and grow
+  the rest a link at a time (a random tick on a hanging ivy block starts
+  it; a link every thirty ticks to twelve). The HUD says Jungle in its
+  clay ravines and mud hollows too (`tdw.jungle_at`).
+- **Lava**: a fluid (`lava`, tick rate 10, lit orange) and where it lies
+  in the Volcanic Foothills — very rare pits (two noises both high) and
+  channels along a contour in rare stretches, the ground capped down to a
+  flat floor eight blocks under the foothills where they are, lava four
+  deep over lava rock, by the terraced fluid fill the rivers use. Two
+  pits found headless at seed 12345 (`-5508,20161`, `-14871,14685`), one
+  6,443 blocks of lava. The ridges back a fifth (34 blocks, cones 45), a
+  fine grain of a block and a half over everything. 666 ops.
+- **Sulfur glows** a little (`light_emit` 3/2/0). **Very rare spots of
+  it in the Arid Mesa**, on the flats. **Glow caps**: bioluminescent
+  mushrooms (blue-green light 2/6/8) sparse on the river's wet banks.
+- **Alpine**: more grass on the permafrost and dirt (TUFT_MIN 0.20 to
+  0.13). **Arid Mesa**: the walls' ledge noise from ten blocks to six and
+  the canyon's from three to two — it cut the little mesas through and
+  left their caps floating; half the big cacti; the badlands' dust haze
+  over it. **Badlands**: the fins, hills, waves and rills a fifth to a
+  quarter calmer; the dust a quarter of its strength (visibility 440/880).
+  **Frozen Wastes**: the whiteout a third of its strength (78/210), twice
+  the snags again (0.045), a little of the alpine's grass on the bare
+  permafrost. **Taiga**: the uplands, ridges, hummocks, basins and
+  channels all 45% smaller; the mist 15% of its strength (280/600).
+  **Temperate Woodlands**: the leaf-litter patches ("the mud spots") from
+  a dozen blocks to five or six, and a tenth of the ground, not a fifth.
+- **The coast's turf is gone** ("i did not ok that block"): the rim is
+  moss with the temperate grass on it; `coast_turf` and `coast_grass`
+  removed. The jag on the face a third of what it was, on land only (it
+  was thrown either side of the line and lifted the seabed into ribs that
+  read as floating), fewer arches, the cuts shallower.
+- Checked headless on a fresh world: rivers, jungle, coast, volcanic (with
+  a pit), mesa; the HUD right everywhere; nothing refused, no errors.
+  **A fresh world is needed** (the sea maps are filled at world init).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

@@ -62,11 +62,12 @@ local POLY_FREQ, POLY_W, POLY_HEAVE = 1 / 11, 0.9, 0.00025
 -- The structures: cell, share of squares, salt, reach over the ground (km).
 local SERAC_CELL, SERAC_SQUARES, SERAC_SALT = 20, 0.5, 91
 local ERRATIC_CELL, ERRATIC_SQUARES, ERRATIC_SALT = 48, 0.35, 92
-local SNAG_CELL, SNAG_SQUARES, SNAG_SALT = 40, 0.0225, 93           -- 0.15 until "decrease the trees down to 15%" (2026-09-15)
+local SNAG_CELL, SNAG_SQUARES, SNAG_SALT = 40, 0.045, 93            -- 0.15 until "decrease the trees down to 15%", then "twice the trees again" (2026-09-15)
+local TUFT_FREQ, TUFT_MIN = 1.5, 0.40                                -- a little grass on the bare ground (2026-09-15)
 -- The whiteout (2026-09-15: "a thick white/blue gray fog here"): thick, at
 -- every height, thinner where the Wastes only partly cover a chunk.
 local WHITEOUT = { r = 0.86, g = 0.90, b = 0.95 }
-local WHITEOUT_VISIBILITY, WHITEOUT_EDGE_VISIBILITY = 26, 70
+local WHITEOUT_VISIBILITY, WHITEOUT_EDGE_VISIBILITY = 78, 210       -- a third of the strength of 26/70 (2026-09-15)
 -- The blizzards: a square of BLIZZARD_CELL blocks is in one for
 -- BLIZZARD_TICKS ticks, one square in BLIZZARD_ONE_IN; a drift stops
 -- DRIFT_MAX blocks up a face.
@@ -339,9 +340,15 @@ tdw.build_biome(ID, function(ctx)
         { code = 7, to = 3 * km, material = blocks.clear_ice },
         { code = 7, from = 3 * km, to = 14 * km, material = blocks.ice },
     }
-    -- No cover at all: no grass, no needles.
+    -- A little grass (2026-09-15, "a bit of grass here and there on the
+    -- dirt up there"): the alpine's tufts, sparse, on the bare permafrost
+    -- between the snowfields, off the ice, the lakes and the crevasses.
+    local tufts = shape.compile("biome.frozen.tufts", masked(n.min(n.min(n.sub(n.const(0.3), snow_w()),
+        n.sub(n.const(0.05), n.max(n.max(glacier_w(), lake_w()), crevasse_w()))),
+        n.sub(n.noise("fw_tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
+        { cover = blocks.alpine_grass, cells = 2, take = tufts },
     }
     if game.schematic_shapes then
         local built = structures()

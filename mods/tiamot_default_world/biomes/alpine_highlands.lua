@@ -213,7 +213,7 @@ local DETAIL_ROCK = 2.0                               -- ...and three times that
 -- clamped small-scale detail".
 local COVER_BAND = 0.010                              -- km: the cover stands within this of the map's surface — not on a cave's floor
 local TUFT_FREQ = 1.5                                 -- the grass: each cell nearly its own decision
-local TUFT_MIN = 0.20                                 -- was 0.30 (a column in a dozen blocks) until "more grass" (2026-09-14)
+local TUFT_MIN = 0.13                                 -- was 0.30 (a column in a dozen blocks) until "more grass" (2026-09-14), 0.20 until "a bit of grass to the permafrost and dirt" (2026-09-15)
 local STEP_FREQ = 1 / 18
 local STEP_H = 0.0012                                 -- km: a step of about a block
 local STEP_STEEP = 8.0                                -- how hard the clamp is: bigger is a sharper edge

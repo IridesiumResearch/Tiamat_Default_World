@@ -458,7 +458,7 @@ function M.default_mode()
         return "alpine"
     elseif only == "coastal_cliffs" then
         return "wet"
-    elseif only == "dense_rainforest_canopy" then
+    elseif only == "jungle" then
         return "rainforest"
     elseif only == "deep_ocean" then
         return "wet"
@@ -616,6 +616,12 @@ local function ember_weight()
     local outer = clamp(mul(sub(const(M.EMBER_OUT_U), u_biome()), const(1.0 / M.EMBER_FADE_U)), 0.0, 1.0)
     return mul(inner, outer)
 end
+M.ember_weight = ember_weight
+
+-- How far the river trough is lifted across a shore's FADE band, km: the
+-- valley (VALLEY_DEPTH deep, river_valleys.lua) is gone where the lift
+-- passes its depth, and the river's own surface stops there too.
+M.RIVER_LIFT_KM = 0.06
 
 -- The Frozen Wastes' weight: 0 in the Crown and the frost ring's wet half,
 -- 1 deep in its dry half, as the product of the ring's share (past the
@@ -766,6 +772,13 @@ function M.terrain(flank)
         -- ring. The volcanic FIRST: the deepest term in the program.
         local pair = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
         terms = add(mul(M.volcanic_terms(), ember_weight()), pair)
+        if M.volcanic_cap then
+            -- The lava pits: the ground capped down to a flat floor where
+            -- a pit is (`volcanic_cap`, far above the ground elsewhere),
+            -- after the pair, so the floor is where the lava's level
+            -- expects it whatever the hills were doing.
+            terms = min(terms, M.volcanic_cap())
+        end
     elseif mode == "rainforest" then
         terms = M.rainforest_terms()
     elseif mode == "belt" then
@@ -838,9 +851,13 @@ function M.terrain(flank)
         end
         if shore then
             -- Nor into a sea: a valley cut through the shore's rim would
-            -- drain it. The trough rises out of reach over the FADE band,
-            -- so a river peters out before the shore.
-            trough = add(trough, mul(tdw.seas.near(), const(1.0)))
+            -- drain it. The trough rises RIVER_LIFT_KM over the FADE band
+            -- toward the shore, so a valley shallows and is gone by half
+            -- way across it: a river peters out before the shore. (A
+            -- kilometre of lift until 2026-09-15: the valley's whole depth
+            -- rose in the band's first twenty-five blocks, a wall the
+            -- river's bed carried on past, painted on the uplands.)
+            trough = add(trough, mul(tdw.seas.near(), const(M.RIVER_LIFT_KM)))
         end
         out = min(out, trough)
     end

@@ -63,7 +63,7 @@ load("biomes.rolling_grasslands")    -- 1.2, the dry half of the same ring
 load("biomes.alpine_highlands")      -- 1.3, the frost ring's dry half
 load("biomes.coastal_cliffs")        -- 1.4, the steep stretches of the Long Shore
 load("biomes.river_valleys")         -- 1.6, the troughs and their rivers, cut across every ring they cross
-load("biomes.dense_rainforest_canopy") -- 1.7, the Verdant Belt's wet half: karst under megatrees
+load("biomes.jungle")                -- 1.7, the Verdant Belt's wet half: karst under megatrees (the Dense Rainforest Canopy until 2026-09-15)
 load("biomes.deep_ocean")            -- 1.8, abyssal plains under a flat sea (not placed)
 load("biomes.frozen_wastes")         -- 1.9, Frostmoor: the frost ring's dry half
 load("biomes.arid_mesa")             -- 2.0, the Glass Waste's dry half: benches and canyons

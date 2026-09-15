@@ -95,8 +95,8 @@ FLUID, filled below the sea level by the generator.
 |---|---|---|
 | `dark_basalt` | strata through the cliffs, near-black | asked for by name 2026-09-13 |
 | `dead_coral` | the splash zone's crust where a fast noise is high, a pale pitted bone colour | asked for by name 2026-09-13 |
-| `coast_turf` | the cliff-top turf, light yellow-green | asked for 2026-09-13 ("light green yellow turf grasses"); a tint is per material, and the chunk tint would carry the strata |
-| `coast_grass` | sparse tufts on the rim, the same | with the turf |
+| ~~`coast_turf`~~ | removed 2026-09-15 ("i did not ok that block"): the rim is `moss` with `tall_grass` on it | asked for 2026-09-13 ("light green yellow turf grasses"); a tint is per material, and the chunk tint would carry the strata |
+| ~~`coast_grass`~~ | removed 2026-09-15 with the turf | with the turf |
 
 ### 1.5 Coastal Shelf (2026-09-13) — the coast's sea side, one biome with the cliffs
 
@@ -114,6 +114,11 @@ coastal pines on the rim).
 
 ### 1.6 River Valleys (2026-09-14)
 
+| Block | Where | Why |
+|---|---|---|
+| `glow_cap` | small pale mushrooms on the wet banks, glowing blue-green | "add some bioluminescent mushrooms to the river valleys", 2026-09-15 |
+
+
 Shares `sand` (the bed and the bars, from the shelf), `wet_clay` (the clay
 beds at the water line, since 2026-09-14; `mud` before, and never shown), `creek_bed` (gravel banks and riffles), `stone` (the
 scoured bedrock shelves), `water` (the channel: the fluid since
@@ -129,7 +134,7 @@ tree, and a palm's crown is a shape rather than a material).
 | `water_iris` | dense in the shallows and on the wet bank | asked for by name 2026-09-14 |
 | `wild_mint` | low and soft wherever the bank is damp | asked for by name 2026-09-14 |
 
-### 1.7 Dense Rainforest Canopy (2026-09-14)
+### 1.7 Jungle (2026-09-14; the Dense Rainforest Canopy until 2026-09-15)
 
 Shares `mud` (the saturated floor), `grass`, `stone` (the outcrops, under
 moss), `willow_wood` and `oak_leaves` (the fan palms, as the river's), and
@@ -204,7 +209,8 @@ and `dirt`.
 |---|---|---|
 | `lava_rock` | the lava lobes, the levees, the jagged boulders, the blisters' crusts | asked for by name 2026-09-15 |
 | `pumice` | pebbles scattered over the ash | asked for by name 2026-09-15 |
-| `sulfur` | the crust ringing every thermal fissure and fumarole; steam rises off it | asked for by name 2026-09-15 |
+| `sulfur` | the crust ringing every thermal fissure and fumarole; steam rises off it; it glows a little (2026-09-15); very rare spots of it on the Arid Mesa's flats | asked for by name 2026-09-15 |
+| `lava` | the block a full block of the lava FLUID is drawn as, lit orange; in the rare pits and channels | "a very rare flowing lava channel or boiling lava pit … we might need to register a new liquid as lava", 2026-09-15 |
 
 ### 2.2 Taiga (2026-09-15)
 

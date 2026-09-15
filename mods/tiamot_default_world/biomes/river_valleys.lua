@@ -92,6 +92,7 @@ local WATER = "tiamot_default_world:water"
 -- The cover.
 local IRIS_FREQ, IRIS_MIN = 1.4, 0.10                 -- dense, in the shallows and on the wet bank
 local MINT_FREQ, MINT_MIN = 1.4, 0.28
+local GLOW_FREQ, GLOW_MIN = 1.4, 0.40                 -- bioluminescent mushrooms, sparse on the wet bank (2026-09-15)
 -- The grass: 0.20 puts a card on 34% of the valley's cell columns. The
 -- woodland's and the grassland's own grass used to stand in the valley too
 -- (half-width RIM), and with the river's 0.22 (32.5%) the valley carried
@@ -233,10 +234,12 @@ tdw.biomes.river_valleys.locate = function(px, pz, seed)
         for _ = 1, 16 do
             local d = dist(x, z)
             if d < 2.0 then
-                -- On the course: out onto the bank, the way we came.
+                -- On the course: out onto the bank, the way we came. Not
+                -- within a shore's FADE band, where the river peters out.
                 local bank = CHANNEL + BANK_W + 2.0
                 local bx, bz = x + gx * bank, z + gz * bank
-                if math.sqrt(bx * bx + bz * bz) >= min_r - RIM then
+                local live = not tdw.seas or not tdw.seas.on() or tdw.seas.at(bx, bz, seed) < -(tdw.seas.FADE - 30.0)
+                if live and math.sqrt(bx * bx + bz * bz) >= min_r - RIM then
                     return math.floor(bx), math.floor(bz)
                 end
                 break
@@ -264,7 +267,14 @@ end
 tdw.build_biome("river_valleys", function(ctx)
     local function masked(field)
         local mask = tdw.biome_mask(n, "river_valleys")
-        return mask and n.min(field, mask) or field
+        field = mask and n.min(field, mask) or field
+        -- Nothing of the river's past the point on a shore's FADE band
+        -- where its valley has been lifted away (shape.RIVER_LIFT_KM):
+        -- the bed and the banks were painted on the uplands beyond it.
+        if tdw.seas and tdw.seas.on() and shape.RIVER_LIFT_KM and shape.terrain_mode and shape.terrain_mode:find("_shore", 1, true) then
+            field = n.min(field, n.sub(n.const(VALLEY_DEPTH / shape.RIVER_LIFT_KM - 0.05), tdw.seas.near()))
+        end
+        return field
     end
     local function step(field)
         return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
@@ -343,11 +353,17 @@ tdw.build_biome("river_valleys", function(ctx)
     local function band(from, to)
         return n.min(n.add(n.mul(course(), n.const(-1.0)), n.const(to)), n.add(course(), n.const(-from)))
     end
-    local function tufts(name, from, to, freq, min)
-        return shape.compile("biome.river." .. name,
-            masked(n.min(band(from, to), n.sub(n.noise("river_" .. name, freq, 1, 1.0), n.const(min)))))
+    local function tufts(name, from, to, freq, min, wet)
+        local field = n.min(band(from, to), n.sub(n.noise("river_" .. name, freq, 1, 1.0), n.const(min)))
+        if wet and tdw.seas and tdw.seas.on() and shape.RIVER_LIFT_KM and shape.terrain_mode and shape.terrain_mode:find("_shore", 1, true) then
+            -- Only where the water still reaches: the bed rises above the
+            -- level where the lift across a shore's band passes BED_DEPTH.
+            field = n.min(field, n.sub(n.const(BED_DEPTH / shape.RIVER_LIFT_KM), tdw.seas.near()))
+        end
+        return shape.compile("biome.river." .. name, masked(field))
     end
-    local iris = tufts("iris", CHANNEL - 1.0, BAR + 4.0, IRIS_FREQ, IRIS_MIN)
+    local glow = tufts("glow", CHANNEL + 0.5, BAR + 2.0, GLOW_FREQ, GLOW_MIN, true)
+    local iris = tufts("iris", CHANNEL - 1.0, BAR + 4.0, IRIS_FREQ, IRIS_MIN, true)
     local mint = tufts("mint", BAR, TERRACE, MINT_FREQ, MINT_MIN)
     -- The grass, thinned by 60% where the valley crosses the Arid Mesa
     -- (2026-09-15: "in arid mesa: reduce the grass by 60%"): a second noise
@@ -367,6 +383,7 @@ tdw.build_biome("river_valleys", function(ctx)
     end)
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries },
+        { cover = blocks.glow_cap, cells = 1, take = glow },
         { cover = blocks.water_iris, cells = 3, take = iris },
         { cover = blocks.wild_mint, cells = 1, take = mint },
         { cover = blocks.tall_grass, cells = 2, take = grass },
