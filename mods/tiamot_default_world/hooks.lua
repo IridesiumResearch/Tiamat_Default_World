@@ -66,6 +66,26 @@ function tdw.on_world_init(fn)
     inits[#inits + 1] = fn
 end
 
+-- A chunk's tint (engine `game.register_chunk_tint`, one per mod, as the
+-- fog): the first subscriber to answer a chunk with a colour speaks for it;
+-- the rest of the world is white.
+local tints = nil
+function tdw.on_chunk_tint(fn)
+    if tints == nil then
+        tints = {}
+        game.register_chunk_tint(function(pos)
+            for _, each in ipairs(tints) do
+                local r, g, b = each(pos)
+                if r ~= nil then
+                    return r, g, b
+                end
+            end
+            return 1.0, 1.0, 1.0
+        end)
+    end
+    tints[#tints + 1] = fn
+end
+
 -- A chunk's fog (engine `game.register_chunk_fog`, one per mod): every
 -- biome that wants mist subscribes here, and the first to answer a chunk
 -- with a table speaks for it. Nil where the engine has no fog.

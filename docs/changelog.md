@@ -1656,6 +1656,41 @@ engine commit they landed in, because the mod is written against them.
   shape of the pool; and in light mode 3 the water is drawn as one
   translucent volume with the chunk seams showing through it.
 
+### The name always up, the lanes off the rainforest, a calmer badlands, a smoothed and fogged Frostmoor
+
+- **The biome's name stays on the HUD** ("for now at least let's have the
+  biome always displayed"): it changes when the ground does and never
+  goes away.
+- **The rainforest was under a sea.** The second lane ran through the
+  middle of the Verdant Belt (28.3 to 35.4 km, the lane 30.7 to 34.8) and
+  drowned most of the rainforest; `/tp dense rainforest canopy` found the
+  rainforest's field positive on a pool's floor and put the player there.
+  Four lanes now: the temperate ring's, wider and reaching into the Ember
+  Ridge (16.3 to 22.5 km); one straddling the Belt's outer edge (34.2 to
+  39.0); two across the Long Shore and the Hem (41.6 to 48.0, 50.1 to
+  56.7). The Belt keeps 29 to 34 km of rainforest and grassland. The same
+  third of the disc, measured. And `/tp` to a land biome lands on land: a
+  place is taken only 150 blocks or more back from any shore.
+- **Alpine boulders cut to 70%**: one surface tick in 29 grows one, was
+  one in 20.
+- **Grass under water** has an air pocket round it because the engine's
+  fluid fills a block to twenty-seven cells less the cells it holds, and
+  a tuft's cells count. The mod cannot put water where a plant's cell is;
+  engine ask 29. The land biomes' covers keep out of the water already.
+- **Badlands**: the rills (a 3D noise) and the piping voids left clumps
+  floating; the rills cut by half, the voids smaller and shallower. A
+  dusty orange-brown tint on every tinted material in its chunks, and a
+  dust haze (110 blocks of visibility, 220 at its edges), through a new
+  `tdw.on_chunk_tint` that lets more than one biome colour the world
+  (the engine keeps one tint hook per mod, as with the fog; the
+  rainforest's moved onto it).
+- **Frozen Wastes smoothed**: the plain from ten blocks either way to
+  five or six, the dunes from four to under two, the sastrugi and the
+  polygons' heave halved, the pressure ridges from nine blocks to five
+  with a third of the jag. The snags to 15% of what they were. A whiteout
+  — thick white-blue-grey fog, 26 blocks of visibility, 70 at the edges —
+  over the whole of Frostmoor.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

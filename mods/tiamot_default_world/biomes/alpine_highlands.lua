@@ -673,7 +673,7 @@ local FULL = game.OCCUPANCY_FULL
 -- rare and get the most, so a full queue of firs never starves them.
 local RESERVE = { fir = 0, rock = 2, boulder = 3, hollow = 6, crevasse = 8 }
 
-local BOULDER_CHANCE = 20      -- one surface block in this many, in a square that has them
+local BOULDER_CHANCE = 29      -- one surface block in this many, in a square that has them (20 until "cut down to 70%", 2026-09-15)
 local BOULDER_CELL = 48        -- squares this wide...
 local BOULDER_CELL_ONE_IN = 2  -- ...one in this many has boulders
 local BOULDER_R = { 1.8, 2.35 } -- half-width, blocks: least and extra (halved 2026-09-12: at 3.6 they stood twice their size)

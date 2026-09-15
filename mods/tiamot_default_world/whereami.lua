@@ -17,7 +17,8 @@ local shape = tdw.shape
 local schem = tdw.schem
 
 local SAMPLE_EVERY = 10        -- ticks between looks at where a player is
-local SHOW_TICKS = 20          -- how long the name stays up: a second at 20 Hz
+-- (The name stayed up a second and went, until 2026-09-15: "for now at
+-- least let's have the biome always displayed on the screen".)
 local SCAN = 8                 -- blocks below the feet the ground is looked for
 local SEEK_TRIES = 20          -- steps tried before a search settles for what it found
 local SEEK_SKY = 220           -- blocks over the base dome a seeker is dropped from
@@ -134,7 +135,7 @@ end
 
 -- ----------------------------------------------------------------- the HUD
 
-local shown = {}               -- uuid -> { biome = id, ticks = n }
+local shown = {}               -- uuid -> { biome = id }
 
 local function say(uuid, name)
     game.set_hud(uuid, name and { biome = name } or {})
@@ -143,14 +144,6 @@ end
 local since = 0
 tdw.on_tick(function(dt)
     since = since + dt
-    for uuid, state in pairs(shown) do
-        if state.ticks > 0 then
-            state.ticks = state.ticks - dt
-            if state.ticks <= 0 then
-                say(uuid, nil)
-            end
-        end
-    end
     if since < SAMPLE_EVERY then
         return
     end
@@ -162,7 +155,7 @@ tdw.on_tick(function(dt)
             local here = tdw.biome_under(math.floor(entity.pos.x), math.floor(entity.pos.y), math.floor(entity.pos.z))
             local state = shown[uuid]
             if state == nil then
-                state = { biome = nil, ticks = 0 }
+                state = { biome = nil }
                 shown[uuid] = state
             end
             -- Only a CHANGE speaks, and unloaded ground says nothing rather
@@ -170,7 +163,6 @@ tdw.on_tick(function(dt)
             -- arrived must not blank the name and put it back again.
             if here and here ~= state.biome then
                 state.biome = here
-                state.ticks = SHOW_TICKS
                 local biome = tdw.biomes[here]
                 say(uuid, biome and biome.name or here)
             end
@@ -192,6 +184,7 @@ end)
 
 local SEEK_ABOVE = 220         -- blocks over the base dome a teleport drops from
 local MARGIN = 0.01            -- how far inside a biome's field a place must be
+local LAND_BACK = 150.0        -- blocks back from a shore a land biome's landing must be
 local R_BLOCKS = shape.R_DISC * 1000
 
 -- What `/tp` understands (2026-09-15: "standardized ... /tp frozen wastes
@@ -317,7 +310,12 @@ local function locate(id, px, pz)
             for _, r in ipairs(radii) do
                 local x, z = d[1] * r, d[2] * r
                 local y = shape.Y0 + 1000 * shape.dome_at(u_at(x, z))
-                if field:at(x + 0.5, y + 0.5, z + 0.5, seed) > margin then
+                -- On dry land, well back from any shore (2026-09-15: the
+                -- rainforest's field is positive under a sea as well, and
+                -- `/tp` put a player on a pool's floor and called it the
+                -- rainforest).
+                local dry = not tdw.seas or not tdw.seas.on() or tdw.seas.at(x, z, seed) < -LAND_BACK
+                if dry and field:at(x + 0.5, y + 0.5, z + 0.5, seed) > margin then
                     return math.floor(x), math.floor(z)
                 end
             end

@@ -88,14 +88,16 @@ local KM = 1000.0
 M.STEP = 0.060                                          -- km: sixty blocks a step
 M.SEA_DROP = M.STEP / 2                                 -- km under the dome at a pool's inner edge
 -- The lanes: centre radius and width, km. Between them the land. The
--- first is the temperate ring's; the rest run from the Verdant Belt to
--- the Hem. The Glass Waste (24.8 to 28.3 km) and the cold core have none.
+-- first is the temperate ring's, reaching into the Ember Ridge; the
+-- second straddles the Verdant Belt's outer edge (a lane through the
+-- belt's middle drowned most of the rainforest, 2026-09-15); the rest run
+-- out across the Long Shore to the Hem. The Glass Waste (24.8 to 28.3 km)
+-- and the cold core have none.
 M.LANES = {
-    { r = 19.1, w = 4.8 },
-    { r = 32.7, w = 4.1 },
-    { r = 39.6, w = 5.5 },
-    { r = 46.9, w = 5.3 },
-    { r = 54.3, w = 5.0 },
+    { r = 19.4, w = 6.2 },
+    { r = 36.6, w = 4.8 },
+    { r = 44.8, w = 6.4 },
+    { r = 53.4, w = 6.6 },
 }
 -- The arcs: where either of two slow noises is positive, read through the
 -- signed contour so the map holds a distance. Nine kilometres of feature.

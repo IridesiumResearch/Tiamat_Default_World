@@ -44,22 +44,29 @@ local ID = "frozen_wastes"
 
 -- The ground, km over the dome. Thresholds against the measured noise: two
 -- octaves over 0.3 on 18% of the ground, at the +0.5 clamp on 6%.
-local PLAIN_FREQ, PLAIN_AMP = 1 / 1500, 0.020                        -- about ten blocks either way over kilometres
-local DUNE_FREQ, DUNE_AMP, DUNE_STRETCH = 1 / 60, 0.008, 3.0          -- four blocks either way, three times as long downwind
+-- Smoothed by half and more on 2026-09-15 ("smooth out everything in
+-- frozen wastes quite a bit"): the plain, the dunes, the sastrugi, the
+-- ridges' height and their jag, the polygons' heave.
+local PLAIN_FREQ, PLAIN_AMP = 1 / 1500, 0.011                        -- five or six blocks either way over kilometres
+local DUNE_FREQ, DUNE_AMP, DUNE_STRETCH = 1 / 60, 0.0035, 3.0         -- under two blocks either way, three times as long downwind
 local SNOW_FREQ, SNOW_MIN = 1 / 140, -0.05                           -- snowfields over a little more than half; the rest scoured bare
-local SASTRUGI_FREQ, SASTRUGI_H, SASTRUGI_STRETCH = 1 / 8, 0.0012, 6.0
-local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 480, 10.0, 0.009
-local JAG_FREQ, JAG_AMP = 1 / 3, 0.010
+local SASTRUGI_FREQ, SASTRUGI_H, SASTRUGI_STRETCH = 1 / 8, 0.0005, 6.0
+local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 480, 12.0, 0.005
+local JAG_FREQ, JAG_AMP = 1 / 3, 0.003
 local CREVASSE_FREQ, CREVASSE_W, CREVASSE_D, CREVASSE_VARY = 1 / 260, 1.6, 0.015, 0.015   -- 15 to 30 deep
 local CREVASSE_SEG_FREQ, CREVASSE_SEG_MIN = 1 / 350, 0.10
 local GLACIER_FREQ, GLACIER_MIN, GLACIER_EDGE, GLACIER_H = 1 / 420, 0.30, 6.0, 0.012
 local CAVE_FREQ, CAVE_W, CAVE_LO, CAVE_HI, CAVE_CUT = 1 / 90, 2.6, 0.001, 0.0055, 0.03
 local LAKE_FREQ, LAKE_MIN, LAKE_EDGE, LAKE_DROP = 1 / 380, 0.30, 10.0, 0.002
-local POLY_FREQ, POLY_W, POLY_HEAVE = 1 / 11, 0.9, 0.0005
+local POLY_FREQ, POLY_W, POLY_HEAVE = 1 / 11, 0.9, 0.00025
 -- The structures: cell, share of squares, salt, reach over the ground (km).
 local SERAC_CELL, SERAC_SQUARES, SERAC_SALT = 20, 0.5, 91
 local ERRATIC_CELL, ERRATIC_SQUARES, ERRATIC_SALT = 48, 0.35, 92
-local SNAG_CELL, SNAG_SQUARES, SNAG_SALT = 40, 0.15, 93
+local SNAG_CELL, SNAG_SQUARES, SNAG_SALT = 40, 0.0225, 93           -- 0.15 until "decrease the trees down to 15%" (2026-09-15)
+-- The whiteout (2026-09-15: "a thick white/blue gray fog here"): thick, at
+-- every height, thinner where the Wastes only partly cover a chunk.
+local WHITEOUT = { r = 0.86, g = 0.90, b = 0.95 }
+local WHITEOUT_VISIBILITY, WHITEOUT_EDGE_VISIBILITY = 26, 70
 -- The blizzards: a square of BLIZZARD_CELL blocks is in one for
 -- BLIZZARD_TICKS ticks, one square in BLIZZARD_ONE_IN; a drift stops
 -- DRIFT_MAX blocks up a face.
@@ -353,6 +360,27 @@ tdw.build_biome(ID, function(ctx)
     end
     return fills
 end)
+
+-- ------------------------------------------------------------ the whiteout
+
+if tdw.on_chunk_fog then
+    tdw.on_chunk_fog(function(pos)
+        local only = tdw.config.everywhere
+        if only then
+            if only ~= ID then
+                return nil
+            end
+            return { r = WHITEOUT.r, g = WHITEOUT.g, b = WHITEOUT.b, visibility = WHITEOUT_VISIBILITY }
+        end
+        FIELD = FIELD or shape.compile("frozen.at", tdw.biome_mask(n, ID))
+        local b = FIELD:bounds(pos)
+        if b.high <= 0 then
+            return nil
+        end
+        return { r = WHITEOUT.r, g = WHITEOUT.g, b = WHITEOUT.b,
+            visibility = b.low > 0 and WHITEOUT_VISIBILITY or WHITEOUT_EDGE_VISIBILITY }
+    end)
+end
 
 -- ------------------------------------------------------------ the blizzards
 

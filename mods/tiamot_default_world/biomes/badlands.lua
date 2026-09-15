@@ -51,9 +51,9 @@ local ID = "badlands"
 
 local HILL_FREQ, HILL_H = 1 / 100, 0.020
 local FIN_FREQ, FIN_H = 1 / 28, 0.014                  -- fine and steep: the razorbacks
-local RILL_FREQ, RILL_STRETCH, RILL_D = 1 / 7, 4.0, 0.0025
+local RILL_FREQ, RILL_STRETCH, RILL_D = 1 / 7, 4.0, 0.0014     -- 0.0025 until 2026-09-15 ("some of the noise is a little too crazy"): the rills are 3D and left clumps floating
 local GULLY_A_FREQ, GULLY_B_FREQ, GULLY_W, GULLY_D = 1 / 90, 1 / 150, 4.0, 0.008
-local PIPE_FREQ, PIPE_W, PIPE_CUT = 1 / 24, 0.035, 0.020
+local PIPE_FREQ, PIPE_W, PIPE_CUT = 1 / 24, 0.022, 0.012        -- was 0.035, 0.020: smaller and shallower, for the same reason
 local WAVE_FREQ, WAVE_AMP = 1 / 60, 0.004
 -- The fold only zig-zags over 0 to twice its first point, so the height is
 -- lifted by BAND_LIFT into that range first: without it everything under
@@ -98,6 +98,49 @@ end
 tdw.biomes[ID].ring_mode = "verdant"
 tdw.biomes[ID].lazy = true
 tdw.biomes[ID].soil = blocks.dry_clay
+
+-- The light (2026-09-15: "a brown/gray orange tint and some fog to match"):
+-- every tinted material in the badlands' chunks pulled toward a dusty
+-- orange-brown, and a dust haze in the air, thinner where the biome only
+-- partly covers a chunk.
+local TINT_IN = { 1.0, 0.86, 0.70 }
+local TINT_EDGE = { 1.0, 0.93, 0.85 }
+local DUST = { r = 0.78, g = 0.68, b = 0.56 }
+local DUST_VISIBILITY, DUST_EDGE_VISIBILITY = 110, 220
+local place_mask = nil
+local function covers(pos)
+    local only = tdw.config.everywhere
+    if only then
+        return only == ID and 1.0 or 0.0
+    end
+    place_mask = place_mask or shape.compile("badlands.place", tdw.biome_mask(n, ID))
+    local b = place_mask:bounds(pos)
+    if b.high <= 0 then
+        return 0.0
+    elseif b.low > 0 then
+        return 1.0
+    end
+    return 0.5
+end
+if tdw.on_chunk_tint then
+    tdw.on_chunk_tint(function(pos)
+        local c = covers(pos)
+        if c == 0.0 then
+            return nil
+        end
+        local t = c == 1.0 and TINT_IN or TINT_EDGE
+        return t[1], t[2], t[3]
+    end)
+end
+if tdw.on_chunk_fog then
+    tdw.on_chunk_fog(function(pos)
+        local c = covers(pos)
+        if c == 0.0 then
+            return nil
+        end
+        return { r = DUST.r, g = DUST.g, b = DUST.b, visibility = c == 1.0 and DUST_VISIBILITY or DUST_EDGE_VISIBILITY }
+    end)
+end
 
 -- ------------------------------------------------------------ the structures
 

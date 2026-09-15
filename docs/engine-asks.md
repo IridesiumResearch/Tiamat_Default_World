@@ -24,6 +24,18 @@ a body grips a block, so ice walks like stone. A `friction` on the block —
 a share of the normal grip, default 1 — read by the movement code for the
 block under a body and the block it is pressed against, is the ask.
 
+## 29. A plant's cells displace the water round it (2026-09-15)
+
+"Grass, when under water, should get saturated so it doesn't have an air
+bubble around it." A block's fluid volume is twenty-seven cells less the
+cells it holds, and a tuft of grass, a water iris, a stand of seagrass or
+kelp holds one to three, so the water round a plant is short by that much
+and the plant stands in a pocket of air. A passable (or billboard) cell
+should not displace fluid: the block would hold twenty-seven of water and
+the plant, drawn in it. The mod cannot do it — a fluid and a solid cannot
+share a cell in the store — so its land covers keep out of the water
+meanwhile, and the sea's own growth stands in pockets.
+
 ## 28. Summaries carry no fluid (2026-09-15)
 
 The seas are placed: a third of the disc, in pools. A chunk outside the

@@ -507,21 +507,21 @@ end)
 local TINT_IN = { 0.76, 0.90, 0.78 }
 local TINT_EDGE = { 0.88, 0.95, 0.89 }
 local tint_mask = nil
-if game.register_chunk_tint then
-    game.register_chunk_tint(function(pos)
+if tdw.on_chunk_tint then
+    tdw.on_chunk_tint(function(pos)
         local only = tdw.config.everywhere
         if only then
             if only == ID then
                 return TINT_IN[1], TINT_IN[2], TINT_IN[3]
             end
-            return 1.0, 1.0, 1.0
+            return nil
         end
         if tint_mask == nil then
             tint_mask = shape.compile("rainforest.tint", tdw.biome_mask(n, ID))
         end
         local b = tint_mask:bounds(pos)
         if b.high <= 0 then
-            return 1.0, 1.0, 1.0
+            return nil
         elseif b.low > 0 then
             return TINT_IN[1], TINT_IN[2], TINT_IN[3]
         end
