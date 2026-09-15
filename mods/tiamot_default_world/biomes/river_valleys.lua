@@ -98,6 +98,7 @@ local MINT_FREQ, MINT_MIN = 1.4, 0.28
 -- 44% where woodland hosted it and 55% where grassland did. Theirs is kept
 -- out now, and 34% is 77% and 61% of those: 70% between them, as asked.
 local GRASS_FREQ, GRASS_MIN = 1.5, 0.12   -- 0.20 until "more grass" (2026-09-14)
+local DRY_THIN = 0.20                      -- in the Arid Mesa, a second noise over this: 62% fewer grass cells, measured against none
 -- The trees.
 local WILLOW_CELL, WILLOW_SQUARES, WILLOW_SALT = 5, 0.55, 41
 local PALM_CELL, PALM_SQUARES, PALM_SALT = 11, 0.30, 42
@@ -343,7 +344,17 @@ tdw.build_biome("river_valleys", function(ctx)
     end
     local iris = tufts("iris", CHANNEL - 1.0, BAR + 4.0, IRIS_FREQ, IRIS_MIN)
     local mint = tufts("mint", BAR, TERRACE, MINT_FREQ, MINT_MIN)
-    local grass = tufts("grass", BAR, RIM, GRASS_FREQ, GRASS_MIN)
+    -- The grass, thinned by 60% where the valley crosses the Arid Mesa
+    -- (2026-09-15: "in arid mesa: reduce the grass by 60%"): a second noise
+    -- over DRY_THIN, which only counts inside the
+    -- mesa's mask — outside it the other term stands at +0.5 and passes.
+    local grass_field = n.min(band(BAR, RIM), n.sub(n.noise("river_grass", GRASS_FREQ, 1, 1.0), n.const(GRASS_MIN)))
+    local mesa = tdw.biomes.arid_mesa and tdw.biome_mask(n, "arid_mesa")
+    if mesa then
+        grass_field = n.min(grass_field, n.max(n.sub(n.noise("river_grass_thin", GRASS_FREQ, 1, 1.0), n.const(DRY_THIN)),
+            n.sub(n.const(0.5), step(mesa))))
+    end
+    local grass = shape.compile("biome.river.grass", masked(grass_field))
     -- The meadow flowers on the terraces and the valley slopes, past the
     -- mint's band so they never stand on it.
     local lunaria, chamomile = tdw.flower_covers("biome.river", "river_grass", GRASS_FREQ, function(field)

@@ -181,20 +181,30 @@ local SEEK_ABOVE = 220         -- blocks over the base dome a teleport drops fro
 local MARGIN = 0.01            -- how far inside a biome's field a place must be
 local R_BLOCKS = shape.R_DISC * 1000
 
--- What `/tp` understands: a biome's short name (or its id), a ring's id.
-local BIOME_WORDS = {
-    alpine = "alpine_highlands", mountains = "alpine_highlands",
-    woodlands = "temperate_woodlands", woodland = "temperate_woodlands", forest = "temperate_woodlands",
-    grasslands = "rolling_grasslands", grassland = "rolling_grasslands",
-    river = "river_valleys", rivers = "river_valleys",
-    rainforest = "dense_rainforest_canopy", jungle = "dense_rainforest_canopy",
-    coast = "coastal_cliffs", cliffs = "coastal_cliffs",
-    ocean = "deep_ocean", sea = "deep_ocean",
-    frozen = "frozen_wastes", wastes = "frozen_wastes", tundra = "frozen_wastes", frostmoor = "frozen_wastes",
-    mesa = "arid_mesa", desert = "arid_mesa", canyon = "arid_mesa", canyons = "arid_mesa",
-    badlands = "badlands", badland = "badlands",
-}
-local RING_WORDS = { greensward = "temperate", firwold = "frost" }
+-- What `/tp` understands (2026-09-15: "standardized ... /tp frozen wastes
+-- if the name of the biome is frozen_wastes.lua"): a biome by its file's
+-- name with spaces for the underscores — `/tp frozen wastes`, `/tp arid
+-- mesa`, `/tp temperate woodlands` — and nothing else; a ring by its id.
+-- Underscores are taken as spaces, and case and extra spaces are ignored.
+local function spoken(id)
+    return (string.gsub(id, "_", " "))
+end
+local function heard(words)
+    local text = string.lower(table.concat(words, " "))
+    text = string.gsub(text, "_", " ")
+    text = string.gsub(text, "%s+", " ")
+    return (string.match(text, "^%s*(.-)%s*$"))
+end
+-- The surface biomes, in the catalogue's order.
+local function surface_biomes()
+    local out = {}
+    for _, biome in ipairs(tdw.biome_list) do
+        if biome.area == "surface" then
+            out[#out + 1] = biome
+        end
+    end
+    return out
+end
 
 local function world_seed()
     return game.world_seed or tdw.seed
@@ -264,10 +274,12 @@ local function locate(id, px, pz)
     end
     local pu = u_at(px, pz)
     local shares = { 0.5, 0.3, 0.7, 0.15, 0.85, 0.05, 0.95 }
-    local radii = {}
-    -- Span by span, the nearest first: the woodlands are the temperate
-    -- ring's wet half and the Long Shore's, and the shares of the two
-    -- together sent a player in the alpine forty kilometres out.
+    -- Span by span, the nearest first, and the whole compass round in each
+    -- before the next: the woodlands are the temperate ring's wet half and
+    -- the Long Shore's, and the shares of the two together sent a player in
+    -- the alpine forty kilometres out; the compass inside the spans still
+    -- sent one in the mesa to the Shore on their own heading, past the
+    -- temperate ring a quarter-turn round.
     local spans = {}
     for _, span in ipairs(tdw.biome_spans(id)) do
         local lo = tdw.layers.ring_by_id[span[1]].u[1]
@@ -275,20 +287,22 @@ local function locate(id, px, pz)
         spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
     end
     table.sort(spans, function(a, b) return a.away < b.away end)
+    local headings = headings_from(px, pz)
     for _, span in ipairs(spans) do
+        local radii = {}
         if pu > span.lo and pu < span.hi then
-            radii[#radii + 1] = math.sqrt(pu) * R_BLOCKS
+            radii[1] = math.sqrt(pu) * R_BLOCKS
         end
         for _, f in ipairs(shares) do
             radii[#radii + 1] = math.sqrt(span.lo + (span.hi - span.lo) * f) * R_BLOCKS
         end
-    end
-    for _, d in ipairs(headings_from(px, pz)) do
-        for _, r in ipairs(radii) do
-            local x, z = d[1] * r, d[2] * r
-            local y = shape.Y0 + 1000 * shape.dome_at(u_at(x, z))
-            if field:at(x + 0.5, y + 0.5, z + 0.5, seed) > MARGIN then
-                return math.floor(x), math.floor(z)
+        for _, d in ipairs(headings) do
+            for _, r in ipairs(radii) do
+                local x, z = d[1] * r, d[2] * r
+                local y = shape.Y0 + 1000 * shape.dome_at(u_at(x, z))
+                if field:at(x + 0.5, y + 0.5, z + 0.5, seed) > MARGIN then
+                    return math.floor(x), math.floor(z)
+                end
             end
         end
     end
@@ -418,7 +432,7 @@ local function distance_text(px, pz, x, z)
     return d >= 1000 and string.format("%.1f km", d / 1000) or string.format("%d blocks", math.floor(d))
 end
 
-local TP_USAGE = "/tp <biome | ring | spawn> or /tp <x> <z> or /tp <x> <y> <z> — /tp list for the names"
+local TP_USAGE = "/tp <biome> (its file's name: /tp frozen wastes) or /tp <ring | spawn> or /tp <x> <z> or /tp <x> <y> <z> — /tp list for the names"
 
 tdw.on_command("tp", TP_USAGE, function(player, args)
     local rec = tdw.online[player]
@@ -443,19 +457,18 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         drop(player, rec, math.floor(numbers[1]), math.floor(numbers[2]))
         return string.format("to %d, %d — landing on the ground there", math.floor(numbers[1]), math.floor(numbers[2]))
     end
-    local word = string.lower(args[1])
+    local word = heard(args)
     if word == "list" then
         local placed, unplaced = {}, {}
-        for _, short in ipairs({ "alpine", "frozen", "woodlands", "grasslands", "mesa", "badlands", "river", "rainforest", "coast", "ocean" }) do
-            local biome = tdw.biomes[BIOME_WORDS[short]]
-            if biome then
-                local list = (biome.built and biome.placed ~= false) and placed or unplaced
-                list[#list + 1] = short
+        for _, biome in ipairs(surface_biomes()) do
+            if biome.built then
+                local list = biome.placed ~= false and placed or unplaced
+                list[#list + 1] = spoken(biome.id)
             end
         end
         local rings = {}
         for _, ring in ipairs(tdw.layers.RINGS) do rings[#rings + 1] = ring.id end
-        return "biomes: " .. table.concat(placed, ", ") .. " — not placed yet: " .. table.concat(unplaced, ", ")
+        return "biomes: " .. table.concat(placed, ", ") .. " — built, not placed: " .. table.concat(unplaced, ", ")
             .. " — rings: " .. table.concat(rings, ", ") .. " — or spawn, or coordinates"
     end
     if word == "spawn" then
@@ -463,7 +476,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         return "to the spawn"
     end
     -- A ring: its middle, on your own heading.
-    local ring = tdw.layers.ring_by_id[RING_WORDS[word] or word]
+    local ring = tdw.layers.ring_by_id[word]
     if ring then
         local d = headings_from(p.x, p.z)[1]
         local r = math.sqrt((ring.u[1] + ring.u[2]) / 2) * R_BLOCKS
@@ -472,10 +485,15 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         return string.format("to %s, at %d, %d (%s)", ring.name, x, z, distance_text(p.x, p.z, x, z))
     end
     -- A biome.
-    local id = BIOME_WORDS[word] or (tdw.biomes[word] and word)
+    local id = nil
+    for _, candidate in ipairs(surface_biomes()) do
+        if spoken(candidate.id) == word then
+            id = candidate.id
+        end
+    end
     local biome = id and tdw.biomes[id]
     if biome == nil then
-        return "no biome or ring called `" .. args[1] .. "` — /tp list"
+        return "no biome or ring called `" .. word .. "` — a biome is its file's name with spaces (/tp frozen wastes); /tp list for them all"
     end
     local only = tdw.config.everywhere
     if only and only ~= id then

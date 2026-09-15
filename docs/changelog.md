@@ -1349,6 +1349,38 @@ engine commit they landed in, because the mod is written against them.
   meadows; `/tp` with and without the seed; three bots at the spawn. No
   refused program, no error, no over-budget tick outside the probes.
 
+### Arid Mesa: ledged walls, 60% less grass; /tp by the biome's file name
+
+- **The walls step in and out up their height** ("the mesa walls slightly
+  more detailed on the vertical axis"). A noise stretched flat — features
+  four blocks apart up a wall and forty along it — nudges where each cliff
+  stands: the plateau value at a bench's cliff by 0.010 either way, the
+  box canyons' contour by a block and a half. Headless cross-sections of
+  the same walls at the same seed: a canyon wall that ran dead straight for
+  thirty blocks of height now steps a block to three every few blocks, and
+  the bench cliffs the same. Only the terrain's cut reads it; the aprons,
+  zones and structures keep the smooth line. The verdant program is 983
+  operations of 1,024.
+- **60% less grass in the mesa.** Most of what reads as grass there is two
+  things: the mesa's own sagebrush cards, and the river valleys' grass
+  where a valley crosses the tablelands. Each is thinned by a further fine
+  noise — the sagebrush everywhere in the mesa, the river's grass only
+  inside the mesa's mask. Measured in cells against no thinning at the
+  same seed: sagebrush 59 and 60% fewer at two places, the river's grass
+  62% fewer. The cut is not the one a fine noise has at random points (0.12
+  keeps 40% there, and only took 47% of the sagebrush away): the fine
+  noises sampled on the same cells are not independent.
+- **`/tp` takes a biome by its file's name, spaces for the underscores**:
+  `/tp frozen wastes` for `frozen_wastes.lua`, `/tp arid mesa`, `/tp
+  temperate woodlands`, `/tp dense rainforest canopy`. Case, underscores
+  and extra spaces are ignored; the short words (`mesa`, `frozen`,
+  `jungle`, `greensward`...) are gone, and a miss says how names are
+  formed. `/tp list` prints the names from the catalogue. Rings stay by id.
+- The biome search finishes the nearest span all the way round the
+  compass before trying the next: from the mesa, the woodlands on the
+  player's heading in the Long Shore (47 km) beat the temperate ring a
+  quarter-turn round (14 km).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

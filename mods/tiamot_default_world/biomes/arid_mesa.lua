@@ -65,6 +65,15 @@ local PLATEAU_FREQ, PLATEAU_OCTAVES = 1 / 900, 3                  -- the third o
 -- The benches: { plateau value where the cliff stands, km of height }.
 local LEVELS = { { -0.25, 0.010 }, { -0.12, 0.012 }, { 0.00, 0.012 }, { 0.12, 0.014 }, { 0.26, 0.016 } }   -- most of the ground stands up on the tablelands
 local CLIFF_K = 150.0                                   -- a cliff a block and a bit wide
+-- The walls' ledges (2026-09-15: "the mesa walls slightly more detailed on
+-- the vertical axis"): the plateau value AT A CLIFF nudged by a noise
+-- stretched flat — features FACE_FREQ apart up the wall and FACE_STRETCH
+-- times that along it — so each face steps in and out a block or two every
+-- few blocks of height, the harder beds standing proud of the softer, as
+-- in the strata. Only the cliffs take it: the aprons, the zones and the
+-- structures read the plain plateau value.
+local FACE_FREQ, FACE_STRETCH, FACE_AMP = 1 / 4, 10, 0.010
+local CANYON_FACE_AMP = 3.0                              -- the same on a box canyon's walls, in blocks of the contour: a block and a half either way
 local TALUS_REACH, TALUS_SHARE = 0.03, 0.25              -- an apron a quarter of the step high, six blocks or so out
 local CANYON_FREQ, CANYON_W, CANYON_SEG_FREQ, CANYON_SEG_MIN = 1 / 350, 6.0, 1 / 500, 0.0
 local ARCH_FREQ, ARCH_MIN, ARCH_T = 1 / 70, 0.28, 0.005
@@ -75,6 +84,7 @@ local CAP_FREQ, CAP_MIN = 1 / 40, 0.25                   -- desert sandstone pat
 local DIRT_FREQ, DIRT_MIN = 1 / 30, 0.46                 -- rare dirt
 local GRAVEL_FREQ, GRAVEL_MIN, TDIRT_FREQ, TDIRT_MIN = 1 / 9, 0.30, 1 / 13, 0.40
 local PUDDLE_FREQ, PUDDLE_MIN = 1 / 20, 0.45
+local SAGE_THIN = 0.29                                   -- a third noise over this: 60% fewer sagebrush cells, measured against none (the fine noises are not independent, so not the 30% it is at random points)
 -- The strata: the height over the smooth ground folded by nested absolute
 -- values into a zig-zag, which the code field rounds to 1..4 and back —
 -- rust-red, ochre, terracotta, pale tan, pale tan, terracotta, ochre,
@@ -100,10 +110,14 @@ end
 local function p()
     return n.noise("ms_plateau", PLATEAU_FREQ, PLATEAU_OCTAVES, 1.0)
 end
+-- The walls' ledges: a noise stretched flat (FACE_FREQ).
+local function face()
+    return n.noise("ms_face", FACE_FREQ, 1, 1.0, { x = FACE_STRETCH, z = FACE_STRETCH })
+end
 -- One bench: its talus apron and its cliff.
 local function bench(level, height)
     local talus = n.clamp(n.mul(n.add(p(), n.const(TALUS_REACH - level)), n.const(1.0 / TALUS_REACH)), 0.0, 1.0)
-    local cliff = n.clamp(n.mul(n.sub(p(), n.const(level)), n.const(CLIFF_K)), 0.0, 1.0)
+    local cliff = n.clamp(n.mul(n.add(p(), n.add(n.mul(face(), n.const(FACE_AMP)), n.const(-level))), n.const(CLIFF_K)), 0.0, 1.0)
     return n.add(n.mul(talus, n.const(height * TALUS_SHARE)), n.mul(cliff, n.const(height * (1.0 - TALUS_SHARE))))
 end
 -- The plateau's height, km: the benches summed.
@@ -122,8 +136,14 @@ local function both(stream, freq, min, edge)
     return n.clamp(n.mul(n.min(n.sub(n.noise(stream, freq, 2, 1.0), n.const(min)),
         n.sub(n.noise(stream .. "_b", freq, 2, 1.0), n.const(min))), n.const(edge)), 0.0, 1.0)
 end
-local function canyon_w()
-    local line = n.clamp(n.mul(n.add(n.contour("ms_canyon", CANYON_FREQ, 2), n.const(-CANYON_W)), n.const(-1.2)), 0.0, 1.0)
+-- `faced`: the walls' ledges too (FACE_FREQ), for the terrain's cut; the
+-- zones and the structures read the smooth line.
+local function canyon_w(faced)
+    local d = n.contour("ms_canyon", CANYON_FREQ, 2)
+    if faced then
+        d = n.add(d, n.mul(face(), n.const(CANYON_FACE_AMP)))
+    end
+    local line = n.clamp(n.mul(n.add(d, n.const(-CANYON_W)), n.const(-1.2)), 0.0, 1.0)
     return n.mul(line, n.clamp(n.mul(n.sub(n.noise("ms_canyon_seg", CANYON_SEG_FREQ, 1, 1.0), n.const(CANYON_SEG_MIN)), n.const(6.0)), 0.0, 1.0))
 end
 -- The plains: below the lowest bench's apron.
@@ -146,7 +166,7 @@ function shape.mesa_terms()
         n.const(-2000.0)), 0.0, 1.0)
     local arch = n.mul(slab, both("ms_arch", ARCH_FREQ, ARCH_MIN, 12.0))
     -- The canyon's cut, less the arch; the plateau's height, less the cut.
-    local cut = n.mul(n.add(n.mul(arch, n.const(-1.0)), n.const(1.0)), canyon_w())
+    local cut = n.mul(n.add(n.mul(arch, n.const(-1.0)), n.const(1.0)), canyon_w(true))
     local acc = n.mul(n.add(n.mul(cut, n.const(-1.0)), n.const(1.0)), height())
     -- The arroyos.
     local wash = n.clamp(n.mul(n.add(arroyo_d(), n.const(-ARROYO_W)), n.const(-0.8)), 0.0, 1.0)
@@ -428,9 +448,12 @@ tdw.build_biome(ID, function(ctx)
     }
     for _, e in ipairs(more) do entries[#entries + 1] = e end
 
-    -- Sagebrush, brittle and sparse, on the flats.
-    local sage = shape.compile("biome.mesa.sage", masked(off_river(n.min(n.sub(n.noise("ms_sage", 1.4, 1, 1.0), n.const(0.38)),
-        n.sub(n.noise("ms_sage_patch", 1 / 30, 1, 1.0), n.const(0.1))), shape.RIVER_BAR or 0)))
+    -- Sagebrush, brittle and sparse, on the flats. 60% less of it
+    -- (2026-09-15: "reduce the grass by 60%"): a third noise, as fine as
+    -- the first, over SAGE_THIN.
+    local sage = shape.compile("biome.mesa.sage", masked(off_river(n.min(n.min(n.sub(n.noise("ms_sage", 1.4, 1, 1.0), n.const(0.38)),
+        n.sub(n.noise("ms_sage_patch", 1 / 30, 1, 1.0), n.const(0.1))),
+        n.sub(n.noise("ms_sage_thin", 1.4, 1, 1.0), n.const(SAGE_THIN))), shape.RIVER_BAR or 0)))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
         { cover = blocks.bramble, cells = 2, take = sage },

@@ -115,9 +115,12 @@ density field; what the options are and what each needs is in
   player UUID in the mod's storage, sampled every half second, written every
   twenty seconds and on leave.
 - **Commands** all start with `/` (`/help` lists them):
-  - `/tp <biome>` — `alpine`, `woodlands`, `grasslands`, `river`,
-    `rainforest` — worked out from the world's seed and dropped onto the
-    ground there; `/tp <ring>` (`crown`, `frost`, `temperate`, `ember`,
+  - `/tp <biome>` — the biome's file name with spaces for underscores:
+    `/tp temperate woodlands`, `/tp rolling grasslands`, `/tp alpine
+    highlands`, `/tp frozen wastes`, `/tp river valleys`, `/tp dense
+    rainforest canopy`, `/tp arid mesa`, `/tp badlands` — worked out from
+    the world's seed and dropped onto the ground there; `/tp <ring>`
+    (`crown`, `frost`, `temperate`, `ember`,
     `glass`, `verdant`, `shore`, `hem`) to the middle of a ring on your own
     heading; `/tp spawn`; `/tp <x> <z>` to land on the ground there; `/tp
     <x> <y> <z>` exactly; `/tp list` for the names.
