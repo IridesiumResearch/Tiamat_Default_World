@@ -67,8 +67,11 @@ end
 for _, material in ipairs({ blocks.volcanic_ash, blocks.charcoal, blocks.dried_mud, blocks.dead_sagebrush }) do
     OWNER[material] = "badlands"
 end
+for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lichen }) do
+    OWNER[material] = "taiga"
+end
 -- Whose ground answers at once, wherever in the column it is found.
-local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true, badlands = true }
+local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true, badlands = true, taiga = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -93,6 +96,11 @@ end
 -- The biome whose ground is under (x, y, z), or nil when the column is
 -- unloaded or made of nothing anybody claims.
 function tdw.biome_under(x, y, z)
+    -- Firwold's ground is fir, moss and peat, which the alpine and the
+    -- rainforest claim: the placement field says first.
+    if tdw.taiga_at and tdw.taiga_at(x, z) then
+        return "taiga"
+    end
     local owner = tdw.biome_under_ground(x, y, z)
     -- The alpine's snow, ice and permafrost are the Frozen Wastes' too:
     -- which of them a place is, is the placement field's to say.
@@ -296,11 +304,15 @@ local function locate(id, px, pz)
         for _, f in ipairs(shares) do
             radii[#radii + 1] = math.sqrt(span.lo + (span.hi - span.lo) * f) * R_BLOCKS
         end
+        -- Well inside, for a span that has an inside that wide: the Crown
+        -- alone (the alpine, since the Taiga took Firwold) is 0.0064 of u
+        -- across, and its field never reaches MARGIN.
+        local margin = math.min(MARGIN, (span.hi - span.lo) * 0.25)
         for _, d in ipairs(headings) do
             for _, r in ipairs(radii) do
                 local x, z = d[1] * r, d[2] * r
                 local y = shape.Y0 + 1000 * shape.dome_at(u_at(x, z))
-                if field:at(x + 0.5, y + 0.5, z + 0.5, seed) > MARGIN then
+                if field:at(x + 0.5, y + 0.5, z + 0.5, seed) > margin then
                     return math.floor(x), math.floor(z)
                 end
             end

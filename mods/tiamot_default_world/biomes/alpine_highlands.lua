@@ -756,6 +756,8 @@ local function mine(x, z)
     -- Not in Frostmoor, which is the Frozen Wastes' (1.9): no firs, no
     -- boulders, nothing of the alpine's grows on its snow and permafrost.
     if tdw.frozen_at and tdw.frozen_at(x, z) then return false end
+    -- Nor in Firwold, which is the Taiga's (2.2).
+    if tdw.taiga_at and tdw.taiga_at(x, z) then return false end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
     -- The cold core, widened by the wobble: the edge wanders, and a tick
     -- refused on the wrong side of it is a tick wasted, not an error.

@@ -193,6 +193,18 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 2.2 Taiga (2026-09-15)
+
+Shares `fir_log` and `fir_needles` (spruce and pine, until named),
+`dead_wood`, `moss`, `mud`, `black_mud` (peat, until named), `granite`,
+`creek_bed` (crest rubble) and `dirt`.
+
+| Block | Where | Why |
+|---|---|---|
+| `mulch` | the forest floor, rust-brown | asked for by name 2026-09-15 |
+| `rust_grass` | rust-brown tufts off the basins | named in the brief 2026-09-15; nothing rust-brown to stand in |
+| `hanging_lichen` | pale strands dripping from dead lower branches | named in the brief 2026-09-15; nothing pale and hanging to stand in |
+
 ### 2.1 Badlands (2026-09-14)
 
 Shares `sand` (soft sandstone bands, until named), `dry_clay` (clay bands,

@@ -35,7 +35,7 @@ biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
-    spans = { { "crown", "crown" }, { "frost", "frost", "wet" } },
+    spans = { { "crown", "crown" } },
     note = "1.3 — the cold core, both halves of it: the Crown and Frostmoor. Its terrain is a MAP, so it reaches exactly as far as that map does — see the map constants in its own file." }
 biome{ id = "frozen_wastes", name = "Frozen Wastes", area = "surface",
     spans = { { "frost", "frost", "dry" } },
@@ -58,7 +58,9 @@ biome{ id = "badlands", name = "Badlands", area = "surface",
     spans = { { "glass", "glass", "wet" } },
     ring = "glass", humidity = { 0.0, 0.42 }, note = "2.1 — the Glass Waste's wet half: fins, rills, gullies, piping voids, banded ash and clay." }
 biome{ id = "taiga", name = "Taiga", area = "surface",
-    ring = "frost", humidity = { -0.05, 0.42 }, note = "Firwold: the wet half of the frost ring." }
+    spans = { { "frost", "frost", "wet" } },
+    ring = "frost", humidity = { -0.05, 0.42 },
+    note = "2.2 — Firwold, the frost ring's wet half: rolling uplands and glacial ridges, peat basins with stagnant pools, a wall of spruce, ancient pines, fallen logs, fog. Its terrain is cross-faded into the alpine's mountains and the Frozen Wastes' plains (shape.lua, cold_terms)." }
 biome{ id = "volcanic_foothills", name = "Volcanic Foothills", area = "surface",
     ring = "ember", note = "The Ember Ridge, the only surface sign of the magma shell." }
 biome{ id = "deep_ocean", name = "Deep Ocean", area = "surface",

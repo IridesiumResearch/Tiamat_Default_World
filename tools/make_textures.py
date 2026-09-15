@@ -81,6 +81,9 @@ BLOCKS = {
     "juniper_wood":   (128, 122, 112,  0),
     "juniper_needles":( 44,  66,  50,  0),
     "columnar_cactus":( 84, 112,  68,  0),
+    "mulch":          (112,  70,  46,  0),   # the taiga (2.2)
+    "rust_grass":     (148,  92,  56,  0),
+    "hanging_lichen": (172, 182, 156,  0),
     "volcanic_ash":   (196, 192, 184,  0),   # the badlands (2.1)
     "charcoal":       ( 58,  56,  60,  0),
     "dried_mud":      (148, 132, 148,  0),
@@ -188,6 +191,8 @@ BLADES = {
     "kelp": (3, 14, 16),         # three broad-ish stems the height of the card
     "pitcher_plant": (3, 9, 14), # three fat tubes
     "dead_sagebrush": (7, 5, 11), # brittle, many short sticks
+    "rust_grass": (5, 9, 15),     # acidic tufts
+    "hanging_lichen": (6, 10, 16), # strands the length of the card
 }
 
 # Rosettes and sprays, for the mantle: a rosette is a few round leaves

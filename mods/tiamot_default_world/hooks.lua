@@ -49,6 +49,28 @@ tdw.on_command("help", "/help — these commands", function()
     return table.concat(lines, "\n")
 end)
 
+-- A chunk's fog (engine `game.register_chunk_fog`, one per mod): every
+-- biome that wants mist subscribes here, and the first to answer a chunk
+-- with a table speaks for it. Nil where the engine has no fog.
+local fogs = nil
+if game.register_chunk_fog then
+    function tdw.on_chunk_fog(fn)
+        if fogs == nil then
+            fogs = {}
+            game.register_chunk_fog(function(pos)
+                for _, each in ipairs(fogs) do
+                    local answer = each(pos)
+                    if answer ~= nil then
+                        return answer
+                    end
+                end
+                return nil
+            end)
+        end
+        fogs[#fogs + 1] = fn
+    end
+end
+
 -- Runs `fn(x, y, z)` when a block of `material` gets a random tick, until
 -- one subscriber returns true — two biomes share the grass block, and each
 -- takes only the ticks on its own ground.

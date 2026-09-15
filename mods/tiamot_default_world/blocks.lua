@@ -236,6 +236,14 @@ block("charcoal", "Charcoal clay", "Stark near-black bands in the badlands' hill
 block("dried_mud", "Dried mud", "Dull lavender, cracked into plates.", { hardness = 0.6, tint = SOIL })
 block("dead_sagebrush", "Dead sagebrush", "Brittle grey sticks at the bottom of a gully.", { hardness = 0.1, tint = SOIL, passable = true, billboard = "cross" })
 
+-- The Taiga (2.2). `mulch` asked for by name (2026-09-15); `rust_grass`
+-- and `hanging_lichen` named in the brief with nothing to stand in for them.
+-- Stand-ins until named: spruce and pine are `fir_log` and `fir_needles`,
+-- peat is `black_mud`.
+block("mulch", "Mulch", "Rust-brown needles and bark, acid and soft underfoot.", { hardness = 0.5, tint = SOIL })
+block("rust_grass", "Rust grass", "Acidic, rust-brown tufts on the forest floor.", { hardness = 0.1, tint = { strength = 0.14, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+block("hanging_lichen", "Hanging lichen", "Pale grey-green strands dripping from dead branches.", { hardness = 0.1, tint = { strength = 0.10, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

@@ -401,12 +401,20 @@ end
 --   "rainforest" the rainforest's terms alone (dev switch: the rainforest)
 --   "ocean"     the deep ocean's floor alone, on the coast's flat sea (dev switch: deep ocean)
 --   "frozen"    the Frozen Wastes' terms alone (dev switch: frozen wastes)
+--   "taiga"     the Taiga's terms alone (dev switch: taiga)
 -- The alpine terms, in "alpine" and "all", are the COLD terms
--- (`cold_terms`): the alpine's mountains cross-faded into the Frozen
--- Wastes' plains across Frostmoor.
+-- (`cold_terms`): the alpine's mountains in the Crown, cross-faded across
+-- its edge into the frost ring's two halves — the Frozen Wastes' plains on
+-- Frostmoor, the Taiga's uplands on Firwold — which cross-fade into each
+-- other across the humidity split.
 --   "all"       temperate and alpine cross-faded by the alpine weight: the
 --               band a few hundred metres wide at the frost ring's edge,
 --               and the only programs that carry every ring's noise.
+--   "rim"       "all" past the Crown's reach: the same, with the cold terms
+--               the frost ring's two halves alone, no alpine mountains. The
+--               Taiga (2.2) took "all" to 968 operations and the woodlands'
+--               grass, which is the terrain and a mask, to 1,031 of 1,024;
+--               the temperate ring's biomes are only ever in this part.
 -- `M.terrain_mode` is what `terrain()` reads while a program is being
 -- built; whoever compiles a program sets it and puts it back.
 M.terrain_mode = nil
@@ -426,6 +434,8 @@ function M.default_mode()
         return "ocean"
     elseif only == "frozen_wastes" then
         return "frozen"
+    elseif only == "taiga" then
+        return "taiga"
     elseif only == "arid_mesa" then
         return "mesa"
     elseif only == "badlands" then
@@ -452,6 +462,11 @@ function M.terrain_mode_for(u_lo, u_hi)
             return "verdant"
         end
         return "temperate"
+    end
+    -- Past everywhere the Crown's edge can wander to, the cold terms are
+    -- the frost ring's alone.
+    if u_lo >= M.CROWN_U + M.FROZEN_RING_BLEND_U / 2 + M.RING_WOBBLE and M.taiga_terms then
+        return "rim"
     end
     return "all"
 end
@@ -483,21 +498,43 @@ end
 -- 1 deep in its dry half, as the product of the ring's share (past the
 -- Crown's edge) and the dry side's (past the humidity split). The radius
 -- FIRST, it being the deeper operand.
-local function frozen_weight()
-    local ring = clamp(add(mul(sub(u_biome(), const(M.CROWN_U)), const(1.0 / M.FROZEN_RING_BLEND_U)), const(0.5)), 0.0, 1.0)
-    local dry = clamp(add(mul(sub(M.humidity(), const(M.HUMIDITY_SPLIT)), const(-0.5 / M.FROZEN_HUMIDITY_BLEND)), const(0.5)),
-        0.0, 1.0)
-    return mul(ring, dry)
+local function frost_ring_w()
+    return clamp(add(mul(sub(u_biome(), const(M.CROWN_U)), const(1.0 / M.FROZEN_RING_BLEND_U)), const(0.5)), 0.0, 1.0)
 end
--- The cold core's terms: the alpine's, and the Frozen Wastes' across
--- Frostmoor, cross-faded by that weight. The alpine alone when the Wastes'
--- file is not loaded.
-local function cold_terms()
+local function frost_dry_w()
+    return clamp(add(mul(sub(M.humidity(), const(M.HUMIDITY_SPLIT)), const(-0.5 / M.FROZEN_HUMIDITY_BLEND)), const(0.5)),
+        0.0, 1.0)
+end
+local function frozen_weight()
+    return mul(frost_ring_w(), frost_dry_w())
+end
+-- The Taiga's weight (2.2): the frost ring's share times the wet side's.
+-- Its pools stand only where this is all but 1 (biomes/taiga.lua).
+function M.taiga_weight()
+    return mul(frost_ring_w(), add(mul(frost_dry_w(), const(-1.0)), const(1.0)))
+end
+-- The cold core's terms: the alpine's in the Crown; past its edge the
+-- Frozen Wastes' on the dry side and the Taiga's on the wet, cross-faded by
+-- the dry weight, as `alpine * (1 - ring) + ring * (frozen * dry + taiga *
+-- (1 - dry))`: each program once, the weights twice, which is what the
+-- Wastes alone cost when their weight was built twice. The alpine FIRST,
+-- the Wastes next and the Taiga deepest in: the Taiga's terms run with two
+-- buffers held, and are written for it. The alpine alone, or with the
+-- Wastes alone, when a file is not loaded.
+local function cold_terms(no_crown)
+    if no_crown and M.frozen_terms and M.taiga_terms then
+        -- Outside the Crown's reach the ring weight is 1: the two halves.
+        return add(mul(M.frozen_terms(), frost_dry_w()), mul(M.taiga_terms(), add(mul(frost_dry_w(), const(-1.0)), const(1.0))))
+    end
     if not M.frozen_terms then
         return M.alpine_terms()
     end
-    local w = frozen_weight()
-    return add(mul(M.alpine_terms(), add(mul(w, const(-1.0)), const(1.0))), mul(M.frozen_terms(), frozen_weight()))
+    if not M.taiga_terms then
+        local w = frozen_weight()
+        return add(mul(M.alpine_terms(), add(mul(w, const(-1.0)), const(1.0))), mul(M.frozen_terms(), frozen_weight()))
+    end
+    local mix = add(mul(M.frozen_terms(), frost_dry_w()), mul(M.taiga_terms(), add(mul(frost_dry_w(), const(-1.0)), const(1.0))))
+    return add(mul(M.alpine_terms(), add(mul(frost_ring_w(), const(-1.0)), const(1.0))), mul(mix, frost_ring_w()))
 end
 
 -- A grassland ridge: positive along the zero contour of its noise.
@@ -547,6 +584,14 @@ function M.terrain(flank)
     -- mode leaves them out — a third of the noise in every alpine fill.
     local mode = flank and "wet" or M.terrain_mode or M.default_mode()
     local detail = mode == "alpine" and const(0.0) or noise("detail", M.DETAIL_FREQ, M.DETAIL_OCTAVES, M.DETAIL_AMP)
+    if mode == "all" or mode == "rim" then
+        -- **Out of the cold core, as the "alpine" mode has it.** The frost
+        -- ring is "alpine" inside a radius and "all" outside it, and with the
+        -- world's detail in one and not the other the ground stepped by up to
+        -- three blocks on the chunk boundary between them (2026-09-15, found
+        -- building the Taiga across that line).
+        detail = mul(detail, add(mul(alpine_weight(), const(-1.0)), const(1.0)))
+    end
     if not flank then
         relief = mul(relief, plain_mask())
     end
@@ -580,6 +625,8 @@ function M.terrain(flank)
         terms = cold_terms()
     elseif mode == "frozen" then
         terms = M.frozen_terms()
+    elseif mode == "taiga" then
+        terms = M.taiga_terms()
     elseif mode == "mesa" then
         terms = M.mesa_terms()
     elseif mode == "badlands" then
@@ -610,7 +657,7 @@ function M.terrain(flank)
         -- cross-faded by the alpine weight against the alpine terms at the
         -- frost ring's edge, so neither ring steps at the border.
         local temperate = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
-        terms = add(mul(cold_terms(), alpine_weight()),
+        terms = add(mul(cold_terms(mode == "rim"), alpine_weight()),
             mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))))
     end
     local out = add(add(terms, shape), M.depth())
@@ -626,7 +673,7 @@ function M.terrain(flank)
     -- deeper of the two, so this costs no buffer at all.
     if not flank and mode ~= "alpine" and mode ~= "coast" and mode ~= "ocean" and M.river_valley then
         local trough = M.river_valley()
-        if mode == "all" then
+        if mode == "all" or mode == "rim" then
             -- Not into the mountains: where the alpine weight is up, the
             -- trough's surface is put a kilometre out of reach.
             trough = add(trough, mul(alpine_weight(), const(1.0)))
@@ -748,7 +795,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

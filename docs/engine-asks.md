@@ -82,7 +82,7 @@ and a thin one dappled. The mod cannot work round either: an opaque
 material inside every clump would be visible through the leaves' holes,
 and would still be undone by (2).
 
-## 23. Fog by place (2026-09-14)
+## 23. Fog by place (2026-09-14) — LANDED (engine 55e929d): the Taiga's mist uses it (2026-09-15)
 
 The rainforest's brief asks for "persistent humid ground fog or mist" and
 "deep emerald twilight" under its canopy. Fog is the sky's: `register_sky`

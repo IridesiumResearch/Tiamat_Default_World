@@ -164,7 +164,7 @@ every ring its temperature suits until the biome that ring is for exists:
 | Rings | Radius | What stands there |
 |---|---|---|
 | The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
-| Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), the Alpine Highlands on the wet |
+| Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), Taiga on the wet (Firwold) |
 | The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
 | The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Rolling Grasslands over the whole width, standing in for a desert |
@@ -388,6 +388,12 @@ built one at a time in its own file. Built so far:
       Cut natively with `game.schematic_shapes` and stamped at generation.
       The canopy's shade and the fog wait on the engine
       (`docs/engine-asks.md`, items 20, 23 and 24).
+- [x] 2.2 Taiga — Firwold, the frost ring's wet half (`biomes/taiga.lua`).
+      Rolling uplands and hummocky glacial ridges over peat basins with
+      stagnant pools and black-water channels; mulch, rust-brown grass and
+      moss; a wall of conical spruce, rare ancient pines, dying dwarf trees
+      in the muskeg, moss-capped boulders, crest rubble, fallen logs over the
+      pools, lichen on dead branches, and mist lying in the hollows.
 - [x] 2.1 Badlands — the Glass Waste's wet half (`biomes/badlands.lua`).
       Tented hills and razorback fins with knife-edge crests, rills straight
       down the slopes, a labyrinth of flat-floored gullies, piping voids;

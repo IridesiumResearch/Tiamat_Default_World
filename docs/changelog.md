@@ -1381,6 +1381,85 @@ engine commit they landed in, because the mod is written against them.
   player's heading in the Long Shore (47 km) beat the temperate ring a
   quarter-turn round (14 km).
 
+### 2.2 Taiga, on Firwold
+
+- The brief: rolling rugged uplands and hummocky glacial ridges broken by
+  sunken water-logged peat basins, slopes stepping down to flat stagnant
+  hollows; rust-brown grass and mulch\*, moss, mud round the bogs, granite
+  boulders under moss; a thick serrated wall of tall conical spruce on the
+  ridges and slopes, dying dwarf trees in the muskeg, rare ancient pines;
+  black-water channels in the peat, pools in the hollows, frost-heaved
+  rubble on the crests; rare mossy fallen logs spanning the pools, lichen
+  dripping from dead lower branches, mist in the forest.
+  `biomes/taiga.lua`.
+- **Where**: Firwold, the frost ring's wet half, as the catalogue planned.
+  The alpine keeps the Crown. `cold_terms` (shape.lua) is now the alpine's
+  mountains in the Crown cross-faded across its edge into the frost ring's
+  two halves, which cross-fade into each other at the humidity split:
+  `alpine * (1 - ring) + ring * (frozen * dry + taiga * (1 - dry))`, each
+  program once.
+- **The ground**: uplands on a slow noise, twenty blocks either way;
+  glacial ridges as tents eleven blocks high along a contour, hummocked
+  two or three blocks; basins where a second noise is high, pulled down to a
+  flat floor twelve blocks under the uplands over a steep edge, with
+  black-water channels cut into the peat. Headless: 63 blocks of relief
+  over a 97-block square, 28% of it at 45 degrees or steeper.
+- **The surface**: mulch over dirt, moss in patches under the trees,
+  gravel over granite on the ridge crests, mud round the bogs, peat
+  (black mud) on the basin floors with moss on their hummocks; rust-brown
+  grass off the basins. Measured: half mulch, a quarter moss, a sixth peat
+  and mud.
+- **The pools**: the rivers' fluid fill at the basin floor's own level,
+  only deep in a basin and only where the Taiga is the whole terrain (its
+  cross-fades are not flat), so the water stands in the floor's dips and
+  channels: 4% of a 97-block square that is half basin.
+- **Growth, cut natively and stamped at generation**: spruces fourteen to
+  twenty-six tall — a straight trunk, a bare foot of dead branches hung
+  with lichen, tiers of branches angled steeply down round a needle core,
+  a spike at the top — on a four-block grid, more than half the squares:
+  needles over 57% of the ground headlessly; ancient pines forty to
+  fifty-five tall with flared roots, stubbed trunks and heavy pads of
+  needles, one square in five of 64; dwarf dying trees in the muskeg;
+  moss-capped granite boulders; rubble on the crests; fallen giants 22 to 34
+  blocks long with root plates and moss along their tops, laid over basin
+  edges so they span the pools.
+- **The mist**: the engine's chunk fog (`game.register_chunk_fog`, engine
+  55e929d), through a new `tdw.on_chunk_fog` so other biomes can add theirs.
+  Grey-green, 42 blocks of visibility (90 where the Taiga only partly covers
+  a chunk), lying 14 blocks over the basin floor, so it fills the hollows
+  and the ridges stand out. The floor's height is read at the height the
+  last read gave, four times: the world's relief is a 3D noise, and read
+  at the base dome it was three hundred blocks off.
+- **Engine ed211d8**: `fill_fluid_terraced` read a level once per column at
+  the chunk's floor, and a level on that 3D relief reads several blocks low
+  there and differently per chunk layer, so the Taiga's pools showed only
+  where a basin floor sat low in its layer. It now re-reads at the level and
+  extrapolates to the fixed point. The river valleys' levels are the same
+  kind and get the same correction.
+- **A seam fixed on the way**: the frost ring is terrain mode "alpine"
+  inside a radius and "all" outside it, and the world's detail noise was in
+  one and not the other — up to three blocks of step on that chunk line.
+  "all" now fades the detail out with the alpine weight.
+- **A new terrain mode, "rim"**: the Taiga took the "all" programs to 968
+  operations and the woodlands' grass (the terrain and a mask) to 1,031 of
+  1,024, so the temperate edge of the frost ring failed to generate. Past
+  the Crown's reach the cold terms are the frost ring's halves alone:
+  "rim", 759 operations; "all" keeps the band nearer the Crown, where the
+  temperate ring's biomes never are.
+- `/tp taiga`. `/tp` asks a narrow span for less margin inside its field:
+  the alpine, now the Crown alone, is never 0.01 inside its own and
+  `/tp alpine highlands` found nothing. The HUD names the Taiga from its
+  placement field, since its ground is fir, moss and peat that the alpine
+  and the rainforest claim; the alpine's random tick stays out of it.
+- Three new nodes: `mulch` (asked for by name), `rust_grass` and
+  `hanging_lichen` (named in the brief with nothing to stand in for them).
+  Stand-ins until named: spruce and pine `fir_log` and `fir_needles`, peat
+  `black_mud`, rubble `granite` and `creek_bed`.
+- Verified headless: `/tp taiga` with a probe of relief, surfaces, growth,
+  pools and a spruce's cross-section; the temperate edge in "rim" with
+  woodland and grassland fills compiled; `/tp alpine highlands`, `/tp
+  frozen wastes`; three bots at the spawn. No refused program, no error.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
