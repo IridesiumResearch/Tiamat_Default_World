@@ -422,11 +422,10 @@ end
 --               Verdant Belt now, and nothing else)
 --   "belt"      the Verdant Belt and outward: the pair with the rainforest
 -- THE SEAS (seas.lua) are a suffix on a mode. A chunk within reach of a
--- shore is "<mode>_shore<k>" — the mode's own terms, faded out toward the
--- shore, with the coast's face and shelf (`M.coast_shore`) and lane k's
--- sills; a chunk past the shelf is "deep<k>" — the ocean's floor
--- (`M.sea_deep`), no land terms. Only the modes a sea can be in take the
--- suffix: "temperate", "belt", and the dev switch's "wet".
+-- shore is "<mode>_shore" — the mode's own terms with the coast's face and
+-- shelf on them (`M.coast_shore`); a chunk past the shelf is "deep" — the
+-- ocean's floor (`M.sea_deep`), no land terms. Only the modes a sea can be
+-- in take the suffix: "temperate", "belt", and the dev switch's "wet".
 -- `M.terrain_mode` is what `terrain()` reads while a program is being
 -- built; whoever compiles a program sets it and puts it back.
 M.terrain_mode = nil
@@ -535,27 +534,26 @@ function M.terrain_mode_for(u_lo, u_hi, pos)
     if pos and seas and seas.on() and SEA_MODES[mode] and M.coast_shore then
         local class = seas.class(pos)
         if class == "deep" then
-            return "deep" .. seas.lane_for((u_lo + u_hi) / 2)
+            return "deep"
         elseif class == "shore" then
-            return mode .. "_shore" .. seas.lane_for((u_lo + u_hi) / 2)
+            return mode .. "_shore"
         end
     end
     return mode
 end
--- A mode's land half and its sea lane, if it has one.
+-- A mode's land half, whether it is a shore, and whether it is the deep.
 function M.mode_parts(mode)
     if mode == nil then
-        return nil, nil, false
+        return nil, false, false
     end
-    local deep = mode:match("^deep(%d+)$")
-    if deep then
-        return nil, tonumber(deep), true
+    if mode == "deep" then
+        return nil, false, true
     end
-    local base, lane = mode:match("^(.-)_shore(%d+)$")
+    local base = mode:match("^(.-)_shore$")
     if base then
-        return base, tonumber(lane), false
+        return base, true, false
     end
-    return mode, nil, false
+    return mode, false, false
 end
 
 -- The alpine weight: 1 through the frost ring, fading to 0 over
@@ -670,12 +668,10 @@ function M.terrain(flank)
     -- alpine map and its ledges carry that scale themselves, so the alpine
     -- mode leaves them out — a third of the noise in every alpine fill.
     local full_mode = flank and "wet" or M.terrain_mode or M.default_mode()
-    local mode, lane_index, deep = M.mode_parts(full_mode)
-    local lane = lane_index and tdw.seas.LANES[lane_index]
+    local mode, shore, deep = M.mode_parts(full_mode)
     if deep then
-        -- Past the shelf: the ocean's floor at the pool's level, and the
-        -- lane's sills. No land in it.
-        return add(M.sea_deep(lane), M.depth())
+        -- Past the shelf: the ocean's floor at the pool's level. No land.
+        return add(M.sea_deep(), M.depth())
     end
     local detail = mode == "alpine" and const(0.0) or noise("detail", M.DETAIL_FREQ, M.DETAIL_OCTAVES, M.DETAIL_AMP)
     if mode == "all" or mode == "rim" then
@@ -773,10 +769,10 @@ function M.terrain(flank)
             mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))))
     end
     local out
-    if lane then
-        -- Within reach of a shore: the land's own shape fades out toward
-        -- it, and the coast's face and shelf take over (coastal_cliffs.lua).
-        out = add(M.coast_shore(add(terms, shape), lane), M.depth())
+    if shore then
+        -- Within reach of a shore: the coast's face and shelf on the land's
+        -- own shape (coastal_cliffs.lua).
+        out = add(M.coast_shore(add(terms, shape)), M.depth())
     else
         out = add(add(terms, shape), M.depth())
     end
@@ -797,7 +793,7 @@ function M.terrain(flank)
             -- trough's surface is put a kilometre out of reach.
             trough = add(trough, mul(alpine_weight(), const(1.0)))
         end
-        if lane then
+        if shore then
             -- Nor into a sea: a valley cut through the shore's rim would
             -- drain it. The trough rises out of reach over the FADE band,
             -- so a river peters out before the shore.

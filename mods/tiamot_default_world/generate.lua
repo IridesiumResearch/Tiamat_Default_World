@@ -104,10 +104,10 @@ end
 -- The seas: the engine's terraced fluid at each pool's level, wherever the
 -- sea maps say (seas.lua). Asked of every chunk inside the body; the fill
 -- answers from the maps' bounds and costs nothing where no sea reaches.
-local function sea_into(buf, pos, u_lo, u_hi, inside_body)
+local function sea_into(buf, pos, inside_body)
     local seas = tdw.seas
     if inside_body and seas and seas.on() then
-        seas.fill(buf, pos, u_lo, u_hi)
+        seas.fill(buf, pos)
     end
 end
 
@@ -225,7 +225,7 @@ local function generate(buf, pos)
             found = tdw.present_biomes_in(ulo, uhi, pos)
             structures_into(buf, found, mode, tmax)
         end
-        sea_into(buf, pos, ulo, uhi, inside_body)
+        sea_into(buf, pos, inside_body)
         if found and tmax > -WATER_ABOVE then
             waters_into(buf, found, mode)
         end
@@ -349,7 +349,7 @@ local function generate(buf, pos)
             -- The sea, after the terrain AND the structures: the fluid fill
             -- takes only the room they leave (it was before the structures,
             -- which put water inside every kelp stand and boulder).
-            sea_into(buf, pos, ulo, uhi, inside_body)
+            sea_into(buf, pos, inside_body)
             -- Then rivers and brine pools, which take the sea's place.
             waters_into(buf, found, mode)
         end
@@ -357,7 +357,7 @@ local function generate(buf, pos)
     if not (skin and inside_body and tmin < shape.SKIN_TOP) then
         -- A chunk of rock under a sea's floor is still under its water: the
         -- flooded caves and tunnels, and the deep water over a trench.
-        sea_into(buf, pos, ulo, uhi, inside_body)
+        sea_into(buf, pos, inside_body)
     end
 
     -- The core stack, outermost first, only the shells this chunk can touch.

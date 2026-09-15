@@ -1536,20 +1536,22 @@ engine commit they landed in, because the mod is written against them.
   across the slope has forty to sixty-five blocks of dome between its two
   shores — and along a ring the dome is level. So the seas are long ARCS
   along the rings, in five LANES (r = 19.1, 32.7, 39.6, 46.9 and 54.3 km;
-  3.3 to 4.4 km wide), which is the world's own idiom; and across a lane a
+  4.1 to 5.5 km wide), which is the world's own idiom; and across a lane a
   sea is TERRACED: the dome's height quantised in steps of sixty blocks,
-  every pool at one of those levels, a SILL of land between — a strip
-  sixty blocks wide lifted half a step over the upper pool and dropping a
-  step to the lower. The steps are circles of constant radius, shared by
-  every sea. A pool's level is the dome at its inner edge less half a
-  step: the inner shore stands thirty blocks over the water, the outer
-  thirty under it, and the rim is lifted.
+  every pool at one of those levels, a SILL of land between — a strip 260
+  blocks wide standing at the upper pool's level plus a beach, with a bank
+  sixty blocks over a hundred down into the lower pool past its outer
+  edge. The steps are circles of constant radius, shared by every sea. A
+  pool's level is the dome at its inner edge less half a step: the inner
+  shore stands thirty blocks over the water, the outer thirty under it,
+  and the ground is floored up to it.
 - **A third.** The arcs are where either of two nine-kilometre noises is
   positive (three quarters of a lane), their edges wandering by a couple
   of hundred blocks, bays and headlands on that at a seven-hundred-block
   scale and the coast's own bites and crenellations under it. Measured
   headless over forty thousand points of the disc: 38.3% at the first
-  widths, 33.3% with them cut by an eighth. None in the cold core (the
+  widths, 33.3% with them cut by an eighth, 26.0% once the sills were
+  widened, 33.1% with the lanes a quarter wider. None in the cold core (the
   alpine map and the Wastes are not built for a shore), none across the
   Glass Waste — the world's dry band, and the terrain program that could
   not carry a shore beside its own — and none on the spawn's plain.
@@ -1557,43 +1559,53 @@ engine commit they landed in, because the mod is written against them.
   the world opens: the signed distance to the nearest shore (blocks,
   positive at sea), the pool's level (km over Y0), and the level over the
   dome. A density program cannot quantise, and five lanes and forty-one
-  steps are six hundred operations a map pays once and a program reads in
-  two. The sills are not in the map (a sixty-block sill between samples a
-  hundred and sixteen apart could be missed, and a missed sill is two
-  pools sixty blocks apart with nothing between): they are terms of the
-  radius in the programs, and only a lane's own — a program is compiled
-  per lane.
+  steps and sills are nine hundred operations a map pays once and a
+  program reads in two. The sills are in the distance map, wider than two
+  samples so none is ever missed (a missed sill is two pools sixty blocks
+  apart with nothing between), and the level map's step sits at a sill's
+  outer edge, not its circle, so the sill is the upper pool's the whole
+  way across and the map's one-sample ramp between levels lies in the
+  lower pool, where the seabed follows it down as a bank. The water's
+  level is the map's rounded DOWN to a step, so the ramp never stands a
+  strip of the upper pool's water in the lower. (The first cut had
+  sixty-block sills as terms of the radius in every program, with the
+  ramp inside them: the land beside a sill was lifted to the ramping
+  level, up to thirty blocks under the upper pool, and the water flooded
+  it with the woodland's trees under it — seen from the window.)
 - **The shore** (`shape.coast_shore`, coastal_cliffs.lua): the ring's own
   terrain with the sea's shape on it. The hills stay and the basins go —
-  the ground is never under a floor that rises from 450 blocks under the
-  dome, 600 blocks inland, to the dome at the shoreline, so a hill meets
-  the sea as a cliff its own height and a basin as a bank up to the rim
-  (the first cut faded ALL the relief out, and every shore was a two-block
-  beach behind a one-in-twenty slope); within 120 blocks the ground is
-  lifted to the level plus a beach; from the coastline the coast's face
+  the ground is never under a floor that is the pool's level plus a beach
+  for 130 blocks inland (a sill, whole) and falls away from there at one
+  in two, so a hill meets the sea as a cliff its own height and a basin as
+  a coastal plain at the water's height with a bank down behind it (the
+  first cut faded ALL the relief out, and every shore was a two-block
+  beach behind a one-in-twenty slope; the second measured the floor from
+  the dome, and the land twenty blocks in could stand twelve under the
+  water behind a rim the width of a dyke); from the coastline the coast's face
   rises over two blocks (twenty-eight on a beach) from the shelf's edge
-  to that ground; the sills lift; the jag and the cuts — the notch, the
-  sea caves, the flooded tunnels — go on. The blowholes and the finest
+  to that ground; the jag and the cuts — the notch, the sea caves, the
+  flooded tunnels — go on. The blowholes and the finest
   jag rib went: a shore program carries the ring's terms as well now, and
   they were the least of the cuts for what they cost (the blowholes
   wanted particles anyway). Past the shelf (`shape.sea_deep`) the shelf's
   foot blends into the ocean's floor between 130 and 200 blocks out.
 - **Terrain modes.** A chunk within 620 blocks of a shore is
-  "<mode>_shore<lane>", past the shelf "deep<lane>"; and "verdant" split:
+  "<mode>_shore", past the shelf "deep"; and "verdant" split:
   "glass" (the mesa and the badlands over the temperate pair, 912
   operations) for the Glass Waste, "belt" (the rainforest over the pair,
   432) for the Verdant Belt and outward, "verdant" (all three, 983) only
   for the band where they meet, which has no seas. The temperate shore is
-  913 operations, the belt's 984, the deep 441.
+  786 operations, the belt's about 860, the deep 323.
 - **The water** is the engine's terraced fluid at the pool's level, the
-  map's level quantised again in the program (the map ramps between two
-  levels over one sample at a sill; water must not), within the shore and
-  off the sills, asked of every chunk inside the body — the maps' bounds
+  map's level rounded down to a step in the program, within the shore,
+  asked of every chunk inside the body — the maps' bounds
   answer for nothing where no sea reaches. Rivers peter out over the 600
   blocks before a shore: a valley cut through the rim would drain the sea.
 - **The biomes.** The coast is present in every shore and deep chunk, its
-  ground the last 24 blocks of land and the shelf; the ocean past the
-  shelf. Both read the sea maps, not a ring. The woodlands', grasslands',
+  ground the last 24 blocks of land (its turf, whatever the height: the
+  strata are the face's, and on a sloping shore they came out as bands
+  across the ground — seen from the window) and the shelf; the ocean past
+  the shelf. Both read the sea maps, not a ring. The woodlands', grasslands',
   rainforest's and river's covers, stands and layers keep 20 blocks off
   the sea. `/tp coastal cliffs` lands on a cliff top, `/tp deep ocean` on
   the floor of a pool; the HUD names both from the map.
@@ -1601,12 +1613,16 @@ engine commit they landed in, because the mod is written against them.
   replaces the first, which is how the seas' maps went unbuilt on the
   first run): `tdw.on_world_init` in hooks.lua multiplexes it, and the
   alpine's maps and the seas' both subscribe.
+- **A new world.** The maps are built once in a world's life, when it
+  opens; a world opened before this has none, and no seas.
 - Verified headless: the fraction; `/tp coastal cliffs` (a hill meets the
   water as a 46-block cliff; the shelf two to twelve under over eighty
-  blocks, a sandbar breaking the surface at twenty-eight); `/tp deep
+  blocks, a sandbar breaking the surface at twenty-eight; the coastal
+  plain behind a low shore at the water's height plus three); `/tp deep
   ocean` (the floor 26 to 90 and more under a pool's surface twelve
-  kilometres away); the circuit of every biome with the client-side chunk
-  report; three bots. No refused program.
+  kilometres away); profiles across a sill and both its edges; the
+  circuit of every biome with the client-side chunk report; three bots.
+  No refused program.
 
 ### Housekeeping
 

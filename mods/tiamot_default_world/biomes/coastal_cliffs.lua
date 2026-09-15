@@ -124,10 +124,6 @@ local TUNNEL_AREA_MIN = 0.0
 -- How much is taken out of the terrain where a cut is: more than the
 -- cliff is tall, so the cut is air to its bottom.
 local CUT = 0.08
--- The lift that holds a shore: the ground is never under the level plus
--- the beach within the skirt, and the lift's target falls away by this
--- much per unit of the skirt's fade, so it comes in without a step.
-local LIFT_BIG = 0.5
 -- The materials.
 local STRATA = {                                      -- the strata, bottom up from STRATA_BASE below the sea: km thick, material code
     { 0.006, 1 }, { 0.004, 2 }, { 0.003, 3 }, { 0.005, 4 }, { 0.003, 1 }, { 0.006, 2 }, { 0.002, 3 },
@@ -274,50 +270,43 @@ local function jag()
     throw = n.add(throw, n.noise("jag_grain", JAG_GRAIN_FREQ, 1, JAG_GRAIN))
     return n.mul(n.mul(n.mul(near, throw), above(SPLASH_HALF)), area)
 end
--- A target the ground is lifted to where it is under it: the level plus
--- the beach, falling away by LIFT_BIG per unit of `fade` outside the band
--- it holds in, so `max(ground, target)` comes in without a step.
-local function lift_target(km_over_level, fade)
-    return n.sub(n.add(seas.rel(), n.const(km_over_level)), n.mul(n.sub(n.const(1.0), fade), n.const(LIFT_BIG)))
-end
 
 -- The shore: the ring's own ground (`land`, km over the dome) within reach
 -- of a sea, returned as the ground's height over the dome with the sea's
 -- shape on it. The land FIRST in every expression: it is the deepest term.
---   1. The hills stay and the basins go: the ground is never under a floor
---      that rises from FLOOR_KM under the dome, FADE blocks inland, to the
---      dome itself at the shore. A hill meets the sea as a cliff its own
---      height; a basin meets it as a bank climbing to the rim. (The first
---      cut faded ALL the relief out toward the shore, and every shore was
---      a two-block beach behind a one-in-twenty slope.)
---   2. Within SKIRT of the shore the ground is lifted to the level plus a
---      beach where it would fall under it: the rim that holds the sea.
+--   1. The hills stay and the basins go: the ground is never under a
+--      floor that is the pool's level plus a beach for PLAIN_W blocks
+--      inland of the shore — a sill, whole — and falls away from there
+--      over FADE blocks to FLOOR_KM under it. A hill meets the sea as a
+--      cliff its own height; a basin meets it as a coastal plain at the
+--      water's height and a bank down behind it. (The first cut faded ALL
+--      the relief out toward the shore, and every shore was a two-block
+--      beach behind a one-in-twenty slope; the second measured the floor
+--      from the dome, and the land twenty blocks in could stand twelve
+--      under the water behind a rim the width of a dyke.)
 --   3. From the coastline the face rises over FACE_W blocks (BEACH_W on a
 --      beach) from the shelf's edge to that ground: `seabed * (1 - f) +
 --      ground * f`; at sea f is 0 and the ground is the shelf.
---   4. On the lane's sills the ground is lifted to the upper pool's level
---      plus the beach (half a step over the map's ramping level there).
---   5. The jag on the face, and the cuts: the notch, the caves, the
---      tunnels and the blowholes, on land only.
-function shape.coast_shore(land, lane)
-    local floor = n.mul(n.sub(seas.near(), n.const(1.0)), n.const(seas.FLOOR_KM))
+--   4. The jag on the face, and the cuts: the notch, the caves and the
+--      tunnels, on land only.
+-- (A sill is land in the map, and the lift in 2 is what makes it a bank:
+-- the level ramps across it from one pool's to the next.)
+function shape.coast_shore(land)
+    local inland = n.clamp(n.mul(n.add(n.mul(seas.d_map(), n.const(-1.0)), n.const(-seas.PLAIN_W)), n.const(1.0 / seas.FADE)), 0.0, 1.0)
+    local floor = n.sub(n.add(seas.rel(), n.const(seas.BEACH)), n.mul(inland, n.const(seas.FLOOR_KM)))
     local g = n.max(land, floor)
-    local skirt = n.clamp(n.add(n.mul(seas.d_map(), n.const(1.0 / seas.SKIRT)), n.const(1.0)), 0.0, 1.0)
-    g = n.max(g, lift_target(seas.BEACH, skirt))
     local f = n.mul(face(), on_land())
     local h = n.add(n.mul(g, f), n.mul(n.add(seas.rel(), seabed()), n.sub(n.const(1.0), f)))
-    h = n.max(h, lift_target(seas.STEP / 2 + seas.BEACH, seas.sill_w(lane)))
     h = n.add(h, jag())
     local cuts = n.add(face_cuts(), deep_cuts())
     return n.sub(h, n.mul(n.mul(cuts, on_land()), n.const(CUT)))
 end
 -- Past the shelf: the shelf's foot blending into the ocean's floor from
--- SHELF_END to DEEP_FROM blocks out, at the pool's level; the sills.
-function shape.sea_deep(lane)
+-- SHELF_END to DEEP_FROM blocks out, at the pool's level.
+function shape.sea_deep()
     local b = n.clamp(n.mul(n.sub(offshore(), n.const(seas.SHELF_END)), n.const(1.0 / (seas.DEEP_FROM - seas.SHELF_END))), 0.0, 1.0)
     local bed = n.add(n.mul(seabed(), n.sub(n.const(1.0), b)), n.mul(shape.ocean_floor(), b))
-    local h = n.add(seas.rel(), bed)
-    return n.max(h, lift_target(seas.STEP / 2 + seas.BEACH, seas.sill_w(lane)))
+    return n.add(seas.rel(), bed)
 end
 
 -- The structures, as schematics for the scatter: `{dx, dy, dz, material,
@@ -480,11 +469,12 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         gate = n.min(gate, n.add(over_sea(), n.const(0.003)))
         return n.min(gate, n.sub(n.const(0.006), over_sea()))
     end
-    -- The turf (8): the rim behind the face, on land, above the splash —
-    -- SHORE_LAND blocks of it, then the ring's own turf takes over.
+    -- The turf (8): the land behind the face — SHORE_LAND blocks of it,
+    -- then the ring's own turf takes over. Whatever its height: the strata
+    -- are the FACE'S, and on a shore that slopes to the water they came
+    -- out as bands across the ground (2026-09-15, from the window).
     local function turf()
         local top = n.min(landward(), n.sub(n.const(-FACE_W - 1.0), seas.d()))
-        top = n.min(top, n.sub(over_sea(), n.const(0.006)))
         return n.min(top, n.add(seas.d_map(), n.const(SHORE_LAND)))
     end
     -- The shelf's floor: sand at sea this side of the ledge's foot (9),

@@ -56,17 +56,24 @@
 -- with the arcs a noise cuts from it — forty-odd steps and five lanes are
 -- six hundred operations, which a map pays once and a program reads in two.
 --
--- THE SILLS are not in the map: a sill is sixty blocks wide and the map's
--- samples are a hundred and sixteen apart, so a map could miss one, and a
--- missed sill is two pools sixty blocks apart with nothing between them.
--- They are terms of the radius in the programs (`M.sill_w`, `M.sill_free`),
--- exact, and only a lane's own — a program is compiled per lane
--- (shape.lua, the "_shore<k>" and "deep<k>" modes).
+-- THE SILLS are in the map, and wide: a strip of land SILL_HALF blocks
+-- either side of a step circle, wider than two samples, so no sill is ever
+-- missed between them (a missed sill is two pools sixty blocks apart with
+-- nothing between). The level map holds the UPPER pool's level across the
+-- whole strip — its step is at the strip's outer edge, not the circle —
+-- so the sill stands at the upper level plus a beach all the way across
+-- (the shore's floor, coastal_cliffs.lua), and the map's one-sample ramp
+-- from the upper level to the lower lies just outside the strip, in the
+-- lower pool: there the seabed follows it down, sixty blocks over a
+-- hundred, a bank into the lower pool. The first cut had sills sixty
+-- blocks wide as terms of the radius in every program with the ramp
+-- inside them, and the water flooded the land beside them up to the
+-- ramp's error — thirty blocks — with the woodland's trees under it.
 --
 -- THE WATER is the engine's terraced fluid (`fill_fluid_terraced`), its
--- level the map's level quantised again in the program (`M.fluid_level`):
--- the map ramps between two levels over one sample's width at a sill, and
--- water must not.
+-- level the map's level quantised DOWN in the program (`M.fluid_level`):
+-- on the ramp the water is the lower pool's, and stops where the bank
+-- rises out of it.
 
 local shape = tdw.shape
 local n = shape.node
@@ -84,11 +91,11 @@ M.SEA_DROP = M.STEP / 2                                 -- km under the dome at 
 -- first is the temperate ring's; the rest run from the Verdant Belt to
 -- the Hem. The Glass Waste (24.8 to 28.3 km) and the cold core have none.
 M.LANES = {
-    { r = 19.1, w = 3.8 },
-    { r = 32.7, w = 3.3 },
-    { r = 39.6, w = 4.4 },
-    { r = 46.9, w = 4.2 },
-    { r = 54.3, w = 4.0 },
+    { r = 19.1, w = 4.8 },
+    { r = 32.7, w = 4.1 },
+    { r = 39.6, w = 5.5 },
+    { r = 46.9, w = 5.3 },
+    { r = 54.3, w = 5.0 },
 }
 -- The arcs: where either of two slow noises is positive, read through the
 -- signed contour so the map holds a distance. Nine kilometres of feature.
@@ -102,11 +109,10 @@ local BAYS_FREQ, BAYS_OCTAVES, BAYS_AMP = 1 / 700, 2, 90.0
 -- coast's own numbers (bites of a dozen blocks, crenellations of two).
 local FINE_DETAIL = { { 1 / 150, 3, 24.0 }, { 1 / 9, 2, 5.0 } }
 M.DIST_FAR = 400.0                                      -- blocks: the map's clamp
-M.SILL_HALF = 30.0                                      -- blocks: a sill's land either side of its circle
-M.SILL_RAMP = 8.0                                       -- blocks: how wide a sill's rise is
-M.FADE = 600.0                                          -- blocks: the basins' floor rises to the dome over this, to the shore; the rivers stop over it
-M.FLOOR_KM = 0.45                                       -- km under the dome the floor starts from, FADE blocks inland: deeper than any relief low
-M.SKIRT = 120.0                                         -- blocks: within this the ground is lifted to the level where it is under
+M.SILL_HALF = 130.0                                     -- blocks: a sill's land either side of its circle: more than a map sample
+M.PLAIN_W = 130.0                                       -- blocks: inland of any shore the ground keeps to the level plus a beach this far (a sill, whole)
+M.FADE = 900.0                                          -- blocks: past PLAIN_W the floor falls away from the level over this; the rivers stop over it
+M.FLOOR_KM = 0.45                                       -- km the floor falls to over FADE: deeper than any relief low, a one-in-two slope
 M.BEACH = 0.002                                         -- km: the lifted ground stands this over the level
 M.SHELF_END = 130.0                                     -- blocks out: the coast's shelf ends, the ocean's floor begins...
 M.DEEP_FROM = 200.0                                     -- ...and is the whole floor from here
@@ -153,31 +159,24 @@ for k, lane in ipairs(M.LANES) do
     lane.index = k
 end
 
--- Whether seas are in this world at all, and which lane a radius is
--- nearest to (its index), for the modes.
+-- Whether seas are in this world: the ring world, or the dev switch's
+-- world of the coast or the ocean.
 function M.on()
-    return true
-end
-function M.lane_for(u)
-    local best, best_d = 1, math.huge
-    for k, lane in ipairs(M.LANES) do
-        local d = math.max(lane.u_lo - u, u - lane.u_hi, 0.0)
-        if d < best_d then
-            best, best_d = k, d
-        end
-    end
-    return best
+    local only = tdw.config.everywhere
+    return only == nil or only == "coastal_cliffs" or only == "deep_ocean"
 end
 
 -- ------------------------------------------------------------ the maps
 
 local u = shape.sub.u
 
--- The level, km over Y0: a staircase down the radius.
+-- The level, km over Y0: a staircase down the radius, each step at the
+-- outer edge of its sill's strip, so the strip is the upper pool's.
 local function level_field()
     local acc = n.const(shape.SUMMIT - M.SEA_DROP)
     for _, step in ipairs(M.STEPS) do
-        acc = n.sub(acc, n.mul(n.clamp(n.mul(n.sub(u(), n.const(step.u)), n.const(1e7)), 0.0, 1.0), n.const(M.STEP)))
+        local at = step.u + M.SILL_HALF / step.blocks_per_u
+        acc = n.sub(acc, n.mul(n.clamp(n.mul(n.sub(u(), n.const(at)), n.const(1e7)), 0.0, 1.0), n.const(M.STEP)))
     end
     return acc
 end
@@ -202,6 +201,12 @@ local function dist_field(everywhere)
     end
     local d = n.min(radial, arc)
     d = n.add(d, n.noise("sea_bays", BAYS_FREQ, BAYS_OCTAVES, BAYS_AMP))
+    -- The sills: a strip of land on every step circle a sea can reach.
+    for _, step in ipairs(M.STEPS) do
+        if step.u > U_MIN - 0.01 then
+            d = n.min(d, n.sub(n.mul(n.abs(n.sub(u(), n.const(step.u))), n.const(step.blocks_per_u)), n.const(M.SILL_HALF)))
+        end
+    end
     -- Not in the cold core.
     d = n.min(d, n.mul(n.sub(u(), n.const(U_MIN)), n.const(R2 / (2.0 * math.sqrt(U_MIN) * R) * KM)))
     if not everywhere then
@@ -260,33 +265,15 @@ end
 function M.rel()
     return { op = "map", map = game.map(map_spec("sea_rel")) }
 end
--- 1 on a lane's sills, 0 off them, rising over SILL_RAMP blocks.
-function M.sill_w(lane)
-    local acc = nil
-    for _, step in ipairs(lane.steps) do
-        local term = n.clamp(n.mul(n.sub(n.const(M.SILL_HALF), n.mul(n.abs(n.sub(u(), n.const(step.u))), n.const(step.blocks_per_u))),
-            n.const(1.0 / M.SILL_RAMP)), 0.0, 1.0)
-        acc = acc and n.max(acc, term) or term
-    end
-    return acc or n.const(0.0)
-end
--- Positive off every sill of the lane: what the water is kept within.
-function M.sill_free(lane)
-    local acc = nil
-    for _, step in ipairs(lane.steps) do
-        local term = n.sub(n.mul(n.abs(n.sub(u(), n.const(step.u))), n.const(step.blocks_per_u)), n.const(M.SILL_HALF))
-        acc = acc and n.min(acc, term) or term
-    end
-    return acc or n.const(M.DIST_FAR)
-end
--- The water's level, world y: the map's level quantised to the steps
--- again, so a sample's ramp at a sill is one level or the other.
+-- The water's level, world y: the map's level quantised DOWN to the
+-- steps — the greatest level at or under the sample's value (a block of
+-- slack for the float), so on a sill's ramp the water is the lower
+-- pool's, never a strip of the upper pool's standing in the lower.
 function M.fluid_level()
     local level = M.level()
-    local acc = n.const(shape.SUMMIT - M.SEA_DROP)
+    local acc = n.const(shape.SUMMIT - M.SEA_DROP - M.STEP)
     for _, step in ipairs(M.STEPS) do
-        local mid = step.level + M.STEP / 2
-        acc = n.sub(acc, n.mul(n.clamp(n.mul(n.sub(n.const(mid), level), n.const(1e5)), 0.0, 1.0), n.const(M.STEP)))
+        acc = n.sub(acc, n.mul(n.clamp(n.mul(n.sub(n.const(step.level - 0.001), level), n.const(1e5)), 0.0, 1.0), n.const(M.STEP)))
     end
     return n.add(n.mul(acc, n.const(KM)), n.const(shape.Y0))
 end
@@ -319,25 +306,18 @@ function M.at(x, z, seed)
     return dist_program():at(x + 0.5, 0.0, z + 0.5, seed)
 end
 
--- The water: the terraced fluid at the pool's level, within the shore and
--- off the sills. One program pair per lane, compiled on first use.
+-- The water: the terraced fluid at the pool's level, within the shore.
 local WATER = "tiamot_default_world:water"
-local FLUID = {}
-function M.fill(buf, pos, u_lo, u_hi)
+local FLUID = nil
+function M.fill(buf, pos)
     if not buf.fill_fluid_terraced then
         return
     end
-    local k = M.lane_for((u_lo + u_hi) / 2)
-    local programs = FLUID[k]
-    if programs == nil then
-        local lane = M.LANES[k]
-        programs = {
-            level = shape.compile("sea.level" .. k, M.fluid_level()),
-            within = shape.compile("sea.within" .. k, n.min(M.d(), M.sill_free(lane))),
-        }
-        FLUID[k] = programs
-    end
-    buf:fill_fluid_terraced({ level = programs.level, within = programs.within, fluid = WATER })
+    FLUID = FLUID or {
+        level = shape.compile("sea.level", M.fluid_level()),
+        within = shape.compile("sea.within", M.d()),
+    }
+    buf:fill_fluid_terraced({ level = FLUID.level, within = FLUID.within, fluid = WATER })
 end
 
 -- Which sea biome a place is, for the HUD: the coast within the shore
