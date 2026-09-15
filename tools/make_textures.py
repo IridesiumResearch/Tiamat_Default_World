@@ -85,6 +85,9 @@ BLOCKS = {
     "rust_grass":     (148,  92,  56,  0),
     "hanging_lichen": (172, 182, 156,  0),
     "volcanic_ash":   (196, 192, 184,  0),   # the badlands (2.1)
+    "lava_rock":      ( 52,  44,  46,  0),   # the volcanic foothills (2.3)
+    "pumice":         (178, 172, 162,  0),
+    "sulfur":         (226, 184,  62,  0),
     "charcoal":       ( 58,  56,  60,  0),
     "dried_mud":      (148, 132, 148,  0),
     "dead_sagebrush": (138, 128, 110,  0),   # the deep ocean (1.8): old, sea-stained bone

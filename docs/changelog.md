@@ -1691,6 +1691,60 @@ engine commit they landed in, because the mod is written against them.
   — thick white-blue-grey fog, 26 blocks of visibility, 70 at the edges —
   over the whole of Frostmoor.
 
+### 2.3 Volcanic Foothills, on the Ember Ridge
+
+- **The Ember Ridge is the Volcanic Foothills** (`biomes/volcanic_foothills.lua`),
+  both halves, 20.7 to 24.8 km, taken from the grassland that stood in.
+  The brief: steep stepped basalt terraces and jagged cinder cones with
+  inclined stone aprons; low foothills rising to sharp ridges broken by
+  lava levees and deep gouges; dark basalt, porous lava rock*, slate-grey
+  ash*, pumice* pebbles, sulfur* crusts ringing thermal fissures; very
+  sparse trees, none on fresh lava, clustered in ash pockets and hollows,
+  charred snags and fire-scarred pines of charcoal*; ash scree, rain-cut
+  ash gullies through tuff, fissures venting steam; columnar basalt,
+  hollow lava-tube blisters, smouldering fumaroles with magma, jagged
+  lava boulders in the ash flats.
+- **The shape**, a new `"ember"` terrain mode (shape.lua): the temperate
+  pair with the ridge's terms weighted in over the ring's inner edge and
+  out again across its outer third, because the Glass Waste's programs
+  begin at the ring's outer edge with the mesa's terms and have no room
+  for these (the mesa's now start 800 m inside the Waste, `GLASS_INSET_U`,
+  where it is plains anyway). Foothills of three blocks either way;
+  ridges forty-two blocks tall as tents over a contour, climbing in
+  seven-block terraces; cinder cones fifty-five blocks tall where two
+  noises agree, a crater in each top, a softer-edged apron round each
+  foot; lava levees four high along a contour, in stretches; gouges
+  sixteen deep; ash gullies where a tuff noise says; fissures a block
+  wide and six deep, in stretches. 605 ops.
+- **The ground**, layered codes: basalt; ash drifts and gully floors;
+  pumice pebbles; cone scree (the flanks between a quarter and seven
+  tenths of the cone's weight); lava lobes where a lobe noise is high;
+  a sulfur ring round every fissure. Steam rises off the sulfur through
+  a random tick (`game.emit_particles`, lifting).
+- **Structures**, cut natively: columnar basalt clusters on the ridges,
+  blisters (an ellipsoid of air under a one-block crust) and fumaroles (a
+  magma throat, a sulfur ring) and lava boulders on the flats, charcoal
+  snags in the ash pockets, charcoal-based pines with fir needles in the
+  hollows, never on a lobe.
+- **New nodes**: `lava_rock`, `pumice`, `sulfur`. The ash is the
+  badlands' `volcanic_ash`, the charred wood the badlands' `charcoal`.
+- **The HUD** says "Volcanic Foothills" on the ridge: its basalt is the
+  coast's material, so `tdw.volcanic_at` (the placement field, cached by
+  eight-block square, as `tdw.taiga_at`) decides before the ground does.
+- **The first sea lane pulled in** to 16.3 to 19.1 km: its shore's
+  reach (920 blocks) now ends short of the ridge's first chunk at 19.5,
+  because the ridge's terms and the shore's together are 1030 ops, six
+  over the compiler's cap, and the brief has the fissures venting steam,
+  not pooling water. The second and third lanes a few hundred metres
+  wider (34.1 to 39.5 and 41.1 to 48.5, both away from the rainforest)
+  for the same third of the disc: 0.332 measured.
+- Checked headless on a fresh world: `/tp volcanic foothills` lands on
+  the ridge (the HUD says so), the surface under the bot is ash, basalt,
+  lava rock, pumice, sulfur, magma and charcoal, the cones' height map
+  shows forty blocks of relief, and the coast, mesa and 20 km (now
+  woodland, dry) come up whole; no errors, nothing refused. **A fresh
+  world is needed**: the sea maps are filled once, at world init.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

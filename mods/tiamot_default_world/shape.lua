@@ -156,6 +156,20 @@ M.VERDANT_BLEND_U = 0.008
 -- the cross-fade into the mesa's terrain at its edges, as the rainforest's.
 M.GLASS_U = { 0.42 * 0.42, 0.48 * 0.48 }
 M.GLASS_BLEND_U = 0.008
+-- The mesa's and the badlands' terms begin this far INSIDE the Glass
+-- Waste (2026-09-15, with the Volcanic Foothills): the Waste's inner
+-- eight hundred metres are plains, which the mesa has anyway, and the
+-- Ember Ridge's terms get the room to stand at full height across most
+-- of their ring before they must be gone for the Waste's programs.
+M.GLASS_INSET_U = 0.012
+-- The Ember Ridge, the Volcanic Foothills (2.3): its span in u, the
+-- cross-fade into its terms at the inner edge, and where they fade OUT
+-- again short of the Glass Waste's programs (which begin at GLASS_U[1]
+-- less their reach, and carry the mesa's terms, not these).
+M.EMBER_U = { 0.35 * 0.35, 0.42 * 0.42 }
+M.EMBER_BLEND_U = 0.006
+M.EMBER_OUT_U = 0.42 * 0.42 + 0.012 - 0.014 - 0.010     -- gone by here on the wobbled radius: the "glass" programs' first chunk, less the wobble
+M.EMBER_FADE_U = 0.012
 -- The Frozen Wastes (1.9) take the frost ring's dry half — Frostmoor — from
 -- the alpine. Their flat permafrost fades into the alpine's mountains across
 -- the Crown's edge over FROZEN_RING_BLEND_U of radius, and across the
@@ -415,6 +429,11 @@ end
 --               Taiga (2.2) took "all" to 968 operations and the woodlands'
 --               grass, which is the terrain and a mask, to 1,031 of 1,024;
 --               the temperate ring's biomes are only ever in this part.
+--   "ember"     the Ember Ridge: the temperate pair with the Volcanic
+--               Foothills' terms (2.3), weighted in across the ring's
+--               inner edge and out again over its outer third — the Glass
+--               Waste's programs begin at the ring's outer edge and have
+--               no room for them
 --   "glass"     the Glass Waste alone: the temperate pair with the mesa's
 --               and the badlands' terms, no rainforest (2026-09-15; the
 --               seas need room beside the land terms, and "verdant" had
@@ -451,6 +470,8 @@ function M.default_mode()
         return "mesa"
     elseif only == "badlands" then
         return "badlands"
+    elseif only == "volcanic_foothills" then
+        return "ember"
     end
     return "wet"
 end
@@ -479,15 +500,17 @@ function M.mode_u_ranges(mode)
     elseif mode == "rim" then
         return { { rim_from, edge + half } }
     elseif mode == "temperate" then
-        return { { edge - half, M.GLASS_U[1] - reach }, { M.VERDANT_U[2] + reach, 2.0 } }
+        return { { edge - half, M.GLASS_U[1] + M.GLASS_INSET_U - reach }, { M.VERDANT_U[2] + reach, 2.0 } }
+    elseif mode == "ember" then
+        return { { M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.RING_WOBBLE, M.GLASS_U[1] + M.GLASS_INSET_U - reach } }
     elseif mode == "verdant" then
         return { { M.VERDANT_U[1] - reach - 0.002, M.GLASS_U[2] + reach + 0.002 } }
     elseif mode == "glass" then
-        return { { M.GLASS_U[1] - reach, M.VERDANT_U[1] - reach } }
+        return { { M.GLASS_U[1] + M.GLASS_INSET_U - reach, M.VERDANT_U[1] - reach } }
     elseif mode == "belt" then
         if base == nil then
             -- A deep chunk: any lane, so the temperate ring's too.
-            return { { edge - half, M.GLASS_U[1] - reach }, { M.GLASS_U[2] + reach, 2.0 } }
+            return { { edge - half, M.GLASS_U[1] + M.GLASS_INSET_U - reach }, { M.GLASS_U[2] + reach, 2.0 } }
         end
         return { { M.GLASS_U[2] + reach, M.VERDANT_U[2] + reach } }
     end
@@ -496,6 +519,9 @@ end
 -- The mode for a chunk spanning [u_lo, u_hi]: one ring's own programs
 -- wherever the alpine weight is exactly 0 or 1 over the whole chunk, the
 -- cross-faded ones in the band between.
+-- Not "ember": its terms and the shore's together are 1030 ops, six over
+-- the compiler's cap, so the first lane keeps its shore reach (FADE, 920
+-- blocks) short of the Ember Ridge's first "ember" chunk at 19.5 km.
 local SEA_MODES = { temperate = true, belt = true, wet = true, dry = true }
 local function land_mode_for(u_lo, u_hi)
     if tdw.config.everywhere then
@@ -509,13 +535,16 @@ local function land_mode_for(u_lo, u_hi)
         return "alpine"
     elseif u_lo >= edge + half then
         local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
-        if u_hi >= M.GLASS_U[1] - reach and u_lo <= M.VERDANT_U[2] + reach then
+        if u_hi >= M.GLASS_U[1] + M.GLASS_INSET_U - reach and u_lo <= M.VERDANT_U[2] + reach then
             if u_hi < M.VERDANT_U[1] - reach then
                 return "glass"
             elseif u_lo > M.GLASS_U[2] + reach then
                 return "belt"
             end
             return "verdant"
+        end
+        if M.volcanic_terms and u_hi >= M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.RING_WOBBLE then
+            return "ember"
         end
         return "temperate"
     end
@@ -574,9 +603,18 @@ end
 
 -- The glass weight: the same for the Glass Waste.
 local function glass_weight()
-    local mid, half = (M.GLASS_U[1] + M.GLASS_U[2]) / 2, (M.GLASS_U[2] - M.GLASS_U[1]) / 2
+    local inner = M.GLASS_U[1] + M.GLASS_INSET_U
+    local mid, half = (inner + M.GLASS_U[2]) / 2, (M.GLASS_U[2] - inner) / 2
     local inside = mul(sub(abs(sub(u_biome(), const(mid))), const(half)), const(-1.0 / M.GLASS_BLEND_U))
     return clamp(add(inside, const(0.5)), 0.0, 1.0)
+end
+
+-- The Ember Ridge's weight: in over EMBER_BLEND_U at the ring's inner
+-- edge, out again over EMBER_FADE_U to EMBER_OUT_U, on the wobbled radius.
+local function ember_weight()
+    local inner = clamp(add(mul(sub(u_biome(), const(M.EMBER_U[1])), const(1.0 / M.EMBER_BLEND_U)), const(0.5)), 0.0, 1.0)
+    local outer = clamp(mul(sub(const(M.EMBER_OUT_U), u_biome()), const(1.0 / M.EMBER_FADE_U)), 0.0, 1.0)
+    return mul(inner, outer)
 end
 
 -- The Frozen Wastes' weight: 0 in the Crown and the frost ring's wet half,
@@ -723,6 +761,11 @@ function M.terrain(flank)
         terms = M.badlands_terms()
     elseif mode == "temperate" then
         terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+    elseif mode == "ember" then
+        -- The Volcanic Foothills' terms over the pair, weighted across the
+        -- ring. The volcanic FIRST: the deepest term in the program.
+        local pair = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+        terms = add(mul(M.volcanic_terms(), ember_weight()), pair)
     elseif mode == "rainforest" then
         terms = M.rainforest_terms()
     elseif mode == "belt" then
@@ -924,7 +967,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true, glass = true, belt = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true, glass = true, belt = true, ember = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

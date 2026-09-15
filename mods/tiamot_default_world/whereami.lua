@@ -71,8 +71,11 @@ end
 for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lichen }) do
     OWNER[material] = "taiga"
 end
+for _, material in ipairs({ blocks.lava_rock, blocks.pumice, blocks.sulfur }) do
+    OWNER[material] = "volcanic_foothills"
+end
 -- Whose ground answers at once, wherever in the column it is found.
-local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true, badlands = true, taiga = true }
+local DECIDES = { alpine_highlands = true, river_valleys = true, dense_rainforest_canopy = true, arid_mesa = true, badlands = true, taiga = true, volcanic_foothills = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -103,9 +106,13 @@ function tdw.biome_under(x, y, z)
         return sea
     end
     -- Firwold's ground is fir, moss and peat, which the alpine and the
-    -- rainforest claim: the placement field says first.
+    -- rainforest claim, and the Ember Ridge's is the coast's basalt: the
+    -- placement fields say first.
     if tdw.taiga_at and tdw.taiga_at(x, z) then
         return "taiga"
+    end
+    if tdw.volcanic_at and tdw.volcanic_at(x, z) then
+        return "volcanic_foothills"
     end
     local owner = tdw.biome_under_ground(x, y, z)
     -- The alpine's snow, ice and permafrost are the Frozen Wastes' too:

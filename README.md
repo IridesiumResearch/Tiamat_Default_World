@@ -165,9 +165,9 @@ every ring its temperature suits until the biome that ring is for exists:
 |---|---|---|
 | The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), Taiga on the wet (Firwold) |
-| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry; the seas' lanes at 19, 33, 40, 47 and 54 km, with the Coastal Cliffs on every shore and the Deep Ocean past every shelf |
+| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore and the Deep Ocean past every shelf |
 | The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
-| The Ember Ridge | 20.7 to 24.8 km | Rolling Grasslands over the whole width, standing in for a desert |
+| The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills over the whole width: stepped basalt ridges and cinder cones on the inner side, foothills on the outer third |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies) |
 | The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity, three lanes of sea |
 | Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
@@ -385,6 +385,13 @@ built one at a time in its own file. Built so far:
       Cut natively with `game.schematic_shapes` and stamped at generation.
       The canopy's shade and the fog wait on the engine
       (`docs/engine-asks.md`, items 20, 23 and 24).
+- [x] 2.3 Volcanic Foothills — the Ember Ridge, both halves
+      (`biomes/volcanic_foothills.lua`). Stepped basalt terraces and cinder
+      cones with aprons, foothills rising to ridges broken by lava levees
+      and gouges; basalt, lava rock, ash drifts, pumice, sulfur crusts round
+      steaming fissures; ash scree and gullies through tuff; columnar
+      basalt, lava-tube blisters, fumaroles with magma, lava boulders;
+      charcoal snags and fire-scarred pines in the ash pockets and hollows.
 - [x] 2.2 Taiga — Firwold, the frost ring's wet half (`biomes/taiga.lua`).
       Rolling uplands and hummocky glacial ridges over peat basins with
       stagnant pools and black-water channels; mulch, rust-brown grass and

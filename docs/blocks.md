@@ -193,6 +193,19 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 2.3 Volcanic Foothills (2026-09-15)
+
+Shares `dark_basalt` (the coast's), `volcanic_ash` and `charcoal` (the
+badlands'), `magma` (in the fumaroles), `fir_log` and `fir_needles` (the
+fire-scarred pines' crowns), `stone` (the columnar basalt, until named)
+and `dirt`.
+
+| Block | Where | Why |
+|---|---|---|
+| `lava_rock` | the lava lobes, the levees, the jagged boulders, the blisters' crusts | asked for by name 2026-09-15 |
+| `pumice` | pebbles scattered over the ash | asked for by name 2026-09-15 |
+| `sulfur` | the crust ringing every thermal fissure and fumarole; steam rises off it | asked for by name 2026-09-15 |
+
 ### 2.2 Taiga (2026-09-15)
 
 Shares `fir_log` and `fir_needles` (spruce and pine, until named),

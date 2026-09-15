@@ -244,6 +244,14 @@ block("mulch", "Mulch", "Rust-brown needles and bark, acid and soft underfoot.",
 block("rust_grass", "Rust grass", "Acidic, rust-brown tufts on the forest floor.", { hardness = 0.1, tint = { strength = 0.14, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 block("hanging_lichen", "Hanging lichen", "Pale grey-green strands dripping from dead branches.", { hardness = 0.1, tint = { strength = 0.10, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 
+-- The Volcanic Foothills (2.3). Three new nodes, asked for by name
+-- (2026-09-15): lava rock*, pumice*, sulfur*. The ash is the badlands'
+-- `volcanic_ash` (asked for there first), and the charred trees are the
+-- badlands' `charcoal`.
+block("lava_rock", "Lava rock", "Porous, dark, sharp: a lobe of it cooled where it ran.", { hardness = 1.3, tint = ROCK })
+block("pumice", "Pumice", "Pale, light, full of holes; pebbles of it in the ash.", { hardness = 0.4, tint = ROCK })
+block("sulfur", "Sulfur", "Bright orange-yellow crust round a thermal fissure.", { hardness = 0.5, tint = { strength = 0.10, scale = 64 } })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

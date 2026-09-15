@@ -31,7 +31,7 @@ biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface
     humidity = { -0.05, 0.42 },
     note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, the Long Shore and the Hem. It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    spans = { { "temperate", "temperate", "dry" }, { "ember", "ember" }, { "verdant", "hem", "dry" } },
+    spans = { { "temperate", "temperate", "dry" }, { "verdant", "hem", "dry" } },
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
@@ -63,7 +63,8 @@ biome{ id = "taiga", name = "Taiga", area = "surface",
     ring = "frost", humidity = { -0.05, 0.42 },
     note = "2.2 — Firwold, the frost ring's wet half: rolling uplands and glacial ridges, peat basins with stagnant pools, a wall of spruce, ancient pines, fallen logs, fog. Its terrain is cross-faded into the alpine's mountains and the Frozen Wastes' plains (shape.lua, cold_terms)." }
 biome{ id = "volcanic_foothills", name = "Volcanic Foothills", area = "surface",
-    ring = "ember", note = "The Ember Ridge, the only surface sign of the magma shell." }
+    spans = { { "ember", "ember" } },
+    ring = "ember", note = "2.3 — the Ember Ridge, the only surface sign of the magma shell: stepped basalt ridges, cinder cones, lava levees, gouges, ash gullies, thermal fissures venting steam." }
 biome{ id = "deep_ocean", name = "Deep Ocean", area = "surface",
     spans = { { "temperate", "hem" } },
     ring = "hem",
