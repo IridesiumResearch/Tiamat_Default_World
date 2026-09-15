@@ -96,6 +96,11 @@ end
 -- The biome whose ground is under (x, y, z), or nil when the column is
 -- unloaded or made of nothing anybody claims.
 function tdw.biome_under(x, y, z)
+    -- A shore or a sea floor: the sea map says (seas.lua).
+    local sea = tdw.seas and tdw.seas.zone(x, z)
+    if sea then
+        return sea
+    end
     -- Firwold's ground is fir, moss and peat, which the alpine and the
     -- rainforest claim: the placement field says first.
     if tdw.taiga_at and tdw.taiga_at(x, z) then

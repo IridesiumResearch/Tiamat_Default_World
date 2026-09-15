@@ -55,6 +55,7 @@ load("hooks")                   -- one tick and one chat hook, many subscribers
 tdw.edits = load("edits")   -- the paced runtime edit queue
 load("rocks")                   -- boulders and clusters, for any biome: tdw.rocks
 load("schem")                   -- ellipsoids written and carved, for any biome: tdw.schem
+load("seas")                    -- where the seas are and each pool's level: tdw.seas, shape.sea_exclude
 load("biomes")             -- registry: tdw.register_area / register_biome
 load("biomes.catalogue")   -- every area and every biome, as data
 load("biomes.temperate_woodlands")   -- 1.1, the first one built

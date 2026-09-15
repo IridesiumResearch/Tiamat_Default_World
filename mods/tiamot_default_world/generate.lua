@@ -101,23 +101,14 @@ local function seed_int(seed)
     return math.tointeger(seed % 4294967296.0) or 0
 end
 
--- The sea: the engine's water below the biome's sea level, in every chunk
--- of a sea mode that reaches it. `fill_fluid_below` takes a level and a
--- fluid and fills the air under the level; the terrain keeps its cells.
--- The coast and the deep ocean are the modes with a flat sea to fill — see
--- biomes/coastal_cliffs.lua for why a sea cannot lie on the dome.
-local WATER = "tiamot_default_world:water"
-local SEA_OF_MODE = { coast = "coastal_cliffs", ocean = "deep_ocean" }
-local function sea_into(buf, mode, y_lo)
-    local owner = SEA_OF_MODE[mode]
-    if owner == nil then
-        return
+-- The seas: the engine's terraced fluid at each pool's level, wherever the
+-- sea maps say (seas.lua). Asked of every chunk inside the body; the fill
+-- answers from the maps' bounds and costs nothing where no sea reaches.
+local function sea_into(buf, pos, u_lo, u_hi, inside_body)
+    local seas = tdw.seas
+    if inside_body and seas and seas.on() then
+        seas.fill(buf, pos, u_lo, u_hi)
     end
-    local sea = tdw.biomes[owner].sea_y
-    if sea == nil or y_lo > sea then
-        return
-    end
-    buf:fill_fluid_below(sea, WATER)
 end
 
 -- The rivers' water: a biome's `fluid` fill, laid per column at its own
@@ -197,7 +188,7 @@ local function generate(buf, pos)
     local dmin = shape.dome_at(uhi) - Yhi
     -- Which ring's programs: one ring's own away from the bands where
     -- rings meet, the cross-faded ones in them (shape.lua, "terrain MODES").
-    local mode = shape.terrain_mode_for(ulo, uhi)
+    local mode = shape.terrain_mode_for(ulo, uhi, pos)
     local T = shape.top_for(mode)
     -- T, the real depth: the engine's bound on the terrain field over this
     -- chunk. Wrong in one direction only — it may say "maybe" about a chunk
@@ -234,7 +225,7 @@ local function generate(buf, pos)
             found = tdw.present_biomes_in(ulo, uhi, pos)
             structures_into(buf, found, mode, tmax)
         end
-        sea_into(buf, mode, y0)
+        sea_into(buf, pos, ulo, uhi, inside_body)
         if found and tmax > -WATER_ABOVE then
             waters_into(buf, found, mode)
         end
@@ -358,10 +349,15 @@ local function generate(buf, pos)
             -- The sea, after the terrain AND the structures: the fluid fill
             -- takes only the room they leave (it was before the structures,
             -- which put water inside every kelp stand and boulder).
-            sea_into(buf, mode, y0)
+            sea_into(buf, pos, ulo, uhi, inside_body)
             -- Then rivers and brine pools, which take the sea's place.
             waters_into(buf, found, mode)
         end
+    end
+    if not (skin and inside_body and tmin < shape.SKIN_TOP) then
+        -- A chunk of rock under a sea's floor is still under its water: the
+        -- flooded caves and tunnels, and the deep water over a trench.
+        sea_into(buf, pos, ulo, uhi, inside_body)
     end
 
     -- The core stack, outermost first, only the shells this chunk can touch.

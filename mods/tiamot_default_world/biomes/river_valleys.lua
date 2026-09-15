@@ -319,6 +319,11 @@ tdw.build_biome("river_valleys", function(ctx)
     if mask then
         code = n.mul(code, step(mask))
     end
+    if shape.sea_exclude then
+        -- A valley peters out before a shore (shape.lua lifts its trough);
+        -- its materials stop there too.
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
+    end
     local depth = shape.compile("biome.river.depth", shape.terrain(false))
     local codes = shape.compile("biome.river.codes", code)
     local km = 0.001

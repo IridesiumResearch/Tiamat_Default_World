@@ -209,7 +209,9 @@ tdw.build_biome("temperate_woodlands", function(ctx)
     -- bed, and in strips across its channel. The ferns keep the valley's
     -- slopes; the grass there is the river's own.
     local function off_river(field, blocks_out)
-        return shape.river_exclude and shape.river_exclude(field, blocks_out) or field
+        field = shape.river_exclude and shape.river_exclude(field, blocks_out) or field
+        -- And out of the sea, and off the shore's own ground (2026-09-15).
+        return shape.sea_exclude and shape.sea_exclude(field, 20.0) or field
     end
     local ferns = shape.compile("biome.woodlands.ferns",
         masked(off_river(n.min(fern_patch, n.sub(n.noise("fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))),

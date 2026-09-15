@@ -49,6 +49,23 @@ tdw.on_command("help", "/help — these commands", function()
     return table.concat(lines, "\n")
 end)
 
+-- The world pre-pass (engine `game.register_on_world_init`, ONE per mod:
+-- a second registration replaces the first, which is how the seas' maps
+-- went unbuilt on 2026-09-15): every file that builds maps subscribes here,
+-- in load order.
+local inits = nil
+function tdw.on_world_init(fn)
+    if inits == nil then
+        inits = {}
+        game.register_on_world_init(function()
+            for _, each in ipairs(inits) do
+                each()
+            end
+        end)
+    end
+    inits[#inits + 1] = fn
+end
+
 -- A chunk's fog (engine `game.register_chunk_fog`, one per mod): every
 -- biome that wants mist subscribes here, and the first to answer a chunk
 -- with a table speaks for it. Nil where the engine has no fog.

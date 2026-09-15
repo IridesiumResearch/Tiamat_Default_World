@@ -121,10 +121,16 @@ tdw.build_biome("rolling_grasslands", function(ctx)
     if shape.river_exclude then
         tufts = shape.river_exclude(tufts, shape.RIVER_RIM)
     end
+    if shape.sea_exclude then
+        tufts = shape.sea_exclude(tufts, 20.0)
+    end
     tufts = shape.compile("biome.grasslands.tufts", masked(tufts))
     local lunaria, chamomile = tdw.flower_covers("biome.grasslands", "tuft", TUFT_FREQ, function(field)
         if shape.river_exclude then
             field = shape.river_exclude(field, shape.RIVER_RIM)
+        end
+        if shape.sea_exclude then
+            field = shape.sea_exclude(field, 20.0)
         end
         return masked(field)
     end)

@@ -19,12 +19,11 @@
 --   brine pools, and towering basalt pillars that rise from the abyss to
 --   within a few blocks of the surface. New material: Bone.
 --
--- THE SEA is the coast's: this biome's terms cancel the dome and stand the
--- floor on one flat sea level, the same level as the coast's, and the
--- generator fills the engine's water below it (generate.lua, `sea_into`).
--- Like the coast it is built and NOT placed — a flat sea cannot lie on the
--- 2.5 km dome, and where the world's seas go is an open decision. Look at it
--- with `tdw.config.everywhere = "deep_ocean"`.
+-- THE SEA is the world's (seas.lua, 2026-09-15): every sea's floor past the
+-- coast's shelf is this biome's. Its floor is `shape.ocean_floor`, km over
+-- the POOL'S level — the coast's `shape.sea_deep` blends the shelf's foot
+-- into it and stands it on the level the sea map gives. Nothing here knows
+-- the dome any more.
 --
 -- THE FLOOR, in km over the sea (negative is under it): a plain 60 to 120
 -- blocks down wandering on a slow noise; guyots rising 55 blocks to flat
@@ -46,15 +45,11 @@
 
 local blocks = tdw.blocks
 local shape = tdw.shape
+local seas = tdw.seas
 local n = shape.node
 local schem = tdw.schem
 
 local ID = "deep_ocean"
-
--- The sea: the coast's level, in the km frame the terrain uses.
-local SEA_BELOW_SPAWN = 0.008
-local SEA_KM = shape.dome_at(shape.PLAIN_U) - SEA_BELOW_SPAWN
-local SEA_Y = shape.Y0 + SEA_KM * 1000
 
 -- Thresholds are against the noise as measured (see the rainforest's file):
 -- two octaves are over 0.2 on 27% of the ground, 0.3 on 18%, 0.35 on 14%,
@@ -83,6 +78,10 @@ local KELP_CELL, KELP_SQUARES, KELP_SALT = 4, 0.4, 83
 
 local function ys()
     return n.mul(n.sub(n.Y(), n.const(shape.Y0)), n.const(shape.SCALE))
+end
+-- y over the pool's level, km.
+local function over_sea()
+    return n.sub(ys(), seas.level())
 end
 local function gate(stream, freq, min, edge)
     return n.clamp(n.mul(n.sub(n.noise(stream, freq, 1, 1.0), n.const(min)), n.const(edge)), 0.0, 1.0)
@@ -128,10 +127,9 @@ local function plain()
     return n.add(n.noise("oc_plain", PLAIN_FREQ, 2, PLAIN_VARY), n.const(PLAIN_KM))
 end
 
--- The ocean's terms of the terrain, km: the floor over the sea level, the
--- dome cancelled and the sea level added, as the coast's are. `terrain()`
--- adds `shape.depth()` after.
-function shape.ocean_terms()
+-- The ocean's floor, km over the pool's level (negative). The coast's
+-- `shape.sea_deep` stands it on the level.
+function shape.ocean_floor()
     local floor = n.add(plain(), n.noise("oc_undulate", UNDULATE_FREQ, 2, UNDULATE_AMP))
     floor = n.add(floor, n.mul(guyot_w(), n.const(GUYOT_H)))
     floor = n.add(floor, n.mul(ridge_w(), n.const(RIDGE_H)))
@@ -145,14 +143,19 @@ function shape.ocean_terms()
     -- A pillar: the floor pulled up to PILLAR_TOP where its weight is 1, as
     -- `floor * (1 - w) + TOP * w`, so the floor is evaluated once.
     local w = pillar_w()
-    local acc = n.add(n.mul(floor, n.add(n.mul(w, n.const(-1.0)), n.const(1.0))), n.mul(pillar_w(), n.const(PILLAR_TOP)))
-    return n.add(acc, n.add(n.mul(shape.dome_node(), n.const(-1.0)), n.const(SEA_KM)))
+    return n.add(n.mul(floor, n.add(n.mul(w, n.const(-1.0)), n.const(1.0))), n.mul(pillar_w(), n.const(PILLAR_TOP)))
 end
 
-tdw.biomes[ID].ring_mode = "ocean"
+tdw.biomes[ID].ring_mode = "temperate"
 tdw.biomes[ID].lazy = true
 tdw.biomes[ID].soil = blocks.mud
-tdw.biomes[ID].sea_y = math.floor(SEA_Y)
+-- Where this biome is: past the shelf of any sea (seas.lua).
+tdw.biomes[ID].present = function(pos)
+    return seas.class(pos) == "deep"
+end
+tdw.biomes[ID].locate = function(px, pz, seed)
+    return seas.locate(px, pz, seed, seas.DEEP_FROM + 20.0, seas.DIST_FAR)
+end
 
 -- ------------------------------------------------------------ the structures
 
@@ -288,16 +291,19 @@ end
 -- ------------------------------------------------------------ the fills
 
 tdw.build_biome(ID, function(ctx)
+    -- This biome's floor: past the coast's shelf.
+    local function zone()
+        return n.sub(seas.d_map(), n.const(seas.SHELF_END))
+    end
     local function masked(field)
-        local mask = tdw.biome_mask(n, ID)
-        return mask and n.min(field, mask) or field
+        return n.min(field, zone())
     end
     local function step(field)
         return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
     end
     -- A pillar's top near the surface, where there is light for sea growth.
     local function shallow_pillar()
-        return n.min(n.sub(pillar_w(), n.const(0.5)), n.sub(ys(), n.const(SEA_KM - SHALLOW)))
+        return n.min(n.sub(pillar_w(), n.const(0.5)), n.add(over_sea(), n.const(SHALLOW)))
     end
     local conditions = {
         -- 1: the plains: mud.
@@ -327,10 +333,7 @@ tdw.build_biome(ID, function(ctx)
     for k, condition in ipairs(conditions) do
         code = n.max(code, n.mul(step(condition), n.const(k)))
     end
-    local mask = tdw.biome_mask(n, ID)
-    if mask then
-        code = n.mul(code, step(mask))
-    end
+    code = n.mul(code, step(zone()))
     local depth = shape.compile("biome.ocean.depth", shape.terrain(false))
     local codes = shape.compile("biome.ocean.codes", code)
     local km = 0.001
@@ -361,7 +364,7 @@ tdw.build_biome(ID, function(ctx)
         n.max(near_crack(18.0, 0.3), shallow_pillar()),
         n.sub(n.noise("oc_seagrass", 1.5, 1, 1.0), n.const(0.2)))))
     local fills = {
-        { layers = true, depth = depth, code = codes, entries = entries, body = true },
+        { layers = true, depth = depth, code = codes, entries = entries },
         { cover = blocks.seagrass, cells = 3, take = grass },
     }
     if game.schematic_shapes then
@@ -382,8 +385,8 @@ tdw.build_biome(ID, function(ctx)
     -- After the sea, whose water it takes the place of.
     fills[#fills + 1] = {
         fluid = "tiamot_default_world:brine",
-        level = shape.compile("biome.ocean.brine_level", n.add(n.mul(n.add(plain(), n.noise("oc_undulate", UNDULATE_FREQ, 2, UNDULATE_AMP)),
-            n.const(1000.0)), n.const(SEA_Y - 1.2))),
+        level = shape.compile("biome.ocean.brine_level", n.add(n.mul(n.add(n.add(plain(), n.noise("oc_undulate", UNDULATE_FREQ, 2, UNDULATE_AMP)),
+            seas.level()), n.const(1000.0)), n.const(shape.Y0 - 1.2))),
         within = shape.compile("biome.ocean.brine_within", masked(n.min(n.sub(pool_w(), n.const(0.05)), n.sub(n.const(0.05), trench_w())))),
     }
     return fills

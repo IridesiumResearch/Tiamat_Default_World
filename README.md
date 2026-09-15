@@ -165,11 +165,11 @@ every ring its temperature suits until the biome that ring is for exists:
 |---|---|---|
 | The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), Taiga on the wet (Firwold) |
-| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry |
+| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry; the seas' lanes at 19, 33, 40, 47 and 54 km, with the Coastal Cliffs on every shore and the Deep Ocean past every shelf |
 | The Verdant Belt | 28.3 to 35.4 km | Dense Rainforest Canopy on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Rolling Grasslands over the whole width, standing in for a desert |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies) |
-| The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity; the Coastal Cliffs are NOT here yet |
+| The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity, three lanes of sea |
 | Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
 
 **No edge of any of it is a circle.** The radius the biomes are placed by is
@@ -216,17 +216,12 @@ placeholder block now, everywhere below the surface band (a hundred blocks
 down), so what is left to build is visible from inside any hole.
 `tdw.config.white_unbuilt = false` puts the rock back.
 
-**The Deep Ocean (1.8) is built but not placed either**, for the same
-reason: abyssal plains, guyots, pillow ridges, trenches, basalt pillars,
-vents with magma, whale bones and brine pools, all under the coast's flat
-sea. `tdw.config.everywhere = "deep_ocean"` shows it.
-
-**The Coastal Cliffs and their shelf are built but not placed.** Their sea
-is flat, and the world's rim is 2.5 km of dome above where a flat sea would
-sit, with about 180 m of relief on top of that; putting the ocean in the
-world means bringing the rim down to a sea level and damping the relief into
-it, which is a change to the world's shape rather than to a biome. Look at
-them with `tdw.config.everywhere = "coastal_cliffs"` until that is decided.
+**The seas (2026-09-15)** are a third of the disc: long arcs along the
+rings in five lanes, terraced across the dome's slope in pools of one
+level each, sixty blocks a step, a sill of land between (`seas.lua`; the
+changelog has the numbers). The Coastal Cliffs stand on every shore and
+the Deep Ocean lies past every shelf. None in the cold core, none across
+the Glass Waste, none on the spawn's plain.
 
 - [x] 1.4 Coastal Cliffs — sheer precipices thirty to sixty blocks into open
       water or a short shingle beach, on a FLAT sea: the biome's terms cancel

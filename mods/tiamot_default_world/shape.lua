@@ -415,6 +415,18 @@ end
 --               Taiga (2.2) took "all" to 968 operations and the woodlands'
 --               grass, which is the terrain and a mask, to 1,031 of 1,024;
 --               the temperate ring's biomes are only ever in this part.
+--   "glass"     the Glass Waste alone: the temperate pair with the mesa's
+--               and the badlands' terms, no rainforest (2026-09-15; the
+--               seas need room beside the land terms, and "verdant" had
+--               none: it is the band where the Glass Waste meets the
+--               Verdant Belt now, and nothing else)
+--   "belt"      the Verdant Belt and outward: the pair with the rainforest
+-- THE SEAS (seas.lua) are a suffix on a mode. A chunk within reach of a
+-- shore is "<mode>_shore<k>" — the mode's own terms, faded out toward the
+-- shore, with the coast's face and shelf (`M.coast_shore`) and lane k's
+-- sills; a chunk past the shelf is "deep<k>" — the ocean's floor
+-- (`M.sea_deep`), no land terms. Only the modes a sea can be in take the
+-- suffix: "temperate", "belt", and the dev switch's "wet".
 -- `M.terrain_mode` is what `terrain()` reads while a program is being
 -- built; whoever compiles a program sets it and puts it back.
 M.terrain_mode = nil
@@ -427,11 +439,11 @@ function M.default_mode()
     elseif only == "alpine_highlands" then
         return "alpine"
     elseif only == "coastal_cliffs" then
-        return "coast"
+        return "wet"
     elseif only == "dense_rainforest_canopy" then
         return "rainforest"
     elseif only == "deep_ocean" then
-        return "ocean"
+        return "wet"
     elseif only == "frozen_wastes" then
         return "frozen"
     elseif only == "taiga" then
@@ -448,6 +460,15 @@ end
 -- Nil for a mode without one: the dev switches, which put a biome
 -- everywhere and mask nothing anyway.
 function M.mode_u_ranges(mode)
+    local base, _, deep = M.mode_parts(mode)
+    if deep then
+        mode = "belt"                           -- a deep chunk is in a lane: both the belt's range and the temperate ring's, below
+    elseif base then
+        mode = base
+    end
+    if mode == nil then
+        return nil
+    end
     local edge = M.ALPINE_EDGE_U
     local half = M.ALPINE_BLEND_U / 2 + M.RING_WOBBLE
     local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
@@ -461,14 +482,23 @@ function M.mode_u_ranges(mode)
     elseif mode == "temperate" then
         return { { edge - half, M.GLASS_U[1] - reach }, { M.VERDANT_U[2] + reach, 2.0 } }
     elseif mode == "verdant" then
-        return { { M.GLASS_U[1] - reach, M.VERDANT_U[2] + reach } }
+        return { { M.VERDANT_U[1] - reach - 0.002, M.GLASS_U[2] + reach + 0.002 } }
+    elseif mode == "glass" then
+        return { { M.GLASS_U[1] - reach, M.VERDANT_U[1] - reach } }
+    elseif mode == "belt" then
+        if base == nil then
+            -- A deep chunk: any lane, so the temperate ring's too.
+            return { { edge - half, M.GLASS_U[1] - reach }, { M.GLASS_U[2] + reach, 2.0 } }
+        end
+        return { { M.GLASS_U[2] + reach, M.VERDANT_U[2] + reach } }
     end
     return nil
 end
 -- The mode for a chunk spanning [u_lo, u_hi]: one ring's own programs
 -- wherever the alpine weight is exactly 0 or 1 over the whole chunk, the
 -- cross-faded ones in the band between.
-function M.terrain_mode_for(u_lo, u_hi)
+local SEA_MODES = { temperate = true, belt = true, wet = true, dry = true }
+local function land_mode_for(u_lo, u_hi)
     if tdw.config.everywhere then
         return M.default_mode()
     end
@@ -481,6 +511,11 @@ function M.terrain_mode_for(u_lo, u_hi)
     elseif u_lo >= edge + half then
         local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
         if u_hi >= M.GLASS_U[1] - reach and u_lo <= M.VERDANT_U[2] + reach then
+            if u_hi < M.VERDANT_U[1] - reach then
+                return "glass"
+            elseif u_lo > M.GLASS_U[2] + reach then
+                return "belt"
+            end
             return "verdant"
         end
         return "temperate"
@@ -491,6 +526,36 @@ function M.terrain_mode_for(u_lo, u_hi)
         return "rim"
     end
     return "all"
+end
+-- `pos` is the chunk (with its seed), for the seas' map bounds; without it
+-- a chunk is taken to be dry land.
+function M.terrain_mode_for(u_lo, u_hi, pos)
+    local mode = land_mode_for(u_lo, u_hi)
+    local seas = tdw.seas
+    if pos and seas and seas.on() and SEA_MODES[mode] and M.coast_shore then
+        local class = seas.class(pos)
+        if class == "deep" then
+            return "deep" .. seas.lane_for((u_lo + u_hi) / 2)
+        elseif class == "shore" then
+            return mode .. "_shore" .. seas.lane_for((u_lo + u_hi) / 2)
+        end
+    end
+    return mode
+end
+-- A mode's land half and its sea lane, if it has one.
+function M.mode_parts(mode)
+    if mode == nil then
+        return nil, nil, false
+    end
+    local deep = mode:match("^deep(%d+)$")
+    if deep then
+        return nil, tonumber(deep), true
+    end
+    local base, lane = mode:match("^(.-)_shore(%d+)$")
+    if base then
+        return base, tonumber(lane), false
+    end
+    return mode, nil, false
 end
 
 -- The alpine weight: 1 through the frost ring, fading to 0 over
@@ -604,7 +669,14 @@ function M.terrain(flank)
     -- The world's own hills: two octaves every surface program pays. The
     -- alpine map and its ledges carry that scale themselves, so the alpine
     -- mode leaves them out — a third of the noise in every alpine fill.
-    local mode = flank and "wet" or M.terrain_mode or M.default_mode()
+    local full_mode = flank and "wet" or M.terrain_mode or M.default_mode()
+    local mode, lane_index, deep = M.mode_parts(full_mode)
+    local lane = lane_index and tdw.seas.LANES[lane_index]
+    if deep then
+        -- Past the shelf: the ocean's floor at the pool's level, and the
+        -- lane's sills. No land in it.
+        return add(M.sea_deep(lane), M.depth())
+    end
     local detail = mode == "alpine" and const(0.0) or noise("detail", M.DETAIL_FREQ, M.DETAIL_OCTAVES, M.DETAIL_AMP)
     if mode == "all" or mode == "rim" then
         -- **Out of the cold core, as the "alpine" mode has it.** The frost
@@ -657,6 +729,24 @@ function M.terrain(flank)
         terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
     elseif mode == "rainforest" then
         terms = M.rainforest_terms()
+    elseif mode == "belt" then
+        -- The Verdant Belt and outward: the rainforest over the wet half,
+        -- weighted in across the belt's edges.
+        local wet = add(mul(M.rainforest_terms(), verdant_weight()), wet_terms())
+        terms = add(mul(swells(), dry_weight()), mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))))
+    elseif mode == "glass" then
+        -- The Glass Waste: the mesa over the dry half, the badlands over the
+        -- wet, weighted in across its edges. The dry side FIRST: the mesa is
+        -- the deepest term in the program.
+        local wet = wet_terms()
+        if M.badlands_terms then
+            wet = add(mul(M.badlands_terms(), glass_weight()), wet)
+        end
+        local dry = swells()
+        if M.mesa_terms then
+            dry = add(mul(M.mesa_terms(), glass_weight()), dry)
+        end
+        terms = add(mul(dry, dry_weight()), mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))))
     elseif mode == "verdant" then
         -- The rainforest's karst, ravines and sinkholes over the wet half's
         -- own gullies, weighted in across the belt's edges; the dry half is
@@ -682,7 +772,14 @@ function M.terrain(flank)
         terms = add(mul(cold_terms(mode == "rim"), alpine_weight()),
             mul(temperate, add(mul(alpine_weight(), const(-1.0)), const(1.0))))
     end
-    local out = add(add(terms, shape), M.depth())
+    local out
+    if lane then
+        -- Within reach of a shore: the land's own shape fades out toward
+        -- it, and the coast's face and shelf take over (coastal_cliffs.lua).
+        out = add(M.coast_shore(add(terms, shape), lane), M.depth())
+    else
+        out = add(add(terms, shape), M.depth())
+    end
     -- **The river valleys are SUBTRACTED from whatever is there**, rather
     -- than being a mode of their own: a river crosses biomes, and the
     -- uplands either side keep their own shape. The terrain is the lesser
@@ -699,6 +796,12 @@ function M.terrain(flank)
             -- Not into the mountains: where the alpine weight is up, the
             -- trough's surface is put a kilometre out of reach.
             trough = add(trough, mul(alpine_weight(), const(1.0)))
+        end
+        if lane then
+            -- Nor into a sea: a valley cut through the shore's rim would
+            -- drain it. The trough rises out of reach over the FADE band,
+            -- so a river peters out before the shore.
+            trough = add(trough, mul(tdw.seas.near(), const(1.0)))
         end
         out = min(out, trough)
     end
@@ -825,7 +928,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true, glass = true, belt = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then
@@ -928,7 +1031,7 @@ local COLUMN_STEP, COLUMN_REACH = 8, 1600
 local column_programs = {}
 function M.ground_at_column(x, z, seed, top)
     local u = (x * x + z * z) * 1e-6 / (M.R_DISC * M.R_DISC)
-    local mode = M.terrain_mode_for(u, u)
+    local mode = M.terrain_mode_for(u, u, { x = x // 16, y = math.floor(top) // 16, z = z // 16, seed = seed })
     local program = column_programs[mode]
     if program == nil then
         local was = M.terrain_mode

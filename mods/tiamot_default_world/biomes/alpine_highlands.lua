@@ -269,7 +269,7 @@ end
 -- The pre-pass: build the maps once per world. Scratch maps are stored
 -- with the world too (every named map is); they are small next to the
 -- world.
-game.register_on_world_init(function()
+tdw.on_world_init(function()
     local height_map = game.map(map_spec("alp_height"))
     local floor_map = game.map(map_spec("alp_floor"))
     local crest_map = game.map(map_spec("alp_crest"))

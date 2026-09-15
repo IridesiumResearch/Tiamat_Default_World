@@ -403,7 +403,9 @@ tdw.build_biome(ID, function(ctx)
         return mask and n.min(field, mask) or field
     end
     local function off_river(field, blocks_out)
-        return shape.river_exclude and shape.river_exclude(field, blocks_out) or field
+        field = shape.river_exclude and shape.river_exclude(field, blocks_out) or field
+        -- And out of the sea and off the shore's own ground (2026-09-15).
+        return shape.sea_exclude and shape.sea_exclude(field, 20.0) or field
     end
     local function step(field)
         return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
@@ -434,6 +436,10 @@ tdw.build_biome(ID, function(ctx)
     local mask = tdw.biome_mask(n, ID)
     if mask then
         code = n.mul(code, step(mask))
+    end
+    if shape.sea_exclude then
+        -- The shore's ground and the seabed are the coast's and the ocean's.
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
     end
     local depth = shape.compile("biome.rainforest.depth", shape.terrain(false))
     local codes = shape.compile("biome.rainforest.codes", code)

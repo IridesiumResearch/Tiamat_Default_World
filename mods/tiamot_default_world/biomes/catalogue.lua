@@ -41,8 +41,9 @@ biome{ id = "frozen_wastes", name = "Frozen Wastes", area = "surface",
     spans = { { "frost", "frost", "dry" } },
     note = "1.9 — Frostmoor, the frost ring's dry half (2026-09-14, the designer's choice): permafrost plains, pressure ridges, crevasses, glaciers with ice caves, seracs, cryo-lakes. Its terrain is cross-faded into the alpine's mountains (shape.lua, cold_terms)." }
 biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
-    ring = "shore", placed = false,
-    note = "1.4 and the shelf. NOT placed in the world yet: its sea is flat and the world's rim is 2.5 km of dome above it, so the ocean needs the rim brought down to a sea level first. Look at it with tdw.config.everywhere." }
+    spans = { { "temperate", "hem" } },
+    ring = "shore",
+    note = "1.4 and the shelf: every shore of every sea (seas.lua), from the temperate ring out. Its `present` is the sea map's: the shore band, the face and the shelf." }
 biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
     ring = "shore", note = "Gentle stretches of the Long Shore." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
@@ -64,8 +65,9 @@ biome{ id = "taiga", name = "Taiga", area = "surface",
 biome{ id = "volcanic_foothills", name = "Volcanic Foothills", area = "surface",
     ring = "ember", note = "The Ember Ridge, the only surface sign of the magma shell." }
 biome{ id = "deep_ocean", name = "Deep Ocean", area = "surface",
-    ring = "hem", placed = false,
-    note = "1.8 — abyssal plains under a hundred blocks of sea: guyots, pillow ridges, trenches, basalt pillars, vents, whale bones, brine pools. NOT placed: its sea is flat, as the coast's is. Look at it with tdw.config.everywhere." }
+    spans = { { "temperate", "hem" } },
+    ring = "hem",
+    note = "1.8 — abyssal plains under a hundred blocks of sea: guyots, pillow ridges, trenches, basalt pillars, vents, whale bones, brine pools. Every sea's floor past the coast's shelf (seas.lua)." }
 biome{ id = "coral_fringed_shallows", name = "Coral-Fringed Shallows", area = "surface",
     ring = "shore", note = "Needs generated water (fill_fluid_below at a sea level)." }
 
