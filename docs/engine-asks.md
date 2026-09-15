@@ -24,6 +24,19 @@ a body grips a block, so ice walks like stone. A `friction` on the block —
 a share of the normal grip, default 1 — read by the movement code for the
 block under a body and the block it is pressed against, is the ask.
 
+## 28. Summaries carry no fluid (2026-09-15)
+
+The seas are placed: a third of the disc, in pools. A chunk outside the
+detail radius is drawn from its summary, and a summary holds materials
+only — so from a hill a sea is its floor, a hole in the world the shape of
+the pool, until the player is within the detail radius and the full chunk
+with its fluid arrives. A summary that carried "and fluid to this level"
+(one level and one fluid per summary would do: a pool is flat) would draw
+the sea to the horizon. Seen from the window at the first seas, with the
+water inside the detail radius drawn in light mode 3 as one translucent
+volume with the chunk seams visible through it, which may be the same
+thing seen from inside.
+
 ## 26. A deep sea is heavy to load (2026-09-14)
 
 **Seen.** The deep ocean put everywhere, headless, one bot: 213 of the ticks

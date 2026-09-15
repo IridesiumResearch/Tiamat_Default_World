@@ -1624,6 +1624,38 @@ engine commit they landed in, because the mod is written against them.
   circuit of every biome with the client-side chunk report; three bots.
   No refused program.
 
+### The mod disabled at a spawn with a river: the river's and the coast's trees cut natively
+
+- From the designer's server log (2026-09-15, their own seed): "building
+  the fills of river_valleys in mode temperate_shore failed: instruction
+  budget exceeded" at the spawn chunk, then "disabling mod after
+  generation failure". A mod past a generator call's instruction budget
+  is disabled, and every chunk after that is the engine's fallback — the
+  solid, minable slabs with mobs on them that read as "unloaded chunks",
+  and the water standing over woodland where the sea's chunks had been
+  laid before the land's.
+- The cause: the spawn is now a shore-class chunk (its plain is 350
+  blocks from the nearest possible shore, inside the 620-block band), and
+  a river runs through their spawn. The first chunk to compile a biome's
+  fills in a mode compiles them in that generator call, and the river's
+  compile CUT its willows, palms and drift piles — rasterised in Lua, tens
+  of thousands of instructions a tree — in the same call as the coast's
+  ten pines (the same) and the woodlands', grasslands' and coast's
+  programs. Over the budget. The headless seed had no river at the spawn
+  and never met it.
+- The river's trees and the coast's pines are recorded and cut natively
+  now (`schem.record_begin`, `game.schematic_shapes`), as every biome
+  since the rainforest's has done. Verified at the designer's seed: the
+  spawn, `/tp coastal cliffs` (their exact landing, 16599, 0) and `/tp
+  river valleys` generate, every fill compiles, no budget failure.
+- `bot.chunk_report` (engine) now tells a one-material chunk under water
+  from one under air: a seabed a few blocks under the surface fills a
+  chunk layer whole, and was counted as a slab.
+- New engine ask (28): the horizon's summaries carry no fluid, so from
+  outside the detail radius a sea is its floor, a hole in the world the
+  shape of the pool; and in light mode 3 the water is drawn as one
+  translucent volume with the chunk seams showing through it.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

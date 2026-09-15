@@ -334,7 +334,7 @@ local schem = tdw.schem
 local edits = tdw.edits
 local BLIND = { blind = true }
 local function pine(rng)
-    edits.begin()
+    schem.record_begin()
     local tall = 5 + rng:below(4)                     -- five to eight blocks of trunk
     local heading = rng:below(16)
     local d = schem.DIR16[heading + 1]
@@ -363,7 +363,9 @@ local function pine(rng)
     end
     local top = trunk[#trunk]
     pad(top[1], top[2] + 0.4, top[3], 2.0 + rng:below(3) * 0.3)
-    return schem.schematic_of(schem.merged(schem.capture(), { [blocks.fir_log] = true }))
+    -- Cut natively (2026-09-15): ten pines rasterised in Lua, in the same
+    -- generator call as the river's trees, were past the call's budget.
+    return schem.record_schematic({ [blocks.fir_log] = 1 })
 end
 -- A boulder cluster: a three-by-three footprint two tall with the blocks
 -- picked by chance, barnacles on the tops of some.
@@ -548,10 +550,8 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         { layers = true, depth = depth, code = codes, entries = entries },
         { cover = blocks.coast_grass, cells = 2, take = tufts },
     }
-    if game.schematic then
-        -- The pines are cut here, at the first coast chunk, not at load:
-        -- a path tree is tens of thousands of operations, and the
-        -- registration window's budget is smaller than a generator call's.
+    if game.schematic and game.schematic_shapes then
+        -- The pines are cut here, at the first coast chunk, not at load.
         if #PINES == 0 then
             for i = 1, PINE_TEMPLATES do PINES[i] = pine(rng_for("pine:" .. i)) end
         end

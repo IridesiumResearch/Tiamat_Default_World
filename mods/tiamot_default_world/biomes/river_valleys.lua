@@ -421,17 +421,22 @@ local DIR4 = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 -- points droop. The palms were stacks of blocks with three-block arms
 -- stuck on the top, and looked it.
 --
--- The geometry is pushed blind into an edit batch and taken back as a list
--- (`edits.take`), which is the same trick the alpine firs use to build a
--- schematic out of the shape code that grows them.
-local schematic_of_batch = schem.schematic_of_batch
+-- The geometry is RECORDED and cut natively (`schem.record_begin`,
+-- `game.schematic_shapes`), as the newer biomes' trees are. Until
+-- 2026-09-15 it was rasterised in Lua into an edit batch, tens of
+-- thousands of instructions a tree, and the first chunk to compile the
+-- river's fills in a mode cut all of them in one generator call — at a
+-- spawn with a river through it, in the shore mode, beside the coast's
+-- pines and three other biomes' programs, that was past the call's
+-- instruction budget, and a mod past its budget is disabled: the world
+-- past that chunk was the engine's fallback.
 
 -- A willow: four stems on a two-by-two footprint, each twisting its own way
 -- and the whole leaning, branches arcing out of their tops, a clump of
 -- leaves on each, and curtains hung from them — longest on the side the
 -- tree leans over, which is the side the water is on.
 local function willow(rng)
-    edits.begin()
+    schem.record_begin()
     local tall = 7 + rng:below(4)
     local lean = DIR4[rng:below(4) + 1]
     local tops = {}
@@ -475,13 +480,13 @@ local function willow(rng)
             schem.push_path(blocks.willow_leaves, curtain, { blind = true })
         end
     end
-    return schematic_of_batch()
+    return schem.record_schematic({ [blocks.willow_wood] = 1 })
 end
 
 -- A palm: one bare stem bowing as it climbs, and a spray of fronds from its
 -- crown, each arcing up and out and then drooping at the tip.
 local function palm(rng)
-    edits.begin()
+    schem.record_begin()
     local tall = 9 + rng:below(6)
     local lean = DIR4[rng:below(4) + 1]
     local points = {}
@@ -504,7 +509,7 @@ local function palm(rng)
             { tip[1] + d[1] * reach, tip[2] - 1.2, tip[3] + d[2] * reach, 0.18 },
         }, { blind = true })
     end
-    return schematic_of_batch()
+    return schem.record_schematic({ [blocks.willow_wood] = 1 })
 end
 
 -- A drift pile: dead wood lying IN the ground, not over it. The root is the
@@ -514,7 +519,7 @@ end
 -- they are short, so a slope never has far to fall away under one. A
 -- second trunk may lie across the first, a little higher.
 local function snag(rng)
-    edits.begin()
+    schem.record_begin()
     local logs = 1 + rng:below(3)
     for i = 1, logs do
         local d = schem.DIR16[rng:below(16) + 1]
@@ -526,7 +531,7 @@ local function snag(rng)
             { ox + d[1] * length * 0.5, y - 0.45, oz + d[2] * length * 0.5, 0.32 },
         }, { blind = true })
     end
-    return schematic_of_batch()
+    return schem.record_schematic({})
 end
 
 -- A stepping stone: a column of scoured rock from the bed of a riffle up
@@ -547,7 +552,7 @@ function tdw.river_schematics()
         return BUILT
     end
     local out = { willows = {}, palms = {}, snags = {}, steps = {} }
-    if not game.schematic then
+    if not game.schematic or not game.schematic_shapes then
         return out
     end
     local function rng_for(name)
