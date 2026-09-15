@@ -50,7 +50,6 @@ local LITTER_MIN = 0.13        -- the noise (+/-0.42) must exceed this: a fifth 
 -- two cells tall in carpets (a slow noise says where a carpet is, a fast
 -- one breaks it into clumps with gaps to walk through), tufts of grass one
 -- cell tall, sparser, everywhere the ferns are not.
-local COVER_CELL = 0.001 / 3   -- km: one cell
 local FERN_PATCH_FREQ = 1 / 36
 local FERN_PATCH_MIN = 0.0     -- half the ground is fern country
 local FERN_FREQ = 1 / 4
@@ -161,23 +160,50 @@ tdw.build_biome("temperate_woodlands", function(ctx)
         local mask = tdw.biome_mask(n, "temperate_woodlands", true)
         return mask and n.min(field, mask) or field
     end
-    -- The top blocks under the real surface: one terrain evaluation each.
-    local function top()
-        return shape.terrain_band(0.0, shape.SKIN_TOP, false)
+    -- **The surface from ONE evaluation of the terrain** (engine
+    -- `fill_layers`, as the newer biomes have it): a code field with no
+    -- terrain in it names, per block, which set of depth bands the block
+    -- gets — turf, litter over it in patches, gravel along the creek floors
+    -- — and the depth is the terrain, once. Until 2026-09-15 this was five
+    -- fills, each the whole terrain and the mask: five evaluations a chunk,
+    -- and a program of the terrain plus a mask, which in the "verdant" mode
+    -- (983 operations of terrain) was past the engine's 1,024 — every chunk
+    -- of the Verdant Belt and its edges failed to generate.
+    local function step(field)
+        return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
     end
-    local grass = shape.compile("biome.woodlands.grass", masked(top()))
-    -- Its own soil under its own grass, where another biome shares the
-    -- chunk (a chunk of woodland alone has loam for its base already).
-    local loam = shape.compile("biome.woodlands.loam", masked(shape.terrain_band(shape.SKIN_TOP, shape.SKIN_DIRT, false)))
-    local litter = shape.compile("biome.woodlands.litter",
-        masked(n.min(top(), n.sub(n.noise("litter", LITTER_FREQ, 2, 1.0), n.const(LITTER_MIN)))))
-    local creek = shape.compile("biome.woodlands.creek", masked(n.min(top(), shape.gully_floor())))
-    -- The cover: bands of AIR over the surface, so the fills add plant cells
-    -- on top of the ground's own. Ferns first, then tufts where ferns are
-    -- not (the tuft field is cut by the fern patch).
-    local function over(cells)
-        return shape.terrain_band(-COVER_CELL * cells, 0.0, false)
+    local conditions = {
+        n.const(1.0),                                                                          -- 1: turf
+        n.sub(n.noise("litter", LITTER_FREQ, 2, 1.0), n.const(LITTER_MIN)),                  -- 2: leaf litter
+        shape.gully_floor(),                                                                   -- 3: a creek's bed
+    }
+    local code = n.const(0.0)
+    for k, condition in ipairs(conditions) do
+        code = n.max(code, n.mul(step(condition), n.const(k)))
     end
+    local mask = tdw.biome_mask(n, "temperate_woodlands", true)
+    if mask then
+        code = n.mul(code, step(mask))
+    end
+    local depth = shape.compile("biome.woodlands.depth", shape.terrain(false))
+    local codes = shape.compile("biome.woodlands.codes", code)
+    -- Its own soil under its own top, so a chunk another biome shares
+    -- still has loam under the woodland's turf (a chunk of woodland alone
+    -- has loam for its base already).
+    local entries = {
+        { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
+        { code = 1, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.loam },
+        { code = 2, to = shape.SKIN_TOP, material = blocks.leaf_litter },
+        { code = 2, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.loam },
+        { code = 3, to = shape.SKIN_TOP, material = blocks.creek_bed },
+        { code = 3, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.loam },
+    }
+    -- The cover, stood on that surface by the engine's cover fill. Ferns
+    -- first, then tufts where ferns are not (the tuft field is cut by the
+    -- fern patch). No terrain in these fields: a cover is only asked in
+    -- blocks that hold a surface, and the first caves are a hundred blocks
+    -- down — the near-ground guard that kept them off cave floors was a
+    -- full terrain per cell for nothing.
     local fern_patch = n.sub(n.noise("fern_patch", FERN_PATCH_FREQ, 1, 1.0), n.const(FERN_PATCH_MIN))
     -- Neither ferns nor tufts in a river valley: they stood on the river's
     -- bed, and in strips across its channel. The ferns keep the valley's
@@ -186,7 +212,7 @@ tdw.build_biome("temperate_woodlands", function(ctx)
         return shape.river_exclude and shape.river_exclude(field, blocks_out) or field
     end
     local ferns = shape.compile("biome.woodlands.ferns",
-        masked(off_river(n.min(n.min(over(2), fern_patch), n.sub(n.noise("fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))),
+        masked(off_river(n.min(fern_patch, n.sub(n.noise("fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))),
             shape.RIVER_BAR or 0)))
     -- Tufts: the engine's cover fill stands them on the surface the fills
     -- above made — two cells tall, one where the surface is a block's top
@@ -204,22 +230,19 @@ tdw.build_biome("temperate_woodlands", function(ctx)
     -- block each way. The card turns to face the camera until the engine's
     -- fixed cards land (engine-asks, item 9).
     local tufts = shape.compile("biome.woodlands.tufts",
-        masked(off_river(n.min(n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
-            n.mul(fern_patch, n.const(-1.0))),
+        masked(off_river(n.min(n.mul(fern_patch, n.const(-1.0)),
             n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN))), shape.RIVER_RIM or 0)))
     -- The flowers, in the columns the grass leaves: off the ferns and the
     -- river valleys, as the grass is.
     local lunaria, chamomile = tdw.flower_covers("biome.woodlands", "tuft", TUFT_FREQ, function(field)
         return masked(off_river(n.min(field, n.mul(fern_patch, n.const(-1.0))), shape.RIVER_RIM or 0))
     end)
-    -- In order: turf everywhere, litter over it in patches, gravel over both
-    -- along the creek floors; then the cover over all of it.
+    -- The surface, then the cover over all of it. Ferns are a cover two
+    -- cells tall, as the tufts are (they were a band of air over the ground,
+    -- which is the same thing at the price of a terrain).
     return {
-        { field = grass, material = blocks.grass },
-        { field = loam, material = blocks.loam, shared_only = true },
-        { field = litter, material = blocks.leaf_litter },
-        { field = creek, material = blocks.creek_bed },
-        { field = ferns, material = blocks.fern },
+        { layers = true, depth = depth, code = codes, entries = entries, body = true },
+        { cover = blocks.fern, cells = 2, take = ferns },
         { cover = blocks.tall_grass, cells = 2, take = tufts },
         lunaria,
         chamomile,

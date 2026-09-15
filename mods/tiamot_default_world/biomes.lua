@@ -171,21 +171,42 @@ end
 -- held: a band is the radius (three buffers) and a half is the humidity
 -- noise, and a mask is itself the shallow half of `min(field, mask)` in
 -- every fill that uses one.
+--
+-- **Only the spans the program can meet.** A fill is compiled per terrain
+-- mode (`compile_fills`), and a mode covers a known range of the radius
+-- (`shape.mode_u_ranges`): a span that cannot overlap it is left out of the
+-- mask, since a band is twenty-odd operations and every program is near
+-- the thousand. The grasslands' temperate-ring span is not in the
+-- "verdant" programs, nor the woodlands'.
 function tdw.biome_mask(n, id, _)
     if tdw.config.everywhere then
         return nil
     end
     local spans = tdw.biome_spans(id)
+    local ranges = tdw.shape.mode_u_ranges and tdw.shape.mode_u_ranges(tdw.shape.terrain_mode)
     local acc = nil
     for _, span in ipairs(spans) do
         local first, last = tdw.layers.ring_by_id[span[1]], tdw.layers.ring_by_id[span[2]]
-        local band = tdw.shape.ring(first.u[1], last.u[2])
-        if span[3] then
+        local reachable = ranges == nil
+        if ranges then
+            local w = tdw.shape.RING_WOBBLE
+            for _, range in ipairs(ranges) do
+                if first.u[1] - w <= range[2] and last.u[2] + w >= range[1] then
+                    reachable = true
+                end
+            end
+        end
+        local band = reachable and tdw.shape.ring(first.u[1], last.u[2]) or nil
+        if band and span[3] then
             band = n.min(band, tdw.shape.humidity_mask(span[3] == "wet"))
         end
-        acc = acc and n.max(acc, band) or band
+        if band then
+            acc = acc and n.max(acc, band) or band
+        end
     end
-    return acc
+    -- Nothing reachable: a mask that is never positive, so the fill paints
+    -- nothing rather than everything.
+    return acc or n.const(-1.0)
 end
 
 -- A biome's spans, defaulting to the one ring it names; a ring's id works

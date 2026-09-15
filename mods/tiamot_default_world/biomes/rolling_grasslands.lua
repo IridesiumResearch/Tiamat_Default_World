@@ -17,7 +17,6 @@
 
 local TUFT_FREQ = 1.5          -- as the woodlands: each cell nearly its own decision
 local TUFT_MIN = 0.12          -- as the woodlands (0.20 until "more grass", 2026-09-14)
-local COVER_CELL = 0.001 / 3
 
 local TRAIL_FREQ = 1 / 220
 local TRAIL_WIDTH = 0.012      -- noise units: a line two or three blocks wide
@@ -80,28 +79,45 @@ tdw.build_biome("rolling_grasslands", function(ctx)
         local mask = tdw.biome_mask(n, "rolling_grasslands", false)
         return mask and n.min(field, mask) or field
     end
-    local function top()
-        return shape.terrain_band(0.0, shape.SKIN_TOP, false)
+    -- The surface from ONE evaluation of the terrain (engine `fill_layers`;
+    -- see the woodlands, 2026-09-15): turf; game trails, a thin band about
+    -- the zero contour of a noise in some stretches only, so they wind
+    -- across the grass and peter out; and bared crests, where the ridge
+    -- term is near its top on the crests a patch noise picks.
+    local function step(field)
+        return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
     end
-    local grass = shape.compile("biome.grasslands.grass", masked(top()))
-    -- Game trails: a thin band about the zero contour of a noise, in some
-    -- stretches only, so they wind across the grass and peter out.
-    local trails = shape.compile("biome.grasslands.trails", masked(n.min(n.min(top(),
-        n.sub(n.const(TRAIL_WIDTH), n.abs(n.noise("trail", TRAIL_FREQ, 1, 1.0)))),
-        n.sub(n.noise("trail_patch", TRAIL_PATCH_FREQ, 1, 1.0), n.const(TRAIL_PATCH_MIN)))))
-    -- Bared crests: where the ridge term is near its top, on the crests a
-    -- patch noise picks.
-    local ledges = shape.compile("biome.grasslands.ledges", masked(n.min(n.min(top(),
-        n.sub(shape.ridge(), n.const(LEDGE_CREST * shape.RIDGE_AMP))),
-        n.sub(n.noise("ledge_patch", LEDGE_PATCH_FREQ, 1, 1.0), n.const(LEDGE_PATCH_MIN)))))
+    local conditions = {
+        n.const(1.0),
+        n.min(n.sub(n.const(TRAIL_WIDTH), n.abs(n.noise("trail", TRAIL_FREQ, 1, 1.0))),
+            n.sub(n.noise("trail_patch", TRAIL_PATCH_FREQ, 1, 1.0), n.const(TRAIL_PATCH_MIN))),
+        n.min(n.sub(shape.ridge(), n.const(LEDGE_CREST * shape.RIDGE_AMP)),
+            n.sub(n.noise("ledge_patch", LEDGE_PATCH_FREQ, 1, 1.0), n.const(LEDGE_PATCH_MIN))),
+    }
+    local code = n.const(0.0)
+    for k, condition in ipairs(conditions) do
+        code = n.max(code, n.mul(step(condition), n.const(k)))
+    end
+    local mask = tdw.biome_mask(n, "rolling_grasslands", false)
+    if mask then
+        code = n.mul(code, step(mask))
+    end
+    local depth = shape.compile("biome.grasslands.depth", shape.terrain(false))
+    local codes = shape.compile("biome.grasslands.codes", code)
+    local entries = {
+        { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
+        { code = 1, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+        { code = 2, to = shape.SKIN_TOP, material = blocks.packed_dirt },
+        { code = 2, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+        { code = 3, to = shape.SKIN_TOP, material = blocks.packed_dirt },
+        { code = 3, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+    }
     -- The grass cover, as in the woodlands: stood on the surface by the
     -- engine's cover fill, two cells tall inside one block, never stacked.
-    -- This field says where — one or two of a block's nine columns, and
-    -- within a sixth of a block of the ground so cave floors get none.
-    -- Not in a river valley: the river's own grass is the valley's, and
-    -- this grass stood on the river's bed.
-    local tufts = n.min(n.sub(n.const(COVER_CELL / 2), shape.terrain(false)),
-        n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))
+    -- This field says where — one or two of a block's nine columns. No
+    -- terrain in it (see the woodlands). Not in a river valley: the river's
+    -- own grass is the valley's, and this grass stood on the river's bed.
+    local tufts = n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN))
     if shape.river_exclude then
         tufts = shape.river_exclude(tufts, shape.RIVER_RIM)
     end
@@ -113,9 +129,7 @@ tdw.build_biome("rolling_grasslands", function(ctx)
         return masked(field)
     end)
     return {
-        { field = grass, material = blocks.grass },
-        { field = trails, material = blocks.packed_dirt },
-        { field = ledges, material = blocks.packed_dirt },
+        { layers = true, depth = depth, code = codes, entries = entries, body = true },
         { cover = blocks.tall_grass, cells = 2, take = tufts },
         lunaria,
         chamomile,

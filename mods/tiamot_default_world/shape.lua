@@ -443,6 +443,28 @@ function M.default_mode()
     end
     return "wet"
 end
+-- The ranges of u a mode's programs are ever run over — the inverse of
+-- `terrain_mode_for`, for the fills' masks (biomes.lua, `tdw.biome_mask`).
+-- Nil for a mode without one: the dev switches, which put a biome
+-- everywhere and mask nothing anyway.
+function M.mode_u_ranges(mode)
+    local edge = M.ALPINE_EDGE_U
+    local half = M.ALPINE_BLEND_U / 2 + M.RING_WOBBLE
+    local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
+    local rim_from = M.CROWN_U + M.FROZEN_RING_BLEND_U / 2 + M.RING_WOBBLE
+    if mode == "alpine" then
+        return { { 0.0, edge - half } }
+    elseif mode == "all" then
+        return { { 0.0, edge + half } }
+    elseif mode == "rim" then
+        return { { rim_from, edge + half } }
+    elseif mode == "temperate" then
+        return { { edge - half, M.GLASS_U[1] - reach }, { M.VERDANT_U[2] + reach, 2.0 } }
+    elseif mode == "verdant" then
+        return { { M.GLASS_U[1] - reach, M.VERDANT_U[2] + reach } }
+    end
+    return nil
+end
 -- The mode for a chunk spanning [u_lo, u_hi]: one ring's own programs
 -- wherever the alpine weight is exactly 0 or 1 over the whole chunk, the
 -- cross-faded ones in the band between.
@@ -768,7 +790,15 @@ local abyss = compile("top.abyss", sub(M.depth(), const(M.ABYSS_D)))
 -- dome: an ocean floor stands a hundred blocks under the dome and its
 -- trenches hundreds more, and bands by the dome would paint them white.
 -- The generator reads the same table for its gate.
-M.BANDS_BY_TERRAIN = { ocean = true }
+--
+-- **Every mode, since 2026-09-15.** The world's relief is four kilometres
+-- of noise masked to a tenth outside the Crown — still four hundred blocks
+-- either way — and the surface band is a hundred blocks: wherever a hill
+-- dipped more than that under the dome the ground was the white
+-- placeholder from five blocks down, a white slope with grass on it. The
+-- spawn's plain flattens the relief, which is why nobody saw it until
+-- `/tp` put a player on real hills. A terrain a mode, compiled once.
+M.BANDS_BY_TERRAIN = setmetatable({}, { __index = function() return true end })
 local function top_programs(mode)
     M.terrain_mode = mode
     local set = {

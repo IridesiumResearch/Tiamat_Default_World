@@ -205,7 +205,9 @@ the ground, and a wrong one moves you on.
 `tdw.config.spawn_biome` does the same for a new player before they
 arrive.
 
-**What no biome claims is white.** Four surface biomes are built; every
+**What no biome claims is white.** (The surface band is measured down
+from the terrain, since 2026-09-15: a hill that dips under the base dome
+is not white five blocks down.) Four surface biomes are built; every
 other area in the catalogue — the three cave bands, the five shells, the
 tail below the apex — has a registered biome and no code behind it. The
 generator used to fill all of that with the layer table's stand-in rock,

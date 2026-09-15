@@ -1460,6 +1460,70 @@ engine commit they landed in, because the mod is written against them.
   woodland and grassland fills compiled; `/tp alpine highlands`, `/tp
   frozen wastes`; three bots at the spawn. No refused program, no error.
 
+### After a teleport: the Verdant Belt generated as air, white under the hills, and what the stand-ins are
+
+- Reported from the window (2026-09-15): `/tp` to most biomes showed
+  "giant solid chunks of dirt, stone with a couple of trees or rocks on
+  them"; the rainforest "blank default nodes in giant full chunks above
+  and below"; the woodlands "all default node white at a slope with grass
+  on it". Three different things.
+- **The Verdant Belt and the Glass Waste's edges had generated as AIR
+  since the badlands (2.1).** The grasslands' fills each carried the whole
+  terrain plus their mask, and in the "verdant" terrain mode (928
+  operations then, 983 with the mesa's ledged walls) that was 1,033 to
+  1,070 of the engine's 1,024: refused, so every chunk with the grasslands
+  present — the whole Verdant Belt, the Glass Waste's edges — failed and
+  fell back to air. The mesa's own probes never met it: the grasslands are
+  not in the Glass Waste. Found with the new `bot.chunk_report` (below).
+- **Fixed by the rewrite the newer biomes already had**: the woodlands and
+  the grasslands are one layered fill each (`fill_layers`: the terrain
+  once, and a code field of noises with no terrain in it — turf, litter,
+  creek bed; turf, trails, bared crests), where they were five and three
+  fills each of the whole terrain. The ferns are a cover two cells tall,
+  as the tufts are. The covers' near-ground guard — a full terrain per
+  cell, to keep grass off cave floors a hundred blocks under the first
+  cave — is gone. The heaviest woodland or grassland program is now the
+  terrain itself; a chunk of woodland evaluates the terrain three times
+  where it did seven.
+- A fill's mask now leaves out the spans its terrain mode can never meet
+  (`shape.mode_u_ranges`): the grasslands' temperate-ring span is not in
+  the "verdant" programs.
+- **Valleys filled solid with white.** The surface band — the hundred
+  blocks under which everything unbuilt is the white placeholder — was
+  measured from the base dome, and the fill that paints it painted
+  everything under that plane, air included: wherever the world's relief
+  (a hundred and fifty blocks either way outside the Crown) took a valley
+  more than a hundred blocks under the dome, it was filled solid with
+  white up to a flat plane, and the grass and trees were then laid on the
+  real ground inside it — a white slope with grass on it, and giant flat
+  solid chunks. The spawn's plain flattens the relief, so it never showed
+  there. The band is measured from the terrain in every mode now, as the
+  ocean's already was. Measured at a relief low 121 blocks under the dome
+  (`/tp 20000 -3000` at seed 12345): 34 surface columns flat to a chunk
+  face with white under them before, 113 real surfaces with stone under
+  them after.
+- **The solid chunks with a tree on them are the horizon's stand-ins**,
+  drawn while the real chunks stream in: a long teleport drops every
+  chunk the client held, and the detail radius takes forty-five seconds
+  or so to fill at a view of six on this machine (summaries arrive first,
+  and are one material a cell). Measured from the client's side with
+  `bot.chunk_report`: at every biome, 45 seconds after `/tp`, the client
+  holds 113 surface chunks of real mixed terrain under sky and none flat
+  to a chunk face; no summary lies inside the detail cylinder. Nothing to
+  fix in the mod; the wait is the generator's, and the stand-ins are the
+  engine's answer to it.
+- **Engine, the bot**: `bot.chunk_report(view)` says what a client holds
+  within `view` chunks of where the server last put it — full chunks,
+  summaries by level, unloads; the full ones decoded and classed as air,
+  one material or mixed; how many surface chunks are mixed (terrain) or
+  flat to a chunk face; and what the one-material chunks under the
+  surface are made of. What a player SEES after a teleport is this, not
+  what the server generated.
+- Verified headless: `/tp` to all ten biomes with the report (real terrain
+  at each, no refused program, no failed chunk); the covers at the spawn,
+  the grasslands, the Verdant Belt and a woodland by a river (ferns,
+  tufts, flowers, litter and loam under the turf).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
