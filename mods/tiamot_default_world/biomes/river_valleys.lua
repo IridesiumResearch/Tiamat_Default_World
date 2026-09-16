@@ -199,7 +199,10 @@ function shape.river_exclude(field, blocks_out)
     return n.min(field, n.add(course(), n.const(-blocks_out)))
 end
 
-tdw.biomes.river_valleys.spans = { { "temperate", "hem" } }
+-- To the Long Shore's edge (the Hem's too until 2026-09-16): the "hem"
+-- programs lift the trough out across the Hem's blend band and the "edge"
+-- ones carry none, so no river reaches the rim.
+tdw.biomes.river_valleys.spans = { { "temperate", "shore" } }
 tdw.biomes.river_valleys.lazy = true                  -- its terms are this file's, and shape.lua loads first
 -- Only chunks a course runs near are this biome's: one sample of the
 -- distance at the chunk's centre, against its reach plus the chunk's own

@@ -177,7 +177,7 @@ function tdw.reef_zone(x, z)
         return only == ID and ID or nil
     end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
-    local w = shape.RING_WOBBLE
+    local w = shape.wobble(u)
     if u >= REEF_U[1] - w and u <= REEF_U[2] + w then
         return ID
     end

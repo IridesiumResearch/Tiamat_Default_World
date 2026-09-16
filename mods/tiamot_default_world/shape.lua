@@ -170,8 +170,30 @@ M.ALPINE_BLEND_U = 0.024
 --
 -- Every Lua-side test against a ring widens by this, since a chunk within
 -- RING_WOBBLE of an edge may be either side of it.
-M.RING_WOBBLE = 0.010     -- kept as the slack every span and mode range is widened by, in u
+M.RING_WOBBLE = 0.010     -- the old fixed slack; nothing reads it now (see M.wobble)
 M.RING_WOBBLE_SHARE = 0.04   -- what the edge actually wanders: a fortieth of the radius, either way
+-- The slack a test at a given u widens by (2026-09-16): the wobble is a
+-- share of the radius, so in u it is SHARE * u at the noise's clamp — and
+-- a hair over. A fixed 0.010 was four times too little at the rim and too
+-- little from the Verdant Belt out: a chunk past a ring's edge by more
+-- than the slack, whose wobbled radius was still inside, was offered no
+-- biome of that ring and painted nothing.
+function M.wobble(u_value)
+    return M.RING_WOBBLE_SHARE * u_value + 0.001
+end
+-- The Hem's inner edge (layers.lua asserts it against the ring) and the
+-- band across it where the mild rings' terrain fades out under the rim's
+-- (the "hem" programs, below).
+M.HEM_U = 0.85 * 0.85
+-- The world's edge on the wobbled radius (2026-09-16). The engine's world
+-- is 60,000 blocks either way on each axis — a square — and a rim at
+-- u_biome = 1 wandered out to 60.2 km along the axes, past it: the Rime
+-- Wall there was outside the world and `/tp` to it silently did nothing.
+-- At this the rim runs 57.45 to 59.8 km.
+M.EDGE_U = (59.8 / 59.0) ^ 2 * (1.0 - 0.04)
+M.HEM_BLEND_U = 0.008
+function M.hem_in() return M.HEM_U - M.HEM_BLEND_U / 2 - M.wobble(M.HEM_U) end
+function M.edge_from() return M.HEM_U + M.HEM_BLEND_U / 2 + M.wobble(M.HEM_U) end
 -- The Verdant Belt, whose wet half is the rainforest (1.7): its span in u,
 -- repeated from layers.lua (which loads after this file), and how wide the
 -- cross-fade into the rainforest's own terrain is at either edge — about
@@ -237,8 +259,28 @@ M.KNOTS = {
     { 16.5, 59.0 }, { 3.1, 58.5 }, { -8.0, 46.0 }, { -12.0, 30.0 }, { -16.0, 16.0 },
     { -25.0, 6.0 }, { -37.0, 2.0 }, { -70.0, 0.0 },
 }
-M.FLANK_WARP = 0.15      -- W' = W * (1 + FLANK_WARP * n), n in +/-0.42
+M.FLANK_WARP = 0.15      -- W' = W * (1 + FLANK_WARP * n * below), n in +/-0.5
 M.FLANK_FREQ = 1 / 4000
+-- **The rim wanders by the rings' own noise** (2026-09-16): at the surface
+-- the body's edge is where the wobbled radius the biomes go by is exactly
+-- 1, so the Rime Wall (3.2) stands on it and the Hem's bands are the same
+-- width all round. The flank's own warp comes in under it, from
+-- FLANK_TOP_Y down over FLANK_RAMP_KM, so the world's underside keeps the
+-- shape it had. The generator's gate bounds the result by these.
+M.FLANK_TOP_Y = 14.0     -- Spindle km: the rim's surface is at 16.5 +/- a few hundred blocks
+M.FLANK_RAMP_KM = 6.0
+-- The flank's warp pulls IN only, from 0 to FLANK_WARP of W: warped out
+-- as it was, the underside bulged to 63 km, past the world's square.
+M.WARP_HI = math.sqrt(M.EDGE_U / (1.0 - M.RING_WOBBLE_SHARE)) + 0.001
+-- The least the warp can leave of W at Spindle height Y km: none of it is
+-- taken above FLANK_TOP_Y, so the gate proves the surface inside out to
+-- 57.4 km. (A bound for the lowest warp at every height proved nothing
+-- past 48.8 km, and the Hem's blend band painted no biome.)
+function M.warp_lo_at(Y_km)
+    local below = (M.FLANK_TOP_Y - Y_km) / M.FLANK_RAMP_KM
+    below = below < 0 and 0 or (below > 1 and 1 or below)
+    return (1.0 - M.FLANK_WARP * below) * math.sqrt(M.EDGE_U / (1.0 + M.RING_WOBBLE_SHARE)) - 0.001
+end
 
 -- The core stack, as horizontal radii in km on the squished ellipsoid. A
 -- thickness of t km in these units is t/K km vertically at the poles, which
@@ -340,9 +382,13 @@ local function ys() return mul(sub(Y(), const(M.Y0)), const(M.SCALE)) end
 -- radius everywhere (±2% of r, so ±600 m at 30 km, ±94 m at the Crown's
 -- edge, nothing at the axis) and costs two operations over the old form,
 -- because `u` is still evaluated once.
-local function u_biome()
-    return mul(u(), add(noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE_SHARE, M.HUMIDITY_STRETCH), const(1.0)))
+local function wobble_node()
+    return noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE_SHARE, M.HUMIDITY_STRETCH)
 end
+local function u_biome()
+    return mul(u(), add(wobble_node(), const(1.0)))
+end
+M.u_biome_node = u_biome
 M.sub = { r2 = r2, u = u, ys = ys }
 
 -- H(u) = SUMMIT - u * (2*DROP - DROP*u), with u evaluated second in the
@@ -505,6 +551,11 @@ M.dry_weight = dry_weight
 --               none: it is the band where the Glass Waste meets the
 --               Verdant Belt now, and nothing else)
 --   "belt"      the Verdant Belt and outward: the pair with the rainforest
+--   "hem"       the Hem's inner band (2026-09-16): the temperate ring's
+--               whole terrain fading out under the Rime Tundra's
+--   "edge"      the rim: the tundra's ground, the Rime Wall, and the
+--               body's own wall in every program, so every fill clips at
+--               it and the chunks past 54 km are painted like the rest
 -- THE SEAS (seas.lua) are a suffix on a mode. A chunk within reach of a
 -- shore is "<mode>_shore" — the mode's own terms with the coast's face and
 -- shelf on them (`M.coast_shore`); a chunk past the shelf is "deep" — the
@@ -539,6 +590,10 @@ function M.default_mode()
         return "ember"
     elseif only == "dunes" or only == "flower_forest" or only == "coral_fringed_shallows" then
         return "temperate"
+    elseif only == "frostpine_coast" or only == "rime_tundra" then
+        return "hem"
+    elseif only == "rime_wall" then
+        return "edge"
     end
     return "wet"
 end
@@ -557,9 +612,9 @@ function M.mode_u_ranges(mode)
         return nil
     end
     local edge = M.ALPINE_EDGE_U
-    local half = M.ALPINE_BLEND_U / 2 + M.RING_WOBBLE
-    local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
-    local rim_from = M.CROWN_U + M.FROZEN_RING_BLEND_U / 2 + M.RING_WOBBLE
+    local half = M.ALPINE_BLEND_U / 2 + M.wobble(edge)
+    local reach = M.reach()
+    local rim_from = M.CROWN_U + M.FROZEN_RING_BLEND_U / 2 + M.wobble(M.CROWN_U)
     if mode == "alpine" then
         return { { 0.0, edge - half } }
     elseif mode == "all" then
@@ -567,9 +622,13 @@ function M.mode_u_ranges(mode)
     elseif mode == "rim" then
         return { { rim_from, edge + half } }
     elseif mode == "temperate" then
-        return { { edge - half, M.GLASS_U[1] + M.GLASS_INSET_U - reach }, { M.VERDANT_U[2] + reach, 2.0 } }
+        return { { edge - half, M.GLASS_U[1] + M.GLASS_INSET_U - reach }, { M.VERDANT_U[2] + reach, M.hem_in() } }
+    elseif mode == "hem" then
+        return { { M.hem_in(), M.edge_from() } }
+    elseif mode == "edge" then
+        return { { M.edge_from(), 2.0 } }
     elseif mode == "ember" then
-        return { { M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.RING_WOBBLE, M.GLASS_U[1] + M.GLASS_INSET_U - reach } }
+        return { { M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.wobble(M.EMBER_U[1]), M.GLASS_U[1] + M.GLASS_INSET_U - reach } }
     elseif mode == "verdant" then
         return { { M.VERDANT_U[1] - reach - 0.002, M.GLASS_U[2] + reach + 0.002 } }
     elseif mode == "glass" then
@@ -589,19 +648,35 @@ end
 -- Not "ember": its terms and the shore's together are 1030 ops, six over
 -- the compiler's cap, so the first lane keeps its shore reach (FADE, 920
 -- blocks) short of the Ember Ridge's first "ember" chunk at 19.5 km.
-local SEA_MODES = { temperate = true, belt = true, wet = true, dry = true }
+local SEA_MODES = { temperate = true, belt = true, wet = true, dry = true, hem = true, edge = true }
+-- The modes whose programs carry the body's wall themselves: the generator
+-- paints their chunks whether or not its gate can prove them inside.
+M.CLIPPED = { edge = true, edge_shore = true }
+-- The widening the Glass Waste's and the Verdant Belt's cross-fades ask
+-- for, at the widest wobble either reaches.
+function M.reach()
+    return math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.wobble(M.VERDANT_U[2])
+end
 local function land_mode_for(u_lo, u_hi)
     if tdw.config.everywhere then
         return M.default_mode()
     end
-    -- Widened by the wobble: a chunk within RING_WOBBLE of the edge may be
+    -- Widened by the wobble: a chunk within the wobble of the edge may be
     -- either side of it, and the programs it gets have to carry both.
     local edge = M.ALPINE_EDGE_U
-    local half = M.ALPINE_BLEND_U / 2 + M.RING_WOBBLE
+    local half = M.ALPINE_BLEND_U / 2 + M.wobble(edge)
     if u_hi <= edge - half then
         return "alpine"
     elseif u_lo >= edge + half then
-        local reach = math.max(M.VERDANT_BLEND_U, M.GLASS_BLEND_U) / 2 + M.RING_WOBBLE
+        -- The rim (2026-09-16): the Hem's programs from where the mild
+        -- rings' terrain starts fading out, and the edge's — clipped to the
+        -- body, with the Rime Wall — from where it is gone.
+        if u_lo >= M.edge_from() then
+            return "edge"
+        elseif u_hi > M.hem_in() then
+            return "hem"
+        end
+        local reach = M.reach()
         if u_hi >= M.GLASS_U[1] + M.GLASS_INSET_U - reach and u_lo <= M.VERDANT_U[2] + reach then
             if u_hi < M.VERDANT_U[1] - reach then
                 return "glass"
@@ -619,7 +694,7 @@ local function land_mode_for(u_lo, u_hi)
         -- Shore painted no surface at all. The ground was right (the
         -- ridge's terms weigh nothing that far out) and the world was bare
         -- soil from 28 km to the rim.
-        if M.volcanic_terms and u_hi >= M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.RING_WOBBLE
+        if M.volcanic_terms and u_hi >= M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.wobble(M.EMBER_U[1])
             and u_lo <= M.GLASS_U[1] + M.GLASS_INSET_U - reach then
             return "ember"
         end
@@ -627,7 +702,7 @@ local function land_mode_for(u_lo, u_hi)
     end
     -- Past everywhere the Crown's edge can wander to, the cold terms are
     -- the frost ring's alone.
-    if u_lo >= M.CROWN_U + M.FROZEN_RING_BLEND_U / 2 + M.RING_WOBBLE and M.taiga_terms then
+    if u_lo >= M.CROWN_U + M.FROZEN_RING_BLEND_U / 2 + M.wobble(M.CROWN_U) and M.taiga_terms then
         return "rim"
     end
     return "all"
@@ -694,6 +769,17 @@ local function ember_weight()
     return mul(inner, outer)
 end
 M.ember_weight = ember_weight
+
+-- The Hem's weight (2026-09-16): 0 through the mild rings, 1 past the
+-- Hem's inner edge, across HEM_BLEND_U of the wobbled radius. What the
+-- "hem" programs fade the temperate terrain out by and the tundra's in.
+local function hem_w()
+    if tdw.config.everywhere then
+        return const(1.0)
+    end
+    return clamp(add(mul(sub(u_biome(), const(M.HEM_U)), const(1.0 / M.HEM_BLEND_U)), const(0.5)), 0.0, 1.0)
+end
+M.hem_weight = hem_w
 
 -- How far the river trough is lifted across a shore's FADE band, km: the
 -- valley (VALLEY_DEPTH deep, river_valleys.lua) is gone where the lift
@@ -795,6 +881,27 @@ function M.relief_node()
     return mul(mul(relief_mask(), noise("relief", M.RELIEF_FREQ, M.RELIEF_OCTAVES, M.RELIEF_AMP)), plain_mask())
 end
 
+-- The mild rings' terms: the pair cross-faded by humidity, and on top of
+-- it the two biomes of the Long Shore that have terms of their own — the
+-- Dunes on the dry side (2.5) and the Flower Forest's knolls on the wet
+-- (2.6). Both are weighted to their half of that one ring and are nothing
+-- anywhere else, and both go in FIRST, with the pair as the shallow
+-- operand: the pair is the deeper of the two and the engine holds every
+-- pending operand in a buffer. The "temperate" programs are this; the
+-- "hem" ones fade it out under the tundra's.
+local function temperate_terms()
+    local pair = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+    local extra = nil
+    if M.dune_terms then
+        extra = mul(M.dune_terms(), M.dune_weight())
+    end
+    if M.knoll_terms then
+        local knolls = mul(M.knoll_terms(), M.knoll_weight())
+        extra = extra and add(extra, knolls) or knolls
+    end
+    return extra and add(extra, pair) or pair
+end
+
 function M.terrain(flank)
     local relief = mul(relief_mask(), noise("relief", M.RELIEF_FREQ, M.RELIEF_OCTAVES, M.RELIEF_AMP))
     -- The world's own hills: two octaves every surface program pays. The
@@ -855,23 +962,19 @@ function M.terrain(flank)
     elseif mode == "badlands" then
         terms = M.badlands_terms()
     elseif mode == "temperate" then
-        -- The mild rings: the pair cross-faded by humidity, and on top of
-        -- it the two biomes of the Long Shore that have terms of their own
-        -- — the Dunes on the dry side (2.5) and the Flower Forest's knolls
-        -- on the wet (2.6). Both are weighted to their half of that one
-        -- ring and are nothing anywhere else, and both go in FIRST, with
-        -- the pair as the shallow operand: the pair is the deeper of the
-        -- two and the engine holds every pending operand in a buffer.
-        local pair = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
-        local extra = nil
-        if M.dune_terms then
-            extra = mul(M.dune_terms(), M.dune_weight())
-        end
-        if M.knoll_terms then
-            local knolls = mul(M.knoll_terms(), M.knoll_weight())
-            extra = extra and add(extra, knolls) or knolls
-        end
-        terms = extra and add(extra, pair) or pair
+        terms = temperate_terms()
+    elseif mode == "hem" then
+        -- The Hem's inner band (2026-09-16): the mild rings' whole terrain
+        -- fading out across HEM_BLEND_U under the Rime Tundra's (3.1). The
+        -- tundra FIRST: the deeper operand goes where nothing is held.
+        local cold = M.tundra_terms and M.tundra_terms() or const(0.0)
+        terms = add(mul(cold, hem_w()), mul(temperate_terms(), add(mul(hem_w(), const(-1.0)), const(1.0))))
+    elseif mode == "edge" then
+        -- The rim: the tundra's ground with the Rime Wall (3.2) standing up
+        -- out of it over the last two hundred blocks; and, below, the whole
+        -- clipped to the body's wall.
+        local cold = M.tundra_terms and M.tundra_terms() or const(0.0)
+        terms = M.wall_lift and add(cold, M.wall_lift()) or cold
     elseif mode == "ember" then
         -- The Volcanic Foothills' terms over the pair, weighted across the
         -- ring. The volcanic FIRST: the deepest term in the program.
@@ -945,8 +1048,11 @@ function M.terrain(flank)
     local out
     if shore then
         -- Within reach of a shore: the coast's face and shelf on the land's
-        -- own shape (coastal_cliffs.lua).
-        out = add(M.coast_shore(add(terms, shape)), M.depth())
+        -- own shape (coastal_cliffs.lua). The Hem's shores take the plain
+        -- profile: the full one is five hundred operations, and the Hem's
+        -- blend band carries two rings' terms.
+        local coast = (mode == "hem" or mode == "edge") and M.coast_plain or M.coast_shore
+        out = add(coast(add(terms, shape)), M.depth())
     else
         out = add(add(terms, shape), M.depth())
     end
@@ -960,12 +1066,18 @@ function M.terrain(flank)
     -- The terrain FIRST and the trough second: `min(a, b)` peaks at the
     -- deeper of `peak(a)` and `1 + peak(b)`, and the terrain is much the
     -- deeper of the two, so this costs no buffer at all.
-    if not flank and mode ~= "alpine" and mode ~= "coast" and mode ~= "ocean" and M.river_valley then
+    if not flank and mode ~= "alpine" and mode ~= "coast" and mode ~= "ocean" and mode ~= "edge" and M.river_valley then
         local trough = M.river_valley()
         if mode == "all" or mode == "rim" then
             -- Not into the mountains: where the alpine weight is up, the
             -- trough's surface is put a kilometre out of reach.
             trough = add(trough, mul(alpine_weight(), const(1.0)))
+        end
+        if mode == "hem" then
+            -- Nor onto the rim: the valley shallows across the Hem's blend
+            -- band and is gone where the "edge" programs, which carry no
+            -- trough, begin.
+            trough = add(trough, hem_w())
         end
         if shore then
             -- Nor into a sea: a valley cut through the shore's rim would
@@ -978,6 +1090,12 @@ function M.terrain(flank)
             trough = add(trough, mul(tdw.seas.near(), const(M.RIVER_LIFT_KM)))
         end
         out = min(out, trough)
+    end
+    if mode == "edge" then
+        -- The body's wall: past it, the void. Every program of the mode and
+        -- every fill compiled in it has this, so nothing paints past the
+        -- edge and the generator needs no flank set for these chunks.
+        out = min(out, M.edge_body())
     end
     return out
 end
@@ -994,9 +1112,9 @@ end
 
 -- W(Y) as a sum of clamped ramps on RAW y, so each segment is seven ops.
 -- W = W_top + sum_i s_i * clamp(y - y_i, dy_i, 0), s_i in km per block.
-local function half_width()
+local function half_width(segments)
     local acc = const(M.KNOTS[1][2])
-    for i = 1, #M.KNOTS - 1 do
+    for i = 1, segments or #M.KNOTS - 1 do
         local y_i = M.KNOTS[i][1] * 1000 + M.Y0
         local dy = (M.KNOTS[i + 1][1] - M.KNOTS[i][1]) * 1000        -- negative
         local slope = (M.KNOTS[i + 1][2] - M.KNOTS[i][2]) / dy         -- positive
@@ -1005,12 +1123,28 @@ local function half_width()
     return acc
 end
 
--- W'(Y) with the flank warp, and B = W'^2 - r^2 (positive inside the body).
-local function warped_half_width()
-    return mul(half_width(), add(const(1.0), noise("flank", M.FLANK_FREQ, 2, M.FLANK_WARP)))
+-- B = W'^2 - r^2 (1 + wobble), positive inside the body. At the surface
+-- W' = W and the edge is where `u_biome` is 1; under FLANK_TOP_Y the
+-- flank's warp comes in as it always was (see M.WARP_HI).
+local function warped_half_width(segments)
+    local below = clamp(mul(sub(const(M.FLANK_TOP_Y), ys()), const(1.0 / M.FLANK_RAMP_KM)), 0.0, 1.0)
+    local warp = add(noise("flank", M.FLANK_FREQ, 2, M.FLANK_WARP), const(-0.5 * M.FLANK_WARP))
+    return mul(half_width(segments), add(mul(warp, below), const(1.0)))
+end
+local function body(segments)
+    local w = warped_half_width(segments)
+    return sub(mul(w, mul(warped_half_width(segments), const(M.EDGE_U))), mul(r2(), add(wobble_node(), const(1.0))))
 end
 function M.body()
-    return sub(mul(warped_half_width(), warped_half_width()), r2())
+    return body()
+end
+-- The same with only the knots a rim chunk can reach, for the "edge"
+-- programs (`M.terrain`): two segments are exact down to Y = -8 km, nineteen
+-- kilometres under the rim, and below that W is 46 km at most either way,
+-- so a chunk 53 km out is air by both. Forty-two operations, not 121.
+M.EDGE_SEGMENTS = 2
+function M.edge_body()
+    return body(M.EDGE_SEGMENTS)
 end
 
 -- E2: squared ellipsoidal distance from the stack centre, km^2.
@@ -1102,7 +1236,7 @@ P.top = {}
 -- here, at load, which was before the river valleys had defined the trough
 -- they cut into it — so the world's most common programs were the only ones
 -- without a river in them.
-local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true, glass = true, belt = true, ember = true }
+local LAZY = { alpine = true, all = true, coast = true, temperate = true, wet = true, dry = true, verdant = true, rainforest = true, ocean = true, frozen = true, mesa = true, badlands = true, taiga = true, rim = true, glass = true, belt = true, ember = true, hem = true, edge = true }
 function M.top_for(mode)
     local set = P.top[mode]
     if set == nil then

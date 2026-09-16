@@ -38,10 +38,8 @@ local DETAIL = shape.SURFACE_DETAIL
 
 local SCALE = shape.SCALE
 local R2_DISC = shape.R_DISC * shape.R_DISC
-local NOISE_BOUND = 0.5           -- the fractal stays within +/-0.42 (the body warp's bound)
 local SAFETY = 0.05               -- km, added to every bound
-local WARP_HI = 1.0 + shape.FLANK_WARP * NOISE_BOUND
-local WARP_LO = 1.0 - shape.FLANK_WARP * NOISE_BOUND
+local WARP_HI = shape.WARP_HI     -- the rim's wander, either way (shape.lua, the body)
 local STACK_Y_BLOCKS = shape.STACK_Y * 1000 + shape.Y0
 local HOLLOW_IN = (shape.HOLLOW_R - SAFETY) * (shape.HOLLOW_R - SAFETY)
 
@@ -203,9 +201,14 @@ local function generate(buf, pos)
 
     -- Bounds on the body: W is non-decreasing in Y.
     local w_hi = shape.half_width_at(Yhi) * WARP_HI + SAFETY
-    local w_lo = shape.half_width_at(Ylo) * WARP_LO - SAFETY
+    local w_lo = shape.half_width_at(Ylo) * shape.warp_lo_at(Ylo) - SAFETY
     local outside_body = r2lo > w_hi * w_hi
     local inside_body = w_lo > 0 and r2hi < w_lo * w_lo
+    -- A rim chunk is painted whether or not the gate can prove it inside:
+    -- its programs carry the body's wall themselves (shape.CLIPPED), so
+    -- every fill clips at the wall and the flank set is not wanted
+    -- (2026-09-16; until then nothing past 54 km had a biome on it).
+    local painted = inside_body or shape.CLIPPED[mode] == true
 
     -- Bounds on the squared ellipsoidal distance from the stack centre.
     local dylo, dyhi = axis_bounds(y0 - STACK_Y_BLOCKS, y1 - STACK_Y_BLOCKS)
@@ -221,11 +224,11 @@ local function generate(buf, pos)
         -- then a river's or a pool's, whose surface stands over a bed that
         -- may be in the chunk below.
         local found = nil
-        if inside_body and tmax > -math.max(WATER_ABOVE, STRUCTURE_ABOVE) then
+        if painted and tmax > -math.max(WATER_ABOVE, STRUCTURE_ABOVE) then
             found = tdw.present_biomes_in(ulo, uhi, pos)
             structures_into(buf, found, mode, tmax)
         end
-        sea_into(buf, pos, inside_body)
+        sea_into(buf, pos, painted)
         if found and tmax > -WATER_ABOVE then
             waters_into(buf, found, mode)
         end
@@ -237,7 +240,7 @@ local function generate(buf, pos)
     end
 
     -- Rock. Which programs, and what it is made of.
-    local V = inside_body and T or P.flank
+    local V = painted and T or P.flank
     local base, level = band_for(dmin)
     local tail = false
     if Yhi < shape.APEX_Y then
@@ -261,7 +264,7 @@ local function generate(buf, pos)
     -- evaluations of the terrain a chunk were one, and the coast at
     -- forty-eight milliseconds a chunk asked for it. A chunk two biomes
     -- share keeps the old path: a wildcard cannot know whose ground it is.
-    local found = (skin and inside_body and tmin < shape.SKIN_TOP) and tdw.present_biomes_in(ulo, uhi, pos) or nil
+    local found = (skin and painted and tmin < shape.SKIN_TOP) and tdw.present_biomes_in(ulo, uhi, pos) or nil
     local body_by_layers = nil
     if found and #found == 1 then
         for _, fill in ipairs(tdw.fills_for(found[1], mode)) do
@@ -271,7 +274,7 @@ local function generate(buf, pos)
         end
     end
 
-    if inside_body and tmin > 0 then
+    if painted and tmin > 0 then
         buf:fill_all(base)
         stats.filled = stats.filled + 1
     elseif body_by_layers then
@@ -301,7 +304,7 @@ local function generate(buf, pos)
         if level < 2 and dmax > shape.ABYSS_D - SAFETY then
             buf:fill_density(V.abyss, unclaimed(blocks.abyss_stone), DETAIL)
         end
-        if skin and inside_body and tmin < shape.SKIN_TOP then
+        if skin and painted and tmin < shape.SKIN_TOP then
             -- The biome's own top.
             local found = tdw.present_biomes_in(ulo, uhi, pos)
             local function fills_of(biome)
@@ -349,15 +352,15 @@ local function generate(buf, pos)
             -- The sea, after the terrain AND the structures: the fluid fill
             -- takes only the room they leave (it was before the structures,
             -- which put water inside every kelp stand and boulder).
-            sea_into(buf, pos, inside_body)
+            sea_into(buf, pos, painted)
             -- Then rivers and brine pools, which take the sea's place.
             waters_into(buf, found, mode)
         end
     end
-    if not (skin and inside_body and tmin < shape.SKIN_TOP) then
+    if not (skin and painted and tmin < shape.SKIN_TOP) then
         -- A chunk of rock under a sea's floor is still under its water: the
         -- flooded caves and tunnels, and the deep water over a trench.
-        sea_into(buf, pos, inside_body)
+        sea_into(buf, pos, painted)
     end
 
     -- The core stack, outermost first, only the shells this chunk can touch.

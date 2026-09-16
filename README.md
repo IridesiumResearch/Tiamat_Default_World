@@ -165,13 +165,13 @@ every ring its temperature suits until the biome that ring is for exists:
 |---|---|---|
 | The Crown | 0 to 4.7 km | the ice cap: Frozen Wastes and Icefall by province |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Alpine Highlands on the dry half (Frostmoor); Taiga and Silverwood by province on the wet (Firwold) |
-| The Greensward and outward | 10.6 to 59 km | Rolling Grasslands on the dry half; the wet half alternates Temperate Woodlands and Flower Forest by province; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — and the Deep Ocean past every shelf |
+| The Greensward to the Long Shore | 10.6 to 50.1 km | Rolling Grasslands on the dry half; the wet half alternates Temperate Woodlands and Flower Forest by province; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — and the Deep Ocean past every shelf |
 | The Verdant Belt | 28.3 to 35.4 km | Jungle on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills over the whole width: stepped basalt ridges and cinder cones on the inner side, foothills on the outer third |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies), and the Salt Pan over a third of both |
 | The Long Shore | 35.4 to 50.1 km | dry half: The Dunes and Rolling Grasslands in provinces two or three km across; wet half: Flower Forest and Temperate Woodlands the same way |
-| The Hem | 50.1 to 59 km | the same four in provinces as the Long Shore. Past about 54 km the chunks leave the body and the generator's `flank` programs make the ground, which the biome fills do not match: it is bare there, and `/tp` stays inside 52 km |
-| Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
+| The Hem | 50.1 km to the edge | the cold rim, colder outward: Frostpine Coast to 53.7 km, the Rime Tundra, and the Rime Wall in the last two hundred blocks — a wall of ice seventy blocks high. The edge wanders with the rings, from 57.45 to 59.8 km (the engine's world is a square 60,000 blocks either way) |
+| The Greensward to the Long Shore | 10.6 to 50.1 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
 
 **No edge of any of it is a circle.** The radius the biomes are placed by is
 the true radius pushed in and out by a slow noise (`shape.RING_WOBBLE`), so
@@ -372,6 +372,15 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
+- [x] 3.2 The Rime Wall — the last two hundred blocks (`biomes/rime_wall.lua`).
+      Drifts, then a ragged face of glacier ice seventy blocks high, a snow
+      top with crevasses and spires, and the edge of the world.
+- [x] 3.1 Rime Tundra — the Hem's ground and middle band
+      (`biomes/rime_tundra.lua`). Roll, hummocks, frost polygons, pingos,
+      frozen tarns; snow climbing toward the wall.
+- [x] 3.0 Frostpine Coast — the Hem's inner band
+      (`biomes/frostpine_coast.lua`). Snowbound fir stands on the tundra's
+      ground.
 - [x] 2.9 Salt Pan — a third of the Glass Waste (`biomes/salt_pan.lua`).
       A flat white crust cracked into polygons, brine pools, salt pillars,
       a dried-mud rim; the ring's terms capped to its floor.

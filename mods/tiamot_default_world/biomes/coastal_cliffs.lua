@@ -311,6 +311,23 @@ function shape.coast_shore(land)
     end
     return ground
 end
+-- The plain shore (2026-09-16), for the Hem's cold programs — and for any
+-- ring whose own terms leave no room for the full one: the floor, the face
+-- and a bare shelf (the terrace, the ledge, the long swell). No stacks, no
+-- jag, no notch, caves or tunnels, no bars, flats or hollows, no reef —
+-- about a fifth of the full shore's five hundred operations. The land
+-- FIRST, as above.
+function shape.coast_plain(land)
+    local inland = n.clamp(n.mul(n.add(n.mul(seas.d_map(), n.const(-1.0)), n.const(-seas.PLAIN_W)), n.const(1.0 / seas.FADE)), 0.0, 1.0)
+    local floor = n.sub(n.add(seas.rel(), n.const(seas.BEACH)), n.mul(inland, n.const(seas.FLOOR_KM)))
+    local g = n.max(land, floor)
+    local f = n.mul(face(), n.clamp(n.mul(shore(), n.const(2.0)), 0.0, 1.0))
+    local out = offshore()
+    local terrace = n.add(n.mul(n.clamp(n.mul(out, n.const(1.0 / TERRACE_W)), 0.0, 1.0), n.const(-(TERRACE[2] - TERRACE[1]))), n.const(-TERRACE[1]))
+    local ledge = n.mul(n.clamp(n.mul(n.sub(offshore(), n.const(DROP_AT)), n.const(1.0 / DROP_W)), 0.0, 1.0), n.const(-DROP_DEPTH))
+    local bed = n.add(n.add(terrace, ledge), n.noise("bed_wave", BED_WAVE_FREQ, 2, BED_WAVE))
+    return n.add(n.mul(g, f), n.mul(n.add(seas.rel(), bed), n.sub(n.const(1.0), f)))
+end
 -- Past the shelf: the shelf's foot blending into the ocean's floor from
 -- SHELF_END to DEEP_FROM blocks out, at the pool's level.
 function shape.sea_deep()

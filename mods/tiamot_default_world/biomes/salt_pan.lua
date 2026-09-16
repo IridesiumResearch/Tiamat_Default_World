@@ -50,7 +50,7 @@ local SNAG_CELL, SNAG_SQUARES = 60, 0.15
 
 -- The pan's own band of the radius: the Glass Waste inset from its outer
 -- edge, so every chunk that has it runs the "glass" programs.
-local reach = math.max(shape.VERDANT_BLEND_U, shape.GLASS_BLEND_U) / 2 + shape.RING_WOBBLE
+local reach = shape.reach()
 local IN_U = shape.GLASS_U[1] + shape.GLASS_INSET_U + 0.002
 local OUT_U = shape.GLASS_U[2] - reach - 0.004
 local function band()
@@ -88,7 +88,7 @@ function tdw.salt_at(x, z)
         return only == ID
     end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
-    if u < IN_U - shape.RING_WOBBLE or u > OUT_U + shape.RING_WOBBLE then
+    if u < IN_U - shape.wobble(u) or u > OUT_U + shape.wobble(u) then
         return false
     end
     local seed = game.world_seed or tdw.seed

@@ -96,11 +96,11 @@ function shape.dune_weight()
     if tdw.config.everywhere == ID then
         return n.const(1.0)
     end
-    -- The Long Shore and the Hem, the dry side, and the province the sand
-    -- takes (2026-09-16): the barchans are thirteen blocks tall and nothing
-    -- else on the dry side wants them, so the terms stop exactly where the
-    -- Rolling Grasslands' turf starts.
-    local first, last = tdw.layers.ring_by_id.shore, tdw.layers.ring_by_id.hem
+    -- The Long Shore (the Hem too until 2026-09-16, when the rim went
+    -- cold), the dry side, and the province the sand takes: the barchans
+    -- are thirteen blocks tall and nothing else on the dry side wants them,
+    -- so the terms stop exactly where the Rolling Grasslands' turf starts.
+    local first, last = tdw.layers.ring_by_id.shore, tdw.layers.ring_by_id.shore
     local band = n.mul(n.clamp(n.mul(shape.ring(first.u[1], last.u[2]), n.const(1.0 / 0.010)), 0.0, 1.0), shape.dry_weight())
     return n.mul(band, shape.province_weight("b"))
 end
@@ -122,7 +122,7 @@ function tdw.dunes_at(x, z)
     end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
     local ring = tdw.layers.ring_by_id.shore
-    if u < ring.u[1] - shape.RING_WOBBLE or u > ring.u[2] + shape.RING_WOBBLE then
+    if u < ring.u[1] - shape.wobble(u) or u > ring.u[2] + shape.wobble(u) then
         return false
     end
     local seed = game.world_seed or tdw.seed

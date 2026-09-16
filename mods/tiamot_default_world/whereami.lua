@@ -20,7 +20,7 @@ local SAMPLE_EVERY = 10        -- ticks between looks at where a player is
 -- (The name stayed up a second and went, until 2026-09-15: "for now at
 -- least let's have the biome always displayed on the screen".)
 local SCAN = 8                 -- blocks below the feet the ground is looked for
-local RIM_KEEP_U = (52.0 / 59.0) ^ 2   -- `/tp` stays inside 52 km: past ~54 the flank programs make the ground and no biome paints it
+local RIM_KEEP_U = tdw.layers.ring_by_id.hem.u[2]   -- `/tp` reaches the rim (2026-09-16): the edge programs clip at the wall and the Hem is painted (it stopped at 52 km while the flank programs made the ground out there)
 local SEEK_TRIES = 20          -- steps tried before a search settles for what it found
 local SEEK_SKY = 220           -- blocks over the base dome a seeker is dropped from
 
@@ -133,7 +133,15 @@ function tdw.biome_under(x, y, z)
     -- The cold core's five share snow, ice, permafrost, granite, fir and
     -- moss between them, so inside the frost ring's edge the placement
     -- fields say, in the order the ground would (2026-09-16).
-    if (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC) <= shape.ALPINE_EDGE_U + shape.RING_WOBBLE then
+    -- The rim's three (2026-09-16) share snow, ice, permafrost and fir with
+    -- the cold core: the wobbled radius says which, and whether.
+    if tdw.rim_at then
+        local rim = tdw.rim_at(x, z)
+        if rim then
+            return rim
+        end
+    end
+    if (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC) <= shape.ALPINE_EDGE_U + shape.wobble(shape.ALPINE_EDGE_U) then
         for _, id in ipairs(COLD) do
             if tdw.placed_at(id, x, z) then
                 return id
@@ -189,7 +197,7 @@ function tdw.placed_at(id, x, z)
     end
     local lo, hi = tdw.biome_span_u(id)
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
-    local w = shape.RING_WOBBLE
+    local w = shape.wobble(hi)
     if u < lo - w or u > hi + w then
         return false
     end
@@ -393,11 +401,8 @@ local function locate(id, px, pz)
     local spans = {}
     for _, span in ipairs(tdw.biome_spans(id)) do
         local lo = tdw.layers.ring_by_id[span[1]].u[1]
-        -- **Not out to the rim.** The Hem runs to u = 1, and past about
-        -- 54 km the chunks leave the body: the generator uses its flank
-        -- programs, no biome paints, and `/tp` put a player on bare
-        -- placeholder 62 km out (2026-09-16). The spans reach the rim; the
-        -- landings stop short of it.
+        -- To the rim since 2026-09-16 (52 km until the "edge" programs
+        -- painted the Hem's outer half).
         local hi = math.min(tdw.layers.ring_by_id[span[2]].u[2], RIM_KEEP_U)
         if hi > lo then
             spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
@@ -468,11 +473,8 @@ local function trial_places(id, px, pz)
     local spans = {}
     for _, span in ipairs(tdw.biome_spans(id)) do
         local lo = tdw.layers.ring_by_id[span[1]].u[1]
-        -- **Not out to the rim.** The Hem runs to u = 1, and past about
-        -- 54 km the chunks leave the body: the generator uses its flank
-        -- programs, no biome paints, and `/tp` put a player on bare
-        -- placeholder 62 km out (2026-09-16). The spans reach the rim; the
-        -- landings stop short of it.
+        -- To the rim since 2026-09-16 (52 km until the "edge" programs
+        -- painted the Hem's outer half).
         local hi = math.min(tdw.layers.ring_by_id[span[2]].u[2], RIM_KEEP_U)
         if hi > lo then
             spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }

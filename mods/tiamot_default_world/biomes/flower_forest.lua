@@ -97,7 +97,7 @@ function shape.knoll_weight()
     if tdw.config.everywhere == ID then
         return n.const(1.0)
     end
-    local first, last = tdw.layers.ring_by_id.temperate, tdw.layers.ring_by_id.hem
+    local first, last = tdw.layers.ring_by_id.temperate, tdw.layers.ring_by_id.shore
     return n.mul(n.clamp(n.mul(shape.ring(first.u[1], last.u[2]), n.const(1.0 / 0.010)), 0.0, 1.0),
         n.sub(n.const(1.0), shape.dry_weight()))
 end

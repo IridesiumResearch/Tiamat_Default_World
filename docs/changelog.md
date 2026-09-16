@@ -2044,6 +2044,64 @@ Found by sampling the whole disc on a grid to draw a map of it.
   than the Wastes'), all 980, glass 968, verdant 989. **A fresh world is
   needed.**
 
+### The rim: painted to the edge, gone cold, and walled with ice
+
+- **The Hem's outer half had never been painted.** Past about 54 km the
+  generator could not prove a chunk inside the body, used its `flank`
+  programs, and ran no biome fills: bare placeholder to the edge. Now every
+  chunk from 51.3 km out runs the new **"edge" programs**, which carry the
+  body's wall themselves (`shape.edge_body`, two knots of it, 42 operations),
+  so every fill clips at the wall and the generator paints them whether or
+  not its gate can prove them inside (`shape.CLIPPED`). The Hem's inner
+  band runs the **"hem"** programs, which fade the mild rings' whole terrain
+  out under the tundra's across `HEM_BLEND_U`. Both take the sea suffix;
+  their shores take a new **plain shore profile** (`shape.coast_plain`: the
+  floor, the face, the terrace and the ledge, no jag, cuts, bars or reef).
+  Programs: edge 348, edge_shore 462, hem_shore 759.
+- **The rim is the cold rim** ("the world needs to get colder as it nears
+  the edge again until an ice wall is hit right at the last couple hundred
+  blocks"), three biomes in bands of the wobbled radius:
+  - **3.0 Frostpine Coast**, 50.1 to 53.7 km: snowbound fir stands with
+    snowfields between, dead firs at the stands' edges, erratics, frozen
+    tarns. The fourth lane's sea runs through it.
+  - **3.1 Rime Tundra**, to two hundred blocks from the edge: the Hem's
+    ground everywhere (`shape.tundra_terms`) — a long roll, hummocks, frost
+    polygons, pingos with fallen-in tops, frozen tarns — dressed in
+    permafrost, turf mats, gravel troughs and snow whose share climbs from
+    a fifth of the ground to nine tenths toward the wall. Erratics and
+    frost-heaved slate. A cold haze.
+  - **3.2 The Rime Wall**, the last two hundred blocks: drifts climbing
+    fifteen blocks, then a face of glacier ice about seventy blocks high,
+    ragged along its length and standing twelve to seventy blocks in from
+    the edge; a snow top with clear-ice crevasses and ice spires; calved
+    blocks in the drifts; a whiteout. Past its top the world ends.
+  The Woodlands, Grasslands, Dunes and Flower Forest now stop at the Long
+  Shore's edge, and so do the rivers (the "hem" programs lift the trough
+  out; the "edge" ones carry none).
+- **The edge wanders with the rings.** The body's wall at the surface is
+  where the wobbled radius the biomes go by is `shape.EDGE_U`, so the wall
+  follows the rim: 57.45 to 59.8 km. **The engine's world is a square
+  60,000 blocks either way**, and a rim at the old 59 km wobbled out to
+  60.2 along the axes — outside the world, where `/tp rime wall` silently
+  did nothing. The flank's own three-dimensional warp still shapes the
+  underside, faded in under 14 km of Spindle height, and now only ever
+  pulls in: warped outward it bulged to 63 km, past the square.
+- **The slack every ring test widens by is a share of the radius**
+  (`shape.wobble(u)`), since the wobble itself has been one since the
+  axis fix: a fixed 0.010 of u was four times too little at the rim and
+  too much at the core. The cold core's modes are cheaper for it (the
+  "alpine" programs now reach 8 km).
+- `/tp` reaches the rim (it stopped at 52 km), and the three rim biomes
+  locate by solving for their band along sixteen bearings: the generic
+  search steps across a span in shares of it and never found a band two
+  hundred blocks wide. `/tp rime wall` lands in the drifts facing the wall.
+  The HUD asks `tdw.rim_at` first. The seas keep inside 57 km.
+- No new nodes. Checked headless on fresh worlds: all three named on the
+  HUD, the wall's profile measured on an axis and a diagonal, the Hem's
+  sea floor clean, and the cold core, Ember Ridge, Glass Waste, Verdant
+  Belt and Long Shore toured again with nothing refused. **A fresh world is
+  needed.**
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

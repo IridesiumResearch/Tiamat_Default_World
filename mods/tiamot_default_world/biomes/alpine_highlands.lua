@@ -761,7 +761,7 @@ local function mine(x, z)
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
     -- The cold core, widened by the wobble: the edge wanders, and a tick
     -- refused on the wrong side of it is a tick wasted, not an error.
-    return u < shape.ALPINE_EDGE_U + shape.RING_WOBBLE
+    return u < shape.ALPINE_EDGE_U + shape.wobble(u)
 end
 -- The ground is flat about (x, z): the surface within two blocks of its
 -- height three blocks out each way — the ledges and steps make even a

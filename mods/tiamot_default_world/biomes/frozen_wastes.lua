@@ -164,7 +164,7 @@ function tdw.frozen_at(x, z)
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
     -- The Crown, since 2026-09-16.
     local crown = tdw.layers.ring_by_id.crown
-    if u > crown.u[2] + shape.RING_WOBBLE then
+    if u > crown.u[2] + shape.wobble(u) then
         return false
     end
     local seed = game.world_seed or tdw.seed

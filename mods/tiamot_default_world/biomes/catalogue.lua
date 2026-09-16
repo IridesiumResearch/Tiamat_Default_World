@@ -27,11 +27,11 @@ area{ id = "surface", name = "Surface", kind = "surface",
 -- shape.RING_WOBBLE, the wet/dry line by the humidity noise, which is a
 -- blob field and never a circle.
 biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface",
-    spans = { { "temperate", "temperate", "wet", "a" }, { "shore", "hem", "wet", "a" } },
+    spans = { { "temperate", "temperate", "wet", "a" }, { "shore", "shore", "wet", "a" } },
     humidity = { -0.05, 0.42 },
-    note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, the Long Shore and the Hem. It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
+    note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring and the Long Shore (the Hem too until 2026-09-16, when the rim went cold). It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    spans = { { "temperate", "temperate", "dry" }, { "verdant", "verdant", "dry" }, { "shore", "hem", "dry", "a" } },
+    spans = { { "temperate", "temperate", "dry" }, { "verdant", "verdant", "dry" }, { "shore", "shore", "dry", "a" } },
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
@@ -47,11 +47,11 @@ biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
 biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
     ring = "shore", note = "Gentle stretches of the Long Shore." }
 biome{ id = "dunes", name = "The Dunes", area = "surface",
-    spans = { { "shore", "hem", "dry", "b" } },
+    spans = { { "shore", "shore", "dry", "b" } },
     ring = "shore", humidity = { -0.42, -0.05 },
-    note = "2.5 — Goldwater: the dry half of the Long Shore and the Hem, in the provinces the Rolling Grasslands do not take (2026-09-16) — barchan dunes with steep slip faces, flat deflation basins, yardang rock ribs, megafauna ribcages." }
+    note = "2.5 — Goldwater: the dry half of the Long Shore (the Hem's too until 2026-09-16), in the provinces the Rolling Grasslands do not take (2026-09-16) — barchan dunes with steep slip faces, flat deflation basins, yardang rock ribs, megafauna ribcages." }
 biome{ id = "flower_forest", name = "Flower Forest", area = "surface",
-    spans = { { "temperate", "temperate", "wet", "b" }, { "shore", "hem", "wet", "b" } },
+    spans = { { "temperate", "temperate", "wet", "b" }, { "shore", "shore", "wet", "b" } },
     ring = "shore", humidity = { -0.05, 0.42 },
     note = "2.6 — the wet half of the mild rings, in the provinces the woodland does not take (2026-09-16): parkland groves of apple, cherry and birch over carpets of allium, peony, poppy and bluebell in sweeping bands, with brooks in the gully floors." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
@@ -93,6 +93,23 @@ biome{ id = "coral_fringed_shallows", name = "Coral-Fringed Shallows", area = "s
     spans = { { "verdant", "shore" } },
     ring = "shore",
     note = "2.4 — the second sea lane (34.1 to 39.5 km), the warm water off the Goldwater dunes: sunlit lagoon flats one to five blocks deep behind a barrier reef crest that drops into open water, surge channels, corals, bomboras, anemone walls. Its `present` is the sea map's class and its own lane; every other shore is the Coastal Cliffs." }
+-- The rim (2026-09-16): "the world needs to get colder as it nears the
+-- edge again until an ice wall is hit right at the last couple hundred
+-- blocks of the edge". The Hem is the cold rim, in three bands of the
+-- wobbled radius; the ground is the tundra's (shape.lua, the "hem" and
+-- "edge" programs), and the wall is a term of the edge's.
+biome{ id = "frostpine_coast", name = "Frostpine Coast", area = "surface",
+    spans = { { "hem", "hem" } },
+    ring = "hem",
+    note = "3.0 — the Hem's inner band, 50.1 to 53.7 km: snowbound fir forest on the tundra's ground, fringing the fourth lane's sea. The cold rim begins here." }
+biome{ id = "rime_tundra", name = "Rime Tundra", area = "surface",
+    spans = { { "hem", "hem" } },
+    ring = "hem",
+    note = "3.1 — the Hem from 53.7 km to the wall's foot: permafrost hummocks and frost polygons, pingos, frozen tarns, erratics, ever more snow outward. Its terms are the Hem's whole ground." }
+biome{ id = "rime_wall", name = "The Rime Wall", area = "surface",
+    spans = { { "hem", "hem" } },
+    ring = "hem",
+    note = "3.2 — the last two hundred blocks: snow drifted against a wall of ice seventy blocks high, and past its top the edge of the world." }
 
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }

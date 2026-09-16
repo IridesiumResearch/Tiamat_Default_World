@@ -194,8 +194,8 @@ function tdw.biome_mask(n, id, _)
         local first, last = tdw.layers.ring_by_id[span[1]], tdw.layers.ring_by_id[span[2]]
         local reachable = ranges == nil
         if ranges then
-            local w = tdw.shape.RING_WOBBLE
             for _, range in ipairs(ranges) do
+                local w = tdw.shape.wobble(math.max(last.u[2], range[2]))
                 if first.u[1] - w <= range[2] and last.u[2] + w >= range[1] then
                     reachable = true
                 end
@@ -351,7 +351,7 @@ function tdw.surface_biomes_in(u_lo, u_hi)
     end
     -- Widened by the wobble, as `rings_overlapping` is: a biome's band has
     -- a wandering edge, so a chunk this close to one may be inside it.
-    local w = tdw.shape.RING_WOBBLE
+    local w = tdw.shape.wobble(u_hi)
     for _, biome in ipairs(tdw.areas.surface.biomes) do
         if biome.built and biome.placed ~= false and (biome.spans or biome.ring) then
             for _, span in ipairs(tdw.biome_spans(biome.id)) do

@@ -33,13 +33,15 @@ end
 -- the two must not drift apart.
 assert(math.abs(M.ring_by_id.frost.u[2] - shape.ALPINE_EDGE_U) < 1e-12,
     "shape.ALPINE_EDGE_U is not the frost ring's outer edge")
+assert(math.abs(M.ring_by_id.hem.u[1] - shape.HEM_U) < 1e-12,
+    "shape.HEM_U is not the Hem's inner edge")
 
 -- Rings whose u range overlaps [u_lo, u_hi].
 -- Widened by the wobble at both ends: a ring's edge wanders, so a chunk
--- this close to one may be inside it (shape.RING_WOBBLE).
+-- this close to one may be inside it (shape.wobble).
 function M.rings_overlapping(u_lo, u_hi)
     local found = {}
-    local w = shape.RING_WOBBLE
+    local w = shape.wobble(u_hi)
     for _, ring in ipairs(M.RINGS) do
         if ring.u[1] - w <= u_hi and ring.u[2] + w >= u_lo then
             found[#found + 1] = ring

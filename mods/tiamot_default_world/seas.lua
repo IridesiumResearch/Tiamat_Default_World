@@ -129,6 +129,7 @@ M.DEEP_FROM = 200.0                                     -- ...and is the whole f
 local U_MIN = 0.06                                      -- past the cold core and the frost ring's blend: r = 14.4 km
 local GLASS_MARGIN = 0.006                              -- past the Glass Waste and its cross-fades either side
 local SPAWN_KEEP = 700.0                                -- blocks: the spawn's plain stays dry
+local RIM_KEEP_U = (57.0 / 59.0) ^ 2                    -- the fourth lane's outer shore, and no further
 
 local MAP_SIDE, MAP_SCALE = 1024, 116                   -- 118,784 blocks: the disc is 118,000 across
 local MAP_ORIGIN = -(MAP_SIDE * MAP_SCALE) // 2
@@ -220,10 +221,13 @@ local function dist_field(everywhere)
     d = n.min(d, n.mul(n.sub(u(), n.const(U_MIN)), n.const(R2 / (2.0 * math.sqrt(U_MIN) * R) * KM)))
     if not everywhere then
         -- Not across the Glass Waste and its cross-fades.
-        local reach = math.max(shape.VERDANT_BLEND_U, shape.GLASS_BLEND_U) / 2 + shape.RING_WOBBLE + GLASS_MARGIN
+        local reach = shape.reach() + GLASS_MARGIN
         local lo, hi = shape.GLASS_U[1] - reach, shape.GLASS_U[2] + reach
         local mid, half = (lo + hi) / 2, (hi - lo) / 2
         d = n.min(d, n.mul(n.sub(n.abs(n.sub(u(), n.const(mid))), n.const(half)), n.const(R2 / (2.0 * math.sqrt(mid) * R) * KM)))
+        -- Not against the rim (2026-09-16): the Rime Wall's drifts start two
+        -- hundred blocks in from an edge that wanders to 57.8 km.
+        d = n.min(d, n.mul(n.sub(n.const(RIM_KEEP_U), u()), n.const(R2 / (2.0 * math.sqrt(RIM_KEEP_U) * R) * KM)))
         -- Not on the spawn's plain: a disc, its distance linearised as the
         -- coast's island was.
         local dx = n.sub(n.X(), n.const(shape.SPAWN_X + 0.5))

@@ -76,6 +76,9 @@ load("biomes.volcanic_foothills")    -- 2.3, the Ember Ridge: basalt terraces, c
 load("biomes.coral_fringed_shallows") -- 2.4, the second lane's sea: lagoon flats behind a barrier reef
 load("biomes.dunes")                 -- 2.5, Goldwater: barchan dunes and deflation basins
 load("biomes.flower_forest")         -- 2.6, the Long Shore's wet half: parkland groves and flower carpets
+load("biomes.rime_tundra")           -- 3.1, the Hem's ground and its middle band: permafrost, pingos, frozen tarns
+load("biomes.frostpine_coast")       -- 3.0, the Hem's inner band: snowbound firs
+load("biomes.rime_wall")             -- 3.2, the last two hundred blocks: the ice wall on the rim
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

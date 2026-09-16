@@ -175,7 +175,7 @@ function tdw.volcanic_at(x, z)
         return only == ID
     end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
-    if u < shape.EMBER_U[1] - shape.RING_WOBBLE or u > shape.EMBER_U[2] + shape.RING_WOBBLE then
+    if u < shape.EMBER_U[1] - shape.wobble(u) or u > shape.EMBER_U[2] + shape.wobble(u) then
         return false
     end
     local seed = game.world_seed or tdw.seed
