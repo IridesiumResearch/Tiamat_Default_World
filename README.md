@@ -165,7 +165,7 @@ every ring its temperature suits until the biome that ring is for exists:
 |---|---|---|
 | The Crown | 0 to 4.7 km | the ice cap: Frozen Wastes and Icefall by province |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Alpine Highlands on the dry half (Frostmoor); Taiga and Silverwood by province on the wet (Firwold) |
-| The Greensward to the Long Shore | 10.6 to 50.1 km | Rolling Grasslands on the dry half; the wet half alternates Temperate Woodlands with the Heather Moor and, more rarely, the Flower Forest by province; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — and the Deep Ocean past every shelf |
+| The Greensward to the Long Shore | 10.6 to 50.1 km | Rolling Grasslands on the dry half; the wet half alternates Temperate Woodlands with the Heather Moor and, more rarely, the Flower Forest by province; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — the Kelp Forest over the third lane's shelf, the Pack Ice over the fourth lane's water, and the Deep Ocean past every shelf |
 | The Verdant Belt | 28.3 to 35.4 km | Jungle on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills on half of it by province (stepped basalt ridges, cinder cones, lava pits); on the other half the Obsidian Barrens on the dry side and the Geyser Basin on the wet; a sea lane from 21.0 to 22.8 km with the Cinder Coast on its shores |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies), and the Salt Pan over a third of both |
@@ -372,6 +372,10 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
+- [x] 3.8 Pack Ice — the fourth lane's surface (`biomes/pack_ice.lua`).
+      Floes, leads, pressure ridges, icebergs, laid by the sea's fill.
+- [x] 3.7 Kelp Forest — the third lane's water (`biomes/kelp_forest.lua`).
+      Kelp groves by depth, rock reefs, urchin barrens.
 - [x] 3.6 Heather Moor — three quarters of the Flower Forest's ground
       (`biomes/heather_moor.lua`). Heather, gorse, bracken, tors, peat
       hags, wind-bent hawthorns.

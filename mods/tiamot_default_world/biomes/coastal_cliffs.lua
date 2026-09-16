@@ -459,7 +459,9 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         -- would otherwise put there — the strata, the turf, the pines.
         band = shape.off_reef and n.min(band, shape.off_reef()) or band
         -- Nor on the Ember Ridge: its shores are the Cinder Coast's (3.5).
-        return shape.off_cinder and n.min(band, shape.off_cinder()) or band
+        band = shape.off_cinder and n.min(band, shape.off_cinder()) or band
+        -- Nor the third lane's water: the Kelp Forest's (3.7).
+        return shape.off_kelp and n.min(band, shape.off_kelp()) or band
     end
     local function masked(field)
         return n.min(field, zone())

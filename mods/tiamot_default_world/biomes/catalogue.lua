@@ -126,6 +126,14 @@ biome{ id = "rime_wall", name = "The Rime Wall", area = "surface",
     spans = { { "hem", "hem" } },
     ring = "hem",
     note = "3.2 — the last two hundred blocks: snow drifted against a wall of ice seventy blocks high, and past its top the edge of the world." }
+biome{ id = "kelp_forest", name = "Kelp Forest", area = "surface",
+    spans = { { "shore", "shore" } },
+    ring = "shore",
+    note = "3.7 — the third sea lane's water (41.1 to 48.5 km, 2026-09-16): kelp in dense groves from the shallows to the ledge's foot, rock reefs, urchin barrens, boulders. Its `present` is the sea map's class and the lane on the true radius; the Coastal Cliffs keep the land side." }
+biome{ id = "pack_ice", name = "Pack Ice", area = "surface",
+    spans = { { "hem", "hem" } },
+    ring = "hem",
+    note = "3.8 — the fourth sea lane's surface (49.8 to 57 km, 2026-09-16): floes with drifted snow, open leads, pressure ridges, icebergs. Laid by the sea's own fill; no fills of its own." }
 
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }

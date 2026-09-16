@@ -331,6 +331,11 @@ function M.fill(buf, pos)
         level = shape.compile("sea.level", M.fluid_level()),
         within = shape.compile("sea.within", M.d()),
     }
+    -- The pack's ice first (biomes/pack_ice.lua): the water takes the room
+    -- it leaves.
+    if tdw.pack_ice_into then
+        tdw.pack_ice_into(buf, pos)
+    end
     buf:fill_fluid_terraced({ level = FLUID.level, within = FLUID.within, fluid = WATER })
 end
 
@@ -354,7 +359,11 @@ function M.zone(x, z)
         end
         local d = M.at(x, z, seed)
         local shore = (tdw.cinder_zone and tdw.cinder_zone(x, z)) or (tdw.reef_zone and tdw.reef_zone(x, z)) or "coastal_cliffs"
-        hit = (d > M.SHELF_END and "deep_ocean") or (d > -30.0 and shore) or false
+        -- The seas with names of their own (2026-09-16): the pack over the
+        -- fourth lane's water, deep or not; the kelp over the third's shelf.
+        local pack = d > 0 and tdw.pack_zone and tdw.pack_zone(x, z)
+        local kelp = d > 0 and tdw.kelp_zone and tdw.kelp_zone(x, z)
+        hit = pack or (d > M.SHELF_END and "deep_ocean") or kelp or (d > -30.0 and shore) or false
         zone_cache[key] = hit
         zone_cached = zone_cached + 1
     end

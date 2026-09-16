@@ -2163,6 +2163,31 @@ Found by sampling the whole disc on a grid to draw a map of it.
   thinned), gorse, bracken, the gullies' water, named on the HUD; the
   Flower Forest and the Woodlands unchanged; nothing refused.
 
+### Two seas of their own: the Kelp Forest and the Pack Ice
+
+- **3.7 Kelp Forest**, the third lane's water (41.1 to 48.5 km): kelp in
+  dense groves over the shelf, in three depth bands whose heights keep the
+  tops a few blocks under the surface — to thirty-four blocks tall at the
+  ledge's foot — on a floor of sand between moss-grown rock reefs, with
+  urchin barrens of bare gravel where the groves open and boulders fallen
+  off the ledge. The lane's sea side, to the shelf's end, on the TRUE
+  radius (the lanes are placed by it); the Coastal Cliffs keep the land
+  side (`shape.off_kelp`), as they do along the reef's lagoon.
+- **3.8 Pack Ice**, the fourth lane's surface (49.8 to 57 km), off the cold
+  rim: floes two and a half blocks thick with snow drifted on them, open
+  leads along a contour, pressure ridges, and icebergs standing sixteen
+  blocks over the water and forty under it. The sea's own fill lays it
+  before the water (`tdw.pack_ice_into`), because a chunk of sea surface is
+  an air chunk to the generator and runs no biome fills. It is laid at the
+  level map's height, one operation where the fluid's stepped level is
+  three hundred, and so from 130 blocks off every shore and sill, where
+  the map ramps between pools.
+- The HUD names the pack over the fourth lane's water, deep or not, and
+  the kelp over the third's shelf.
+- No new nodes. Checked headless on fresh worlds: the kelp forest's floor
+  sand 40%, moss-grown rock 37%, barrens 12%, kelp standing; the pack's
+  surface 57% ice and 40% open water; both named; nothing refused.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
