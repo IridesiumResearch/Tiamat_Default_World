@@ -71,11 +71,21 @@ end
 for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lichen }) do
     OWNER[material] = "taiga"
 end
+for _, material in ipairs({ blocks.white_sand, blocks.calcite, blocks.pink_algae, blocks.coral_magenta,
+    blocks.coral_cyan, blocks.coral_amber, blocks.sea_anemone }) do
+    OWNER[material] = "coral_fringed_shallows"
+end
+for _, material in ipairs({ blocks.apple_wood, blocks.apple_leaves, blocks.apple_blossom, blocks.cherry_wood,
+    blocks.cherry_leaves, blocks.cherry_blossom, blocks.birch_leaves, blocks.allium, blocks.peony,
+    blocks.poppy, blocks.bluebell }) do
+    OWNER[material] = "flower_forest"
+end
 for _, material in ipairs({ blocks.lava_rock, blocks.pumice, blocks.lava }) do   -- not the sulfur: the mesa has spots of it
     OWNER[material] = "volcanic_foothills"
 end
 -- Whose ground answers at once, wherever in the column it is found.
-local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true, taiga = true, volcanic_foothills = true }
+local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true,
+    taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -113,6 +123,10 @@ function tdw.biome_under(x, y, z)
     end
     if tdw.volcanic_at and tdw.volcanic_at(x, z) then
         return "volcanic_foothills"
+    end
+    -- Goldwater's sand is the coast's and the mesa's too.
+    if tdw.dunes_at and tdw.dunes_at(x, z) then
+        return "dunes"
     end
     local owner = tdw.biome_under_ground(x, y, z)
     -- The alpine's snow, ice and permafrost are the Frozen Wastes' too:

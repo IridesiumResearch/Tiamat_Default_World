@@ -70,6 +70,9 @@ load("biomes.arid_mesa")             -- 2.0, the Glass Waste's dry half: benches
 load("biomes.badlands")              -- 2.1, the Glass Waste's wet half: fins, rills and gullies
 load("biomes.taiga")                 -- 2.2, Firwold: spruce uplands and peat basins
 load("biomes.volcanic_foothills")    -- 2.3, the Ember Ridge: basalt terraces, cinder cones, fissures
+load("biomes.coral_fringed_shallows") -- 2.4, the second lane's sea: lagoon flats behind a barrier reef
+load("biomes.dunes")                 -- 2.5, Goldwater: barchan dunes and deflation basins
+load("biomes.flower_forest")         -- 2.6, the Long Shore's wet half: parkland groves and flower carpets
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

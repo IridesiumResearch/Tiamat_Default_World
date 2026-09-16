@@ -301,7 +301,15 @@ function shape.coast_shore(land)
     local h = n.add(n.mul(g, f), n.mul(n.add(seas.rel(), seabed()), n.sub(n.const(1.0), f)))
     h = n.add(h, jag())
     local cuts = n.add(face_cuts(), deep_cuts())
-    return n.sub(h, n.mul(n.mul(cuts, on_land()), n.const(CUT)))
+    local ground = n.sub(h, n.mul(n.mul(cuts, on_land()), n.const(CUT)))
+    if shape.reef_shelf then
+        -- The Coral-Fringed Shallows (2.4): inside their lane the reef's
+        -- floor stands over the shelf's, and the greater of the two is the
+        -- sea floor. Everywhere else `reef_shelf` is a kilometre down and
+        -- this is the coast, unchanged.
+        return n.max(ground, n.add(seas.rel(), shape.reef_shelf()))
+    end
+    return ground
 end
 -- Past the shelf: the shelf's foot blending into the ocean's floor from
 -- SHELF_END to DEEP_FROM blocks out, at the pool's level.
@@ -420,13 +428,19 @@ tdw.biomes.coastal_cliffs.present = function(pos)
     return class == "shore" or class == "deep"
 end
 tdw.biomes.coastal_cliffs.locate = function(px, pz, seed)
-    return seas.locate(px, pz, seed, -40.0, -6.0)
+    -- Not the reef's lane: its water is the Coral-Fringed Shallows' and
+    -- `/tp coastal cliffs` should not land on the lagoon's own beach.
+    return seas.locate(px, pz, seed, -40.0, -6.0, nil, nil, tdw.reef_u)
 end
 tdw.build_biome("coastal_cliffs", function(ctx)
     -- This biome's ground: SHORE_LAND blocks inland to SHELF_END blocks out.
     -- Everything else is the ring's own biome's.
     local function zone()
-        return n.min(n.sub(n.const(seas.SHELF_END), seas.d_map()), n.add(seas.d_map(), n.const(SHORE_LAND)))
+        local band = n.min(n.sub(n.const(seas.SHELF_END), seas.d_map()), n.add(seas.d_map(), n.const(SHORE_LAND)))
+        -- Not in the reef's lane: its sand, its algae and its corals are
+        -- the Coral-Fringed Shallows', and so is everything this biome
+        -- would otherwise put there — the strata, the turf, the pines.
+        return shape.off_reef and n.min(band, shape.off_reef()) or band
     end
     local function masked(field)
         return n.min(field, zone())

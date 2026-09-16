@@ -265,6 +265,37 @@ game.register_fluid{
 block("glow_cap", "Glow caps", "Small pale mushrooms that glow blue-green after dark.",
     { hardness = 0.1, passable = true, billboard = "cross", light_emit = { r = 2, g = 6, b = 8 } })
 
+-- 2.4 The Coral-Fringed Shallows. The reef's own nodes, asked for by name
+-- (2026-09-15): pink algae*, and the three coral tints*. White sand, calcite
+-- and the anemones are what the brief's flats and drop-off walls are made
+-- of and nothing already registered stands in for them. The gravel is the
+-- coast's `creek_bed`, the pumice the Ember Ridge's.
+block("white_sand", "White sand", "Fine coral sand, almost white; the lagoon's flats and its sandspits.", { hardness = 0.4, tint = SOIL })
+block("calcite", "Calcite", "The reef's own rock: pale, hard, full of old coral.", { hardness = 1.1, tint = ROCK })
+block("pink_algae", "Pink algae", "Vibrant coralline crust over the reef rock.", { hardness = 0.4, tint = { strength = 0.14, scale = 96 } })
+block("coral_magenta", "Magenta coral", "Elkhorn branches in vivid magenta.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
+block("coral_cyan", "Cyan coral", "Wide table coral, spreading flat in cyan.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
+block("coral_amber", "Amber coral", "Rounded brain coral domes in amber.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
+block("sea_anemone", "Sea anemones", "Clusters of them lining the drop-off walls, waving in the surge.",
+    { hardness = 0.1, tint = { strength = 0.16, scale = 64 }, passable = true, sway = true, billboard = "cross" })
+
+-- 2.6 The Flower Forest. The trees' wood and flowers, asked for by name
+-- (2026-09-15): apple*, cherry*, and their blossom; the leaves with them,
+-- since a crown cannot be cut out of nothing. The birch's log is the
+-- woodland's; its leaves are new, paler and finer than an oak's. The four
+-- meadow flowers* are the brief's own list.
+block("apple_wood", "Apple wood", "Short, crooked, pale-barked: an orchard tree gone wild.", { hardness = 0.9, tint = SOIL })
+block("apple_leaves", "Apple leaves", "A low, broad crown of them.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
+block("apple_blossom", "Apple blossom", "White-pink blossom through the crown, and fallen under it.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
+block("cherry_wood", "Cherry wood", "Dark, banded bark; a wild cherry leans toward the light.", { hardness = 0.9, tint = SOIL })
+block("cherry_leaves", "Cherry leaves", "Fine leaves under the blossom.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
+block("cherry_blossom", "Cherry blossom", "Deep pink, and it drifts.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
+block("birch_leaves", "Birch leaves", "Small, bright, always moving.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
+block("allium", "Allium", "A tall stem under a violet globe of florets.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+block("peony", "Peony", "Heavy pink blooms that nod after rain.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+block("poppy", "Poppy", "Scarlet, on a thin hairy stem.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+block("bluebell", "Bluebells", "Nodding violet-blue bells; they carpet the groves.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

@@ -198,6 +198,51 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 2.4 Coral-Fringed Shallows (2026-09-15)
+
+Shares `creek_bed` (the gravel and the tidal gutters' floors), `pumice`
+(the Ember Ridge's), `limestone` (the bomboras), `willow_wood` and
+`oak_leaves` (the leaning palms), and the `water` FLUID.
+
+| Block | Where | Why |
+|---|---|---|
+| `pink_algae` | encrusting most of the reef rock | asked for by name 2026-09-15 |
+| `coral_magenta` | elkhorn branches, table plates, brain domes | "add magenta, cyan and amber coral", 2026-09-15 |
+| `coral_cyan` | the same three forms | with the magenta |
+| `coral_amber` | the same three forms | with the magenta |
+| `white_sand` | the lagoon's flats, its bars and its spits | the brief's "white sand"; the world's `sand` is golden-tan and is the dunes' |
+| `calcite` | the reef rock under the algae, the drop-off wall, the arches | named in the brief 2026-09-15; nothing registered is reef rock |
+| `sea_anemone` | dense clusters down the drop-off walls | named in the brief 2026-09-15; nothing registered waves in the surge |
+
+### 2.5 The Dunes (2026-09-15)
+
+No new nodes. Shares `sand` (golden-tan already), `creek_bed` (the
+deflation lag), `packed_dirt` (the wind-packed crust), `ochre_sandstone`
+and `rust_red_sandstone` (the yardangs and the wind-carved rocks),
+`dead_wood` (the snags), `bone` (the ribcages), `dead_sagebrush` and
+`tall_grass` (what little grows in the hollows).
+
+### 2.6 Flower Forest (2026-09-15)
+
+Shares `grass` and `loam` (the turf and its soil), `mulch` (the Taiga's),
+`moss` and `stone` (the half-buried stones), `creek_bed` (the brooks'
+pebble beds), `mud` (the seeps), `birch_log` (the woodland's) and the
+`water` FLUID.
+
+| Block | Where | Why |
+|---|---|---|
+| `apple_wood` | the orchard trees' crooked boles and limbs | "add the wood and flowers for the trees indicated with*", 2026-09-15 |
+| `apple_leaves` | their low broad crowns | a crown cannot be cut out of nothing |
+| `apple_blossom` | through the crowns, and on the fallen logs | the flowers of the starred tree |
+| `cherry_wood` | the wild cherries' leaning trunks | asked for by name 2026-09-15 |
+| `cherry_leaves` | under their blossom | with the wood |
+| `cherry_blossom` | deep pink, through the crowns | the flowers of the starred tree |
+| `birch_leaves` | the birches' narrow crowns | the birch's log was already the woodland's; its leaves were not |
+| `allium` | violet globes, in the first band of the wave | asked for by name 2026-09-15 |
+| `peony` | heavy pink blooms, the third band | asked for by name 2026-09-15 |
+| `poppy` | scarlet, the second band | asked for by name 2026-09-15 |
+| `bluebell` | nodding violet-blue, the fourth band | asked for by name 2026-09-15 |
+
 ### 2.3 Volcanic Foothills (2026-09-15)
 
 Shares `dark_basalt` (the coast's), `volcanic_ash` and `charcoal` (the

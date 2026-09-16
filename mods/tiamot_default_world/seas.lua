@@ -348,7 +348,8 @@ function M.zone(x, z)
             zone_cache, zone_cached = {}, 0
         end
         local d = M.at(x, z, seed)
-        hit = (d > M.SHELF_END and "deep_ocean") or (d > -30.0 and "coastal_cliffs") or false
+        local shore = (tdw.reef_zone and tdw.reef_zone(x, z)) or "coastal_cliffs"
+        hit = (d > M.SHELF_END and "deep_ocean") or (d > -30.0 and shore) or false
         zone_cache[key] = hit
         zone_cached = zone_cached + 1
     end
@@ -357,12 +358,20 @@ end
 
 -- A place whose shore distance is between `lo` and `hi`, for `/tp`: out
 -- from the player's heading round the compass, across every lane in
--- forty-block steps, the nearest lane first.
-function M.locate(px, pz, seed, lo, hi)
+-- forty-block steps, the nearest lane first. `u_lo` and `u_hi` narrow it
+-- to one band of the radius, which is how the reef's lane is found and
+-- the other three lanes are not (2.4).
+function M.locate(px, pz, seed, lo, hi, u_lo, u_hi, skip)
     local lanes = {}
     local pu = (px * px + pz * pz) * 1e-6 / R2
     for _, lane in ipairs(M.LANES) do
-        lanes[#lanes + 1] = { lane = lane, away = math.max(lane.u_lo - pu, pu - lane.u_hi, 0.0) }
+        local inside = u_lo == nil or (lane.u_hi >= u_lo and lane.u_lo <= u_hi)
+        if skip and lane.u_lo >= skip[1] and lane.u_hi <= skip[2] then
+            inside = false
+        end
+        if inside then
+            lanes[#lanes + 1] = { lane = lane, away = math.max(lane.u_lo - pu, pu - lane.u_hi, 0.0) }
+        end
     end
     table.sort(lanes, function(a, b) return a.away < b.away end)
     local r0 = math.sqrt(px * px + pz * pz)
@@ -377,9 +386,16 @@ function M.locate(px, pz, seed, lo, hi)
             local from, to = (lane.r - lane.w / 2 - 0.3) * KM, (lane.r + lane.w / 2 + 0.3) * KM
             for r = from, to, 40.0 do
                 local x, z = math.floor(ax * r), math.floor(az * r)
-                local dist = M.at(x, z, seed)
-                if dist >= lo and dist <= hi then
-                    return x, z
+                local u = (x * x + z * z) * 1e-6 / R2
+                local ok = u_lo == nil or (u >= u_lo and u <= u_hi)
+                if skip and u >= skip[1] and u <= skip[2] then
+                    ok = false
+                end
+                if ok then
+                    local dist = M.at(x, z, seed)
+                    if dist >= lo and dist <= hi then
+                        return x, z
+                    end
                 end
             end
         end

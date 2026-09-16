@@ -165,11 +165,12 @@ every ring its temperature suits until the biome that ring is for exists:
 |---|---|---|
 | The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), Taiga on the wet (Firwold) |
-| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore and the Deep Ocean past every shelf |
+| The Greensward and outward | 10.6 to 59 km | Temperate Woodlands on the wet half, Rolling Grasslands on the dry; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — and the Deep Ocean past every shelf |
 | The Verdant Belt | 28.3 to 35.4 km | Jungle on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills over the whole width: stepped basalt ridges and cinder cones on the inner side, foothills on the outer third |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies) |
-| The Long Shore, the Hem | 35.4 to 59 km | woodland and grassland by humidity, three lanes of sea |
+| The Long Shore | 35.4 to 50.1 km | The Dunes on the dry half (Goldwater's sand sea), Flower Forest on the wet |
+| The Hem | 50.1 to 59 km | woodland and grassland by humidity. Past about 54 km the chunks leave the body and the generator's `flank` programs make the ground, which the biome fills do not match: it is bare there |
 | Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
 
 **No edge of any of it is a circle.** The radius the biomes are placed by is
@@ -371,6 +372,25 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
+- [x] 2.6 Flower Forest — the Long Shore's wet half
+      (`biomes/flower_forest.lua`). Parkland groves of apple, cherry and
+      birch with clearings between them; grass, mulch and moss-dusted
+      stones; carpets of allium, peony, poppy and bluebell in sweeping
+      bands of one wave noise; brooks in the gullies' floors with pebble
+      beds and grassy banks; spring seeps; fallen blossom logs.
+- [x] 2.5 The Dunes — Goldwater, the Long Shore's dry half
+      (`biomes/dunes.lua`). Barchan dunes with gentle windward faces and
+      steep slip faces, long swells, flat deflation basins with lag and
+      crust, yardang rock ribs; sagebrush and hardy grass in a few
+      hollows, dead snags, megafauna ribcages, wind-carved rocks.
+- [x] 2.4 Coral-Fringed Shallows — the second sea lane
+      (`biomes/coral_fringed_shallows.lua`). Lagoon flats one to five
+      blocks deep behind a barrier reef crest that drops into open water;
+      surge channels and tidal gutters; white sand, gravel, calcite, rare
+      pumice and pink algae; elkhorn, table and brain corals in magenta,
+      cyan and amber; swim-through arches, hollow bomboras, anemone walls,
+      leaning palms on the dry spits. Its floor is offered to the shore's
+      own program rather than taking a terrain mode of its own.
 - [x] 1.7 Jungle — the Verdant Belt's wet half (`biomes/jungle.lua`; the
       Dense Rainforest Canopy until 2026-09-15). Karst ridges, sheer ravines,
       sinkholes and hummocks as terms of the terrain in the "verdant" mode;

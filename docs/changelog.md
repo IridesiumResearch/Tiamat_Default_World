@@ -1808,6 +1808,72 @@ engine commit they landed in, because the mod is written against them.
   a pit), mesa; the HUD right everywhere; nothing refused, no errors.
   **A fresh world is needed** (the sea maps are filled at world init).
 
+### 2.4 Coral-Fringed Shallows, 2.5 The Dunes, 2.6 Flower Forest
+
+Three biomes from one brief, and a mode fault they turned up.
+
+- **The `"ember"` terrain mode had no outer edge** (2.3, this morning), so
+  every chunk beyond the Glass Waste — the Long Shore and the Hem, 28 km to
+  the rim, a third of the world — was generated with the Ember Ridge's
+  programs. The ground was right (the ridge's terms weigh nothing that far
+  out), but the mode's u range is the ridge alone, so `biome_mask` pruned
+  every span out there to nothing: the woodland, the grassland and both new
+  land biomes painted no surface at all and the outer world was bare soil.
+  The test now also asks that the chunk be inside the Glass Waste's own
+  programs' inner edge. Found because the two new biomes would not paint.
+- **2.4 Coral-Fringed Shallows** (`biomes/coral_fringed_shallows.lua`), the
+  second sea lane — 34.1 to 39.5 km, the warm water off Goldwater. Lagoon
+  flats one to five blocks under the surface, a barrier crest ninety blocks
+  out standing at about the waterline, and past it the shelf's own ledge
+  dropping thirty blocks into the Deep Ocean. Surge channels cut the flats
+  and the crest; tidal gutters scour gravel across them; sandbars rise, and
+  the rare spit breaches the tide. White sand, gravel, calcite, rare pumice,
+  and pink algae over most of the reef rock. Elkhorn, table and brain
+  corals in magenta, cyan and amber; swim-through arches; hollow limestone
+  bomboras; anemone carpets down the drop-off wall; leaning palms on the
+  dry spits only. **It costs the shore programs no mode of their own**: the
+  reef's floor is offered to `shape.coast_shore` as a field that is its own
+  bed inside the lane and a kilometre under the world outside it, and the
+  shore takes the greater of the two — one operation and one buffer. Every
+  other lane is still the Coastal Cliffs, which keep the land side of this
+  one (the beach, the face and the turf behind it).
+- **2.5 The Dunes** (`biomes/dunes.lua`), Goldwater — the Long Shore's dry
+  half, 35.4 to 50.1 km, taken from the grassland. Barchan dunes from
+  `min(up, down)` of two clamps on one wind-stretched noise, so the ground
+  climbs two hundred blocks and drops in thirty; long rhythmic swells under
+  them; flat deflation basins where the dune field's own gate is low, with
+  coarse lag and a wind-packed crust; yardang rock ribs along a contour.
+  Barren: no timber, a little sagebrush and hardy grass in a few of the
+  hollows, bleached megafauna ribcages half-swallowed on the dune flanks,
+  dead snags, wind-carved rocks. No new nodes.
+- **2.6 Flower Forest** (`biomes/flower_forest.lua`), the Long Shore's wet
+  half, taken from the woodland. Parkland: groves of six to fourteen apple,
+  cherry and birch with sunlit clearings between them, over lush grass,
+  mulch patches and moss-dusted stones. **The flowers come in sweeping
+  bands**: four cover fills share one slow wave noise and each takes a band
+  of it, overlapping at the edges, so a walk crosses allium, poppy, peony
+  and bluebell in sweeps a hundred blocks wide. Brooks are the existing
+  gullies' floors with water laid in the deepest quarter of them — pebble
+  beds, grassy banks, no channel cut — and spring seeps pool in the
+  hollows. Fallen rotting blossom logs. It adds one term to the terrain: a
+  six-block knoll noise.
+- **New nodes**: `pink_algae`, `coral_magenta`, `coral_cyan`, `coral_amber`,
+  `white_sand`, `calcite`, `sea_anemone`; `apple_wood`, `apple_leaves`,
+  `apple_blossom`, `cherry_wood`, `cherry_leaves`, `cherry_blossom`,
+  `birch_leaves`; `allium`, `peony`, `poppy`, `bluebell`.
+- Checked headless on a fresh world: every biome teleported to and read on
+  the ground — the lagoon is 3,228 wet columns of white sand, algae and
+  coral under six blocks of water; the dunes are sand, lag and crust with
+  18% cover cut to a few per cent; the flower forest is peony, bluebell,
+  poppy, allium, blossom and grass under cherry and apple crowns. Nothing
+  refused, no errors; `temperate_shore` 985 operations of 1,024,
+  `belt_shore` 939. **A fresh world is needed.**
+- **Found, not fixed**: past about 54 km the chunks are no longer wholly
+  inside the body, so the generator uses the `flank` programs, whose
+  terrain is not the one the biome fills carry — nothing paints there and
+  the Hem's outer half is bare. It predates this batch and wants a batch of
+  its own.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

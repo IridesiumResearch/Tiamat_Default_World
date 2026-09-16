@@ -396,6 +396,9 @@ local function dry_weight()
     return clamp(add(mul(sub(M.humidity(), const(M.HUMIDITY_SPLIT)), const(-0.5 / M.HUMIDITY_BLEND)), const(0.5)),
         0.0, 1.0)
 end
+-- The same weight for a biome on half a ring: the Dunes take the dry side
+-- of the Long Shore, the Flower Forest the wet.
+M.dry_weight = dry_weight
 
 -- Terrain MODES: which biome terms a program carries. A density program
 -- cannot ask where it is, so the world's rings each get their own programs
@@ -472,6 +475,8 @@ function M.default_mode()
         return "badlands"
     elseif only == "volcanic_foothills" then
         return "ember"
+    elseif only == "dunes" or only == "flower_forest" or only == "coral_fringed_shallows" then
+        return "temperate"
     end
     return "wet"
 end
@@ -543,7 +548,17 @@ local function land_mode_for(u_lo, u_hi)
             end
             return "verdant"
         end
-        if M.volcanic_terms and u_hi >= M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.RING_WOBBLE then
+        -- The Ember Ridge, INSIDE the Glass Waste's own programs' inner
+        -- edge (2026-09-16). Without that second test this branch caught
+        -- every chunk outward of the Waste as well — the whole Long Shore
+        -- and the Hem ran in the "ember" mode, whose u range is the ridge
+        -- alone, so `biome_mask` pruned every span out there to nothing and
+        -- the woodland, the grassland and the two new biomes of the Long
+        -- Shore painted no surface at all. The ground was right (the
+        -- ridge's terms weigh nothing that far out) and the world was bare
+        -- soil from 28 km to the rim.
+        if M.volcanic_terms and u_hi >= M.EMBER_U[1] - M.EMBER_BLEND_U / 2 - M.RING_WOBBLE
+            and u_lo <= M.GLASS_U[1] + M.GLASS_INSET_U - reach then
             return "ember"
         end
         return "temperate"
@@ -766,7 +781,23 @@ function M.terrain(flank)
     elseif mode == "badlands" then
         terms = M.badlands_terms()
     elseif mode == "temperate" then
-        terms = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+        -- The mild rings: the pair cross-faded by humidity, and on top of
+        -- it the two biomes of the Long Shore that have terms of their own
+        -- — the Dunes on the dry side (2.5) and the Flower Forest's knolls
+        -- on the wet (2.6). Both are weighted to their half of that one
+        -- ring and are nothing anywhere else, and both go in FIRST, with
+        -- the pair as the shallow operand: the pair is the deeper of the
+        -- two and the engine holds every pending operand in a buffer.
+        local pair = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
+        local extra = nil
+        if M.dune_terms then
+            extra = mul(M.dune_terms(), M.dune_weight())
+        end
+        if M.knoll_terms then
+            local knolls = mul(M.knoll_terms(), M.knoll_weight())
+            extra = extra and add(extra, knolls) or knolls
+        end
+        terms = extra and add(extra, pair) or pair
     elseif mode == "ember" then
         -- The Volcanic Foothills' terms over the pair, weighted across the
         -- ring. The volcanic FIRST: the deepest term in the program.

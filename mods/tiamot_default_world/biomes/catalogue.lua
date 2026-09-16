@@ -27,11 +27,11 @@ area{ id = "surface", name = "Surface", kind = "surface",
 -- shape.RING_WOBBLE, the wet/dry line by the humidity noise, which is a
 -- blob field and never a circle.
 biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface",
-    spans = { { "temperate", "temperate", "wet" }, { "shore", "hem", "wet" } },
+    spans = { { "temperate", "temperate", "wet" }, { "hem", "hem", "wet" } },
     humidity = { -0.05, 0.42 },
     note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, the Long Shore and the Hem. It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    spans = { { "temperate", "temperate", "dry" }, { "verdant", "hem", "dry" } },
+    spans = { { "temperate", "temperate", "dry" }, { "verdant", "verdant", "dry" }, { "hem", "hem", "dry" } },
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
@@ -46,6 +46,14 @@ biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
     note = "1.4 and the shelf: every shore of every sea (seas.lua), from the temperate ring out. Its `present` is the sea map's: the shore band, the face and the shelf." }
 biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
     ring = "shore", note = "Gentle stretches of the Long Shore." }
+biome{ id = "dunes", name = "The Dunes", area = "surface",
+    spans = { { "shore", "shore", "dry" } },
+    ring = "shore", humidity = { -0.42, -0.05 },
+    note = "2.5 — Goldwater, the Long Shore's dry half (35.4 to 50.1 km): barchan dunes with steep slip faces, flat deflation basins, yardang rock ribs, megafauna ribcages." }
+biome{ id = "flower_forest", name = "Flower Forest", area = "surface",
+    spans = { { "shore", "shore", "wet" } },
+    ring = "shore", humidity = { -0.05, 0.42 },
+    note = "2.6 — the Long Shore's wet half: parkland groves of apple, cherry and birch over carpets of allium, peony, poppy and bluebell in sweeping bands, with brooks in the gully floors." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
     ring = "temperate",
     note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }
@@ -70,7 +78,9 @@ biome{ id = "deep_ocean", name = "Deep Ocean", area = "surface",
     ring = "hem",
     note = "1.8 — abyssal plains under a hundred blocks of sea: guyots, pillow ridges, trenches, basalt pillars, vents, whale bones, brine pools. Every sea's floor past the coast's shelf (seas.lua)." }
 biome{ id = "coral_fringed_shallows", name = "Coral-Fringed Shallows", area = "surface",
-    ring = "shore", note = "Needs generated water (fill_fluid_below at a sea level)." }
+    spans = { { "verdant", "shore" } },
+    ring = "shore",
+    note = "2.4 — the second sea lane (34.1 to 39.5 km), the warm water off the Goldwater dunes: sunlit lagoon flats one to five blocks deep behind a barrier reef crest that drops into open water, surge channels, corals, bomboras, anemone walls. Its `present` is the sea map's class and its own lane; every other shore is the Coastal Cliffs." }
 
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }

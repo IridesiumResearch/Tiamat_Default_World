@@ -86,6 +86,24 @@ BLOCKS = {
     "lava_rock":      ( 52,  44,  46,  0),   # the volcanic foothills (2.3)
     "pumice":         (178, 172, 162,  0),
     "sulfur":         (226, 184,  62,  0),
+    "white_sand":     (226, 218, 198,  0),   # the coral shallows (2.4)
+    "calcite":        (204, 202, 194,  0),
+    "pink_algae":     (206,  96, 128,  0),
+    "coral_magenta":  (176,  52, 118,  0),
+    "coral_cyan":     ( 46, 156, 164,  0),
+    "coral_amber":    (206, 140,  46,  0),
+    "sea_anemone":    (196,  84, 110,  0),
+    "apple_wood":     ( 96,  76,  56,  0),   # the flower forest (2.6)
+    "apple_leaves":   ( 76, 110,  52,  0),
+    "apple_blossom":  (238, 216, 220,  0),
+    "cherry_wood":    ( 84,  62,  58,  0),
+    "cherry_leaves":  ( 88, 116,  60,  0),
+    "cherry_blossom": (232, 168, 186,  0),
+    "birch_leaves":   (112, 148,  68,  0),
+    "allium":         (150, 116, 188,  0),
+    "peony":          (214, 128, 156,  0),
+    "poppy":          (178,  54,  48,  0),
+    "bluebell":       ( 94, 106, 190,  0),
     "lava":           (214,  84,  22,  0),   # the fluid's block
     "glow_cap":       (150, 224, 226,  0),   # the river's mushrooms (2026-09-15)
     "charcoal":       ( 58,  56,  60,  0),
@@ -147,6 +165,11 @@ DOTS = {
     "climbing_ivy": (2.0, 0.5, 0.8),     # small leaves on a rope
     "kapok_leaves": (2.4, 0.5, 0.7),     # lighter and more open than the ironwood's
     "juniper_needles": (2.2, 0.6, 0.8),  # sparse, scattered
+    "apple_leaves": (2.5, 0.4, 0.6),     # the flower forest's crowns (2.6)
+    "cherry_leaves": (2.2, 0.5, 0.7),    # finer than the apple's
+    "birch_leaves": (2.0, 0.5, 0.8),     # small and bright
+    "apple_blossom": (2.8, 0.3, 0.5),    # crowded petals, not leaves
+    "cherry_blossom": (2.6, 0.4, 0.5),
 }
 
 # A single round BLOOM in the middle of the tile, a little high, with a
@@ -154,6 +177,8 @@ DOTS = {
 BLOOMS = {
     "rose_blooms": 5.2,
     "monstera": 7.0,     # one broad leaf the width of the card
+    "peony": 6.0,        # the flower forest (2.6): a heavy double bloom
+    "poppy": 4.0,        # one scarlet cup on a thin stem
 }
 
 # Items are PICTURES — a rose on its stem — because an item is never in the
@@ -195,6 +220,7 @@ BLADES = {
     "dead_sagebrush": (7, 5, 11), # brittle, many short sticks
     "rust_grass": (5, 9, 15),     # acidic tufts
     "hanging_lichen": (6, 10, 16), # strands the length of the card
+    "sea_anemone": (8, 5, 10),     # a fat tuft of tentacles (2.4)
 }
 
 # Rosettes and sprays, for the mantle: a rosette is a few round leaves
@@ -212,6 +238,8 @@ SPRAYS = {
     "ladys_mantle_bloom": 5,
     "blue_lunaria": 4,       # a few tall stems, a card a block high
     "roman_chamomile": 6,    # many short ones, a card a third of a block
+    "allium": 3,             # three tall stems under globes (2.6)
+    "bluebell": 5,           # nodding bells, a card a block high
 }
 
 
