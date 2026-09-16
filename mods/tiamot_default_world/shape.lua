@@ -1017,7 +1017,13 @@ function M.terrain(flank)
     elseif mode == "belt" then
         -- The Verdant Belt and outward: the rainforest over the wet half,
         -- weighted in across the belt's edges.
-        local wet = add(mul(M.rainforest_terms(), verdant_weight()), wet_terms())
+        local rain = mul(M.rainforest_terms(), verdant_weight())
+        if M.karst_terms then
+            -- The Karst Towers (3.12), in their province well inside the
+            -- belt: the pinnacles FIRST, the deepest.
+            rain = add(mul(M.karst_terms(), M.karst_weight()), rain)
+        end
+        local wet = add(rain, wet_terms())
         terms = add(mul(swells(), dry_weight()), mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))))
     elseif mode == "glass" then
         -- The Glass Waste: the mesa over the dry half, the badlands over the

@@ -316,6 +316,13 @@ block("tube_worms", "Tube worms", "White tubes tipped with red plumes, crowding 
 block("glow_polyp", "Glow polyp", "A small pale polyp giving off a cold blue light in the dark of the deep.", { hardness = 0.1, tint = { strength = 0.10, scale = 48 }, passable = true, sway = true, billboard = "cross", light_emit = { r = 2, g = 7, b = 11 } })
 block("mangrove_wood", "Mangrove wood", "Dark reddish wood of the mangroves' stems and prop roots.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
 block("mangrove_leaves", "Mangrove leaves", "Thick glossy leaves in a low roof over the tide.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
+-- 3.11 Savanna, 3.13 Peat Fen and 3.14 Redwood Stands (2026-09-16).
+block("golden_grass", "Golden grass", "Knee-high dry grass, gold in the sun.", { hardness = 0.1, tint = { strength = 0.14, scale = 64 }, passable = true, sway = true, billboard = "cross" })
+block("acacia_wood", "Acacia wood", "Dark, hard, thorny wood of the flat-topped trees.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
+block("acacia_leaves", "Acacia leaves", "Small olive leaves in flat spreading pads.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
+block("reeds", "Reeds", "Tall reeds with brown plumes, standing in the shallows.", { hardness = 0.1, tint = { strength = 0.12, scale = 64 }, passable = true, sway = true, billboard = "cross" })
+block("redwood_log", "Redwood log", "Thick, soft, deeply furrowed red bark.", { hardness = 2.0, tint = { strength = 0.08, scale = 96 } })
+block("redwood_needles", "Redwood needles", "Flat sprays of dark needles, high overhead.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
 block("black_sand", "Black sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.

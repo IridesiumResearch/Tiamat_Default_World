@@ -79,6 +79,12 @@ OWNER[blocks.sinter] = "geyser_basin"
 OWNER[blocks.thermal_mat] = "geyser_basin"
 OWNER[blocks.black_sand] = "cinder_coast"
 OWNER[blocks.heather] = "heather_moor"
+OWNER[blocks.golden_grass] = "savanna"
+OWNER[blocks.acacia_wood] = "savanna"
+OWNER[blocks.acacia_leaves] = "savanna"
+OWNER[blocks.reeds] = "peat_fen"
+OWNER[blocks.redwood_log] = "redwood_stands"
+OWNER[blocks.redwood_needles] = "redwood_stands"
 OWNER[blocks.tube_worms] = "abyssal_trench"
 OWNER[blocks.glow_polyp] = "abyssal_trench"
 OWNER[blocks.mangrove_wood] = "mangrove_coast"
@@ -100,7 +106,7 @@ end
 local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true,
     taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true, salt_pan = true,
     obsidian_barrens = true, geyser_basin = true, cinder_coast = true, heather_moor = true,
-    abyssal_trench = true, mangrove_coast = true }
+    abyssal_trench = true, mangrove_coast = true, savanna = true, peat_fen = true, redwood_stands = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -127,11 +133,13 @@ end
 -- patch of turf cannot say which biome it is and the placement field is
 -- asked instead. A material one of them owns ALONE — a poppy, an apple
 -- tree, leaf litter, sand — still decides, above this.
-local MOSAIC = { "flower_forest", "heather_moor", "dunes", "temperate_woodlands", "rolling_grasslands" }
+local MOSAIC = { "karst_towers", "savanna", "peat_fen", "redwood_stands", "flower_forest", "heather_moor", "dunes",
+    "temperate_woodlands", "rolling_grasslands" }
 -- The cold core, in the order to ask: the two on the Crown, then the ring.
 local COLD = { "frozen_wastes", "icefall", "alpine_highlands", "taiga", "silverwood" }
 -- And the owners a shared material can name, which the field overrules.
-local MOSAIC_MEMBER = { flower_forest = true, heather_moor = true, dunes = true, temperate_woodlands = true,
+local MOSAIC_MEMBER = { karst_towers = true, savanna = true, peat_fen = true, redwood_stands = true,
+    flower_forest = true, heather_moor = true, dunes = true, temperate_woodlands = true,
     rolling_grasslands = true, taiga = true, jungle = true }
 
 -- The biome whose ground is under (x, y, z), or nil when the column is

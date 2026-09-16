@@ -87,6 +87,10 @@ load("biomes.kelp_forest")           -- 3.7, the third lane's water: kelp groves
 load("biomes.pack_ice")              -- 3.8, the fourth lane's surface: floes, leads and bergs
 load("biomes.abyssal_trench")        -- 3.9, a province of the deep floors: rifts and black smokers
 load("biomes.mangrove_coast")        -- 3.10, the reef lane's wet-side shores: mangroves on the mud
+load("biomes.savanna")               -- 3.11, the Verdant Belt's dry half: golden grass and acacias
+load("biomes.karst_towers")          -- 3.12, a third of the Jungle: limestone pinnacles
+load("biomes.peat_fen")              -- 3.13, a quarter of the Woodlands' province, temperate ring
+load("biomes.redwood_stands")        -- 3.14, a quarter of the Woodlands' province, Long Shore
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

@@ -198,6 +198,22 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 3.11 Savanna, 3.13 Peat Fen, 3.14 Redwood Stands (2026-09-16)
+
+The Savanna shares `dirt`, `packed_dirt` (the termite mounds), `sand`,
+`granite`. The Karst Towers share `limestone`, `moss`, `grass`, `loam`,
+`mud`, `fern`, `kapok_wood`, `ironwood_leaves`, `oak_log`. The Fen shares
+`moss`, `black_mud`, `mud`, `tall_grass` (the cotton grass), `dead_wood`
+(the bog oaks) and the `water` FLUID. The Stands share `mulch`, `moss`,
+`loam`, `fern`.
+
+| Block | Where | Why |
+|---|---|---|
+| `golden_grass` | the Savanna's cover | nothing registered is a dry gold grass |
+| `acacia_wood`, `acacia_leaves` | the flat-topped trees and thorn shrubs | no registered tree reads as an acacia |
+| `reeds` | the Fen's pool margins, a cover three cells tall | nothing registered is a tall reed |
+| `redwood_log`, `redwood_needles` | the redwoods and the fallen giants | the biome is named for them |
+
 ### 3.9 Abyssal Trench, 3.10 Mangrove Coast (2026-09-16)
 
 The trench shares `black_mud`, `dark_basalt`, `sulfur`, `magma` (the

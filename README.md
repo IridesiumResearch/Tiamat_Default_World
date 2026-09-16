@@ -166,7 +166,7 @@ every ring its temperature suits until the biome that ring is for exists:
 | The Crown | 0 to 4.7 km | the ice cap: Frozen Wastes and Icefall by province |
 | Frostmoor and Firwold | 4.7 to 10.6 km | Alpine Highlands on the dry half (Frostmoor); Taiga and Silverwood by province on the wet (Firwold) |
 | The Greensward to the Long Shore | 10.6 to 50.1 km | Rolling Grasslands on the dry half; the wet half alternates Temperate Woodlands with the Heather Moor and, more rarely, the Flower Forest by province; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — the Kelp Forest over the third lane's shelf, the Pack Ice over the fourth lane's water, the Mangrove Coast on the reef lane's wet-side shores, and past every shelf the Deep Ocean, torn by the Abyssal Trench's rifts in two fifths of it |
-| The Verdant Belt | 28.3 to 35.4 km | Jungle on the wet half (karst under megatrees), Rolling Grasslands on the dry |
+| The Verdant Belt | 28.3 to 35.4 km | Jungle on two thirds of the wet half (karst under megatrees) and Karst Towers on the rest; Savanna on the dry half |
 | The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills on half of it by province (stepped basalt ridges, cinder cones, lava pits); on the other half the Obsidian Barrens on the dry side and the Geyser Basin on the wet; a sea lane from 21.0 to 22.8 km with the Cinder Coast on its shores |
 | The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies), and the Salt Pan over a third of both |
 | The Long Shore | 35.4 to 50.1 km | dry half: The Dunes and Rolling Grasslands in provinces two or three km across; wet half: Temperate Woodlands, the Heather Moor and the Flower Forest the same way |
@@ -372,6 +372,12 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
+- [x] 3.14 Redwood Stands — a quarter of the Woodlands' province on the
+      Long Shore (`biomes/redwood_stands.lua`).
+- [x] 3.13 Peat Fen — a quarter of the Woodlands' province in the temperate
+      ring (`biomes/peat_fen.lua`).
+- [x] 3.12 Karst Towers — a third of the Jungle (`biomes/karst_towers.lua`).
+- [x] 3.11 Savanna — the Verdant Belt's dry half (`biomes/savanna.lua`).
 - [x] 3.10 Mangrove Coast — the reef lane's wet-side shores
       (`biomes/mangrove_coast.lua`). Mangroves on prop roots, mud flats,
       tidal channels.

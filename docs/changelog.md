@@ -2214,6 +2214,36 @@ Found by sampling the whole disc on a grid to draw a map of it.
   over a rift with its walls, polyps and mats; the Deep Ocean's landing
   off the province; nothing refused. **A fresh world is needed.**
 
+### Four for variety: Savanna, Karst Towers, Peat Fen, Redwood Stands
+
+- **3.11 Savanna** takes the Verdant Belt's dry half from the Rolling
+  Grasslands (they keep the temperate ring's and the Long Shore's): golden
+  grass to the knee over red-brown earth, flat-topped acacias, termite
+  mounds, kopjes of rounded granite, thorn shrubs.
+- **3.12 Karst Towers**, a third of the Jungle's ground (its province "b"
+  past 0.25): limestone pinnacles to fifty blocks over a forest floor of
+  grass, ferns and mud pools under broadleaf trees, moss streaked down the
+  walls, scrub on the tops. Its terms stand in the "belt" programs, faded
+  in only well inside the belt so no "verdant" chunk (989) needs them.
+  Programs: belt 485, belt_shore 994.
+- **3.13 Peat Fen**, a quarter of the Temperate Woodlands' province in the
+  temperate ring (province "a" under -0.383): sphagnum over black peat,
+  dark pools in every gully floor ringed with reeds, cotton grass, bog oak
+  stumps and trunks half sunk.
+- **3.14 Redwood Stands**, the same share on the Long Shore: redwoods forty
+  to sixty blocks on buttressed feet, bare for two thirds of their height,
+  younger trees between, ferns over needle mulch and moss, fallen giants.
+- The Fen and the Stands are dressing biomes (the mild rings are at 999).
+  The HUD's placement fields ask all four first.
+- **New nodes**: `golden_grass`, `acacia_wood`, `acacia_leaves`, `reeds`,
+  `redwood_log`, `redwood_needles`.
+- Checked headless on a fresh world: all four teleported to and named;
+  savanna grass 42%, the fen's pools wet with reeds at their edges, the
+  redwoods' crowns over 56% of the square; towers measured by the terrain
+  field, a sixth of a 480-block square standing 25 to 61 blocks over the
+  floor; the Jungle, the Woodlands and the reef unchanged; nothing refused.
+  **A fresh world is needed.**
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

@@ -27,11 +27,11 @@ area{ id = "surface", name = "Surface", kind = "surface",
 -- shape.RING_WOBBLE, the wet/dry line by the humidity noise, which is a
 -- blob field and never a circle.
 biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface",
-    spans = { { "temperate", "temperate", "wet", "a" }, { "shore", "shore", "wet", "a" } },
+    spans = { { "temperate", "temperate", "wet", "a", 0.0, -0.383 }, { "shore", "shore", "wet", "a", 0.0, -0.383 } },
     humidity = { -0.05, 0.42 },
     note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring and the Long Shore (the Hem too until 2026-09-16, when the rim went cold). It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    spans = { { "temperate", "temperate", "dry" }, { "verdant", "verdant", "dry" }, { "shore", "shore", "dry", "a" } },
+    spans = { { "temperate", "temperate", "dry" }, { "shore", "shore", "dry", "a" } },
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
@@ -62,7 +62,7 @@ biome{ id = "river_valleys", name = "River Valleys", area = "surface",
     ring = "temperate",
     note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }
 biome{ id = "jungle", name = "Jungle", area = "surface",
-    spans = { { "verdant", "verdant", "wet" } },
+    spans = { { "verdant", "verdant", "wet", "a", 0.25 } },
     ring = "verdant", humidity = { 0.05, 0.42 }, note = "1.7 — the wet half of the Verdant Belt: karst, ravines and sinkholes under megatrees. The Dense Rainforest Canopy until 2026-09-15." }
 biome{ id = "arid_mesa", name = "Arid Mesa", area = "surface",
     spans = { { "glass", "glass", "dry" } },
@@ -142,6 +142,22 @@ biome{ id = "mangrove_coast", name = "Mangrove Coast", area = "surface",
     spans = { { "verdant", "shore", "wet" } },
     ring = "verdant", humidity = { -0.05, 0.42 },
     note = "3.10 — the reef lane's wet-side shores (2026-09-16): mangroves on prop roots at the tide line, mud flats, tidal channels, saplings in the shallows. The reef and the Coastal Cliffs keep off it." }
+biome{ id = "savanna", name = "Savanna", area = "surface",
+    spans = { { "verdant", "verdant", "dry" } },
+    ring = "verdant", humidity = { -0.42, -0.05 },
+    note = "3.11 — the Verdant Belt's dry half (2026-09-16), the Rolling Grasslands' until then: golden grass, flat-topped acacias, termite mounds, kopjes." }
+biome{ id = "karst_towers", name = "Karst Towers", area = "surface",
+    spans = { { "verdant", "verdant", "wet", "b", 0.25 } },
+    ring = "verdant", humidity = { -0.05, 0.42 },
+    note = "3.12 — a third of the Jungle's ground (2026-09-16): limestone pinnacles fifty blocks tall over a forest floor, moss-streaked walls, scrub-crowned tops." }
+biome{ id = "peat_fen", name = "Peat Fen", area = "surface",
+    spans = { { "temperate", "temperate", "wet", "a", -0.383 } },
+    ring = "temperate", humidity = { -0.05, 0.42 },
+    note = "3.13 — a quarter of the Woodlands' province in the temperate ring (2026-09-16): sphagnum over peat, dark pools ringed with reeds, cotton grass, bog oaks." }
+biome{ id = "redwood_stands", name = "Redwood Stands", area = "surface",
+    spans = { { "shore", "shore", "wet", "a", -0.383 } },
+    ring = "shore", humidity = { -0.05, 0.42 },
+    note = "3.14 — a quarter of the Woodlands' province on the Long Shore (2026-09-16): redwoods forty to sixty blocks tall, dense ferns, fallen giants." }
 
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }
