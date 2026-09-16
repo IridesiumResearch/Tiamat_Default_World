@@ -16,6 +16,83 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+## 30. A program cannot spend the same value twice (2026-09-16)
+
+**The binding constraint on the whole world.** A density program may hold
+1,024 operations and eight live buffers, and the shore programs are at
+985 (`temperate_shore`) and 939 (`belt_shore`) with three biomes' terms in
+them. Nothing in the compiler remembers a subtree it has already emitted,
+so every helper the mod calls twice is compiled twice:
+
+- `shape.ring` re-emits the radius — `x*x + z*z`, the wobble noise, the
+  fold — at every call, and the mod's own comments already say the radius
+  is "three buffers of its own".
+- the reef's `out()` is a map read and a clamp, and the shore program
+  contains six copies of it;
+- the dunes' barchan is one stretched noise read by two clamps, so the
+  noise is in the program twice;
+- every `a * (1 - w) + b * w` cross-fade emits `w` twice.
+
+What that costs, today, in the world: the reef's tidal gutters had to stop
+being a cut in the terrain and become a surface material instead; the
+reef's floor is a `max` against the shelf rather than a cross-fade into
+it; the Coastal Cliffs' blowholes and their fine rib are still out (2.4,
+2026-09-15); and the rim is bare past about 54 km because the chunks there
+need the body test as well as the terrain, which is why the mod keeps a
+second, thinner family of programs (`P.flank`) with none of the biome
+terms in it — with room, that family would not have to exist.
+
+**The smallest change is reuse, not a bigger cap**: hash-cons identical
+subtrees when `game.density` compiles, emit each once, and have the
+repeats read the buffer it went to. The mod builds the repeats out of the
+same node constructors with the same arguments, so structural equality
+catches nearly all of them. The honest catch is that a shared value has to
+stay live between its uses, so reuse trades operations for buffers — which
+is why this ask is really "either more of one or more of the other": more
+buffers with spilling, or the cap raised, or both. Any of the three buys
+the same thing, which is that a biome can carry the detail its brief asks
+for without another one losing some.
+
+## 31. A fluid gives no light (2026-09-16)
+
+The Volcanic Foothills' lava pits are dark. `light_emit` is a property of
+a BLOCK, and a block that holds a fluid is air in the store with a volume
+beside it — the fluid's `material` is what it is DRAWN as, never what is
+placed — so the emission table never sees it. Measured headless in a pit:
+a block holding 21 cells of lava reads `r0 g0 b0`, lit only by the sky
+(`sun 15`). At night, and anywhere a pit is roofed, molten rock is black.
+
+The mod cannot work round it. It cannot place the lava block instead: a
+solid look-alike does not flow, cannot be swum or drained, and would have
+to be swapped for the fluid the moment anything touched it. Ringing every
+pit with lantern stone is a lie the player can dig up.
+
+The smallest change is a `light_emit` on `Tiamot.FluidSpec`, seeded like a
+block's in `seed_emission` for any block whose fluid volume is over some
+share of full (or scaled by the volume, which also makes a draining pit
+dim as it empties). The magma shell's look-alike solid can then become the
+fluid too, which is what it was always meant to be.
+
+## 32. A cover fill is one block tall (2026-09-16)
+
+The Flower Forest's brief asks for "single- and TWO-block flowers", and
+alliums and peonies are the two-block ones. `fill_cover` clamps its run to
+`SUBNODES_PER_AXIS` and keeps it inside one block, so the tallest flower
+the mod can grow is three cells — a third of the height the brief wants,
+and the same height as a poppy, which should be the short one.
+
+Everything else the mod has for standing things on a surface is the
+scatter, and a two-block flower through the scatter is a schematic per
+flower, a stand program per flower, and a neighbourhood pass per chunk for
+what a cover does in one pass — for a plant that grows every few blocks
+across a whole ring, that is the wrong tool by an order of magnitude.
+
+The ask is a cover that may run past the block it starts in: `cells`
+allowed over three, the run continuing into the block above while the
+blocks are empty, and the run stopping where it meets anything. The
+engine already finds the surface and already keeps one run to a block, so
+this is the same scan with the ceiling lifted.
+
 ## 27. Friction per block (2026-09-14)
 
 The Frozen Wastes' crevasses have "slick, near-frictionless blue ice
@@ -123,7 +200,7 @@ tint are all the twilight there is.
 The rainforest also wants ambient DRIPS from the canopy and drifting MIST
 particles, which are item 20. Its shade is item 24.
 
-## 22. A noise stretched along one axis (2026-09-14)
+## 22. A noise stretched along one axis (2026-09-14) — LANDED (engine 12bd662): the badlands' rills, the mesa's wall ledges, the Frozen Wastes' dunes and sastrugi, and the Dunes' barchans (2.5) are all stretched noises
 
 A cliff's roughness is not the same shape in every direction: rock flutes
 and weathers vertically, strata run horizontally, and a noise that is
@@ -155,7 +232,7 @@ A client built before fec84db runs its own server without it (2026-09-14:
 `/tp mesa` answered "the seed is not known yet"), so `/tp` falls back to
 searching by landing when `game.world_seed` is nil.
 
-## 20. Particles (2026-09-13)
+## 20. Particles (2026-09-13) — LANDED as `game.emit_particles` (engine 985997a): the Ember Ridge's fumaroles vent steam off their sulfur (2.3, 2026-09-15). The blowholes and the canopy's drip are still to do in the mod
 
 The coast's blowholes should erupt with sea spray, and nothing in the API
 emits a particle: a burst of short-lived sprites at a position, in a

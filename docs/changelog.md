@@ -1868,6 +1868,15 @@ Three biomes from one brief, and a mode fault they turned up.
   poppy, allium, blossom and grass under cherry and apple crowns. Nothing
   refused, no errors; `temperate_shore` 985 operations of 1,024,
   `belt_shore` 939. **A fresh world is needed.**
+- **Three engine asks written** (`docs/engine-asks.md`): 30, a program
+  cannot spend the same value twice — the shore programs are at 985 of
+  1,024 operations and every helper called twice is compiled twice, which
+  is what cut the reef's tidal gutters and what keeps the rim's thinner
+  programs biome-less; 31, a fluid gives no light — measured in a pit, a
+  block holding 21 cells of lava reads r0 g0 b0, so molten rock is black
+  at night; 32, a cover fill is one block tall, and the brief asked for
+  two-block flowers. Items 20 (particles) and 22 (stretched noise) are
+  marked landed: the fumaroles and the barchans use them.
 - **Found, not fixed**: past about 54 km the chunks are no longer wholly
   inside the body, so the generator uses the `flank` programs, whose
   terrain is not the one the biome fills carry — nothing paints there and
