@@ -198,6 +198,19 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 2.7 Icefall, 2.8 Silverwood, 2.9 Salt Pan (2026-09-16)
+
+The Icefall shares `ice`, `clear_ice`, `snow` and `creek_bed` (moraine).
+The Silverwood shares `birch_log` (the woodland's), `birch_leaves` (the
+Flower Forest's), `mulch`, `moss`, `black_mud`, `granite`, `rust_grass`.
+The Salt Pan shares `dry_clay`, `wet_clay`, `mud`, `dried_mud`,
+`dead_wood`, and the `brine` FLUID (the ocean's).
+
+| Block | Where | Why |
+|---|---|---|
+| `lichen` | the Silverwood's floor, and over its boulders and fallen trunks | nothing registered is a pale crust a birch stands on |
+| `salt` | the pan's crust, its pillars, the salt round a snag's foot | nothing registered is white and flat and cracked |
+
 ### 2.4 Coral-Fringed Shallows (2026-09-15)
 
 Shares `creek_bed` (the gravel and the tidal gutters' floors), `pumice`

@@ -163,12 +163,12 @@ every ring its temperature suits until the biome that ring is for exists:
 
 | Rings | Radius | What stands there |
 |---|---|---|
-| The Crown | 0 to 4.7 km | Alpine Highlands, both halves: mountains on the dome's own summit |
-| Frostmoor and Firwold | 4.7 to 10.6 km | Frozen Wastes on the dry half (Frostmoor), Taiga on the wet (Firwold) |
+| The Crown | 0 to 4.7 km | the ice cap: Frozen Wastes and Icefall by province |
+| Frostmoor and Firwold | 4.7 to 10.6 km | Alpine Highlands on the dry half (Frostmoor); Taiga and Silverwood by province on the wet (Firwold) |
 | The Greensward and outward | 10.6 to 59 km | Rolling Grasslands on the dry half; the wet half alternates Temperate Woodlands and Flower Forest by province; the seas' lanes at 16.3–19.1, 34.1–39.5, 41.1–48.5 and 49.8–57 km, with the Coastal Cliffs on every shore but the second lane's — that one is the Coral-Fringed Shallows — and the Deep Ocean past every shelf |
 | The Verdant Belt | 28.3 to 35.4 km | Jungle on the wet half (karst under megatrees), Rolling Grasslands on the dry |
 | The Ember Ridge | 20.7 to 24.8 km | Volcanic Foothills over the whole width: stepped basalt ridges and cinder cones on the inner side, foothills on the outer third |
-| The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies) |
+| The Glass Waste | 24.8 to 28.3 km | Arid Mesa on the dry half (benches, box canyons, buttes), Badlands on the wet (fins, rills, gullies), and the Salt Pan over a third of both |
 | The Long Shore | 35.4 to 50.1 km | dry half: The Dunes and Rolling Grasslands in provinces two or three km across; wet half: Flower Forest and Temperate Woodlands the same way |
 | The Hem | 50.1 to 59 km | the same four in provinces as the Long Shore. Past about 54 km the chunks leave the body and the generator's `flank` programs make the ground, which the biome fills do not match: it is bare there, and `/tp` stays inside 52 km |
 | Every ring from the Greensward outward | 10.6 to 59 km | River Valleys, cut ACROSS the rest: a trough two and a half kilometres from the next, wherever its course runs |
@@ -372,6 +372,15 @@ built one at a time in its own file. Built so far:
       after the pre-pass. Outside the map it holds its edge value; tiling
       the whole frost ring is the step after the shape is right. Nothing
       grows by tick here yet.
+- [x] 2.9 Salt Pan — a third of the Glass Waste (`biomes/salt_pan.lua`).
+      A flat white crust cracked into polygons, brine pools, salt pillars,
+      a dried-mud rim; the ring's terms capped to its floor.
+- [x] 2.8 Silverwood — Firwold's other half (`biomes/silverwood.lua`).
+      Birch and aspen stands on lichen, mulch and moss, over the Taiga's
+      own ground.
+- [x] 2.7 Icefall — the Crown's other half (`biomes/icefall.lua`). The ice
+      cap broken: blue ice, crevasse cracks, moraine bands, seracs and
+      fallen blocks, over the Frozen Wastes' own ground.
 - [x] 2.6 Flower Forest — the Long Shore's wet half
       (`biomes/flower_forest.lua`). Parkland groves of apple, cherry and
       birch with clearings between them; grass, mulch and moss-dusted

@@ -177,6 +177,10 @@ end
 tdw.biomes[ID].ring_mode = "verdant"
 tdw.biomes[ID].lazy = true
 tdw.biomes[ID].soil = blocks.rust_red_sandstone
+-- `/tp` keeps off the Salt Pan (2.9), which paints over a third of this ring.
+tdw.biomes[ID].locate_field = function(field)
+    return shape.salt_exclude and shape.salt_exclude(field) or field
+end
 
 -- The dust (2026-09-15, "add that same fog to the mesa biome"): the
 -- badlands' haze at the same strength, thinner in a chunk the biome only
@@ -390,7 +394,10 @@ end
 tdw.build_biome(ID, function(ctx)
     local function masked(field)
         local mask = tdw.biome_mask(n, ID)
-        return mask and n.min(field, mask) or field
+        field = mask and n.min(field, mask) or field
+        -- Not on the Salt Pan (2.9), which paints over this ring's third:
+        -- its covers and structures keep off the crust (2026-09-16).
+        return shape.salt_exclude and shape.salt_exclude(field) or field
     end
     local function off_river(field, blocks_out)
         return shape.river_exclude and shape.river_exclude(field, blocks_out) or field

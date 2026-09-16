@@ -2001,6 +2001,49 @@ Found by sampling the whole disc on a grid to draw a map of it.
   slower (1/95 rather than 1/72) and its cut higher, so the groves come
   out the same size with more sunlit ground between them.
 
+### The cold core swapped, and three more biomes: Icefall, Silverwood, Salt Pan
+
+- **The Frozen Wastes are the ice cap now and the Alpine Highlands stand
+  round it** ("the alpine highlands and frozen wastes need to switch
+  spots"): the Crown is the Wastes' permafrost plain, split by the
+  province noise with the new **Icefall** — the same ground dressed as
+  the glacier itself: blue ice cracked into polygons, clear ice down into
+  the crevasses and over the frozen lakes, moraine bands, seracs and
+  fallen blocks standing dense, a thin bright haze. Frostmoor, the frost
+  ring's dry half, is the alpine's mountains; the alpine map is twelve
+  kilometres from the axis either way, so it reaches. In shape.lua the
+  swap is `frozen * (1 - ring) + ring * (alpine * dry + taiga * (1 -
+  dry))` — the same programs and weights the other way round. The cold
+  core's HUD asks the five placement fields in order, since snow, ice,
+  permafrost, granite, fir and moss are shared between them.
+- **Silverwood**, Firwold's other half ("I need a second biome in taiga
+  too"): birch and aspen in loose stands on a lichen floor, mulch under
+  the stands, moss on the ridge crests, the Taiga's peat basins between —
+  the Taiga's own ground (`shape.taiga_feature`), dressed pale and open
+  where the Taiga is dark and close. No terms of its own; the cold core's
+  cross-fade band is at 980 of 1,024 and could not carry any.
+- **Salt Pan**, a third of the Glass Waste ("break up the arid mesa ring
+  with at least one more biome"): a dead-flat white crust cracked into
+  polygons, brine pools in its hollows (the ocean's brine, by the
+  terraced fluid fill), salt pillars, dead snags crusted to the knees, a
+  rim of dried mud. It does not add terms; it CAPS them — in the "glass"
+  programs the ring's terms are taken under the pan's floor where its
+  weight is 1, so the mesa's benches and the badlands' fins are cut to
+  the flat, and the cap stands a hundred blocks up where the weight is 0.
+  From above only: the ring's cuts below its base are shallow and the pan
+  keeps them as low spots, and the lower cap cost fifty operations the
+  ring did not have (it touched 1,020; it is 968). It sits on the
+  province noise's "b" side past a split of 0.2 — a span's fifth entry
+  now — inset from the ring's outer strip, which runs in the "verdant"
+  programs at 989. The mesa and the badlands keep their spans; it paints
+  over them, their structures keep off it, and their landings do too.
+- **New nodes**: `lichen`, `salt`.
+- Checked headless on a fresh world: all eight cold and glass biomes
+  teleported to and named, the pan's pools wet, nothing refused.
+  Programs: alpine 607, rim 723 (was 759 — the alpine's terms are cheaper
+  than the Wastes'), all 980, glass 968, verdant 989. **A fresh world is
+  needed.**
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

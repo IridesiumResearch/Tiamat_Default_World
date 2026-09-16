@@ -104,6 +104,8 @@ BLOCKS = {
     "peony":          (214, 128, 156,  0),
     "poppy":          (178,  54,  48,  0),
     "bluebell":       ( 94, 106, 190,  0),
+    "lichen":         (158, 170, 142,  0),   # the Silverwood floor (2.8)
+    "salt":           (234, 232, 224,  0),   # the Salt Pan (2.9)
     "lava":           (214,  84,  22,  0),   # the fluid's block
     "glow_cap":       (150, 224, 226,  0),   # the river's mushrooms (2026-09-15)
     "charcoal":       ( 58,  56,  60,  0),

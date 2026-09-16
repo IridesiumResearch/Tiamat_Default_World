@@ -84,6 +84,10 @@ local function channel_w()
     return n.clamp(n.mul(n.add(n.contour("tg_channel", CHANNEL_FREQ, 2), n.const(-CHANNEL_W)), n.const(-1.5)), 0.0, 1.0)
 end
 
+-- The features, for the Silverwood (2.8), which stands on this ground and
+-- dresses it.
+shape.taiga_feature = { upland = upland, ridge = ridge_w, hummock = hummock, basin = basin_w, channel = channel_w }
+
 -- The Taiga's terms of the terrain, km, added to the depth. Written
 -- deepest-first down a left-leaning chain: `cold_terms` evaluates it with
 -- two buffers already held.

@@ -296,6 +296,12 @@ block("peony", "Peony", "Heavy pink blooms that nod after rain.", { hardness = 0
 block("poppy", "Poppy", "Scarlet, on a thin hairy stem.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 block("bluebell", "Bluebells", "Nodding violet-blue bells; they carpet the groves.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 
+-- 2.8 Silverwood and 2.9 Salt Pan (2026-09-16): a lichen floor for the
+-- birches, and the pan's crust. The birches are the woodland's log and
+-- the Flower Forest's leaves; the pan's pools are the ocean's brine.
+block("lichen", "Lichen", "A pale grey-green crust over the ground under the birches, crisp underfoot.", { hardness = 0.3, tint = { strength = 0.14, scale = 96 } })
+block("salt", "Salt", "The pan's crust: white, hard, cracked into polygons, glaring in the sun.", { hardness = 0.7, tint = { strength = 0.06, scale = 128 } })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

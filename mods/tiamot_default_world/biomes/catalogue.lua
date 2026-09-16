@@ -35,10 +35,10 @@ biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
-    spans = { { "crown", "crown" } },
+    spans = { { "frost", "frost", "dry" } },
     note = "1.3 — the cold core, both halves of it: the Crown and Frostmoor. Its terrain is a MAP, so it reaches exactly as far as that map does — see the map constants in its own file." }
 biome{ id = "frozen_wastes", name = "Frozen Wastes", area = "surface",
-    spans = { { "frost", "frost", "dry" } },
+    spans = { { "crown", "crown", nil, "a" } },
     note = "1.9 — Frostmoor, the frost ring's dry half (2026-09-14, the designer's choice): permafrost plains, pressure ridges, crevasses, glaciers with ice caves, seracs, cryo-lakes. Its terrain is cross-faded into the alpine's mountains (shape.lua, cold_terms)." }
 biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
     spans = { { "temperate", "hem" } },
@@ -67,9 +67,21 @@ biome{ id = "badlands", name = "Badlands", area = "surface",
     spans = { { "glass", "glass", "wet" } },
     ring = "glass", humidity = { 0.0, 0.42 }, note = "2.1 — the Glass Waste's wet half: fins, rills, gullies, piping voids, banded ash and clay." }
 biome{ id = "taiga", name = "Taiga", area = "surface",
-    spans = { { "frost", "frost", "wet" } },
+    spans = { { "frost", "frost", "wet", "a" } },
     ring = "frost", humidity = { -0.05, 0.42 },
     note = "2.2 — Firwold, the frost ring's wet half: rolling uplands and glacial ridges, peat basins with stagnant pools, a wall of spruce, ancient pines, fallen logs, fog. Its terrain is cross-faded into the alpine's mountains and the Frozen Wastes' plains (shape.lua, cold_terms)." }
+biome{ id = "icefall", name = "Icefall", area = "surface",
+    spans = { { "crown", "crown", nil, "b" } },
+    ring = "crown",
+    note = "2.7 — the Crown's other half (2026-09-16): the ice cap broken — blue ice, crevasse cracks, seracs and ice towers, moraine bands. The Frozen Wastes' ground, dressed." }
+biome{ id = "silverwood", name = "Silverwood", area = "surface",
+    spans = { { "frost", "frost", "wet", "b" } },
+    ring = "frost", humidity = { -0.05, 0.42 },
+    note = "2.8 — Firwold's other half (2026-09-16): birch and aspen stands on a lichen floor, pale and open where the Taiga is dark and close. The Taiga's ground, dressed." }
+biome{ id = "salt_pan", name = "Salt Pan", area = "surface",
+    spans = { { "glass", "glass", nil, "b", 0.2 } },
+    ring = "glass",
+    note = "2.9 — a third of the Glass Waste (2026-09-16), inset from its outer edge: a dead-flat white crust, polygon cracks, brine pools, salt pillars. The ground is clamped to the pan's floor from both sides in the glass programs." }
 biome{ id = "volcanic_foothills", name = "Volcanic Foothills", area = "surface",
     spans = { { "ember", "ember" } },
     ring = "ember", note = "2.3 — the Ember Ridge, the only surface sign of the magma shell: stepped basalt ridges, cinder cones, lava levees, gouges, ash gullies, thermal fissures venting steam." }

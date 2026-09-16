@@ -132,6 +132,7 @@ M.PROVINCE_FREQ = 1 / 3000
 M.PROVINCE_OCTAVES = 2
 M.PROVINCE_SPLIT = 0.0    -- the noise runs +/-0.5: an even share either side
 M.PROVINCE_BLEND = 0.05   -- in the noise's units: the terms fade up over this, from the line the materials change on
+M.SALT_RAMP = 0.10        -- km: how far the Salt Pan's clamps stand off the ground where the pan is not (a bench is 64 blocks at most)
 M.HUMIDITY_SPLIT = -0.05  -- the noise runs +/-0.5 after the clamp: the dry half is the smaller
 M.HUMIDITY_BLEND = 0.04   -- in the noise's units: a few hundred blocks of cross-fade
 M.HUMIDITY_DITHER = 0.03  -- +/-, at DITHER_FREQ: the speckle of the material edge
@@ -428,20 +429,24 @@ end
 
 -- Which side of a province a place is, as a mask positive on its side:
 -- "a" and "b" are exact complements, as the humidity's halves are.
-function M.province_mask(side)
+function M.province_mask(side, split)
+    split = split or M.PROVINCE_SPLIT
     local p = noise("province", M.PROVINCE_FREQ, M.PROVINCE_OCTAVES, 1.0, M.HUMIDITY_STRETCH)
     if side == "b" then
-        return sub(p, const(M.PROVINCE_SPLIT))
+        return sub(p, const(split))
     end
-    return mul(sub(p, const(M.PROVINCE_SPLIT)), const(-1.0))
+    return mul(sub(p, const(split)), const(-1.0))
 end
 -- The same as a 0-to-1 weight for a biome's TERMS, rising from nothing at
 -- the line its materials change on: a dune field starts flat exactly where
 -- the sand starts. Six operations, which is what it costs every program
 -- that carries the terms.
-function M.province_weight(side)
+-- `split` moves the line (a span's fifth entry): 0 is an even share, 0.2
+-- gives side "b" about a third of the ground.
+function M.province_weight(side, split)
+    split = split or M.PROVINCE_SPLIT
     local p = noise("province", M.PROVINCE_FREQ, M.PROVINCE_OCTAVES, 1.0, M.HUMIDITY_STRETCH)
-    local raw = side == "b" and sub(p, const(M.PROVINCE_SPLIT)) or sub(const(M.PROVINCE_SPLIT), p)
+    local raw = side == "b" and sub(p, const(split)) or sub(const(split), p)
     return clamp(mul(raw, const(1.0 / M.PROVINCE_BLEND)), 0.0, 1.0)
 end
 
@@ -722,20 +727,32 @@ end
 -- the Wastes next and the Taiga deepest in: the Taiga's terms run with two
 -- buffers held, and are written for it. The alpine alone, or with the
 -- Wastes alone, when a file is not loaded.
+-- **Swapped 2026-09-16** ("the alpine highlands and frozen wastes need to
+-- switch spots"): the Frozen Wastes' plains are the ICE CAP on the Crown,
+-- and the alpine's mountains stand round it on Frostmoor, the frost ring's
+-- dry half — `frozen * (1 - ring) + ring * (alpine * dry + taiga * (1 -
+-- dry))`. The alpine map is 1,024 samples at 24 blocks, twelve kilometres
+-- from the axis either way, so it reaches the frost ring's outer edge with
+-- room to spare. Same programs, same weights, the same number of
+-- operations as the other way round.
 local function cold_terms(no_crown)
-    if no_crown and M.frozen_terms and M.taiga_terms then
+    if no_crown and M.alpine_terms and M.taiga_terms then
         -- Outside the Crown's reach the ring weight is 1: the two halves.
-        return add(mul(M.frozen_terms(), frost_dry_w()), mul(M.taiga_terms(), add(mul(frost_dry_w(), const(-1.0)), const(1.0))))
+        return add(mul(M.alpine_terms(), frost_dry_w()), mul(M.taiga_terms(), add(mul(frost_dry_w(), const(-1.0)), const(1.0))))
     end
     if not M.frozen_terms then
         return M.alpine_terms()
     end
     if not M.taiga_terms then
-        local w = frozen_weight()
-        return add(mul(M.alpine_terms(), add(mul(w, const(-1.0)), const(1.0))), mul(M.frozen_terms(), frozen_weight()))
+        local w = frost_ring_w()
+        return add(mul(M.frozen_terms(), add(mul(w, const(-1.0)), const(1.0))), mul(M.alpine_terms(), frost_ring_w()))
     end
-    local mix = add(mul(M.frozen_terms(), frost_dry_w()), mul(M.taiga_terms(), add(mul(frost_dry_w(), const(-1.0)), const(1.0))))
-    return add(mul(M.alpine_terms(), add(mul(frost_ring_w(), const(-1.0)), const(1.0))), mul(mix, frost_ring_w()))
+    local mix = add(mul(M.alpine_terms(), frost_dry_w()), mul(M.taiga_terms(), add(mul(frost_dry_w(), const(-1.0)), const(1.0))))
+    return add(mul(M.frozen_terms(), add(mul(frost_ring_w(), const(-1.0)), const(1.0))), mul(mix, frost_ring_w()))
+end
+-- The Crown's share, for the biomes that stand on the ice cap.
+function M.crown_weight()
+    return add(mul(frost_ring_w(), const(-1.0)), const(1.0))
 end
 
 -- A grassland ridge: positive along the zero contour of its noise.
@@ -887,6 +904,19 @@ function M.terrain(flank)
             dry = add(mul(M.mesa_terms(), glass_weight()), dry)
         end
         terms = add(mul(dry, dry_weight()), mul(wet, add(mul(dry_weight(), const(-1.0)), const(1.0))))
+        if M.salt_floor then
+            -- The Salt Pan (2026-09-16): where its weight is 1 the ground is
+            -- clamped down to the pan's own floor — the benches and fins cut
+            -- to it — and where the weight is 0 the cap stands SALT_RAMP
+            -- above and touches nothing. `terms` is evaluated once, as the
+            -- left operand of the min.
+            -- From above only: the ring's cuts under its base are shallow
+            -- (an arroyo two blocks, a piping void six) and the pan keeps
+            -- them as its own low spots. Clamping from below as well cost
+            -- another fifty operations, and the ring was at 1,020.
+            local off = mul(sub(const(1.0), M.salt_weight()), const(M.SALT_RAMP))
+            terms = min(terms, add(M.salt_floor(), off))
+        end
     elseif mode == "verdant" then
         -- The rainforest's karst, ravines and sinkholes over the wet half's
         -- own gullies, weighted in across the belt's edges; the dry half is

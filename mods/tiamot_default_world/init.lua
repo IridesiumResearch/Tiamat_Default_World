@@ -65,10 +65,13 @@ load("biomes.coastal_cliffs")        -- 1.4, the steep stretches of the Long Sho
 load("biomes.river_valleys")         -- 1.6, the troughs and their rivers, cut across every ring they cross
 load("biomes.jungle")                -- 1.7, the Verdant Belt's wet half: karst under megatrees (the Dense Rainforest Canopy until 2026-09-15)
 load("biomes.deep_ocean")            -- 1.8, abyssal plains under a flat sea (not placed)
-load("biomes.frozen_wastes")         -- 1.9, Frostmoor: the frost ring's dry half
+load("biomes.frozen_wastes")         -- 1.9, the Crown's ice cap (Frostmoor until 2026-09-16)
+load("biomes.icefall")               -- 2.7, the Crown's other half: the ice cap broken
 load("biomes.arid_mesa")             -- 2.0, the Glass Waste's dry half: benches and canyons
 load("biomes.badlands")              -- 2.1, the Glass Waste's wet half: fins, rills and gullies
+load("biomes.salt_pan")              -- 2.9, a third of the Glass Waste: the flat white crust
 load("biomes.taiga")                 -- 2.2, Firwold: spruce uplands and peat basins
+load("biomes.silverwood")            -- 2.8, Firwold's other half: birch on lichen
 load("biomes.volcanic_foothills")    -- 2.3, the Ember Ridge: basalt terraces, cinder cones, fissures
 load("biomes.coral_fringed_shallows") -- 2.4, the second lane's sea: lagoon flats behind a barrier reef
 load("biomes.dunes")                 -- 2.5, Goldwater: barchan dunes and deflation basins

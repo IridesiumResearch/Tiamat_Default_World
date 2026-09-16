@@ -72,6 +72,8 @@ end
 for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lichen }) do
     OWNER[material] = "taiga"
 end
+OWNER[blocks.lichen] = "silverwood"
+OWNER[blocks.salt] = "salt_pan"
 for _, material in ipairs({ blocks.white_sand, blocks.calcite, blocks.pink_algae, blocks.coral_magenta,
     blocks.coral_cyan, blocks.coral_amber, blocks.sea_anemone }) do
     OWNER[material] = "coral_fringed_shallows"
@@ -86,7 +88,7 @@ for _, material in ipairs({ blocks.lava_rock, blocks.pumice, blocks.lava }) do  
 end
 -- Whose ground answers at once, wherever in the column it is found.
 local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true,
-    taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true }
+    taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true, salt_pan = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -114,6 +116,8 @@ end
 -- asked instead. A material one of them owns ALONE — a poppy, an apple
 -- tree, leaf litter, sand — still decides, above this.
 local MOSAIC = { "flower_forest", "dunes", "temperate_woodlands", "rolling_grasslands" }
+-- The cold core, in the order to ask: the two on the Crown, then the ring.
+local COLD = { "frozen_wastes", "icefall", "alpine_highlands", "taiga", "silverwood" }
 -- And the owners a shared material can name, which the field overrules.
 local MOSAIC_MEMBER = { flower_forest = true, dunes = true, temperate_woodlands = true,
     rolling_grasslands = true, taiga = true, jungle = true }
@@ -126,21 +130,25 @@ function tdw.biome_under(x, y, z)
     if sea then
         return sea
     end
-    -- Firwold's ground is fir, moss and peat, which the alpine and the
-    -- rainforest claim, and the Ember Ridge's is the coast's basalt: the
-    -- placement fields say first.
-    if tdw.taiga_at and tdw.taiga_at(x, z) then
-        return "taiga"
+    -- The cold core's five share snow, ice, permafrost, granite, fir and
+    -- moss between them, so inside the frost ring's edge the placement
+    -- fields say, in the order the ground would (2026-09-16).
+    if (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC) <= shape.ALPINE_EDGE_U + shape.RING_WOBBLE then
+        for _, id in ipairs(COLD) do
+            if tdw.placed_at(id, x, z) then
+                return id
+            end
+        end
     end
     if tdw.volcanic_at and tdw.volcanic_at(x, z) then
         return "volcanic_foothills"
     end
-    local owner = tdw.biome_under_ground(x, y, z)
-    -- The alpine's snow, ice and permafrost are the Frozen Wastes' too:
-    -- which of them a place is, is the placement field's to say.
-    if owner == "alpine_highlands" and tdw.frozen_at and tdw.frozen_at(x, z) then
-        return "frozen_wastes"
+    -- The Salt Pan paints over the mesa's and the badlands' ground, and its
+    -- crust is two blocks over theirs: the field says (2026-09-16).
+    if tdw.salt_at and tdw.salt_at(x, z) then
+        return "salt_pan"
     end
+    local owner = tdw.biome_under_ground(x, y, z)
     -- The Jungle's floor is moss, but its ravines are clay and its hollows
     -- mud, which say nothing: the placement field says.
     if owner == nil and tdw.jungle_at and tdw.jungle_at(x, z) then
@@ -352,6 +360,12 @@ local FIELDS = {}
 local function field_of(id)
     if FIELDS[id] == nil then
         local mask = tdw.biome_mask(shape.node, id)
+        -- A biome may narrow where `/tp` lands in it: the mesa and the
+        -- badlands keep off the Salt Pan, which paints over their spans.
+        local biome = tdw.biomes[id]
+        if mask and biome and biome.locate_field then
+            mask = biome.locate_field(mask)
+        end
         FIELDS[id] = mask and shape.compile("tp." .. id, mask) or false
     end
     return FIELDS[id]

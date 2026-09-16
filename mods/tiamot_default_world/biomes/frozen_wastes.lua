@@ -109,6 +109,11 @@ local function polygon_w()
     return n.max(a, n.clamp(n.mul(n.add(n.contour("fw_poly_b", POLY_FREQ * 1.3, 1), n.const(-POLY_W)), n.const(-2.0)), 0.0, 1.0))
 end
 
+-- The features, for the Icefall (2.7), which stands on this ground and
+-- dresses it: the same fields, so its ice is where the terrain's ice is.
+shape.frozen_feature = { plain = plain, snow = snow_w, ridge = ridge_w, crevasse = crevasse_w, crevasse_d = crevasse_d,
+    glacier = glacier_w, lake = lake_w, polygon = polygon_w }
+
 -- The Frozen Wastes' terms of the terrain, km, added to the depth.
 function shape.frozen_terms()
     local acc = n.add(plain(), n.noise("fw_dune", DUNE_FREQ, 2, DUNE_AMP, WIND))
@@ -157,8 +162,9 @@ function tdw.frozen_at(x, z)
         return only == ID
     end
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
-    local frost = tdw.layers.ring_by_id.frost
-    if u < frost.u[1] - shape.RING_WOBBLE or u > frost.u[2] + shape.RING_WOBBLE then
+    -- The Crown, since 2026-09-16.
+    local crown = tdw.layers.ring_by_id.crown
+    if u > crown.u[2] + shape.RING_WOBBLE then
         return false
     end
     local seed = game.world_seed or tdw.seed

@@ -62,6 +62,8 @@ function tdw.register_biome(spec)
                 "biome " .. spec.id .. ": a span's half is \"wet\", \"dry\" or nothing")
             assert(span[4] == nil or span[4] == "a" or span[4] == "b",
                 "biome " .. spec.id .. ": a span's province is \"a\", \"b\" or nothing")
+            assert(span[5] == nil or type(span[5]) == "number",
+                "biome " .. spec.id .. ": a span's province split is a number or nothing")
         end
     end
     spec.fills = nil
@@ -205,7 +207,7 @@ function tdw.biome_mask(n, id, _)
             band = n.min(band, tdw.shape.humidity_mask(span[3] == "wet"))
         end
         if band and span[4] then
-            band = n.min(band, tdw.shape.province_mask(span[4]))
+            band = n.min(band, tdw.shape.province_mask(span[4], span[5]))
         end
         if band then
             acc = acc and n.max(acc, band) or band
