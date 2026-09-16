@@ -254,18 +254,18 @@ local function snags(rng)
             { ox + lean[1] * 0.3, tall * 0.6, oz + lean[2] * 0.3, 0.33 },
             { ox + lean[1] * 0.7, tall, oz + lean[2] * 0.7, 0.22 },
         }
-        schem.push_path(blocks.dead_wood, trunk, BLIND)
+        schem.push_path(blocks.dead_log, trunk, BLIND)
         for _ = 1, rng:below(3) do
             local px, py, pz = schem.path_point(trunk, tall * (0.4 + rng:below(4) * 0.12))
             local d = schem.DIR16[rng:below(16) + 1]
             local tip = { px + d[1] * 1.6, py + 0.8, pz + d[2] * 1.6, 0.14 }
-            schem.push_path(blocks.dead_wood, { { px, py, pz, 0.2 }, tip }, BLIND)
+            schem.push_path(blocks.dead_log, { { px, py, pz, 0.2 }, tip }, BLIND)
             schem.push_ellipsoid(blocks.snow, tip[1], tip[2] + 0.35, tip[3], 0.45, 0.25, 0.45, BLIND)
         end
         local top = trunk[3]
         schem.push_ellipsoid(blocks.snow, top[1], top[2] + 0.35, top[3], 0.4, 0.3, 0.4, BLIND)
     end
-    return schem.record_schematic({ [blocks.dead_wood] = 1 })
+    return schem.record_schematic({ [blocks.dead_log] = 1 })
 end
 
 local BUILT = nil
@@ -338,7 +338,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 1, to = 5 * km, material = blocks.permafrost },
         { code = 2, to = 2 * km, material = blocks.snow },
         { code = 2, from = 2 * km, to = 5 * km, material = blocks.permafrost },
-        { code = 3, to = 1 * km, material = blocks.creek_bed },
+        { code = 3, to = 1 * km, material = blocks.gravel },
         { code = 3, from = 1 * km, to = 5 * km, material = blocks.permafrost },
         { code = 4, to = 14 * km, material = blocks.ice },
         { code = 5, to = 1 * km, material = blocks.snow },
@@ -356,7 +356,7 @@ tdw.build_biome(ID, function(ctx)
             n.sub(n.noise("fw_tuft_patch", TUFT_PATCH_FREQ, 2, 1.0), n.const(TUFT_PATCH_MIN))))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.alpine_grass, cells = 2, take = tufts },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -465,3 +465,6 @@ tdw.on_random_tick(blocks.snow, function(x, y, z)
     end
     return true
 end)
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint.
+tdw.biome_tint("frozen_wastes", { 0.82, 0.94, 1.0 })

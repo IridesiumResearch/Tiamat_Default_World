@@ -29,8 +29,8 @@
 --
 -- Stand-ins until named: spruce and pine wood and needles are the alpine
 -- fir's `fir_log` and `fir_needles`; peat is the rainforest's `black_mud`;
--- ridge rubble is `granite` and `creek_bed`. New: `mulch` (asked for by
--- name), `rust_grass` and `hanging_lichen` (named in the brief, with nothing
+-- ridge rubble is `granite` and `gravel`. New: `mulch` (asked for by
+-- name), `tall_grass` and `lichen` (named in the brief, with nothing
 -- to stand in for a rust-brown tuft or a pale hanging strand).
 
 local blocks = tdw.blocks
@@ -154,7 +154,7 @@ local BLIND = { blind = true }
 local function lichen(x, y, z, rng)
     for _ = 1, 1 + rng:below(2) do
         local ox, oz = x + (rng:below(3) - 1) * 0.25, z + (rng:below(3) - 1) * 0.25
-        schem.push_path(blocks.hanging_lichen, { { ox, y - 0.1, oz, 0.2 }, { ox, y - 0.9 - rng:below(4) * 0.35, oz, 0.12 } }, BLIND)
+        schem.push_path(blocks.lichen, { { ox, y - 0.1, oz, 0.2 }, { ox, y - 0.9 - rng:below(4) * 0.35, oz, 0.12 } }, BLIND)
     end
 end
 
@@ -167,7 +167,7 @@ local function dead_branches(trunk_x, trunk_z, from, to, reach, rng)
             local d = schem.DIR16[(turn + k * 6) % 16 + 1]
             local len = reach * (0.6 + rng:below(4) * 0.15)
             local tip = { trunk_x + d[1] * len, h - len * 0.7, trunk_z + d[2] * len, 0.1 }
-            schem.push_path(blocks.dead_wood, { { trunk_x, h, trunk_z, 0.16 }, tip }, BLIND)
+            schem.push_path(blocks.dead_log, { { trunk_x, h, trunk_z, 0.16 }, tip }, BLIND)
             if rng:below(3) > 0 then
                 lichen(tip[1], tip[2], tip[3], rng)
             end
@@ -250,13 +250,13 @@ local function dwarf(rng)
     local lean = schem.DIR16[rng:below(16) + 1]
     local trunk = { { 0.5, -1.0, 0.5, 0.3 }, { 0.5 + lean[1] * 0.4, tall * 0.5, 0.5 + lean[2] * 0.4, 0.22 },
         { 0.5 + lean[1] * 0.3, tall, 0.5 + lean[2] * 0.3, 0.1 } }
-    schem.push_path(rng:below(2) == 0 and blocks.dead_wood or blocks.fir_log, trunk, BLIND)
+    schem.push_path(rng:below(2) == 0 and blocks.dead_log or blocks.fir_log, trunk, BLIND)
     dead_branches(trunk[2][1], trunk[2][3], 1.0, tall * 0.7, 0.9, rng)
     for _ = 1, rng:below(3) do
         local px, py, pz = schem.path_point(trunk, tall * (0.5 + rng:below(4) * 0.12))
         schem.push_ellipsoid(blocks.fir_needles, px, py, pz, 0.7, 0.5, 0.7, { rough = 0.5, blind = true })
     end
-    return schem.record_schematic({ [blocks.fir_log] = 1, [blocks.dead_wood] = 1 })
+    return schem.record_schematic({ [blocks.fir_log] = 1, [blocks.dead_log] = 1 })
 end
 
 -- A boulder, rough grey granite with a coat of moss over its top.
@@ -283,7 +283,7 @@ local function rubble(rng)
     for _ = 1, 3 + rng:below(5) do
         local x, z = 0.5 + rng:below(7) - 3, 0.5 + rng:below(7) - 3
         local r = 0.55 + rng:below(4) * 0.2
-        schem.push_ellipsoid(rng:below(3) == 0 and blocks.creek_bed or blocks.granite, x, r * 0.3, z, r, r * 0.8, r,
+        schem.push_ellipsoid(rng:below(3) == 0 and blocks.gravel or blocks.granite, x, r * 0.3, z, r, r * 0.8, r,
             { rough = 0.5, blind = true })
     end
     return schem.record_schematic({})
@@ -310,7 +310,7 @@ local function fallen_log(rng)
         local t = 0.3 + k * 0.15
         local px, pz = ax + (bx - ax) * t, az + (bz - az) * t
         local s = (rng:below(2) == 0) and 1 or -1
-        schem.push_path(blocks.dead_wood, { { px, y, pz, 0.3 }, { px + side[1] * s * 2.2, y + 1.4, pz + side[2] * s * 2.2, 0.12 } }, BLIND)
+        schem.push_path(blocks.dead_log, { { px, y, pz, 0.3 }, { px + side[1] * s * 2.2, y + 1.4, pz + side[2] * s * 2.2, 0.12 } }, BLIND)
     end
     return schem.record_schematic({ [blocks.fir_log] = 1 })
 end
@@ -385,7 +385,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 1, from = 1 * km, to = 5 * km, material = blocks.dirt },
         { code = 2, to = 1 * km, material = blocks.moss },
         { code = 2, from = 1 * km, to = 5 * km, material = blocks.dirt },
-        { code = 3, to = 1 * km, material = blocks.creek_bed },
+        { code = 3, to = 1 * km, material = blocks.gravel },
         { code = 3, from = 1 * km, to = 5 * km, material = blocks.granite },
         { code = 4, to = 2 * km, material = blocks.mud },
         { code = 4, from = 2 * km, to = 5 * km, material = blocks.black_mud },
@@ -398,7 +398,7 @@ tdw.build_biome(ID, function(ctx)
         n.sub(n.const(0.6), basin_w()))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.rust_grass, cells = 2, take = tufts },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -477,3 +477,6 @@ if tdw.on_chunk_fog then
         return { r = FOG.r, g = FOG.g, b = FOG.b, visibility = visibility, top = top }
     end)
 end
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint.
+tdw.biome_tint("taiga", { 1.0, 0.78, 0.60 })

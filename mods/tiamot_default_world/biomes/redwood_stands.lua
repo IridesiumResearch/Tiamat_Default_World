@@ -29,7 +29,7 @@ local FALLEN_CELL, FALLEN_SQUARES = 48, 0.35
 
 tdw.biomes[ID].ring_mode = "temperate"
 tdw.biomes[ID].lazy = true
-tdw.biomes[ID].soil = blocks.loam
+tdw.biomes[ID].soil = blocks.dirt
 
 -- ------------------------------------------------------------ the trees
 
@@ -123,9 +123,9 @@ tdw.build_biome(ID, function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = 1 * km, material = blocks.mulch },
-        { code = 1, from = 1 * km, to = 5 * km, material = blocks.loam },
+        { code = 1, from = 1 * km, to = 5 * km, material = blocks.dirt },
         { code = 2, to = 1 * km, material = blocks.moss },
-        { code = 2, from = 1 * km, to = 5 * km, material = blocks.loam },
+        { code = 2, from = 1 * km, to = 5 * km, material = blocks.dirt },
     }
     local ferns = shape.compile("biome.redwood.ferns", masked(off_river(n.min(n.sub(n.noise("rw_fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN)),
         n.sub(n.noise("rw_fern_patch", FERN_PATCH_FREQ, 2, 1.0), n.const(FERN_PATCH_MIN))))))

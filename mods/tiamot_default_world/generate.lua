@@ -42,6 +42,11 @@ local SAFETY = 0.05               -- km, added to every bound
 local WARP_HI = shape.WARP_HI     -- the rim's wander, either way (shape.lua, the body)
 local STACK_Y_BLOCKS = shape.STACK_Y * 1000 + shape.Y0
 local HOLLOW_IN = (shape.HOLLOW_R - SAFETY) * (shape.HOLLOW_R - SAFETY)
+-- The gloam's light sediment (2026-09-16): flat beds through the dark, a
+-- noise stretched wide in x and z so its positive side lies in sheets a few
+-- blocks thick. Laid only in chunks wholly of the gloam's rock, so no bed
+-- runs into the stone above or out past the body's wall.
+local SEDIMENT_BEDS = shape.compile("sediment.beds", shape.node.sub(shape.node.noise("sediment_beds", 1 / 24, 2, 1.0, { x = 10, z = 10 }), shape.node.const(0.12)))
 
 -- Chunk-class counters, logged now and then so the cost mix is visible.
 local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0, by_layers = 0 }
@@ -79,8 +84,8 @@ end
 local DEEP_D = shape.SURFACE_BAND_D
 
 local function band_for(dmin)
-    if dmin > shape.ABYSS_D + SAFETY then return unclaimed(blocks.abyss_stone), 2 end
-    if dmin > shape.GLOAM_D + SAFETY then return unclaimed(blocks.gloam_stone), 1 end
+    if dmin > shape.ABYSS_D + SAFETY then return unclaimed(blocks.morphic_rock), 2 end
+    if dmin > shape.GLOAM_D + SAFETY then return unclaimed(blocks.dark_sediment), 1 end
     -- The surface band is the one depth band whose area has biomes; below
     -- it the normal caves begin, and nothing is built there.
     if dmin > DEEP_D + SAFETY then return unclaimed(blocks.stone), 0 end
@@ -276,6 +281,9 @@ local function generate(buf, pos)
 
     if painted and tmin > 0 then
         buf:fill_all(base)
+        if level == 1 then
+            buf:fill_density(SEDIMENT_BEDS, unclaimed(blocks.light_sediment), DETAIL)
+        end
         stats.filled = stats.filled + 1
     elseif body_by_layers then
         stats.carved = stats.carved + 1
@@ -299,10 +307,10 @@ local function generate(buf, pos)
             buf:fill_density(V.deep, WHITE, DETAIL)
         end
         if level < 1 and dmax > shape.GLOAM_D - SAFETY then
-            buf:fill_density(V.gloam, unclaimed(blocks.gloam_stone), DETAIL)
+            buf:fill_density(V.gloam, unclaimed(blocks.dark_sediment), DETAIL)
         end
         if level < 2 and dmax > shape.ABYSS_D - SAFETY then
-            buf:fill_density(V.abyss, unclaimed(blocks.abyss_stone), DETAIL)
+            buf:fill_density(V.abyss, unclaimed(blocks.morphic_rock), DETAIL)
         end
         if skin and painted and tmin < shape.SKIN_TOP then
             -- The biome's own top.

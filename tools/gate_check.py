@@ -74,8 +74,8 @@ def axis_bounds(a0, a1):
     lo = 0 if a0 <= 0 <= a1 else min(abs(a0), abs(a1))
     return lo, max(abs(a0), abs(a1))
 def band_for(dmin):
-    if dmin > ABYSS_D + SAFETY: return "abyss_stone", 2
-    if dmin > GLOAM_D + SAFETY: return "gloam_stone", 1
+    if dmin > ABYSS_D + SAFETY: return "morphic_rock", 2
+    if dmin > GLOAM_D + SAFETY: return "dark_sediment", 1
     return "stone", 0
 
 def classify(cx, cy, cz):

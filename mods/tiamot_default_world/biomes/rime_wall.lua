@@ -188,3 +188,9 @@ if tdw.on_chunk_fog then
         return { r = WHITEOUT.r, g = WHITEOUT.g, b = WHITEOUT.b, visibility = 160 }
     end)
 end
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint, on
+-- its band of the Hem.
+tdw.biome_tint("rime_wall", { 0.82, 0.94, 1.0 }, function()
+    return shape.node.min(tdw.biome_mask(shape.node, "rime_wall"), shape.rim_band(shape.RIM.wall))
+end)

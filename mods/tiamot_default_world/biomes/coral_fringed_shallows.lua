@@ -40,7 +40,7 @@
 --
 -- New nodes, asked for by name: pink algae, and the three coral tints.
 -- White sand, calcite and the anemones are new because nothing registered
--- stands in for them; the gravel is `creek_bed`, the pumice the Ember
+-- stands in for them; the gravel is `gravel`, the pumice the Ember
 -- Ridge's, the palms' timber the river's willow and their fronds the oak's.
 
 local blocks = tdw.blocks
@@ -195,7 +195,7 @@ end
 local CORALS = { blocks.coral_magenta, blocks.coral_cyan, blocks.coral_amber }
 local PRIORITY = {
     [blocks.coral_magenta] = 1, [blocks.coral_cyan] = 1, [blocks.coral_amber] = 1,
-    [blocks.calcite] = 1, [blocks.willow_wood] = 1, [game.AIR] = 2,
+    [blocks.calcite] = 1, [blocks.willow_log] = 1, [game.AIR] = 2,
 }
 
 -- An elkhorn: a short trunk off the floor and three to five flattened
@@ -280,7 +280,7 @@ local function bombora(rng)
     schem.record_begin()
     local r = 3.0 + rng:below(4) * 0.5
     local h = 2.6 + rng:below(4) * 0.4
-    schem.push_ellipsoid(blocks.limestone, 0.5, h - r * 0.4, 0.5, r, h, r * (0.9 + rng:below(3) * 0.1), ROUGH)
+    schem.push_ellipsoid(blocks.stone, 0.5, h - r * 0.4, 0.5, r, h, r * (0.9 + rng:below(3) * 0.1), ROUGH)
     schem.push_ellipsoid(game.AIR, 0.5, h - r * 0.5, 0.5, r - 1.4, h - 1.0, r - 1.4, BLIND)
     -- The hole in the top, and a mouth in one side.
     local d = schem.DIR16[rng:below(16) + 1]
@@ -307,7 +307,7 @@ local function palm(rng)
         local bow = t * t * (2.2 + rng:below(3) * 0.4)
         stem[#stem + 1] = { 0.5 + d[1] * bow, -1.5 + t * (tall + 1.5), 0.5 + d[2] * bow, 0.62 - 0.26 * t }
     end
-    schem.push_path(blocks.willow_wood, stem, BLIND)
+    schem.push_path(blocks.willow_log, stem, BLIND)
     local tip = stem[#stem]
     local fronds = 7 + rng:below(4)
     for f = 1, fronds do
@@ -407,7 +407,7 @@ tdw.build_biome(ID, function(ctx)
     local entries = {
         { code = 1, to = 4 * km, material = blocks.white_sand },
         { code = 1, from = 4 * km, to = 14 * km, material = blocks.calcite },
-        { code = 2, to = 2 * km, material = blocks.creek_bed },
+        { code = 2, to = 2 * km, material = blocks.gravel },
         { code = 2, from = 2 * km, to = 14 * km, material = blocks.white_sand },
         { code = 3, to = 1 * km, material = blocks.pumice },
         { code = 3, from = 1 * km, to = 14 * km, material = blocks.white_sand },
@@ -415,17 +415,11 @@ tdw.build_biome(ID, function(ctx)
         { code = 5, to = 1 * km, material = blocks.pink_algae },
         { code = 5, from = 1 * km, to = 14 * km, material = blocks.calcite },
         { code = 6, to = 14 * km, material = blocks.calcite },
-        { code = 7, to = 2 * km, material = blocks.creek_bed },
+        { code = 7, to = 2 * km, material = blocks.gravel },
         { code = 7, from = 2 * km, to = 14 * km, material = blocks.white_sand },
     }
-    -- The anemones: dense on the drop-off wall, from the crest's outer
-    -- edge to the foot of the ledge, and nowhere else.
-    local anemones = shape.compile("biome.reef.anemones", reef_only(n.min(
-        n.min(n.sub(out(), n.const(CREST_END - 6.0)), n.sub(n.const(seas.SHELF_END), out())),
-        n.sub(n.noise("reef_anemone", ANEMONE_FREQ, 1, 1.0), n.const(ANEMONE_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.sea_anemone, cells = 2, take = anemones },
     }
     if game.schematic_shapes then
         local built = structures()

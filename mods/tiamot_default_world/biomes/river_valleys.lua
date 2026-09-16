@@ -355,12 +355,12 @@ tdw.build_biome("river_valleys", function(ctx)
     local entries = {
         { code = 1, to = SOIL_DEPTH, material = blocks.grass },
         { code = 1, from = SOIL_DEPTH, to = 4 * km, material = blocks.dirt },
-        { code = 2, to = 3 * km, material = blocks.creek_bed },
+        { code = 2, to = 3 * km, material = blocks.gravel },
         { code = 3, to = SAND_DEPTH, material = blocks.sand },
         { code = 4, to = 3 * km, material = blocks.wet_clay },
         { code = 5, to = 4 * km, material = blocks.stone },
         { code = 6, to = 3 * km, material = blocks.mud },
-        { code = 7, to = 3 * km, material = blocks.creek_bed },
+        { code = 7, to = 3 * km, material = blocks.gravel },
         { code = 8, to = 4 * km, material = blocks.sand },
     }
     -- The cover: iris in the shallows and on the wet bank, mint on the damp
@@ -482,7 +482,7 @@ local function willow(rng)
             z = z + (rng:below(3) - 1) * 0.4 + lean[2] * t * 0.8
             points[#points + 1] = { x, -1.0 + t * (height + 1), z, 0.74 - 0.42 * t }
         end
-        schem.push_path(blocks.willow_wood, points, { blind = true })
+        schem.push_path(blocks.willow_log, points, { blind = true })
         tops[#tops + 1] = points[#points]
     end
     -- The branches, and what hangs off them.
@@ -491,7 +491,7 @@ local function willow(rng)
             local d = schem.DIR16[rng:below(16) + 1]
             local reach = 2.4 + rng:below(4) * 0.5
             local tip = { top[1] + d[1] * reach, top[2] + 1.0 + rng:below(3) * 0.4, top[3] + d[2] * reach, 0.2 }
-            schem.push_path(blocks.willow_wood, {
+            schem.push_path(blocks.willow_log, {
                 { top[1], top[2], top[3], 0.34 },
                 { top[1] + d[1] * reach * 0.5, top[2] + 0.9, top[3] + d[2] * reach * 0.5, 0.27 },
                 tip,
@@ -512,7 +512,7 @@ local function willow(rng)
             schem.push_path(blocks.willow_leaves, curtain, { blind = true })
         end
     end
-    return schem.record_schematic({ [blocks.willow_wood] = 1 })
+    return schem.record_schematic({ [blocks.willow_log] = 1 })
 end
 
 -- A palm: one bare stem bowing as it climbs, and a spray of fronds from its
@@ -528,7 +528,7 @@ local function palm(rng)
         points[#points + 1] = { 0.5 + lean[1] * bow, -1.0 + t * (tall + 1), 0.5 + lean[2] * bow,
             0.66 - 0.28 * t }
     end
-    schem.push_path(blocks.willow_wood, points, { blind = true })
+    schem.push_path(blocks.willow_log, points, { blind = true })
     local tip = points[#points]
     local fronds = 7 + rng:below(3)
     for f = 1, fronds do
@@ -541,7 +541,7 @@ local function palm(rng)
             { tip[1] + d[1] * reach, tip[2] - 1.2, tip[3] + d[2] * reach, 0.18 },
         }, { blind = true })
     end
-    return schem.record_schematic({ [blocks.willow_wood] = 1 })
+    return schem.record_schematic({ [blocks.willow_log] = 1 })
 end
 
 -- A drift pile: dead wood lying IN the ground, not over it. The root is the
@@ -558,7 +558,7 @@ local function snag(rng)
         local length = 2 + rng:below(3)
         local ox, oz = rng:below(3) - 1 + 0.5, rng:below(3) - 1 + 0.5
         local y = 0.1 + (i - 1) * 0.35
-        schem.push_path(blocks.dead_wood, {
+        schem.push_path(blocks.dead_log, {
             { ox - d[1] * length * 0.5, y, oz - d[2] * length * 0.5, 0.42 },
             { ox + d[1] * length * 0.5, y - 0.45, oz + d[2] * length * 0.5, 0.32 },
         }, { blind = true })

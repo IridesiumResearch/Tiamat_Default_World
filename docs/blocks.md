@@ -15,18 +15,47 @@ carries variation. What breaks up a surface is the renderer's — the
 large-scale `tint`, and per-cell value jitter once the engine has it (asks,
 item 5). A textured material is a decision the designer makes by name.
 
+## One of each (2026-09-16)
+
+The designer's rule: **no variants of a block.** One grass, one dirt, one
+lichen, one gravel; a biome that wants its grass or its dirt a different
+colour gets it from its **chunk tint** (`tdw.biome_tint`, biomes.lua), not
+from a block of its own. Woods are logs. Consolidated that day:
+
+| Was | Is |
+|---|---|
+| gloam stone | `dark_sediment`, with `light_sediment` in beds through it |
+| abyss stone, lantern stone, dream stone | `morphic_rock`, `hot_fiber_stone`, `cold_fiber_stone` |
+| loam, alpine turf | `dirt` |
+| leaf litter | `mulch` |
+| creek bed | `gravel` |
+| limestone | `stone` |
+| alpine grass, golden grass, rust grass | `tall_grass` (the tuft), coloured by the tint |
+| columnar cactus | `cactus` |
+| willow, kapok, juniper, apple, cherry, mangrove and acacia wood; dead wood | `*_log`, `dead_log` |
+| sinter, thermal mat | `lava_rock`, `magma` |
+| black sand | `dark_sand` |
+| sea anemone | `calcite` (the wall it lined) |
+| hanging lichen | `lichen` |
+| tube worms | `barnacles` round the vents |
+
+Tints set: the cold core and the Hem's cold rim a cold blue-green, the
+Taiga rust, the Silverwood pale, the Savanna dry gold; the Jungle and the
+Badlands kept theirs. The tint multiplies, so it shifts grass toward gold
+without brightening it (engine ask 33).
+
 ## The world (the shape and its layers)
 
 | Block | Where | Why |
 |---|---|---|
 | `stone` | everywhere below the skin | the body of the world |
 | `dirt` | skin where no biome claims the ground | "no biome yet" reads as brown |
-| `gloam_stone` | 1.6–4 km down | the dark caves' rock |
-| `abyss_stone` | below 4 km | the abyss's rock |
+| `dark_sediment`, `light_sediment` | 1.6–4 km down | the dark caves' rock, the light in flat beds through the dark |
+| `morphic_rock` | below 4 km | the abyss's rock |
 | `magma_crust`, `magma` | the magma shell | crust / lava look-alike |
-| `lantern_stone` | hot magical caves | glows |
+| `hot_fiber_stone` | hot magical caves | glows |
 | `caul` | slime border | the membrane |
-| `dream_stone` | cold magical caves | ice-lit |
+| `cold_fiber_stone` | cold magical caves | ice-lit |
 | `scorch` | the hollow ring | dense, dry |
 | `marrow`, `apex_stone` | the tail, below the apex | the needle |
 | `water` | any pool, later any sea | the block a full block of the fluid is drawn as; also the fluid |
@@ -38,13 +67,10 @@ item 5). A textured material is a decision the designer makes by name.
 | `grass` | the turf | |
 | `oak_log` | trunks, branches, root flares, root nodes | |
 | `oak_leaves` | canopies; transparent | |
-| `loam` | the soil under the turf, the brief's "deep dark loam" | |
-| `leaf_litter` | patches in the turf | |
-| `creek_bed` | wet gravel on the gully floors | |
-| `limestone` | half-buried rocks | one of two, the brief named both |
+| `gravel` | wet gravel on the gully floors | |
 | `granite` | half-buried rocks | |
 | `birch_log` | aspens scattered through the woodland; their own biome's later | asked for 2026-09-09; canopies reuse `oak_leaves` for now |
-| `dead_wood` | standing snags and fallen trunks | asked for 2026-09-09 |
+| `dead_log` | standing snags and fallen trunks | asked for 2026-09-09 |
 | `fern` | knee-high carpets, two cells tall, in clumps; blocky fronds | asked for 2026-09-10; for reuse |
 | `tall_grass` | tufts two or three cells tall, where the ferns are not; a sprite as tall as the run | asked for 2026-09-10; for reuse |
 | `bramble` | wild berry tangles, walked round; drawn as sprites | asked for 2026-09-10; for reuse |
@@ -66,7 +92,7 @@ Shares `grass`, `dirt` (its soil), `tall_grass` and `granite` (the erratics).
 
 ## 1.3 Alpine Highlands
 
-Shares `granite` (the skin), `dirt` (thin patches) and `creek_bed` (as
+Shares `granite` (the skin), `dirt` (thin patches) and `gravel` (as
 gravel drifts on the risers — a rename to `gravel` is the day it is used
 somewhere that is not wet).
 
@@ -79,15 +105,13 @@ somewhere that is not wet).
 | `water` (reused) | eight blocks under each lake's ice, as the BLOCK, not the fluid | until the fluid fill takes a level per column (engine-asks 18) |
 | `fir_log` | the cell-thin trunk of a mountain fir, below the tree line | asked for 2026-09-12 ("a tall thin fir tree") |
 | `fir_needles` | tiers of needle pads, a cone to a point; the leaves' dot look, darker | asked for 2026-09-12 with the fir |
-| `alpine_grass` | sparse tufts below the snowline, the temperate blades in a darker desaturated blue-green with a cold tint | asked for 2026-09-12; a tint is per material, so a hue is a block |
-| `dead_wood` (reused) | snags and fallen firs, one fir in twenty-one | as the woodlands, twice as often |
-| `alpine_turf` | turf over the dirt below the tree line, in the tufts' cold blue-green | 2026-09-12: the shared `grass` block carries the temperate tint, and a tint is per material |
+| `dead_log` (reused) | snags and fallen firs, one fir in twenty-one | as the woodlands, twice as often |
 
 ### 1.4 Coastal Cliffs (2026-09-13)
 
-Shares `stone` and `slate` (strata), `limestone` (standing in for the
+Shares `stone` and `slate` (strata), `stone` (standing in for the
 sandstone stratum: one new material a biome is the rule and two were asked
-for by name), `creek_bed` (the tide-washed gravel and the beaches), `grass`
+for by name), `gravel` (the tide-washed gravel and the beaches), `grass`
 and `tall_grass` (the cliff-top turf and its sparse tufts), and the `water`
 FLUID, filled below the sea level by the generator.
 
@@ -100,7 +124,7 @@ FLUID, filled below the sea level by the generator.
 
 ### 1.5 Coastal Shelf (2026-09-13) — the coast's sea side, one biome with the cliffs
 
-Shares `creek_bed` (gravel beds), `limestone` (the pavement, standing in
+Shares `gravel` (gravel beds), `stone` (the pavement, standing in
 for sandstone), `stone` (boulders), `fir_log` and `fir_needles` (the
 coastal pines on the rim).
 
@@ -120,15 +144,15 @@ coastal pines on the rim).
 
 
 Shares `sand` (the bed and the bars, from the shelf), `wet_clay` (the clay
-beds at the water line, since 2026-09-14; `mud` before, and never shown), `creek_bed` (gravel banks and riffles), `stone` (the
+beds at the water line, since 2026-09-14; `mud` before, and never shown), `gravel` (gravel banks and riffles), `stone` (the
 scoured bedrock shelves), `water` (the channel: the fluid since
-2026-09-14, the block before), `dead_wood` (snags and drift jams), `grass` and `tall_grass`
+2026-09-14, the block before), `dead_log` (snags and drift jams), `grass` and `tall_grass`
 (the terraces), and `oak_leaves` (the palms' fronds: the willow is the new
 tree, and a palm's crown is a shape rather than a material).
 
 | Block | Where | Why |
 |---|---|---|
-| `willow_wood` | the twisted multi-stem trunks leaning over the current | asked for by name 2026-09-14 |
+| `willow_log` | the twisted multi-stem trunks leaning over the current | asked for by name 2026-09-14 |
 | `willow_leaves` | the sweeping curtains, hung from the crown into the water | asked for by name 2026-09-14 |
 | `willow_planks` | not generated: the crafted board, registered with its tree | asked for by name 2026-09-14 |
 | `water_iris` | dense in the shallows and on the wet bank | asked for by name 2026-09-14 |
@@ -137,7 +161,7 @@ tree, and a palm's crown is a shape rather than a material).
 ### 1.7 Jungle (2026-09-14; the Dense Rainforest Canopy until 2026-09-15)
 
 Shares `mud` (the saturated floor), `grass`, `stone` (the outcrops, under
-moss), `willow_wood` and `oak_leaves` (the fan palms, as the river's), and
+moss), `willow_log` and `oak_leaves` (the fan palms, as the river's), and
 `oak_log` and `fern` (the tree ferns). The vines are `climbing_ivy`.
 
 | Block | Where | Why |
@@ -150,7 +174,7 @@ moss), `willow_wood` and `oak_leaves` (the fan palms, as the river's), and
 | `climbing_ivy` | strips up the megatrees' trunks, and ropes hung from their limbs | asked for by name 2026-09-14 |
 | `monstera` | stands of giant split leaves on the floor, three cells tall | asked for by name 2026-09-14 |
 | `pitcher_plant` ("Pitcher Plants") | in the bays between a megatree's buttress walls | asked for by name 2026-09-14, replacing the `ladys_mantle` stand-in |
-| `kapok_wood` | the kapoks' trunks, buttresses and limbs | asked for by name 2026-09-14, replacing `birch_log` |
+| `kapok_log` | the kapoks' trunks, buttresses and limbs | asked for by name 2026-09-14, replacing `birch_log` |
 | `kapok_leaves` | the kapoks' flat tiers of canopy | asked for by name 2026-09-14, replacing `oak_leaves` |
 | `kapok_planks` | not generated: the crafted board, registered with its tree | asked for by name 2026-09-14 |
 | `dry_clay` | up the ravines' walls, and under the wet clay of their floors | asked for by name 2026-09-14 |
@@ -158,11 +182,11 @@ moss), `willow_wood` and `oak_leaves` (the fan palms, as the river's), and
 
 ### 1.8 Deep Ocean (2026-09-14; not placed)
 
-Shares `mud`, `sand`, `creek_bed` (the gravel drifts), `dark_basalt` (crusts,
+Shares `mud`, `sand`, `gravel` (the gravel drifts), `dark_basalt` (crusts,
 reefs, ridges, pillars, chimneys), `magma` (in the cracks and the chimneys'
 mouths), and the coast's `barnacles`, `ocean_moss`, `kelp` and `seagrass`
 (round the vents and on the pillars' tops). Stand-ins until named:
-`limestone` for the white sand and the brine pools' salt crust, `black_mud`
+`stone` for the white sand and the brine pools' salt crust, `black_mud`
 for the fine dark sand, and the `water` block for how the `brine` fluid is
 drawn.
 
@@ -173,8 +197,8 @@ drawn.
 ### 1.9 Frozen Wastes (2026-09-14)
 
 Shares `snow`, `ice` (the blue glacial ice: ridges, glaciers, crevasse
-walls, under the lakes), `permafrost`, `creek_bed` (the polygons'
-frost-heaved gravel), `granite` (the erratics) and `dead_wood` (the snags).
+walls, under the lakes), `permafrost`, `gravel` (the polygons'
+frost-heaved gravel), `granite` (the erratics) and `dead_log` (the snags).
 
 | Block | Where | Why |
 |---|---|---|
@@ -184,9 +208,9 @@ frost-heaved gravel), `granite` (the erratics) and `dead_wood` (the snags).
 
 Shares `sand` (the red sand of the plains and talus, and the desert
 sandstone patches, until named), `dry_clay` (terracotta strata until named,
-and the arroyos' banks), `limestone` (pale tan sandstone until named),
-`dirt`, `creek_bed`, `mud`, `wet_clay`, `bramble` (sagebrush until named),
-`dead_wood` and `bone` (the nests), and `willow_wood` and `oak_leaves` (the
+and the arroyos' banks), `stone` (pale tan sandstone until named),
+`dirt`, `gravel`, `mud`, `wet_clay`, `bramble` (sagebrush until named),
+`dead_log` and `bone` (the nests), and `willow_log` and `oak_leaves` (the
 palms).
 
 | Block | Where | Why |
@@ -194,43 +218,41 @@ palms).
 | `rust_red_sandstone` | strata; under the plains and talus | asked for by name 2026-09-14 |
 | `ochre_sandstone` | strata; hoodoo bands | asked for by name 2026-09-14 |
 | `pale_terracotta` | the cap on every bench top and hoodoo | asked for by name 2026-09-14 |
-| `juniper_wood` | the junipers' and pines' crooked grey trunks | asked for by name 2026-09-14 |
+| `juniper_log` | the junipers' and pines' crooked grey trunks | asked for by name 2026-09-14 |
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
-| `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
+| `cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
 ### 3.11 Savanna, 3.13 Peat Fen, 3.14 Redwood Stands (2026-09-16)
 
 The Savanna shares `dirt`, `packed_dirt` (the termite mounds), `sand`,
-`granite`. The Karst Towers share `limestone`, `moss`, `grass`, `loam`,
-`mud`, `fern`, `kapok_wood`, `ironwood_leaves`, `oak_log`. The Fen shares
-`moss`, `black_mud`, `mud`, `tall_grass` (the cotton grass), `dead_wood`
+`granite`. The Karst Towers share `stone`, `moss`, `grass`, `dirt`,
+`mud`, `fern`, `kapok_log`, `ironwood_leaves`, `oak_log`. The Fen shares
+`moss`, `black_mud`, `mud`, `tall_grass` (the cotton grass), `dead_log`
 (the bog oaks) and the `water` FLUID. The Stands share `mulch`, `moss`,
-`loam`, `fern`.
+`dirt`, `fern`.
 
 | Block | Where | Why |
 |---|---|---|
-| `golden_grass` | the Savanna's cover | nothing registered is a dry gold grass |
-| `acacia_wood`, `acacia_leaves` | the flat-topped trees and thorn shrubs | no registered tree reads as an acacia |
+| `acacia_log`, `acacia_leaves` | the flat-topped trees and thorn shrubs | no registered tree reads as an acacia |
 | `reeds` | the Fen's pool margins, a cover three cells tall | nothing registered is a tall reed |
 | `redwood_log`, `redwood_needles` | the redwoods and the fallen giants | the biome is named for them |
 
 ### 3.9 Abyssal Trench, 3.10 Mangrove Coast (2026-09-16)
 
 The trench shares `black_mud`, `dark_basalt`, `sulfur`, `magma` (the
-smokers' throats), `thermal_mat` (the bacterial mats). The mangroves share
-`mud`, `black_mud`, `creek_bed`, `moss`.
+smokers' throats), `magma` (the bacterial mats). The mangroves share
+`mud`, `black_mud`, `gravel`, `moss`.
 
 | Block | Where | Why |
 |---|---|---|
-| `tube_worms` | a cover round the smokers' feet | the brief's tube worms; nothing registered is a crowd of tubes |
 | `glow_polyp` | a sparse cover over the trench's mud; gives a cold blue light | the brief's bioluminescence, in water no light reaches |
-| `mangrove_wood` | the mangroves' stems and prop roots | nothing registered is a dark red-brown tropical wood |
+| `mangrove_log` | the mangroves' stems and prop roots | nothing registered is a dark red-brown tropical wood |
 | `mangrove_leaves` | their crowns | nothing registered is a thick glossy leaf |
 
 ### 3.6 Heather Moor (2026-09-16)
 
 Shares `grass`, `black_mud` (the peat), `moss`, `granite`, `mud`,
-`creek_bed`, `fern` (the bracken), `tall_grass`, `oak_log` and `oak_leaves`
+`gravel`, `fern` (the bracken), `tall_grass`, `oak_log` and `oak_leaves`
 (the hawthorns), and the `water` FLUID.
 
 | Block | Where | Why |
@@ -242,23 +264,21 @@ Shares `grass`, `black_mud` (the peat), `moss`, `granite`, `mud`,
 
 The Barrens share `dark_basalt`, `volcanic_ash`, `pumice`. The Basin shares
 `mud`, `sulfur` (its geyser throats steam by the Foothills' random tick),
-`volcanic_ash`, `dead_wood`, and the `water` FLUID. The Cinder Coast
+`volcanic_ash`, `dead_log`, and the `water` FLUID. The Cinder Coast
 shares `dark_basalt`, `volcanic_ash`, `lava_rock`, `sulfur`.
 
 | Block | Where | Why |
 |---|---|---|
 | `obsidian` | the Barrens' sheets, razor ridges, shards and spires; glaze on the Cinder Coast's faces | the biome is named for it and nothing registered is black glass |
-| `sinter` | the Basin's floor, terrace dams, pool beds and geyser cones | nothing registered is a pale hot-spring crust |
-| `thermal_mat` | the orange microbial mats in the Basin's runoff | the brief's "mineral colours", and nothing registered is orange |
-| `black_sand` | the Cinder Coast's beaches and shelf | the brief's black sand; `black_mud` is a mud |
+| `dark_sand` | the Cinder Coast's beaches and shelf | the brief's black sand; `black_mud` is a mud |
 
 ### 2.7 Icefall, 2.8 Silverwood, 2.9 Salt Pan (2026-09-16)
 
-The Icefall shares `ice`, `clear_ice`, `snow` and `creek_bed` (moraine).
+The Icefall shares `ice`, `clear_ice`, `snow` and `gravel` (moraine).
 The Silverwood shares `birch_log` (the woodland's), `birch_leaves` (the
-Flower Forest's), `mulch`, `moss`, `black_mud`, `granite`, `rust_grass`.
+Flower Forest's), `mulch`, `moss`, `black_mud`, `granite`, `tall_grass`.
 The Salt Pan shares `dry_clay`, `wet_clay`, `mud`, `dried_mud`,
-`dead_wood`, and the `brine` FLUID (the ocean's).
+`dead_log`, and the `brine` FLUID (the ocean's).
 
 | Block | Where | Why |
 |---|---|---|
@@ -267,8 +287,8 @@ The Salt Pan shares `dry_clay`, `wet_clay`, `mud`, `dried_mud`,
 
 ### 2.4 Coral-Fringed Shallows (2026-09-15)
 
-Shares `creek_bed` (the gravel and the tidal gutters' floors), `pumice`
-(the Ember Ridge's), `limestone` (the bomboras), `willow_wood` and
+Shares `gravel` (the gravel and the tidal gutters' floors), `pumice`
+(the Ember Ridge's), `stone` (the bomboras), `willow_log` and
 `oak_leaves` (the leaning palms), and the `water` FLUID.
 
 | Block | Where | Why |
@@ -279,29 +299,28 @@ Shares `creek_bed` (the gravel and the tidal gutters' floors), `pumice`
 | `coral_amber` | the same three forms | with the magenta |
 | `white_sand` | the lagoon's flats, its bars and its spits | the brief's "white sand"; the world's `sand` is golden-tan and is the dunes' |
 | `calcite` | the reef rock under the algae, the drop-off wall, the arches | named in the brief 2026-09-15; nothing registered is reef rock |
-| `sea_anemone` | dense clusters down the drop-off walls | named in the brief 2026-09-15; nothing registered waves in the surge |
 
 ### 2.5 The Dunes (2026-09-15)
 
-No new nodes. Shares `sand` (golden-tan already), `creek_bed` (the
+No new nodes. Shares `sand` (golden-tan already), `gravel` (the
 deflation lag), `packed_dirt` (the wind-packed crust), `ochre_sandstone`
 and `rust_red_sandstone` (the yardangs and the wind-carved rocks),
-`dead_wood` (the snags), `bone` (the ribcages), `dead_sagebrush` and
+`dead_log` (the snags), `bone` (the ribcages), `dead_sagebrush` and
 `tall_grass` (what little grows in the hollows).
 
 ### 2.6 Flower Forest (2026-09-15)
 
-Shares `grass` and `loam` (the turf and its soil), `mulch` (the Taiga's),
-`moss` and `stone` (the half-buried stones), `creek_bed` (the brooks'
+Shares `grass` and `dirt` (the turf and its soil), `mulch` (the Taiga's),
+`moss` and `stone` (the half-buried stones), `gravel` (the brooks'
 pebble beds), `mud` (the seeps), `birch_log` (the woodland's) and the
 `water` FLUID.
 
 | Block | Where | Why |
 |---|---|---|
-| `apple_wood` | the orchard trees' crooked boles and limbs | "add the wood and flowers for the trees indicated with*", 2026-09-15 |
+| `apple_log` | the orchard trees' crooked boles and limbs | "add the wood and flowers for the trees indicated with*", 2026-09-15 |
 | `apple_leaves` | their low broad crowns | a crown cannot be cut out of nothing |
 | `apple_blossom` | through the crowns, and on the fallen logs | the flowers of the starred tree |
-| `cherry_wood` | the wild cherries' leaning trunks | asked for by name 2026-09-15 |
+| `cherry_log` | the wild cherries' leaning trunks | asked for by name 2026-09-15 |
 | `cherry_leaves` | under their blossom | with the wood |
 | `cherry_blossom` | deep pink, through the crowns | the flowers of the starred tree |
 | `birch_leaves` | the birches' narrow crowns | the birch's log was already the woodland's; its leaves were not |
@@ -327,21 +346,19 @@ and `dirt`.
 ### 2.2 Taiga (2026-09-15)
 
 Shares `fir_log` and `fir_needles` (spruce and pine, until named),
-`dead_wood`, `moss`, `mud`, `black_mud` (peat, until named), `granite`,
-`creek_bed` (crest rubble) and `dirt`.
+`dead_log`, `moss`, `mud`, `black_mud` (peat, until named), `granite`,
+`gravel` (crest rubble) and `dirt`.
 
 | Block | Where | Why |
 |---|---|---|
 | `mulch` | the forest floor, rust-brown | asked for by name 2026-09-15 |
-| `rust_grass` | rust-brown tufts off the basins | named in the brief 2026-09-15; nothing rust-brown to stand in |
-| `hanging_lichen` | pale strands dripping from dead lower branches | named in the brief 2026-09-15; nothing pale and hanging to stand in |
 
 ### 2.1 Badlands (2026-09-14)
 
 Shares `sand` (soft sandstone bands, until named), `dry_clay` (clay bands,
-the popcorn crust and the runoffs, until named), `creek_bed` (chert, until
+the popcorn crust and the runoffs, until named), `gravel` (chert, until
 named), `mud` (the gully floors' middles), `granite` (petrified trunks,
-until named), `tall_grass`, and the mesa's `juniper_wood` and
+until named), `tall_grass`, and the mesa's `juniper_log` and
 `juniper_needles` (the stunted trees).
 
 | Block | Where | Why |
@@ -365,6 +382,6 @@ leaves (`tdw.flower_covers`). Both billboards, with a tone-only tint.
 Nine before the rule, two added under it (both asked for by name). The
 open question is `birch_leaves`: a birch canopy in oak green is wrong up
 close, and the day birch gets its own biome is the day to ask. Candidates for merging when the biome is revisited:
-`limestone`/`granite` into one weathered rock with a tint spread;
-`leaf_litter` could become a tint variation of `loam` if the engine's tint
+`stone`/`granite` into one weathered rock with a tint spread;
+`mulch` could become a tint variation of `dirt` if the engine's tint
 ever takes a per-block field.

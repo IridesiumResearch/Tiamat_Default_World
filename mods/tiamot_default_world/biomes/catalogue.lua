@@ -96,7 +96,7 @@ biome{ id = "obsidian_barrens", name = "Obsidian Barrens", area = "surface",
 biome{ id = "geyser_basin", name = "Geyser Basin", area = "surface",
     spans = { { "ember", "ember", "wet", "b" } },
     ring = "ember",
-    note = "3.4 — the Ember Ridge's other province, wet side (2026-09-16): terraced sinter round hot pools, orange thermal mats in the runoff, mud pots, geyser cones venting steam." }
+    note = "3.4 — the Ember Ridge's other province, wet side (2026-09-16): terraced lava rock round hot pools, glowing magma in the runoff, mud pots, geyser cones venting steam." }
 biome{ id = "cinder_coast", name = "Cinder Coast", area = "surface",
     spans = { { "ember", "ember" } },
     ring = "ember",
@@ -149,7 +149,7 @@ biome{ id = "savanna", name = "Savanna", area = "surface",
 biome{ id = "karst_towers", name = "Karst Towers", area = "surface",
     spans = { { "verdant", "verdant", "wet", "b", 0.25 } },
     ring = "verdant", humidity = { -0.05, 0.42 },
-    note = "3.12 — a third of the Jungle's ground (2026-09-16): limestone pinnacles fifty blocks tall over a forest floor, moss-streaked walls, scrub-crowned tops." }
+    note = "3.12 — a third of the Jungle's ground (2026-09-16): stone pinnacles fifty blocks tall over a forest floor, moss-streaked walls, scrub-crowned tops." }
 biome{ id = "peat_fen", name = "Peat Fen", area = "surface",
     spans = { { "temperate", "temperate", "wet", "a", -0.383 } },
     ring = "temperate", humidity = { -0.05, 0.42 },

@@ -134,12 +134,12 @@ density field; what the options are and what each needs is in
 |---|---|---|---|
 | Surface | depth below the top | 0 – 100 blocks | biome block over `dirt` |
 | Normal caves | depth | 100 – 1,600 | `stone` |
-| Dark caves | depth | 1,600 – 4,000 | `gloam_stone` |
-| Abyss | depth | > 4,000 | `abyss_stone` |
+| Dark caves | depth | 1,600 – 4,000 | `dark_sediment`, beds of `light_sediment` |
+| Abyss | depth | > 4,000 | `morphic_rock` |
 | Magma shell | E from the stack centre | 50 crust / 25 lava / 50 crust, around E = 55 km | `magma_crust`, `magma` |
-| Hot magical caves | E | 54.8 – 50.3 km | `lantern_stone` |
+| Hot magical caves | E | 54.8 – 50.3 km | `hot_fiber_stone` |
 | Slime border | E | 50.3 – 49.7 km | `caul` |
-| Cold magical caves | E | 49.7 – 46.0 km | `dream_stone` |
+| Cold magical caves | E | 49.7 – 46.0 km | `cold_fiber_stone` |
 | The Hollow Ring | E | 46.0 – 37.0 km | `scorch` |
 | The Hollow | E | < 37.0 km | air |
 | The Tail | Spindle Y | −37 to −63 km | `marrow` |

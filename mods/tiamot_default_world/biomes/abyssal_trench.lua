@@ -7,14 +7,15 @@
 -- a rift a couple of hundred blocks across, its walls of black basalt
 -- falling away to a slot as deep again, and along a line in its floor the
 -- vents — black smoker chimneys up to twenty blocks tall, crusted in
--- sulfur and glowing at the throat, fields of tube worms round their feet,
--- pale bacterial mats, and glowing polyps scattered over the dark mud where
+-- sulfur and glowing at the throat, a crust of barnacles round their feet,
+-- glowing magma mats, and glowing polyps scattered over the dark mud where
 -- no light has ever reached.
 --
 -- Its terms (`shape.abyss_terms`) cut into the Deep Ocean's floor in the
 -- coast's `shape.sea_deep`, weighted by this province and by the shelf's
 -- blend, so no rift reaches the shelf. The Deep Ocean keeps off it
--- (`shape.off_abyss`). New nodes: `tube_worms`, `glow_polyp`.
+-- (`shape.off_abyss`). New node: `glow_polyp`. The worm fields round the
+-- vents are a barnacle crust (tube worms were a node until 2026-09-16).
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -81,7 +82,7 @@ tdw.biomes[ID].ring_mode = "temperate"
 tdw.biomes[ID].lazy = true
 tdw.biomes[ID].soil = blocks.black_mud
 tdw.biomes[ID].present = function(pos)
-    return seas.class(pos) == "deep"
+    return seas.reaches(pos, seas.SHELF_END)
 end
 tdw.biomes[ID].locate = function(px, pz, seed)
     return seas.locate(px, pz, seed, seas.DEEP_FROM + 20.0, seas.DIST_FAR, nil, nil, nil, function(x, z)
@@ -154,6 +155,9 @@ tdw.build_biome(ID, function(ctx)
         n.min(vent_near(28.0), n.sub(n.noise("ab_mat", MAT_FREQ, 2, 1.0), n.const(MAT_MIN))),
         -- 4: the vent line's crust: sulfur over basalt.
         vent_near(3.0),
+        -- 5: the vent fauna's crust round the smokers' feet: barnacles.
+        n.min(n.min(vent_near(16.0), n.mul(vent_near(3.0), n.const(-1.0))),
+            n.sub(n.noise("ab_worm", WORM_FREQ, 1, 1.0), n.const(WORM_MIN))),
     }
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
@@ -166,18 +170,18 @@ tdw.build_biome(ID, function(ctx)
     local entries = {
         { code = 1, to = 4 * km, material = blocks.black_mud },
         { code = 2, to = 500 * km, material = blocks.dark_basalt },
-        { code = 3, to = 1 * km, material = blocks.thermal_mat },
+        { code = 3, to = 1 * km, material = blocks.magma },
         { code = 3, from = 1 * km, to = 4 * km, material = blocks.black_mud },
         { code = 4, to = 1 * km, material = blocks.sulfur },
         { code = 4, from = 1 * km, to = 500 * km, material = blocks.dark_basalt },
+        { code = 5, to = 1 * km, material = blocks.barnacles },
+        { code = 5, from = 1 * km, to = 4 * km, material = blocks.black_mud },
     }
-    local worms = shape.compile("biome.abyss.worms", masked(n.min(vent_near(16.0), n.sub(n.noise("ab_worm", WORM_FREQ, 1, 1.0), n.const(WORM_MIN)))))
     -- The polyps away from the worms: more than sixteen blocks off the vents.
     local polyps = shape.compile("biome.abyss.polyps", masked(n.min(n.sub(n.contour("ab_vent", VENT_FREQ, 1), n.const(16.0)),
         n.sub(n.noise("ab_polyp", POLYP_FREQ, 1, 1.0), n.const(POLYP_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries },
-        { cover = blocks.tube_worms, cells = 3, take = worms },
         { cover = blocks.glow_polyp, cells = 1, take = polyps },
     }
     if game.schematic_shapes then

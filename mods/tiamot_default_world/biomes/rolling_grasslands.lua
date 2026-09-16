@@ -202,7 +202,7 @@ local function stone_near(x, y, z)
         for _, r in ipairs({ 6, 14, 26, ERRATIC_APART }) do
             for dy = -2, 2 do
                 local b = at(x + d[1] * r, y + dy, z + d[2] * r)
-                if b ~= nil and b.occupancy ~= 0 and (b.material == blocks.granite or b.material == blocks.limestone) then
+                if b ~= nil and b.occupancy ~= 0 and (b.material == blocks.granite or b.material == blocks.stone) then
                     return true
                 end
             end

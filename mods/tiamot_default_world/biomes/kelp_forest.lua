@@ -158,7 +158,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 1, to = 4 * km, material = blocks.sand },
         { code = 2, to = 1 * km, material = blocks.ocean_moss },
         { code = 2, from = 1 * km, to = 40 * km, material = blocks.stone },
-        { code = 3, to = 3 * km, material = blocks.creek_bed },
+        { code = 3, to = 3 * km, material = blocks.gravel },
     }
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries },

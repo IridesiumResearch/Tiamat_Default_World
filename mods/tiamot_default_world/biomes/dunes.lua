@@ -27,8 +27,8 @@
 -- it, marching downwind.
 --
 -- No new nodes. The sand is the world's `sand` (golden-tan already), the
--- deflation lag is `creek_bed`, the yardangs are the mesa's sandstones,
--- the snags `dead_wood`, the ribs the ocean's `bone`, the hardy grass the
+-- deflation lag is `gravel`, the yardangs are the mesa's sandstones,
+-- the snags `dead_log`, the ribs the ocean's `bone`, the hardy grass the
 -- badlands' `dead_sagebrush` and a little `tall_grass`.
 
 local blocks = tdw.blocks
@@ -160,7 +160,7 @@ local function snag(rng)
     local tall = 3 + rng:below(4)
     local d = schem.DIR16[rng:below(16) + 1]
     local lean = 0.3 + rng:below(3) * 0.25
-    schem.push_path(blocks.dead_wood, {
+    schem.push_path(blocks.dead_log, {
         { 0.5, -2.5, 0.5, 0.62 },
         { 0.5 + d[1] * lean * 0.4, tall * 0.5, 0.5 + d[2] * lean * 0.4, 0.45 },
         { 0.5 + d[1] * lean, tall, 0.5 + d[2] * lean, 0.28 },
@@ -168,12 +168,12 @@ local function snag(rng)
     for _ = 1, 1 + rng:below(2) do
         local w = schem.DIR16[rng:below(16) + 1]
         local h = tall * (0.45 + rng:below(40) / 100)
-        schem.push_path(blocks.dead_wood, {
+        schem.push_path(blocks.dead_log, {
             { 0.5, h, 0.5, 0.3 },
             { 0.5 + w[1] * (1.2 + rng:below(3) * 0.4), h + 0.6 + rng:below(3) * 0.3, 0.5 + w[2] * (1.2 + rng:below(3) * 0.4), 0.16 },
         }, BLIND)
     end
-    return schem.record_schematic({ [blocks.dead_wood] = 1 })
+    return schem.record_schematic({ [blocks.dead_log] = 1 })
 end
 
 -- A megafauna ribcage: a spine along the ground and six to nine pairs of
@@ -300,7 +300,7 @@ tdw.build_biome(ID, function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = 30 * km, material = blocks.sand },
-        { code = 2, to = 1 * km, material = blocks.creek_bed },
+        { code = 2, to = 1 * km, material = blocks.gravel },
         { code = 2, from = 1 * km, to = 30 * km, material = blocks.sand },
         { code = 3, to = 1 * km, material = blocks.packed_dirt },
         { code = 3, from = 1 * km, to = 30 * km, material = blocks.sand },

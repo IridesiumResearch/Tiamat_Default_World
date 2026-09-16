@@ -197,11 +197,11 @@ tdw.build_biome("temperate_woodlands", function(ctx)
     -- has loam for its base already).
     local entries = {
         { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
-        { code = 1, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.loam },
-        { code = 2, to = shape.SKIN_TOP, material = blocks.leaf_litter },
-        { code = 2, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.loam },
-        { code = 3, to = shape.SKIN_TOP, material = blocks.creek_bed },
-        { code = 3, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.loam },
+        { code = 1, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+        { code = 2, to = shape.SKIN_TOP, material = blocks.mulch },
+        { code = 2, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+        { code = 3, to = shape.SKIN_TOP, material = blocks.gravel },
+        { code = 3, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
     }
     -- The cover, stood on that surface by the engine's cover fill. Ferns
     -- first, then tufts where ferns are not (the tuft field is cut by the
@@ -255,7 +255,7 @@ tdw.build_biome("temperate_woodlands", function(ctx)
         chamomile,
     }
 end)
-tdw.biomes.temperate_woodlands.soil = blocks.loam
+tdw.biomes.temperate_woodlands.soil = blocks.dirt
 
 -- Reading the world ---------------------------------------------------------
 
@@ -274,7 +274,7 @@ local function is_whole(b)
 end
 local function is_wood(b)
     return b ~= nil and b.occupancy ~= 0
-        and (b.material == blocks.oak_log or b.material == blocks.birch_log or b.material == blocks.dead_wood)
+        and (b.material == blocks.oak_log or b.material == blocks.birch_log or b.material == blocks.dead_log)
 end
 -- Nothing there but ground cover, which a pool or a plant may take over.
 local function is_open(b)
@@ -815,7 +815,7 @@ local function grow_snag(x, y, z, rng)
     local top = y + height
     edits.begin()
     for by = base - 1, top - 1 do                        -- from a block under the footing: the root
-        edits.push({ x = x, y = by, z = z }, "tiamot_default_world:dead_wood")
+        edits.push({ x = x, y = by, z = z }, "tiamot_default_world:dead_log")
     end
     -- The broken top: the bottom layer and a few cells above it.
     local jag = 0
@@ -828,7 +828,7 @@ local function grow_snag(x, y, z, rng)
         jag = jag | bit(rng:below(3), 1, rng:below(3))
     end
     jag = jag | bit(rng:below(3), 2, rng:below(3))
-    edits.push({ x = x, y = top, z = z }, "tiamot_default_world:dead_wood", jag)
+    edits.push({ x = x, y = top, z = z }, "tiamot_default_world:dead_log", jag)
     -- Stubs: one or two bars out from the upper trunk.
     for _ = 1, 1 + rng:below(2) do
         local dirs = { { 1, 0, "x" }, { -1, 0, "x" }, { 0, 1, "z" }, { 0, -1, "z" } }
@@ -836,10 +836,10 @@ local function grow_snag(x, y, z, rng)
         local sy = top - 1 - rng:below(math.max(1, height - 2))
         local sx, sz = x + d[1], z + d[2]
         if is_open(at(sx, sy, sz)) then
-            edits.push({ x = sx, y = sy, z = sz }, "tiamot_default_world:dead_wood", BAR[d[3]])
+            edits.push({ x = sx, y = sy, z = sz }, "tiamot_default_world:dead_log", BAR[d[3]])
         end
     end
-    push_flares(x, y, z, base, "tiamot_default_world:dead_wood", rng:below(3), rng)
+    push_flares(x, y, z, base, "tiamot_default_world:dead_log", rng:below(3), rng)
     if rng:below(MANTLE_BY_DEAD_ONE_IN) == 0 then
         push_mantle(x, y, z, rng)
     end
@@ -888,7 +888,7 @@ local function lay_log(x, y, z, rng)
                 mask = mask & ~(along_x and (bit(2, 0, 0) | bit(2, 1, 0) | bit(2, 0, 1) | bit(2, 1, 1))
                     or (bit(0, 0, 2) | bit(1, 0, 2) | bit(0, 1, 2) | bit(1, 1, 2)))
             end
-            edits.push({ x = lx, y = ly, z = lz }, "tiamot_default_world:dead_wood", mask, true)
+            edits.push({ x = lx, y = ly, z = lz }, "tiamot_default_world:dead_log", mask, true)
             placed = placed + 1
         end
     end
@@ -916,7 +916,7 @@ local function stone_near(x, y, z)
             for dy = -1, 1 do
                 local b = at(x + d[1] * r, y + dy, z + d[2] * r)
                 if b ~= nil and b.occupancy ~= 0
-                    and (b.material == blocks.limestone or b.material == blocks.granite) then
+                    and (b.material == blocks.stone or b.material == blocks.granite) then
                     return true
                 end
             end
@@ -940,7 +940,7 @@ local function place_rocks(x, y, z, rng, root)
         stats.spacing = stats.spacing + 1
         return false
     end
-    local material = rng:next_bool() and "tiamot_default_world:limestone" or "tiamot_default_world:granite"
+    local material = rng:next_bool() and "tiamot_default_world:stone" or "tiamot_default_world:granite"
     edits.begin()
     local placed
     if rng:below(LONE_ONE_IN) == 0 then
@@ -1263,7 +1263,7 @@ end
 -- when the biome is everywhere, or when loam is under the turf.
 tdw.on_random_tick(blocks.grass, function(x, y, z)
     local only = tdw.config.everywhere
-    local mine = only == "temperate_woodlands" or (only == nil and tdw.soil_under(x, y, z) == blocks.loam)
+    local mine = only == "temperate_woodlands" or (only == nil and tdw.soil_under(x, y, z) == blocks.dirt)
     if not mine then
         return false
     end

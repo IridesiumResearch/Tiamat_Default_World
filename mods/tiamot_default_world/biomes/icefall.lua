@@ -136,7 +136,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 2, from = 1 * km, to = 40 * km, material = blocks.ice },
         { code = 3, to = 6 * km, material = blocks.clear_ice },
         { code = 3, from = 6 * km, to = 40 * km, material = blocks.ice },
-        { code = 4, to = 1 * km, material = blocks.creek_bed },
+        { code = 4, to = 1 * km, material = blocks.gravel },
         { code = 4, from = 1 * km, to = 40 * km, material = blocks.ice },
         { code = 5, to = 4 * km, material = blocks.clear_ice },
         { code = 5, from = 4 * km, to = 40 * km, material = blocks.ice },
@@ -180,3 +180,6 @@ if tdw.on_chunk_fog then
         return { r = HAZE.r, g = HAZE.g, b = HAZE.b, visibility = b.low > 0 and HAZE_VISIBILITY or HAZE_EDGE_VISIBILITY }
     end)
 end
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint.
+tdw.biome_tint("icefall", { 0.82, 0.94, 1.0 })

@@ -13,8 +13,8 @@
 --
 -- Its terms (`shape.geyser_terms`) stand in the "ember" programs in place
 -- of the Foothills' where the province is "b", on the wet side (shape.lua).
--- The pools are water by the terraced fluid fill. New nodes: `sinter`,
--- `thermal_mat`.
+-- The pools are water by the terraced fluid fill. No nodes of its own since
+-- 2026-09-16: the crust is lava rock and the runoff's mats are magma.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -68,7 +68,7 @@ end
 
 tdw.biomes[ID].ring_mode = "ember"
 tdw.biomes[ID].lazy = true
-tdw.biomes[ID].soil = blocks.sinter
+tdw.biomes[ID].soil = blocks.lava_rock
 
 -- ------------------------------------------------------------ the structures
 
@@ -76,7 +76,7 @@ local ROUGH = { rough = 0.3, blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "geyser_template:" .. name)
 end
-local PRIORITY = { [blocks.sinter] = 1, [blocks.sulfur] = 1, [blocks.mud] = 1 }
+local PRIORITY = { [blocks.lava_rock] = 1, [blocks.sulfur] = 1, [blocks.mud] = 1 }
 
 -- A geyser cone: a squat sinter chimney two to four blocks, a sulfur throat
 -- at its top that the random tick puffs steam from.
@@ -84,7 +84,7 @@ local function cone(rng)
     schem.record_begin()
     local tall = 2 + rng:below(3)
     local r = 1.6 + rng:below(3) * 0.3
-    schem.push_path(blocks.sinter, { { 0.5, -1.0, 0.5, r }, { 0.5, tall * 0.6, 0.5, r * 0.6 }, { 0.5, tall, 0.5, 0.7 } }, ROUGH)
+    schem.push_path(blocks.lava_rock, { { 0.5, -1.0, 0.5, r }, { 0.5, tall * 0.6, 0.5, r * 0.6 }, { 0.5, tall, 0.5, 0.7 } }, ROUGH)
     schem.push_ellipsoid(blocks.sulfur, 0.5, tall - 0.2, 0.5, 0.45, 0.5, 0.45, { blind = true })
     return schem.record_schematic(PRIORITY)
 end
@@ -100,8 +100,8 @@ local function snag(rng)
     schem.record_begin()
     local tall = 3 + rng:below(4)
     local d = schem.DIR16[rng:below(16) + 1]
-    schem.push_path(blocks.dead_wood, { { 0.5, -1.5, 0.5, 0.35 }, { 0.5 + d[1] * 0.5, tall, 0.5 + d[2] * 0.5, 0.15 } }, { blind = true })
-    schem.push_ellipsoid(blocks.sinter, 0.5, 0.0, 0.5, 0.9, 0.4, 0.9, ROUGH)
+    schem.push_path(blocks.dead_log, { { 0.5, -1.5, 0.5, 0.35 }, { 0.5 + d[1] * 0.5, tall, 0.5 + d[2] * 0.5, 0.15 } }, { blind = true })
+    schem.push_ellipsoid(blocks.lava_rock, 0.5, 0.0, 0.5, 0.9, 0.4, 0.9, ROUGH)
     return schem.record_schematic(PRIORITY)
 end
 
@@ -157,17 +157,17 @@ tdw.build_biome(ID, function(ctx)
     local codes = shape.compile("biome.geyser.codes", code)
     local km = 0.001
     local entries = {
-        { code = 1, to = 4 * km, material = blocks.sinter },
+        { code = 1, to = 4 * km, material = blocks.lava_rock },
         { code = 1, from = 4 * km, to = 6 * km, material = blocks.dark_basalt },
         { code = 2, to = 2 * km, material = blocks.volcanic_ash },
         { code = 2, from = 2 * km, to = 6 * km, material = blocks.dark_basalt },
-        { code = 3, to = 1 * km, material = blocks.thermal_mat },
-        { code = 3, from = 1 * km, to = 4 * km, material = blocks.sinter },
+        { code = 3, to = 1 * km, material = blocks.magma },
+        { code = 3, from = 1 * km, to = 4 * km, material = blocks.lava_rock },
         { code = 4, to = 3 * km, material = blocks.mud },
-        { code = 4, from = 3 * km, to = 6 * km, material = blocks.sinter },
-        { code = 5, to = 4 * km, material = blocks.sinter },
+        { code = 4, from = 3 * km, to = 6 * km, material = blocks.lava_rock },
+        { code = 5, to = 4 * km, material = blocks.lava_rock },
         { code = 6, to = 1 * km, material = blocks.sulfur },
-        { code = 6, from = 1 * km, to = 4 * km, material = blocks.sinter },
+        { code = 6, from = 1 * km, to = 4 * km, material = blocks.lava_rock },
     }
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },

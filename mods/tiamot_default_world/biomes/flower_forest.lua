@@ -104,7 +104,7 @@ end
 
 tdw.biomes[ID].ring_mode = "temperate"
 tdw.biomes[ID].lazy = true
-tdw.biomes[ID].soil = blocks.loam
+tdw.biomes[ID].soil = blocks.dirt
 
 -- ------------------------------------------------------------ the trees
 
@@ -113,7 +113,7 @@ local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "flower_forest_template:" .. name)
 end
 local PRIORITY = {
-    [blocks.apple_wood] = 1, [blocks.cherry_wood] = 1, [blocks.birch_log] = 1, [blocks.moss] = 1,
+    [blocks.apple_log] = 1, [blocks.cherry_log] = 1, [blocks.birch_log] = 1, [blocks.moss] = 1,
 }
 
 -- A crown: a rough ball of leaves with blossom thrown through it — two or
@@ -141,7 +141,7 @@ local function apple(rng)
         { 0.5 + lean[1] * 0.2, tall * 0.5, 0.5 + lean[2] * 0.2, 0.55 },
         { 0.5 + lean[1] * 0.35, tall, 0.5 + lean[2] * 0.35, 0.48 },
     }
-    schem.push_path(blocks.apple_wood, bole, BLIND)
+    schem.push_path(blocks.apple_log, bole, BLIND)
     local top = bole[#bole]
     local limbs = 3 + rng:below(2)
     local first = rng:below(16)
@@ -150,7 +150,7 @@ local function apple(rng)
         local reach = 1.6 + rng:below(4) * 0.35
         local rise = 1.8 + rng:below(4) * 0.4
         local tip = { top[1] + d[1] * reach, top[2] + rise, top[3] + d[2] * reach, 0.24 }
-        schem.push_path(blocks.apple_wood, { { top[1], top[2], top[3], 0.4 },
+        schem.push_path(blocks.apple_log, { { top[1], top[2], top[3], 0.4 },
             { top[1] + d[1] * reach * 0.5, top[2] + rise * 0.6, top[3] + d[2] * reach * 0.5, 0.32 }, tip }, BLIND)
         crown(rng, blocks.apple_leaves, blocks.apple_blossom, tip[1], tip[2] + 0.8, tip[3], 2.0 + rng:below(3) * 0.35, 0.8)
     end
@@ -169,7 +169,7 @@ local function cherry(rng)
         { 0.5 + lean[1] * over * 0.3, tall * 0.45, 0.5 + lean[2] * over * 0.3, 0.5 },
         { 0.5 + lean[1] * over, tall, 0.5 + lean[2] * over, 0.36 },
     }
-    schem.push_path(blocks.cherry_wood, trunk, BLIND)
+    schem.push_path(blocks.cherry_log, trunk, BLIND)
     local top = trunk[#trunk]
     local limbs = 3 + rng:below(3)
     local first = rng:below(16)
@@ -177,7 +177,7 @@ local function cherry(rng)
         local d = schem.DIR16[(first + i * 16 // limbs + rng:below(2)) % 16 + 1]
         local reach = 2.0 + rng:below(4) * 0.4
         local tip = { top[1] + d[1] * reach, top[2] + 1.2 + rng:below(3) * 0.4, top[3] + d[2] * reach, 0.22 }
-        schem.push_path(blocks.cherry_wood, { { top[1], top[2], top[3], 0.34 }, tip }, BLIND)
+        schem.push_path(blocks.cherry_log, { { top[1], top[2], top[3], 0.34 }, tip }, BLIND)
         crown(rng, blocks.cherry_leaves, blocks.cherry_blossom, tip[1], tip[2] + 0.7, tip[3], 2.2 + rng:below(3) * 0.35, 0.75)
     end
     crown(rng, blocks.cherry_leaves, blocks.cherry_blossom, top[1], top[2] + 1.6, top[3], 2.4 + rng:below(3) * 0.3, 0.7)
@@ -221,8 +221,8 @@ local function fallen_log(rng)
     local length = 4 + rng:below(5)
     local d = schem.DIR16[rng:below(16) + 1]
     local half = length / 2
-    local wood = rng:below(2) == 0 and blocks.apple_wood or blocks.cherry_wood
-    local blossom = wood == blocks.apple_wood and blocks.apple_blossom or blocks.cherry_blossom
+    local wood = rng:below(2) == 0 and blocks.apple_log or blocks.cherry_log
+    local blossom = wood == blocks.apple_log and blocks.apple_blossom or blocks.cherry_blossom
     local ax, az = 0.5 - d[1] * half, 0.5 - d[2] * half
     local bx, bz = 0.5 + d[1] * half, 0.5 + d[2] * half
     schem.push_path(wood, { { ax, 0.3, az, 0.85 }, { bx, 0.15, bz, 0.7 } }, BLIND)
@@ -311,15 +311,15 @@ tdw.build_biome(ID, function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
-        { code = 1, from = shape.SKIN_TOP, to = 4 * km, material = blocks.loam },
+        { code = 1, from = shape.SKIN_TOP, to = 4 * km, material = blocks.dirt },
         { code = 2, to = shape.SKIN_TOP, material = blocks.mulch },
-        { code = 2, from = shape.SKIN_TOP, to = 4 * km, material = blocks.loam },
+        { code = 2, from = shape.SKIN_TOP, to = 4 * km, material = blocks.dirt },
         { code = 3, to = 1 * km, material = blocks.moss },
         { code = 3, from = 1 * km, to = 4 * km, material = blocks.stone },
-        { code = 4, to = 2 * km, material = blocks.creek_bed },
-        { code = 4, from = 2 * km, to = 4 * km, material = blocks.loam },
+        { code = 4, to = 2 * km, material = blocks.gravel },
+        { code = 4, from = 2 * km, to = 4 * km, material = blocks.dirt },
         { code = 5, to = 1 * km, material = blocks.mud },
-        { code = 5, from = 1 * km, to = 4 * km, material = blocks.loam },
+        { code = 5, from = 1 * km, to = 4 * km, material = blocks.dirt },
     }
     -- The grass takes the high side of its own noise; the flowers take the
     -- low side, split between them by the wave. Neither stands on a brook's

@@ -2244,6 +2244,44 @@ Found by sampling the whole disc on a grid to draw a map of it.
   floor; the Jungle, the Woodlands and the reef unchanged; nothing refused.
   **A fresh world is needed.**
 
+### One of each: the block list consolidated, and colour by biome tint
+
+- **The designer's rule** ("if a biome needs different colored grass or
+  lichen or dirt then the per biome tint needs to be changed"): no variant
+  blocks. Gloam stone is now **dark sediment** with **light sediment** laid
+  in flat beds through it (a noise stretched tenfold in x and z, only in
+  chunks wholly of the gloam's rock). Abyss, lantern and dream stone are
+  **morphic rock**, **hot fiber stone** and **cold fiber stone**. Loam and
+  alpine turf are **dirt**, leaf litter **mulch**, creek bed **gravel**,
+  limestone **stone** (the Karst Towers are stone towers now), columnar
+  cactus **cactus**, black sand **dark sand**, sinter **lava rock**, thermal
+  mat **magma**. Every wood is a **log** (willow, kapok, juniper, apple,
+  cherry, mangrove, acacia; dead wood is `dead_log`), as the ironwood was.
+- **The grass tufts** (alpine, golden, rust) are the one `tall_grass` tuft,
+  not the `grass` block: the turf is a solid block and would have stood up
+  out of the ground as a cover. **Hanging lichen** is `lichen`. **Sea
+  anemones** were a cover on the reef's drop-off wall, which is calcite
+  already: the cover is gone. **Tube worms** are a crust of `barnacles`
+  round the trench's vents.
+- **Colour by tint**: `tdw.biome_tint(id, rgb, field)` answers a chunk with
+  a biome's colour where its mask covers it, half way at its edge. Set for
+  the Frozen Wastes, Icefall and Alpine Highlands and the Hem's three
+  (cold blue-green), the Taiga (rust), the Silverwood (pale) and the
+  Savanna (dry gold). The tint multiplies: it can shift the one grass
+  toward gold but not brighten it — engine ask 33.
+- **A ring of unpainted sea floor round every shelf**, found on the way:
+  the Deep Ocean and the Abyssal Trench painted only chunks wholly past the
+  shelf's end, and a chunk across that line was a shore chunk the coast
+  paints only to the line. Both now paint any chunk that reaches past it
+  (`seas.reaches`).
+- The HUD's ownership lost the blocks that are shared now (the alpine's
+  turf and tufts no longer name it; the fields and the rest do).
+- Checked headless on fresh worlds: the alpine, the Taiga, the Savanna, the
+  Geyser Basin, the Abyssal Trench, the reef, the Woodlands, the mesa and
+  the Cinder Coast toured, each named and painted with the new blocks; the
+  trench's floor mud, polyps and basalt with no soil; every block has its
+  texture; nothing refused. **A fresh world is needed** (block ids changed).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

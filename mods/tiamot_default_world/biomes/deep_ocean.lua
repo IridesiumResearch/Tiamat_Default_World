@@ -39,7 +39,7 @@
 -- block holding one accepts none of another — so a pool of brine laid in a
 -- hollow under the sea stays a pool, with the sea over it.
 --
--- Stand-ins until the designer names nodes: the white sand is `limestone`
+-- Stand-ins until the designer names nodes: the white sand is `stone`
 -- (and the salt crust round a brine pool), the fine dark sand `black_mud`.
 -- The brine is drawn as the `water` block.
 
@@ -151,7 +151,7 @@ tdw.biomes[ID].lazy = true
 tdw.biomes[ID].soil = blocks.mud
 -- Where this biome is: past the shelf of any sea (seas.lua).
 tdw.biomes[ID].present = function(pos)
-    return seas.class(pos) == "deep"
+    return seas.reaches(pos, seas.SHELF_END)
 end
 tdw.biomes[ID].locate = function(px, pz, seed)
     -- Not in the Abyssal Trench's province (3.9).
@@ -345,16 +345,16 @@ tdw.build_biome(ID, function(ctx)
     local entries = {
         { code = 1, to = 3 * km, material = blocks.mud },
         { code = 2, to = 3 * km, material = blocks.sand },
-        { code = 3, to = 2 * km, material = blocks.creek_bed },
+        { code = 3, to = 2 * km, material = blocks.gravel },
         { code = 3, from = 2 * km, to = 4 * km, material = blocks.mud },
         -- The basalt reaches far down: a pillar's sides, a trench's walls and a
         -- guyot's steep flanks are hundreds of blocks under the column's top.
         { code = 4, to = 400 * km, material = blocks.dark_basalt },
-        { code = 5, to = 3 * km, material = blocks.limestone },
+        { code = 5, to = 3 * km, material = blocks.stone },
         { code = 5, from = 3 * km, to = 400 * km, material = blocks.dark_basalt },
         { code = 6, to = 2 * km, material = blocks.black_mud },
         { code = 6, from = 2 * km, to = 5 * km, material = blocks.dark_basalt },
-        { code = 7, to = 1 * km, material = blocks.limestone },
+        { code = 7, to = 1 * km, material = blocks.stone },
         { code = 7, from = 1 * km, to = 3 * km, material = blocks.mud },
         { code = 8, to = 1 * km, material = blocks.ocean_moss },
         { code = 8, from = 1 * km, to = 5 * km, material = blocks.dark_basalt },

@@ -11,8 +11,8 @@
 -- rising out of the grass, bare patches of packed earth, and kopjes — piles
 -- of rounded granite boulders — here and there on the swells.
 --
--- A dressing biome, on the dry side's swells. New nodes: `golden_grass`,
--- `acacia_wood`, `acacia_leaves`.
+-- A dressing biome, on the dry side's swells. New nodes: `acacia_log`,
+-- `acacia_leaves`. The grass is the world's grass, gold by the chunk tint.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -39,7 +39,7 @@ local BLIND = { blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "savanna_template:" .. name)
 end
-local PRIORITY = { [blocks.acacia_wood] = 1, [blocks.packed_dirt] = 1, [blocks.granite] = 1 }
+local PRIORITY = { [blocks.acacia_log] = 1, [blocks.packed_dirt] = 1, [blocks.granite] = 1 }
 
 -- An acacia: a trunk that forks low into two or three limbs leaning out,
 -- each ending under a flat, wide pad of leaves, the pads together a table.
@@ -47,14 +47,14 @@ local function acacia(rng)
     schem.record_begin()
     local fork = 2.5 + rng:below(3) * 0.5
     local tall = 7 + rng:below(4)
-    schem.push_path(blocks.acacia_wood, { { 0.5, -1.2, 0.5, 0.42 }, { 0.5, fork, 0.5, 0.34 } }, BLIND)
+    schem.push_path(blocks.acacia_log, { { 0.5, -1.2, 0.5, 0.42 }, { 0.5, fork, 0.5, 0.34 } }, BLIND)
     local limbs = 2 + rng:below(2)
     local first = rng:below(16)
     for i = 0, limbs - 1 do
         local d = schem.DIR16[(first + i * 16 // limbs + rng:below(2)) % 16 + 1]
         local reach = 2.2 + rng:below(3) * 0.5
         local tip = { 0.5 + d[1] * reach, tall - rng:below(2), 0.5 + d[2] * reach }
-        schem.push_path(blocks.acacia_wood, { { 0.5, fork, 0.5, 0.26 }, { 0.5 + d[1] * reach * 0.5, fork + (tall - fork) * 0.6, 0.5 + d[2] * reach * 0.5, 0.2 },
+        schem.push_path(blocks.acacia_log, { { 0.5, fork, 0.5, 0.26 }, { 0.5 + d[1] * reach * 0.5, fork + (tall - fork) * 0.6, 0.5 + d[2] * reach * 0.5, 0.2 },
             { tip[1], tip[2], tip[3], 0.14 } }, BLIND)
         schem.push_ellipsoid(blocks.acacia_leaves, tip[1], tip[2] + 0.5, tip[3], 2.8 + rng:below(3) * 0.4, 0.7, 2.8 + rng:below(3) * 0.4, { rough = 0.3, blind = true })
     end
@@ -87,7 +87,7 @@ local function shrub(rng)
     schem.record_begin()
     for _ = 1, 3 do
         local d = schem.DIR16[rng:below(16) + 1]
-        schem.push_path(blocks.acacia_wood, { { 0.5, -0.5, 0.5, 0.12 }, { 0.5 + d[1] * 1.1, 1.2 + rng:below(2) * 0.4, 0.5 + d[2] * 1.1, 0.08 } }, BLIND)
+        schem.push_path(blocks.acacia_log, { { 0.5, -0.5, 0.5, 0.12 }, { 0.5 + d[1] * 1.1, 1.2 + rng:below(2) * 0.4, 0.5 + d[2] * 1.1, 0.08 } }, BLIND)
     end
     schem.push_ellipsoid(blocks.acacia_leaves, 0.5, 1.3, 0.5, 1.1, 0.5, 1.1, { rough = 0.5, blind = true })
     return schem.record_schematic(PRIORITY)
@@ -153,7 +153,7 @@ tdw.build_biome(ID, function(ctx)
         n.sub(n.noise("sv_grass_patch", GRASS_PATCH_FREQ, 2, 1.0), n.const(GRASS_PATCH_MIN))))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.golden_grass, cells = 3, take = grass },
+        { cover = blocks.tall_grass, cells = 3, take = grass },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -168,3 +168,6 @@ tdw.build_biome(ID, function(ctx)
     end
     return fills
 end)
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint.
+tdw.biome_tint("savanna", { 1.0, 0.90, 0.52 })

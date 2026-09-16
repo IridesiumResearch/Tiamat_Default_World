@@ -49,7 +49,7 @@
 -- THE STRATA are horizontal over the smooth ground (the dome and the
 -- world's relief), so they run parallel to the benches. Stand-ins until the
 -- designer names nodes: terracotta is `dry_clay`, pale tan sandstone
--- `limestone`, desert sandstone and red sand `sand`, sagebrush `bramble`,
+-- `stone`, desert sandstone and red sand `sand`, sagebrush `bramble`,
 -- and the barrel cacti and prickly pear are cut from the columnar cactus.
 
 local blocks = tdw.blocks
@@ -217,15 +217,15 @@ local DIR4 = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 local function saguaro(rng)
     schem.record_begin()
     local tall = 5 + rng:below(5)
-    schem.push_path(blocks.columnar_cactus, { { 0.5, -1.0, 0.5, 0.45 }, { 0.5, tall, 0.5, 0.4 } }, BLIND)
+    schem.push_path(blocks.cactus, { { 0.5, -1.0, 0.5, 0.45 }, { 0.5, tall, 0.5, 0.4 } }, BLIND)
     local first = rng:below(4)
     for i = 0, rng:below(4) - 1 do
         local d = DIR4[(first + i) % 4 + 1]
         local at = 2 + rng:below(math.max(1, tall - 3))
         local out = 1.3 + rng:below(2) * 0.5
         local x, z = 0.5 + d[1] * out, 0.5 + d[2] * out
-        schem.push_path(blocks.columnar_cactus, { { 0.5, at, 0.5, 0.36 }, { x, at, z, 0.34 } }, BLIND)
-        schem.push_path(blocks.columnar_cactus, { { x, at, z, 0.34 }, { x, at + 1.5 + rng:below(3) * 0.5, z, 0.3 } }, BLIND)
+        schem.push_path(blocks.cactus, { { 0.5, at, 0.5, 0.36 }, { x, at, z, 0.34 } }, BLIND)
+        schem.push_path(blocks.cactus, { { x, at, z, 0.34 }, { x, at + 1.5 + rng:below(3) * 0.5, z, 0.3 } }, BLIND)
     end
     return schem.record_schematic({})
 end
@@ -235,12 +235,12 @@ end
 local function cranny(rng)
     schem.record_begin()
     if rng:below(2) == 0 then
-        schem.push_ellipsoid(blocks.columnar_cactus, 0.5, 0.45, 0.5, 0.45, 0.48, 0.45, BLIND)
+        schem.push_ellipsoid(blocks.cactus, 0.5, 0.45, 0.5, 0.45, 0.48, 0.45, BLIND)
     else
         local x, y, z = 0.5, 0.35, 0.5
         for _ = 1, 3 + rng:below(4) do
             local flat_x = rng:below(2) == 0
-            schem.push_ellipsoid(blocks.columnar_cactus, x, y, z, flat_x and 0.14 or 0.45, 0.45, flat_x and 0.45 or 0.14, BLIND)
+            schem.push_ellipsoid(blocks.cactus, x, y, z, flat_x and 0.14 or 0.45, 0.45, flat_x and 0.45 or 0.14, BLIND)
             local d = DIR4[rng:below(4) + 1]
             x, y, z = x + d[1] * 0.35, y + 0.5, z + d[2] * 0.35
         end
@@ -264,7 +264,7 @@ local function juniper(rng)
             z = z + d[2] * 0.5 * t + (rng:below(3) - 1) * 0.35
             points[#points + 1] = { x, t * tall * (s == 1 and 1.0 or 0.8), z, 0.4 - 0.22 * t }
         end
-        schem.push_path(blocks.juniper_wood, points, BLIND)
+        schem.push_path(blocks.juniper_log, points, BLIND)
         local top = points[#points]
         for _ = 1, 1 + rng:below(3) do
             local w = schem.DIR16[rng:below(16) + 1]
@@ -273,7 +273,7 @@ local function juniper(rng)
                 { rough = 0.45, blind = true })
         end
     end
-    return schem.record_schematic({ [blocks.juniper_wood] = 1 })
+    return schem.record_schematic({ [blocks.juniper_log] = 1 })
 end
 
 -- A palm by a wash: a bowing stem and a spray of drooping fronds.
@@ -287,7 +287,7 @@ local function palm(rng)
         local bow = t * t * 1.2
         stem[#stem + 1] = { 0.5 + lean[1] * bow, -1.0 + t * (tall + 1), 0.5 + lean[2] * bow, 0.55 - 0.2 * t }
     end
-    schem.push_path(blocks.willow_wood, stem, BLIND)
+    schem.push_path(blocks.willow_log, stem, BLIND)
     local tip = stem[#stem]
     local fronds = 6 + rng:below(3)
     for f = 1, fronds do
@@ -299,7 +299,7 @@ local function palm(rng)
             { tip[1] + d[1] * reach, tip[2] - 1.0, tip[3] + d[2] * reach, 0.18 },
         }, BLIND)
     end
-    return schem.record_schematic({ [blocks.willow_wood] = 1 })
+    return schem.record_schematic({ [blocks.willow_log] = 1 })
 end
 
 -- A hoodoo or a spire: a column of banded rock six to eighteen tall,
@@ -309,7 +309,7 @@ local function hoodoo(rng)
     local tall = 6 + rng:below(13)
     local spire = rng:below(3) == 0
     local r0 = spire and 1.1 or 1.5
-    local bands = { blocks.rust_red_sandstone, blocks.ochre_sandstone, blocks.limestone }
+    local bands = { blocks.rust_red_sandstone, blocks.ochre_sandstone, blocks.stone }
     local y, k = -1.0, 0
     while y < tall do
         local next_y = math.min(tall, y + 2 + rng:below(3))
@@ -334,7 +334,7 @@ local function nest(rng)
     for k = 0, 7 do
         local d = schem.DIR16[(k * 2 + rng:below(2)) % 16 + 1]
         local e = schem.DIR16[(k * 2 + 5) % 16 + 1]
-        schem.push_path(blocks.dead_wood, {
+        schem.push_path(blocks.dead_log, {
             { 0.5 + d[1] * 1.1, 0.15, 0.5 + d[2] * 1.1, 0.16 },
             { 0.5 + d[1] * 1.1 + e[1] * 1.2, 0.35, 0.5 + d[2] * 1.1 + e[2] * 1.2, 0.14 },
         }, BLIND)
@@ -450,7 +450,7 @@ tdw.build_biome(ID, function(ctx)
     local codes = shape.compile("biome.mesa.codes", code)
     local km = 0.001
     local deep = 400 * km
-    local STRATUM = { blocks.rust_red_sandstone, blocks.ochre_sandstone, blocks.dry_clay, blocks.limestone }
+    local STRATUM = { blocks.rust_red_sandstone, blocks.ochre_sandstone, blocks.dry_clay, blocks.stone }
     local entries = {}
     for s = 1, 4 do
         entries[#entries + 1] = { code = s, to = 2 * km, material = blocks.pale_terracotta }
@@ -465,7 +465,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 13, from = 3 * km, to = deep, material = blocks.rust_red_sandstone },
         { code = 14, to = 3 * km, material = blocks.sand },
         { code = 14, from = 3 * km, to = deep, material = blocks.rust_red_sandstone },
-        { code = 15, to = 2 * km, material = blocks.creek_bed },
+        { code = 15, to = 2 * km, material = blocks.gravel },
         { code = 15, from = 2 * km, to = deep, material = blocks.rust_red_sandstone },
         { code = 16, to = 1 * km, material = blocks.dirt },
         { code = 16, from = 1 * km, to = deep, material = blocks.rust_red_sandstone },
@@ -473,7 +473,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 17, from = 1 * km, to = deep, material = blocks.rust_red_sandstone },
         { code = 18, to = 2 * km, material = blocks.dry_clay },
         { code = 18, from = 2 * km, to = deep, material = blocks.rust_red_sandstone },
-        { code = 19, to = 1 * km, material = blocks.creek_bed },
+        { code = 19, to = 1 * km, material = blocks.gravel },
         { code = 19, from = 1 * km, to = 3 * km, material = blocks.sand },
         { code = 19, from = 3 * km, to = deep, material = blocks.rust_red_sandstone },
         { code = 20, to = 1 * km, material = blocks.mud },

@@ -39,7 +39,7 @@
 -- THE BANDS are the mesa's fold: the height over the smooth ground, with a
 -- slow wave of two blocks added, folded into a zig-zag the code rounds to
 -- five materials. Stand-ins until named: the soft sandstone is `sand`, the
--- clay and the popcorn crust `dry_clay`, the chert `creek_bed`, the
+-- clay and the popcorn crust `dry_clay`, the chert `gravel`, the
 -- petrified trunks `granite`.
 
 local blocks = tdw.blocks
@@ -157,14 +157,14 @@ local function stunted(rng)
     local tall = 2 + rng:below(2)
     local d = schem.DIR16[rng:below(16) + 1]
     local stem = { { 0.5, -1.0, 0.5, 0.36 }, { 0.5 + d[1] * 0.4, tall * 0.6, 0.5 + d[2] * 0.4, 0.28 }, { 0.5 + d[1] * 0.9, tall, 0.5 + d[2] * 0.9, 0.18 } }
-    schem.push_path(blocks.juniper_wood, stem, BLIND)
+    schem.push_path(blocks.juniper_log, stem, BLIND)
     for _ = 1, 1 + rng:below(2) do
         local w = schem.DIR16[rng:below(16) + 1]
         schem.push_ellipsoid(blocks.juniper_needles, stem[3][1] + w[1] * 0.6, tall + 0.2, stem[3][3] + w[2] * 0.6, 1.0, 0.35, 1.0,
             { rough = 0.45, blind = true })
     end
     schem.push_ellipsoid(blocks.dried_mud, 0.5, 0.5, 0.5, 1.6, 0.45, 1.6, { rough = 0.3, blind = true })
-    return schem.record_schematic({ [blocks.juniper_wood] = 2, [blocks.dried_mud] = 1 })
+    return schem.record_schematic({ [blocks.juniper_log] = 2, [blocks.dried_mud] = 1 })
 end
 
 -- A fallen petrified trunk: eighteen blocks or so of stone log lying at the
@@ -248,7 +248,7 @@ tdw.build_biome(ID, function(ctx)
     local more = {
         { code = 6, to = 1 * km, material = blocks.dry_clay },
         { code = 6, from = 1 * km, to = deep, material = blocks.dried_mud },
-        { code = 7, to = 1 * km, material = blocks.creek_bed },
+        { code = 7, to = 1 * km, material = blocks.gravel },
         { code = 7, from = 1 * km, to = deep, material = blocks.charcoal },
         { code = 8, to = 2 * km, material = blocks.dry_clay },
         { code = 8, from = 2 * km, to = deep, material = blocks.dried_mud },

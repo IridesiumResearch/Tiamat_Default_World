@@ -58,15 +58,12 @@ block("stone", "Stone", "The body of the world.", { hardness = 1.5, tint = ROCK 
 block("dirt", "Dirt", "Ground with no biome claim on it yet.", { hardness = 0.5, tint = SOIL })
 block("packed_dirt", "Packed dry dirt", "A game trail; a bared crest.", { hardness = 0.7, tint = SOIL })
 block("grass", "Grass", "Temperate turf.", { hardness = 0.5, tint = GREEN })
-block("loam", "Loam", "Deep, dark woodland soil.", { hardness = 0.5, tint = SOIL })
-block("leaf_litter", "Leaf litter", "Last year's leaves, packed brown.", { hardness = 0.3, tint = SOIL })
 block("mud", "Mud", "The floor of a pool.", { hardness = 0.4, tint = SOIL })
-block("creek_bed", "Creek bed", "Wet gravel along a seasonal creek.", { hardness = 0.6, tint = ROCK })
-block("limestone", "Limestone", "Weathered, pale, soft-edged.", { hardness = 1.2, tint = ROCK })
+block("gravel", "Gravel", "Loose gravel: creek beds, moraine, shingle, frost-sorted troughs.", { hardness = 0.6, tint = ROCK })
 block("granite", "Granite", "Weathered, grey, speckled.", { hardness = 2.0, tint = ROCK })
 block("oak_log", "Oak log", "Trunk of a temperate oak.", { hardness = 1.0, tint = SOIL })
 block("birch_log", "Birch log", "Pale, papery bark.", { hardness = 0.9, tint = ROCK })
-block("dead_wood", "Dead wood", "Grey, dry, split.", { hardness = 0.6, tint = ROCK })
+block("dead_log", "Dead log", "Grey, dry, split.", { hardness = 0.6, tint = ROCK })
 -- Alpine highlands (1.3), asked for by name: slate seams in the granite,
 -- permafrost in patches, and snow as a crust one cell thick (a cover).
 block("slate", "Slate", "Dark, layered, splits in sheets.", { hardness = 1.4, tint = ROCK })
@@ -80,10 +77,8 @@ block("fir_needles", "Fir needles", "Tiers of them, dark.", { hardness = 0.2, ti
 -- The highlands' own grass (asked for 2026-09-12): the temperate tuft's
 -- blades in a darker, desaturated blue-green, with its own cold tint — a
 -- tint is per material, so a different hue is a different block.
-block("alpine_grass", "Alpine grass", "Sparse, dark, wind-flattened tufts.", { hardness = 0.1, tint = COLD_GREEN, passable = true, sway = true, billboard = "cross" })
 -- The highlands' turf: the `grass` block's role in the temperate ring, in
 -- the same cold blue-green as the tufts that stand on it (2026-09-12).
-block("alpine_turf", "Alpine turf", "Thin cold turf over the highland dirt.", { hardness = 0.5, tint = COLD_GREEN })
 
 -- Ground cover. Cells, not blocks: a fern is two cell layers of a block, a
 -- tuft of grass one to three, a bramble a tangle of cells over a few
@@ -142,8 +137,8 @@ block("oak_leaves", "Oak leaves", "Canopy of a temperate oak.", { hardness = 0.2
 
 -- The coast (1.4). Two new nodes, asked for by name: the dark basalt of
 -- the strata and the dead coral of the splash zone. The sandstone stratum
--- is `limestone` standing in (one new material a biome is the rule, and
--- two were asked for); the gravel is `creek_bed`.
+-- is `stone` standing in (one new material a biome is the rule, and
+-- two were asked for); the gravel is `gravel`.
 block("dark_basalt", "Dark basalt", "A near-black stratum of the sea cliffs.", { hardness = 1.6, tint = ROCK })
 block("dead_coral", "Dead coral", "Bleached, pitted, slick: the splash zone's crust.", { hardness = 0.7, tint = SOIL })
 -- The cliff-top flora, light yellow-green: a tint is per material, so a
@@ -166,8 +161,8 @@ block("kelp", "Kelp", "Ten blocks of it from a hollow, swaying.", { hardness = 0
 -- The river valleys (1.6). Five new nodes, asked for by name: the willow's
 -- wood, its leaves and its planks, and the two flowering herbs of the bank.
 -- The clay beds are `wet_clay` (since 2026-09-14; `mud` before), the gravel
--- is `creek_bed` and the bedrock shelves are `stone`.
-block("willow_wood", "Willow wood", "Grey-brown, twisted, and always leaning over the water.", { hardness = 0.9, tint = SOIL })
+-- is `gravel` and the bedrock shelves are `stone`.
+block("willow_log", "Willow log", "Grey-brown, twisted, and always leaning over the water.", { hardness = 0.9, tint = SOIL })
 block("willow_leaves", "Willow leaves", "Long curtains of it, dipping into the current.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 block("willow_planks", "Willow planks", "Pale boards cut from a river willow.", { hardness = 0.8, tint = SOIL })
 block("water_iris", "Water iris", "Blades and a flower, standing in the shallows.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
@@ -179,7 +174,7 @@ block("wild_mint", "Wild mint", "Low, soft, and everywhere the bank is damp.", {
 -- pitcher plants, the kapok's wood, leaves and planks, and dry and wet clay.
 -- The rest of the brief is nodes that already exist: the saturated mud is
 -- `mud`, the grass `grass`, the rare outcrops `stone` under moss, the fan
--- palms the river palm's `willow_wood` and `oak_leaves`, the tree ferns
+-- palms the river palm's `willow_log` and `oak_leaves`, the tree ferns
 -- `oak_log` and `fern`, and the hanging vines `climbing_ivy`.
 local EMERALD = { strength = 0.24, scale = 160, low = { 0.78, 1.0, 0.82 }, high = { 0.90, 1.0, 0.88 } }
 block("moss", "Moss", "A thick wet coat over the rainforest floor, and over nearly every stone in it.", { hardness = 0.3, tint = EMERALD })
@@ -190,7 +185,7 @@ block("ironwood_planks", "Ironwood planks", "Heavy red-brown boards cut from an 
 block("climbing_ivy", "Climbing ivy", "Up every trunk, and hanging in ropes from the limbs.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
 block("monstera", "Monstera", "Giant split leaves on the forest floor.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
 block("pitcher_plant", "Pitcher Plants", "Carnivorous tubes huddled in the hollows between a megatree's roots.", { hardness = 0.1, tint = EMERALD, passable = true, billboard = "cross" })
-block("kapok_wood", "Kapok wood", "The emergent's trunk: pale, smooth and grey.", { hardness = 1.0, tint = ROCK })
+block("kapok_log", "Kapok log", "The emergent's trunk: pale, smooth and grey.", { hardness = 1.0, tint = ROCK })
 block("kapok_leaves", "Kapok leaves", "Flat tiers of lighter green high over the canopy.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 block("kapok_planks", "Kapok planks", "Light, pale boards cut from a kapok.", { hardness = 0.7, tint = SOIL })
 block("dry_clay", "Dry clay", "Cracked pale clay, up the walls of the ravines.", { hardness = 0.8, tint = SOIL })
@@ -198,49 +193,47 @@ block("wet_clay", "Wet clay", "Slick dark clay where the water sits: a ravine's 
 
 -- The Deep Ocean (1.8). One new node, asked for by name (2026-09-14): bone,
 -- for the whale skeletons. Everything else is a node that exists: `sand`,
--- `mud`, `dark_basalt`, `creek_bed` (the gravel drifts), `magma` (in the
+-- `mud`, `dark_basalt`, `gravel` (the gravel drifts), `magma` (in the
 -- cracks: it already glows), and the vents' `barnacles`, `ocean_moss`,
--- `kelp` and `seagrass`. Stand-ins until named: white sand is `limestone`,
+-- `kelp` and `seagrass`. Stand-ins until named: white sand is `stone`,
 -- fine dark sand `black_mud`.
 block("bone", "Bone", "A whale's, long on the sea floor, broken across the basalt.", { hardness = 1.2, tint = ROCK })
 
 -- The Frozen Wastes (1.9). One new node, asked for by name (2026-09-14):
 -- clear ice, for the cryo-lakes. Everything else exists: `snow`, the blue
--- glacial `ice`, `permafrost`, `creek_bed` (the frost-heaved gravel of the
--- polygons), `granite` (the erratics) and `dead_wood` (the frozen snags).
+-- glacial `ice`, `permafrost`, `gravel` (the frost-heaved gravel of the
+-- polygons), `granite` (the erratics) and `dead_log` (the frozen snags).
 block("clear_ice", "Clear ice", "A frozen lake's top: deep, clear, and blue under it.", { hardness = 0.8, tint = COLD_BLUE, transparent = true })
 
 -- The Arid Mesa (2.0). Six new nodes, asked for by name (2026-09-14):
 -- rust-red* and ochre* sandstone, pale terracotta*, the juniper's* wood and
 -- needles, and the columnar cactus*. Stand-ins until named: terracotta is
--- `dry_clay`, pale tan sandstone `limestone`, desert sandstone and red sand
+-- `dry_clay`, pale tan sandstone `stone`, desert sandstone and red sand
 -- `sand`, sagebrush `bramble`; the barrel cacti and prickly pear are cut
--- from the columnar cactus; the palms are the river's `willow_wood` and
+-- from the columnar cactus; the palms are the river's `willow_log` and
 -- `oak_leaves`; the pines share the juniper's nodes.
 block("rust_red_sandstone", "Rust-red sandstone", "The mesa's reddest strata.", { hardness = 1.3, tint = ROCK })
 block("ochre_sandstone", "Ochre sandstone", "Yellow-brown bands between the red.", { hardness = 1.3, tint = ROCK })
 block("pale_terracotta", "Pale terracotta", "The hard cap on a mesa's top, and on a hoodoo's.", { hardness = 1.6, tint = ROCK })
-block("juniper_wood", "Juniper wood", "Crooked, split and weathered grey.", { hardness = 1.0, tint = ROCK })
+block("juniper_log", "Juniper log", "Crooked, split and weathered grey.", { hardness = 1.0, tint = ROCK })
 block("juniper_needles", "Juniper needles", "Flat, sparse pads of dark evergreen.", { hardness = 0.2, tint = COLD_GREEN, cutout = true, sway = true })
-block("columnar_cactus", "Columnar cactus", "Ribbed green columns with right-angle arms.", { hardness = 0.4, tint = GREEN })
+block("cactus", "Cactus", "Ribbed green columns with right-angle arms.", { hardness = 0.4, tint = GREEN })
 
 -- The Badlands (2.1). Four new nodes, asked for by name (2026-09-14):
 -- volcanic ash*, charcoal*, dull lavender dried mud* and dead sagebrush*.
 -- Stand-ins until named: soft sandstone `sand`, clay and the popcorn crust
--- `dry_clay`, chert `creek_bed`, the petrified trunks `granite`; the stunted
+-- `dry_clay`, chert `gravel`, the petrified trunks `granite`; the stunted
 -- trees are the mesa's juniper nodes.
 block("volcanic_ash", "Volcanic ash", "Pale grey bands of old ash between the clays.", { hardness = 0.6, tint = ROCK })
 block("charcoal", "Charcoal clay", "Stark near-black bands in the badlands' hills.", { hardness = 0.7, tint = ROCK })
 block("dried_mud", "Dried mud", "Dull lavender, cracked into plates.", { hardness = 0.6, tint = SOIL })
 block("dead_sagebrush", "Dead sagebrush", "Brittle grey sticks at the bottom of a gully.", { hardness = 0.1, tint = SOIL, passable = true, billboard = "cross" })
 
--- The Taiga (2.2). `mulch` asked for by name (2026-09-15); `rust_grass`
--- and `hanging_lichen` named in the brief with nothing to stand in for them.
+-- The Taiga (2.2). `mulch` asked for by name (2026-09-15); `tall_grass`
+-- and `lichen` named in the brief with nothing to stand in for them.
 -- Stand-ins until named: spruce and pine are `fir_log` and `fir_needles`,
 -- peat is `black_mud`.
 block("mulch", "Mulch", "Rust-brown needles and bark, acid and soft underfoot.", { hardness = 0.5, tint = SOIL })
-block("rust_grass", "Rust grass", "Acidic, rust-brown tufts on the forest floor.", { hardness = 0.1, tint = { strength = 0.14, scale = 96 }, passable = true, sway = true, billboard = "cross" })
-block("hanging_lichen", "Hanging lichen", "Pale grey-green strands dripping from dead branches.", { hardness = 0.1, tint = { strength = 0.10, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 
 -- The Volcanic Foothills (2.3). Three new nodes, asked for by name
 -- (2026-09-15): lava rock*, pumice*, sulfur*. The ash is the badlands'
@@ -269,25 +262,23 @@ block("glow_cap", "Glow caps", "Small pale mushrooms that glow blue-green after 
 -- (2026-09-15): pink algae*, and the three coral tints*. White sand, calcite
 -- and the anemones are what the brief's flats and drop-off walls are made
 -- of and nothing already registered stands in for them. The gravel is the
--- coast's `creek_bed`, the pumice the Ember Ridge's.
+-- coast's `gravel`, the pumice the Ember Ridge's.
 block("white_sand", "White sand", "Fine coral sand, almost white; the lagoon's flats and its sandspits.", { hardness = 0.4, tint = SOIL })
 block("calcite", "Calcite", "The reef's own rock: pale, hard, full of old coral.", { hardness = 1.1, tint = ROCK })
 block("pink_algae", "Pink algae", "Vibrant coralline crust over the reef rock.", { hardness = 0.4, tint = { strength = 0.14, scale = 96 } })
 block("coral_magenta", "Magenta coral", "Elkhorn branches in vivid magenta.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
 block("coral_cyan", "Cyan coral", "Wide table coral, spreading flat in cyan.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
 block("coral_amber", "Amber coral", "Rounded brain coral domes in amber.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
-block("sea_anemone", "Sea anemones", "Clusters of them lining the drop-off walls, waving in the surge.",
-    { hardness = 0.1, tint = { strength = 0.16, scale = 64 }, passable = true, sway = true, billboard = "cross" })
 
 -- 2.6 The Flower Forest. The trees' wood and flowers, asked for by name
 -- (2026-09-15): apple*, cherry*, and their blossom; the leaves with them,
 -- since a crown cannot be cut out of nothing. The birch's log is the
 -- woodland's; its leaves are new, paler and finer than an oak's. The four
 -- meadow flowers* are the brief's own list.
-block("apple_wood", "Apple wood", "Short, crooked, pale-barked: an orchard tree gone wild.", { hardness = 0.9, tint = SOIL })
+block("apple_log", "Apple log", "Short, crooked, pale-barked: an orchard tree gone wild.", { hardness = 0.9, tint = SOIL })
 block("apple_leaves", "Apple leaves", "A low, broad crown of them.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 block("apple_blossom", "Apple blossom", "White-pink blossom through the crown, and fallen under it.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
-block("cherry_wood", "Cherry wood", "Dark, banded bark; a wild cherry leans toward the light.", { hardness = 0.9, tint = SOIL })
+block("cherry_log", "Cherry log", "Dark, banded bark; a wild cherry leans toward the light.", { hardness = 0.9, tint = SOIL })
 block("cherry_leaves", "Cherry leaves", "Pink from the first thaw to the last of the summer.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
 block("cherry_blossom", "Cherry blossom", "Deep pink, and it drifts.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
 block("birch_leaves", "Birch leaves", "Small, bright, always moving.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
@@ -306,24 +297,20 @@ block("salt", "Salt", "The pan's crust: white, hard, cracked into polygons, glar
 -- the Ember Ridge's black glass, its hot springs' sinter and the mats that
 -- grow in their runoff, and the black sand where the ridge meets its sea.
 block("obsidian", "Obsidian", "Black volcanic glass in sheets and razor ridges; it breaks to an edge.", { hardness = 5.0, tint = { strength = 0.05, scale = 128 } })
-block("sinter", "Sinter", "Pale mineral crust laid down by the hot springs, in terraces round their pools.", { hardness = 1.2, tint = { strength = 0.08, scale = 96 } })
-block("thermal_mat", "Thermal mat", "Orange and ochre slime of heat-loving microbes in the springs' runoff.", { hardness = 0.3, tint = { strength = 0.22, scale = 48 } })
 -- 3.6 Heather Moor (2026-09-16): the heath's carpet and its bushes.
 block("heather", "Heather", "Low wiry heath in purple flower, ankle-deep.", { hardness = 0.1, tint = { strength = 0.14, scale = 64 }, passable = true, sway = true, billboard = "cross" })
 block("gorse", "Gorse", "Spiny yellow-green bush in yellow flower; it smells of coconut.", { hardness = 0.3, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
 -- 3.9 Abyssal Trench and 3.10 Mangrove Coast (2026-09-16).
-block("tube_worms", "Tube worms", "White tubes tipped with red plumes, crowding round the vents.", { hardness = 0.2, tint = { strength = 0.10, scale = 48 }, passable = true, sway = true, billboard = "cross" })
 block("glow_polyp", "Glow polyp", "A small pale polyp giving off a cold blue light in the dark of the deep.", { hardness = 0.1, tint = { strength = 0.10, scale = 48 }, passable = true, sway = true, billboard = "cross", light_emit = { r = 2, g = 7, b = 11 } })
-block("mangrove_wood", "Mangrove wood", "Dark reddish wood of the mangroves' stems and prop roots.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
+block("mangrove_log", "Mangrove log", "Dark reddish wood of the mangroves' stems and prop roots.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
 block("mangrove_leaves", "Mangrove leaves", "Thick glossy leaves in a low roof over the tide.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
 -- 3.11 Savanna, 3.13 Peat Fen and 3.14 Redwood Stands (2026-09-16).
-block("golden_grass", "Golden grass", "Knee-high dry grass, gold in the sun.", { hardness = 0.1, tint = { strength = 0.14, scale = 64 }, passable = true, sway = true, billboard = "cross" })
-block("acacia_wood", "Acacia wood", "Dark, hard, thorny wood of the flat-topped trees.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
+block("acacia_log", "Acacia log", "Dark, hard, thorny wood of the flat-topped trees.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
 block("acacia_leaves", "Acacia leaves", "Small olive leaves in flat spreading pads.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
 block("reeds", "Reeds", "Tall reeds with brown plumes, standing in the shallows.", { hardness = 0.1, tint = { strength = 0.12, scale = 64 }, passable = true, sway = true, billboard = "cross" })
 block("redwood_log", "Redwood log", "Thick, soft, deeply furrowed red bark.", { hardness = 2.0, tint = { strength = 0.08, scale = 96 } })
 block("redwood_needles", "Redwood needles", "Flat sprays of dark needles, high overhead.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
-block("black_sand", "Black sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
+block("dark_sand", "Dark sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
@@ -348,8 +335,9 @@ game.register_fluid{
 }
 
 -- Depth bands -----------------------------------------------------------
-block("gloam_stone", "Gloam stone", "Dark-cave rock, 1.6 to 4 km down.", { hardness = 2.0, tint = ROCK })
-block("abyss_stone", "Abyss stone", "Pressure-crushed rock, below 4 km.", { hardness = 3.0, tint = ROCK })
+block("dark_sediment", "Dark sediment", "Dark-cave rock, 1.6 to 4 km down: old mud turned to stone.", { hardness = 2.0, tint = ROCK })
+block("light_sediment", "Light sediment", "Pale beds laid through the dark sediment.", { hardness = 2.0, tint = ROCK })
+block("morphic_rock", "Morphic rock", "Pressure-crushed rock, below 4 km.", { hardness = 3.0, tint = ROCK })
 
 -- The magma shell: a thin lava layer with a crust on each side ----------
 block("magma_crust", "Magma crust", "Cooked rock, fifty blocks either side of the fire.", { hardness = 2.5 })
@@ -357,11 +345,11 @@ block("magma", "Magma", "Still lava. A look-alike solid until fluid can be gener
     { hardness = 4.0, light_emit = { r = 15, g = 7, b = 0 } })
 
 -- The core stack --------------------------------------------------------
-block("lantern_stone", "Lantern stone", "Hot magical caves: it glows.",
+block("hot_fiber_stone", "Hot fiber stone", "Hot magical caves: it glows.",
     { hardness = 2.0, light_emit = { r = 10, g = 8, b = 4 } })
 block("caul", "Caul", "The slime border: a luminous membrane.",
     { hardness = 0.8, light_emit = { r = 4, g = 9, b = 3 } })
-block("dream_stone", "Dream stone", "Cold magical caves: ice-lit.",
+block("cold_fiber_stone", "Cold fiber stone", "Cold magical caves: ice-lit.",
     { hardness = 2.0, light_emit = { r = 3, g = 5, b = 9 } })
 block("scorch", "Scorch", "The hollow ring: dense, hot, dry.", { hardness = 3.5, tint = ROCK })
 

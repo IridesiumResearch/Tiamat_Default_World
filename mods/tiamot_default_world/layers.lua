@@ -55,8 +55,8 @@ end
 M.DEPTH = {
     { id = "surface",      d = { -0.05, 0.10 },  material = "stone" },
     { id = "normal_caves", d = { 0.10, shape.GLOAM_D }, material = "stone" },
-    { id = "dark_caves",   d = { shape.GLOAM_D, shape.ABYSS_D }, material = "gloam_stone" },
-    { id = "abyss",        d = { shape.ABYSS_D, 1e9 }, material = "abyss_stone" },
+    { id = "dark_caves",   d = { shape.GLOAM_D, shape.ABYSS_D }, material = "dark_sediment" },
+    { id = "abyss",        d = { shape.ABYSS_D, 1e9 }, material = "morphic_rock" },
 }
 
 -- The core stack, outermost first, from shape.SHELLS.
@@ -64,9 +64,9 @@ M.SHELL_MATERIAL = {
     magma_above = "magma_crust",
     magma = "magma",
     magma_below = "magma_crust",
-    hot_magical = "lantern_stone",
+    hot_magical = "hot_fiber_stone",
     slime_border = "caul",
-    cold_magical = "dream_stone",
+    cold_magical = "cold_fiber_stone",
     hollow_ring = "scorch",
 }
 

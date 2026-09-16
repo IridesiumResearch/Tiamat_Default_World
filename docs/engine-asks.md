@@ -73,6 +73,20 @@ share of full (or scaled by the volume, which also makes a draining pit
 dim as it empties). The magma shell's look-alike solid can then become the
 fluid too, which is what it was always meant to be.
 
+## 33. A chunk tint cannot brighten (2026-09-16)
+
+**Seen.** The designer's rule is one grass, one dirt, one lichen, and a
+biome that wants them another colour gets it from its chunk tint. The
+Savanna's grass should be gold and the Taiga's rust; the one grass is a
+mid green, and the tint multiplies it with every channel clamped to 1
+(`tint_bytes`), so the best a tint can do is darken green toward olive.
+
+**Why the mod cannot.** A brighter base texture would brighten every biome
+that does not tint, and the untinted world is most of it.
+
+**Ask.** Let a chunk tint's channels run above 1 — 0 to 2 in the byte, say,
+with 1.0 at 128 — so a tint can lift a channel as well as cut one.
+
 ## 32. A cover fill is one block tall (2026-09-16)
 
 The Flower Forest's brief asks for "single- and TWO-block flowers", and

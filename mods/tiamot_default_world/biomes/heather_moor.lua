@@ -169,7 +169,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 3, from = 1 * km, to = 4 * km, material = blocks.granite },
         { code = 4, to = 2 * km, material = blocks.mud },
         { code = 4, from = 2 * km, to = 5 * km, material = blocks.black_mud },
-        { code = 5, to = 2 * km, material = blocks.creek_bed },
+        { code = 5, to = 2 * km, material = blocks.gravel },
         { code = 5, from = 2 * km, to = 5 * km, material = blocks.black_mud },
     }
     -- Off the peat, the stones and the wet: what the covers stand on.

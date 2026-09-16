@@ -50,7 +50,7 @@ end
 
 tdw.biomes[ID].ring_mode = "belt"
 tdw.biomes[ID].lazy = true
-tdw.biomes[ID].soil = blocks.loam
+tdw.biomes[ID].soil = blocks.dirt
 
 -- ------------------------------------------------------------ the structures
 
@@ -58,7 +58,7 @@ local BLIND = { blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "karst_template:" .. name)
 end
-local PRIORITY = { [blocks.kapok_wood] = 1, [blocks.oak_log] = 1 }
+local PRIORITY = { [blocks.kapok_log] = 1, [blocks.oak_log] = 1 }
 
 -- Scrub on a tower's top: a clump of leaves on a short stem.
 local function scrub(rng)
@@ -75,7 +75,7 @@ local function tree(rng)
     local tall = 12 + rng:below(7)
     local d = schem.DIR16[rng:below(16) + 1]
     local trunk = { { 0.5, -1.5, 0.5, 0.6 }, { 0.5 + d[1] * 0.4, tall * 0.6, 0.5 + d[2] * 0.4, 0.45 }, { 0.5 + d[1] * 0.7, tall, 0.5 + d[2] * 0.7, 0.3 } }
-    schem.push_path(blocks.kapok_wood, trunk, BLIND)
+    schem.push_path(blocks.kapok_log, trunk, BLIND)
     local top = trunk[#trunk]
     schem.push_ellipsoid(blocks.ironwood_leaves, top[1], top[2] + 0.6, top[3], 4.0 + rng:below(3) * 0.5, 2.0, 4.0 + rng:below(3) * 0.5, { rough = 0.35, blind = true })
     return schem.record_schematic(PRIORITY)
@@ -128,13 +128,13 @@ tdw.build_biome(ID, function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
-        { code = 1, from = shape.SKIN_TOP, to = 5 * km, material = blocks.loam },
+        { code = 1, from = shape.SKIN_TOP, to = 5 * km, material = blocks.dirt },
         { code = 2, to = 3 * km, material = blocks.mud },
-        { code = 3, to = 80 * km, material = blocks.limestone },
+        { code = 3, to = 80 * km, material = blocks.stone },
         { code = 4, to = 1 * km, material = blocks.moss },
-        { code = 4, from = 1 * km, to = 80 * km, material = blocks.limestone },
+        { code = 4, from = 1 * km, to = 80 * km, material = blocks.stone },
         { code = 5, to = 1 * km, material = blocks.moss },
-        { code = 5, from = 1 * km, to = 80 * km, material = blocks.limestone },
+        { code = 5, from = 1 * km, to = 80 * km, material = blocks.stone },
     }
     local ferns = shape.compile("biome.karst.ferns", masked(n.min(n.sub(n.const(0.02), tower_w()),
         n.sub(n.noise("kt_fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN)))))

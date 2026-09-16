@@ -553,19 +553,19 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         { code = 1, to = 12 * km, material = blocks.stone },
         { code = 2, to = 12 * km, material = blocks.dark_basalt },
         { code = 3, to = 12 * km, material = blocks.slate },
-        { code = 4, to = 12 * km, material = blocks.limestone },
+        { code = 4, to = 12 * km, material = blocks.stone },
         { code = 5, to = 2 * km, material = blocks.dead_coral },
-        { code = 6, to = 2 * km, material = blocks.creek_bed },
-        { code = 7, to = 3 * km, material = blocks.creek_bed },
+        { code = 6, to = 2 * km, material = blocks.gravel },
+        { code = 7, to = 3 * km, material = blocks.gravel },
         { code = 8, to = 1 * km, material = blocks.moss },          -- moss, not the coast turf ("i did not ok that block", 2026-09-15)
         { code = 8, from = 1 * km, to = 12 * km, material = blocks.stone },
         { code = 9, to = SAND_DEPTH, material = blocks.sand },
-        { code = 10, to = 3 * km, material = blocks.creek_bed },
-        { code = 11, to = 3 * km, material = blocks.limestone },
+        { code = 10, to = 3 * km, material = blocks.gravel },
+        { code = 11, to = 3 * km, material = blocks.stone },
         { code = 12, to = 1 * km, material = blocks.ocean_moss },
-        { code = 12, from = 1 * km, to = 3 * km, material = blocks.limestone },
+        { code = 12, from = 1 * km, to = 3 * km, material = blocks.stone },
         { code = 13, to = 1 * km, material = blocks.barnacles },
-        { code = 13, from = 1 * km, to = 3 * km, material = blocks.limestone },
+        { code = 13, from = 1 * km, to = 3 * km, material = blocks.stone },
     }
     -- Sparse grass on the rim's turf: the cover fill, where the turf is and
     -- a fast noise picks a column in some.

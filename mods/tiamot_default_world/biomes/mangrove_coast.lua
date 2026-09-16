@@ -13,7 +13,7 @@
 -- Where: the second lane's shores (the reef's band) on the humidity noise's
 -- wet side, from twenty-four blocks inland to twenty out; the reef and the
 -- Coastal Cliffs keep off it (`shape.off_mangrove`). Its ground is the
--- coast's, unchanged. New nodes: `mangrove_wood`, `mangrove_leaves`.
+-- coast's, unchanged. New nodes: `mangrove_log`, `mangrove_leaves`.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -78,7 +78,7 @@ local BLIND = { blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "mangrove_template:" .. name)
 end
-local PRIORITY = { [blocks.mangrove_wood] = 1 }
+local PRIORITY = { [blocks.mangrove_log] = 1 }
 
 -- A mangrove: a trunk that starts three blocks up, held on four to six
 -- prop roots arching out and down to the mud; a crooked stem to six to
@@ -92,13 +92,13 @@ local function mangrove(rng)
     for i = 0, roots - 1 do
         local d = schem.DIR16[(first + i * 16 // roots) % 16 + 1]
         local reach = 2.0 + rng:below(3) * 0.4
-        schem.push_path(blocks.mangrove_wood, { { 0.5, base, 0.5, 0.3 },
+        schem.push_path(blocks.mangrove_log, { { 0.5, base, 0.5, 0.3 },
             { 0.5 + d[1] * reach * 0.6, base + 0.6, 0.5 + d[2] * reach * 0.6, 0.22 },
             { 0.5 + d[1] * reach, -1.2, 0.5 + d[2] * reach, 0.18 } }, BLIND)
     end
     local x, z = 0.5 + (rng:below(3) - 1) * 0.3, 0.5 + (rng:below(3) - 1) * 0.3
     local trunk = { { 0.5, base - 0.5, 0.5, 0.36 }, { x, tall * 0.7, z, 0.3 }, { x + (rng:below(3) - 1) * 0.4, tall, z, 0.22 } }
-    schem.push_path(blocks.mangrove_wood, trunk, BLIND)
+    schem.push_path(blocks.mangrove_log, trunk, BLIND)
     local top = trunk[#trunk]
     schem.push_ellipsoid(blocks.mangrove_leaves, top[1], top[2] + 0.5, top[3], 3.0 + rng:below(3) * 0.4, 1.4, 3.0 + rng:below(3) * 0.4, { rough = 0.35, blind = true })
     for _ = 1, 1 + rng:below(2) do
@@ -113,9 +113,9 @@ local function sapling(rng)
     local tall = 2 + rng:below(2)
     for i = 0, 2 do
         local d = schem.DIR16[(i * 5 + rng:below(2)) % 16 + 1]
-        schem.push_path(blocks.mangrove_wood, { { 0.5, 1.0, 0.5, 0.15 }, { 0.5 + d[1] * 0.8, -0.8, 0.5 + d[2] * 0.8, 0.1 } }, BLIND)
+        schem.push_path(blocks.mangrove_log, { { 0.5, 1.0, 0.5, 0.15 }, { 0.5 + d[1] * 0.8, -0.8, 0.5 + d[2] * 0.8, 0.1 } }, BLIND)
     end
-    schem.push_path(blocks.mangrove_wood, { { 0.5, 0.8, 0.5, 0.15 }, { 0.5, tall, 0.5, 0.12 } }, BLIND)
+    schem.push_path(blocks.mangrove_log, { { 0.5, 0.8, 0.5, 0.15 }, { 0.5, tall, 0.5, 0.12 } }, BLIND)
     schem.push_ellipsoid(blocks.mangrove_leaves, 0.5, tall + 0.3, 0.5, 1.0, 0.6, 1.0, { rough = 0.3, blind = true })
     return schem.record_schematic(PRIORITY)
 end
@@ -171,7 +171,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 1, to = 4 * km, material = blocks.mud },
         { code = 2, to = 2 * km, material = blocks.black_mud },
         { code = 2, from = 2 * km, to = 4 * km, material = blocks.mud },
-        { code = 3, to = 2 * km, material = blocks.creek_bed },
+        { code = 3, to = 2 * km, material = blocks.gravel },
         { code = 3, from = 2 * km, to = 4 * km, material = blocks.mud },
         { code = 4, to = 1 * km, material = blocks.moss },
         { code = 4, from = 1 * km, to = 4 * km, material = blocks.mud },

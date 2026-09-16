@@ -173,14 +173,14 @@ tdw.build_biome(ID, function(ctx)
         { code = 3, from = 1 * km, to = 3 * km, material = blocks.granite },
         { code = 4, to = 3 * km, material = blocks.black_mud },
         { code = 4, from = 3 * km, to = 6 * km, material = blocks.mud },
-        { code = 5, to = 1 * km, material = blocks.creek_bed },
+        { code = 5, to = 1 * km, material = blocks.gravel },
         { code = 5, from = 1 * km, to = 4 * km, material = blocks.mud },
     }
     local grass = shape.compile("biome.silverwood.grass", masked(n.min(n.sub(n.const(BASIN_OFF), T.basin()),
         n.sub(n.noise("sw_grass", GRASS_FREQ, 1, 1.0), n.const(GRASS_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.rust_grass, cells = 2, take = grass },
+        { cover = blocks.tall_grass, cells = 2, take = grass },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -198,3 +198,6 @@ tdw.build_biome(ID, function(ctx)
     end
     return fills
 end)
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint.
+tdw.biome_tint("silverwood", { 0.98, 0.94, 0.82 })

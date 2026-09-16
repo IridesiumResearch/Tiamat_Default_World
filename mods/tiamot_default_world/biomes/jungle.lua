@@ -122,7 +122,7 @@ local AIR = game.AIR
 -- Priorities for the engine's cut: wood keeps its cells from the leaves and
 -- the ivy pushed across it, and a log's hollow of air takes them from the
 -- wood.
-local PRIORITY = { [blocks.ironwood_log] = 1, [blocks.kapok_wood] = 1, [blocks.willow_wood] = 1, [blocks.oak_log] = 1, [AIR] = 2 }
+local PRIORITY = { [blocks.ironwood_log] = 1, [blocks.kapok_log] = 1, [blocks.willow_log] = 1, [blocks.oak_log] = 1, [AIR] = 2 }
 local BLIND = { blind = true }
 
 local function pick(rng, range)
@@ -145,7 +145,7 @@ local IRONWOOD = {
 -- The kapok: an emergent, taller and paler, its buttresses the biggest in
 -- the forest, branching only near the top into flat tiers of limbs.
 local KAPOK = {
-    log = blocks.kapok_wood, leaves = blocks.kapok_leaves,
+    log = blocks.kapok_log, leaves = blocks.kapok_leaves,
     height = { 54, 12 }, r = { 2.8, 1.1 },
     fins = { 6, 2 }, fin_h = { 10, 4 }, fin_reach = { 9, 3 },
     limbs = { 6, 2 }, limb_from = 0.78, limb_reach = { 11, 5 }, limb_rise = { 1, 2 },
@@ -326,7 +326,7 @@ local function fan_palm(rng)
         local bow = t * t * 1.4
         stem[#stem + 1] = { 0.5 + d[1] * bow, -1.0 + t * (tall + 1), 0.5 + d[2] * bow, 0.5 - 0.2 * t }
     end
-    schem.push_path(blocks.willow_wood, stem, BLIND)
+    schem.push_path(blocks.willow_log, stem, BLIND)
     local tip = stem[#stem]
     local fans = 9 + rng:below(5)
     for f = 1, fans do
@@ -599,7 +599,7 @@ end
 local VINE_MAX, VINE_TICKS = 12, 30
 local IVY = "tiamot_default_world:climbing_ivy"
 local CENTRE_COLUMN = (1 << 4) | (1 << 13) | (1 << 22)   -- the middle cell column of a block: one card the block's height
-local WOOD = { [blocks.ironwood_log] = true, [blocks.kapok_wood] = true, [blocks.willow_wood] = true, [blocks.oak_log] = true }
+local WOOD = { [blocks.ironwood_log] = true, [blocks.kapok_log] = true, [blocks.willow_log] = true, [blocks.oak_log] = true }
 local edits = tdw.edits
 local function has(b, material)
     if b == nil then

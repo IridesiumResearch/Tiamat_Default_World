@@ -183,7 +183,7 @@ local SCREE_MIN = -0.05
 local PERMAFROST_FREQ = 1 / 140
 local PERMAFROST_MIN = 0.05
 -- Dirt over most of the ground below the snowline that faces up, and
--- turf (`alpine_turf`, the cold-tinted turf) over most of that below the tree line: the
+-- turf (`dirt`, the cold-tinted turf) over most of that below the tree line: the
 -- granite shows on about a third of it, the walls and the crests and
 -- the patches these leave.
 local DIRT_FREQ = 1 / 80
@@ -626,10 +626,10 @@ tdw.build_biome("alpine_highlands", function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = 3 * km, material = blocks.slate },
-        { code = 2, to = 3 * km, material = blocks.creek_bed },
+        { code = 2, to = 3 * km, material = blocks.gravel },
         { code = 3, to = 3 * km, material = blocks.permafrost },
         { code = 4, to = 3 * km, material = blocks.dirt },
-        { code = 5, to = 1 * km, material = blocks.alpine_turf },
+        { code = 5, to = 1 * km, material = blocks.dirt },
         { code = 5, from = 1 * km, to = 3 * km, material = blocks.dirt },
         { code = 6, to = SNOW_PATCH_DEPTH, material = blocks.snow },
         { code = 7, to = SNOW_DEPTH, material = blocks.snow },
@@ -644,7 +644,7 @@ tdw.build_biome("alpine_highlands", function(ctx)
         -- this fill lay the granite and the stone under the layers too, and
         -- runs no body fill of its own (generate.lua).
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.alpine_grass, cells = 2, take = tufts },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
         -- The meadow flowers, where the grass could grow and does not.
         lunaria,
         chamomile,
@@ -714,7 +714,7 @@ local STATS_EVERY = 200
 
 local GRANITE, SLATE = "tiamot_default_world:granite", "tiamot_default_world:slate"
 local FIR_LOG, FIR_NEEDLES = "tiamot_default_world:fir_log", "tiamot_default_world:fir_needles"
-local DEAD = "tiamot_default_world:dead_wood"
+local DEAD = "tiamot_default_world:dead_log"
 local DIR8 = { { 1, 0 }, { 1, 1 }, { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }, { 0, -1 }, { 1, -1 } }
 
 local stats = { turns = 0, boulders = 0, boulder_tries = 0, rocks = 0, rock_tries = 0, firs = 0, fir_tries = 0,
@@ -746,7 +746,7 @@ end
 -- Open to a tree: air, or nothing but the grass cover, which a trunk may
 -- stand through (the woodlands learned this first).
 local function is_open(b)
-    return b ~= nil and (b.occupancy == 0 or b.material == blocks.alpine_grass)
+    return b ~= nil and (b.occupancy == 0 or b.material == blocks.tall_grass)
 end
 local function is_fir(b) return holds(b, blocks.fir_log) end
 -- Whether a tick here is this biome's: everywhere, or in the frost ring.
@@ -1036,7 +1036,7 @@ local NOT_GROUND = {
     [game.get_block_id(FIR_LOG)] = true,
     [game.get_block_id(FIR_NEEDLES)] = true,
     [game.get_block_id(DEAD)] = true,
-    [blocks.alpine_grass] = true,
+    [blocks.tall_grass] = true,
 }
 local function is_ground(b)
     if b == nil or b.occupancy == 0 then return false end
@@ -1189,7 +1189,7 @@ local function try(name, fn, x, y, z)
 end
 
 -- The materials whose random tick is this biome's surface.
-local SURFACE_MATERIALS = { blocks.snow, blocks.permafrost, blocks.dirt, blocks.creek_bed, blocks.alpine_turf, blocks.ice }
+local SURFACE_MATERIALS = { blocks.snow, blocks.permafrost, blocks.dirt, blocks.gravel, blocks.dirt, blocks.ice }
 local IS_SURFACE = {}
 for _, material in ipairs(SURFACE_MATERIALS) do IS_SURFACE[material] = true end
 -- Whether a block is one of this biome's surfaces, in any of its cells.
@@ -1347,3 +1347,6 @@ if game.schematic then
 else
     game.log("tiamot_default_world alpine: no game.schematic in this engine; the firs grow by tick alone")
 end
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint.
+tdw.biome_tint("alpine_highlands", { 0.82, 0.94, 1.0 })

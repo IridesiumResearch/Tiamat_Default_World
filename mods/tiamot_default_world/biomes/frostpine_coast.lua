@@ -40,7 +40,7 @@ local BLIND = { blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "frostpine_template:" .. name)
 end
-local PRIORITY = { [blocks.fir_log] = 1, [blocks.dead_wood] = 1, [blocks.granite] = 1 }
+local PRIORITY = { [blocks.fir_log] = 1, [blocks.dead_log] = 1, [blocks.granite] = 1 }
 
 -- A frostpine: a straight fir nine to sixteen blocks, its tiers of needles
 -- narrowing up the trunk, each tier with a cap of snow on it.
@@ -66,11 +66,11 @@ local function snag(rng)
     local tall = 5 + rng:below(6)
     local d = schem.DIR16[rng:below(16) + 1]
     local trunk = { { 0.5, -1.5, 0.5, 0.4 }, { 0.5 + d[1] * 0.6, tall, 0.5 + d[2] * 0.6, 0.18 } }
-    schem.push_path(blocks.dead_wood, trunk, BLIND)
+    schem.push_path(blocks.dead_log, trunk, BLIND)
     for _ = 1, 2 + rng:below(3) do
         local e = schem.DIR16[rng:below(16) + 1]
         local bx, by, bz = schem.path_point(trunk, tall * (0.4 + rng:below(50) / 100))
-        schem.push_path(blocks.dead_wood, { { bx, by, bz, 0.15 }, { bx + e[1] * 1.3, by - 0.4, bz + e[2] * 1.3, 0.1 } }, BLIND)
+        schem.push_path(blocks.dead_log, { { bx, by, bz, 0.15 }, { bx + e[1] * 1.3, by - 0.4, bz + e[2] * 1.3, 0.1 } }, BLIND)
     end
     return schem.record_schematic(PRIORITY)
 end
@@ -138,7 +138,7 @@ tdw.build_biome(ID, function(ctx)
     local codes = shape.compile("biome.frostpine.codes", code)
     local km = 0.001
     local entries = {
-        { code = 1, to = 1 * km, material = blocks.alpine_turf },
+        { code = 1, to = 1 * km, material = blocks.dirt },
         { code = 1, from = 1 * km, to = 5 * km, material = blocks.dirt },
         { code = 2, to = 5 * km, material = blocks.permafrost },
         { code = 3, to = 2 * km, material = blocks.snow },
@@ -150,7 +150,7 @@ tdw.build_biome(ID, function(ctx)
         n.sub(n.noise("fp_tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.alpine_grass, cells = 2, take = tufts },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -164,4 +164,10 @@ tdw.build_biome(ID, function(ctx)
         scatter("erratic", built.erratics, firm, ERRATIC_CELL, ERRATIC_SQUARES, 213, 0.006)
     end
     return fills
+end)
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint, on
+-- its band of the Hem.
+tdw.biome_tint("frostpine_coast", { 0.82, 0.94, 1.0 }, function()
+    return shape.node.min(tdw.biome_mask(shape.node, "frostpine_coast"), shape.rim_band(shape.RIM.coast))
 end)

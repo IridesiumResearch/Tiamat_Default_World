@@ -28,16 +28,13 @@ BLOCKS = {
     "dirt":           ( 98,  78,  58,  0),
     "packed_dirt":    (124, 102,  72,  0),
     "grass":          ( 88, 122,  52,  0),
-    "loam":           ( 58,  44,  32,  0),
-    "leaf_litter":    (108,  82,  52,  0),
     "mud":            ( 52,  42,  34,  0),
-    "creek_bed":      ( 96,  94,  88,  0),
-    "limestone":      (176, 168, 146,  0),
+    "gravel":      ( 96,  94,  88,  0),
     "granite":        (128, 124, 120,  0),
     "oak_log":        ( 84,  64,  44,  0),
     "oak_leaves":     ( 64, 100,  42,  0),
     "birch_log":      (206, 200, 186,  0),
-    "dead_wood":      (110, 102,  90,  0),
+    "dead_log":      (110, 102,  90,  0),
     "fern":           ( 52,  96,  54,  0),
     "tall_grass":     (116, 136,  60,  0),
     "bramble":        ( 72,  60,  44,  0),
@@ -47,13 +44,15 @@ BLOCKS = {
     "roman_chamomile":(238, 234, 214,  0),
     "rose_bush":      ( 58,  90,  46,  0),
     "slate":          ( 72,  78,  90,  0),
+    "dark_sediment":  ( 62,  64,  74,  0),   # the gloam's rock (2026-09-16)
+    "light_sediment": (150, 146, 134,  0),
     "dark_basalt":    ( 44,  44,  48,  0),
     "dead_coral":     (178, 166, 150,  0),
     "sand":           (194, 180, 138,  0),
     "ocean_moss":     ( 40,  78,  62,  0),
     "barnacles":      (170, 166, 154,  0),
     "seagrass":       ( 66, 118,  58,  0),
-    "willow_wood":    ( 92,  82,  66,  0),
+    "willow_log":    ( 92,  82,  66,  0),
     "willow_leaves":  ( 96, 124,  62,  0),
     "willow_planks":  (176, 156, 120,  0),
     "water_iris":     ( 74, 116,  64,  0),
@@ -67,7 +66,7 @@ BLOCKS = {
     "climbing_ivy":   ( 60,  98,  52,  0),
     "monstera":       ( 58, 106,  56,  0),
     "pitcher_plant":  (122,  98,  56,  0),   # green going to red-brown at the mouths
-    "kapok_wood":     (170, 164, 150,  0),
+    "kapok_log":     (170, 164, 150,  0),
     "kapok_leaves":   ( 86, 122,  58,  0),
     "kapok_planks":   (196, 180, 150,  0),
     "dry_clay":       (170, 142, 112,  0),
@@ -76,12 +75,10 @@ BLOCKS = {
     "rust_red_sandstone": (146, 74, 52, 0),   # the arid mesa (2.0)
     "ochre_sandstone": (178, 132, 70,  0),
     "pale_terracotta": (198, 158, 128, 0),
-    "juniper_wood":   (128, 122, 112,  0),
+    "juniper_log":   (128, 122, 112,  0),
     "juniper_needles":( 44,  66,  50,  0),
-    "columnar_cactus":( 84, 112,  68,  0),
+    "cactus":( 84, 112,  68,  0),
     "mulch":          (112,  70,  46,  0),   # the taiga (2.2)
-    "rust_grass":     (148,  92,  56,  0),
-    "hanging_lichen": (172, 182, 156,  0),
     "volcanic_ash":   (196, 192, 184,  0),   # the badlands (2.1)
     "lava_rock":      ( 52,  44,  46,  0),   # the volcanic foothills (2.3)
     "pumice":         (178, 172, 162,  0),
@@ -92,11 +89,10 @@ BLOCKS = {
     "coral_magenta":  (176,  52, 118,  0),
     "coral_cyan":     ( 46, 156, 164,  0),
     "coral_amber":    (206, 140,  46,  0),
-    "sea_anemone":    (196,  84, 110,  0),
-    "apple_wood":     ( 96,  76,  56,  0),   # the flower forest (2.6)
+    "apple_log":     ( 96,  76,  56,  0),   # the flower forest (2.6)
     "apple_leaves":   ( 76, 110,  52,  0),
     "apple_blossom":  (238, 216, 220,  0),
-    "cherry_wood":    ( 84,  62,  58,  0),
+    "cherry_log":    ( 84,  62,  58,  0),
     "cherry_leaves":  (222, 140, 168,  0),   # pink, not green (2026-09-16)
     "cherry_blossom": (232, 168, 186,  0),
     "birch_leaves":   (112, 148,  68,  0),
@@ -107,19 +103,15 @@ BLOCKS = {
     "lichen":         (158, 170, 142,  0),   # the Silverwood floor (2.8)
     "salt":           (234, 232, 224,  0),   # the Salt Pan (2.9)
     "obsidian":       ( 24,  20,  30,  0),   # the Obsidian Barrens (3.3)
-    "sinter":         (214, 206, 188,  0),   # the Geyser Basin (3.4)
-    "thermal_mat":    (206, 122,  40,  0),
-    "black_sand":     ( 40,  38,  42,  0),   # the Cinder Coast (3.5)
+    "dark_sand":     ( 40,  38,  42,  0),   # the Cinder Coast (3.5)
     "heather":        (150,  84, 150,  0),   # the Heather Moor (3.6)
-    "tube_worms":     (224, 214, 206,  0),   # the Abyssal Trench (3.9)
-    "golden_grass":   (196, 168,  84,  0),   # the Savanna (3.11)
-    "acacia_wood":    ( 88,  70,  56,  0),
+    "acacia_log":    ( 88,  70,  56,  0),
     "acacia_leaves":  (104, 120,  56,  0),
     "reeds":          (134, 128,  78,  0),   # the Peat Fen (3.13)
     "redwood_log":    (128,  64,  46,  0),   # the Redwood Stands (3.14)
     "redwood_needles": ( 46,  82,  52,  0),
     "glow_polyp":     (150, 220, 240,  0),
-    "mangrove_wood":  ( 96,  62,  48,  0),   # the Mangrove Coast (3.10)
+    "mangrove_log":  ( 96,  62,  48,  0),   # the Mangrove Coast (3.10)
     "mangrove_leaves": ( 52,  92,  48,  0),
     "gorse":          (168, 160,  52,  0),
     "lava":           (214,  84,  22,  0),   # the fluid's block
@@ -133,17 +125,14 @@ BLOCKS = {
     "ice":            (126, 172, 228,  0),   # cold blue (2026-09-12; was a grey-blue near the snow's)
     "fir_log":        ( 68,  56,  46,  0),
     "fir_needles":    ( 40,  68,  54,  0),
-    "alpine_grass":   ( 62,  92,  86,  0),
-    "alpine_turf":    ( 56,  84,  78,  0),
     "rose_blooms":    (176,  42,  64,  0),
     "water":          ( 58,  92, 110,  0),
-    "gloam_stone":    ( 74,  78,  90,  0),
-    "abyss_stone":    ( 40,  38,  44,  0),
+    "morphic_rock":    ( 40,  38,  44,  0),
     "magma_crust":    ( 96,  44,  30,  0),
     "magma":          (222, 112,  28,  0),
-    "lantern_stone":  (196, 168, 112,  0),
+    "hot_fiber_stone":  (196, 168, 112,  0),
     "caul":           (112, 176, 104,  0),
-    "dream_stone":    (140, 176, 200,  0),
+    "cold_fiber_stone":    (140, 176, 200,  0),
     "scorch":         ( 66,  48,  36,  0),
     "marrow":         (214, 206, 190,  0),
     "apex_stone":     ( 54,  36,  62,  0),
@@ -233,18 +222,12 @@ DOTS.update(DOTS_EXTRA)
 
 BLADES = {
     "tall_grass": (5, 11, 16),   # blades per card; shortest, tallest in pixels
-    "alpine_grass": (5, 8, 13),  # shorter: wind-flattened
     "water_iris": (4, 12, 16),   # tall blades, few of them
     "wild_mint": (6, 5, 9),      # low and bushy
     "seagrass": (5, 12, 16),     # long, most of the card
     "kelp": (3, 14, 16),         # three broad-ish stems the height of the card
     "pitcher_plant": (3, 9, 14), # three fat tubes
     "dead_sagebrush": (7, 5, 11), # brittle, many short sticks
-    "rust_grass": (5, 9, 15),     # acidic tufts
-    "hanging_lichen": (6, 10, 16), # strands the length of the card
-    "sea_anemone": (8, 5, 10),     # a fat tuft of tentacles (2.4)
-    "tube_worms": (7, 6, 13),      # a crowd of white tubes (3.9)
-    "golden_grass": (6, 9, 16),    # knee-high dry grass (3.11)
     "reeds": (4, 13, 16),          # tall, a few stems a card (3.13)
 }
 

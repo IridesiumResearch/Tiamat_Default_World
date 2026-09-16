@@ -40,16 +40,16 @@ local BLIND = { blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "fen_template:" .. name)
 end
-local PRIORITY = { [blocks.dead_wood] = 1 }
+local PRIORITY = { [blocks.dead_log] = 1 }
 
 -- A bog oak's stump: a thick black stub two to four blocks, split.
 local function stump(rng)
     schem.record_begin()
     local tall = 2 + rng:below(3)
-    schem.push_path(blocks.dead_wood, { { 0.5, -1.5, 0.5, 0.9 }, { 0.5, tall, 0.5, 0.6 } }, { rough = 0.4, blind = true })
+    schem.push_path(blocks.dead_log, { { 0.5, -1.5, 0.5, 0.9 }, { 0.5, tall, 0.5, 0.6 } }, { rough = 0.4, blind = true })
     for _ = 1, 2 do
         local d = schem.DIR16[rng:below(16) + 1]
-        schem.push_path(blocks.dead_wood, { { 0.5, -0.8, 0.5, 0.35 }, { 0.5 + d[1] * 1.8, -0.6, 0.5 + d[2] * 1.8, 0.2 } }, BLIND)
+        schem.push_path(blocks.dead_log, { { 0.5, -0.8, 0.5, 0.35 }, { 0.5 + d[1] * 1.8, -0.6, 0.5 + d[2] * 1.8, 0.2 } }, BLIND)
     end
     return schem.record_schematic(PRIORITY)
 end
@@ -59,7 +59,7 @@ local function log(rng)
     local length = 8 + rng:below(7)
     local d = schem.DIR16[rng:below(16) + 1]
     local half = length / 2
-    schem.push_path(blocks.dead_wood, { { 0.5 - d[1] * half, -0.2, 0.5 - d[2] * half, 0.8 }, { 0.5 + d[1] * half, -0.4, 0.5 + d[2] * half, 0.55 } }, BLIND)
+    schem.push_path(blocks.dead_log, { { 0.5 - d[1] * half, -0.2, 0.5 - d[2] * half, 0.8 }, { 0.5 + d[1] * half, -0.4, 0.5 + d[2] * half, 0.55 } }, BLIND)
     return schem.record_schematic(PRIORITY)
 end
 

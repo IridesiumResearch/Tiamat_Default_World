@@ -306,6 +306,13 @@ local function dist_program()
 end
 -- What a chunk is to the seas, from the map's bounds over it: "deep" past
 -- the shelf, "shore" within FADE of a shore, nil out of their reach.
+-- Whether any of a chunk may be more than `blocks` out to sea: for the
+-- deep biomes, whose floor starts at the shelf's end. A chunk across that
+-- line is a shore chunk by `class`, and until 2026-09-16 the deep floor in
+-- it was painted by nobody (plain soil in a ring round every shelf).
+function M.reaches(pos, blocks)
+    return dist_program():bounds(pos).high > blocks
+end
 function M.class(pos)
     local b = dist_program():bounds(pos)
     if b.low > M.SHELF_END - 30.0 then

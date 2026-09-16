@@ -373,4 +373,39 @@ function tdw.surface_biomes_in(u_lo, u_hi)
     return found
 end
 
+-- **A biome's colour is its chunk tint** (2026-09-16: "if a biome needs
+-- different colored grass or lichen or dirt then the per biome tint needs
+-- to be changed"): one grass, one dirt, one lichen, drawn through the tint
+-- of the chunks the biome covers, full in a chunk it covers wholly and half
+-- way at its edge. The engine multiplies (every channel 1 at most), so a
+-- tint darkens and shifts hue; it cannot make green grass brighter gold.
+--   `field_fn`: the biome's placement field if its mask alone is too wide.
+function tdw.biome_tint(id, rgb, field_fn)
+    if not tdw.on_chunk_tint then
+        return
+    end
+    local edge = { (1.0 + rgb[1]) / 2, (1.0 + rgb[2]) / 2, (1.0 + rgb[3]) / 2 }
+    local mask = nil
+    tdw.on_chunk_tint(function(pos)
+        local only = tdw.config.everywhere
+        if only then
+            if only == id then
+                return rgb[1], rgb[2], rgb[3]
+            end
+            return nil
+        end
+        if mask == nil then
+            local n = tdw.shape.node
+            mask = tdw.shape.compile("tint." .. id, field_fn and field_fn() or tdw.biome_mask(n, id))
+        end
+        local b = mask:bounds(pos)
+        if b.high <= 0 then
+            return nil
+        elseif b.low > 0 then
+            return rgb[1], rgb[2], rgb[3]
+        end
+        return edge[1], edge[2], edge[3]
+    end)
+end
+
 return M

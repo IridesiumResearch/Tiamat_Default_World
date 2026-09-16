@@ -29,14 +29,12 @@ local SEEK_SKY = 220           -- blocks over the base dome a seeker is dropped 
 -- soil, so a column with granite or snow anywhere in it is the alpine's
 -- whatever else is in it.
 local ALPINE_GROUND = { blocks.granite, blocks.slate, blocks.permafrost, blocks.snow,
-    blocks.ice, blocks.alpine_turf, blocks.alpine_grass, blocks.fir_log, blocks.fir_needles }
+    blocks.ice, blocks.fir_log, blocks.fir_needles }
 -- The river's own, which win for the same reason the alpine's do: a valley
 -- is cut through another biome, and its floor is sand and gravel that
 -- belong to half the world. A willow or an iris belongs to one river.
-local RIVER_GROUND = { blocks.willow_wood, blocks.willow_leaves, blocks.water_iris, blocks.wild_mint }
+local RIVER_GROUND = { blocks.willow_log, blocks.willow_leaves, blocks.water_iris, blocks.wild_mint }
 local OWNER = {
-    [blocks.loam] = "temperate_woodlands",
-    [blocks.leaf_litter] = "temperate_woodlands",
     [blocks.oak_log] = "temperate_woodlands",
     [blocks.birch_log] = "temperate_woodlands",
     [blocks.dirt] = "rolling_grasslands",
@@ -58,43 +56,39 @@ OWNER[blocks.glow_cap] = "river_valleys"
 -- the woodland claims, and the moss under them is the rainforest's and
 -- nobody else's. The clays are shared with the river and say nothing.
 for _, material in ipairs({ blocks.moss, blocks.black_mud, blocks.ironwood_log, blocks.ironwood_leaves,
-    blocks.climbing_ivy, blocks.monstera, blocks.pitcher_plant, blocks.kapok_wood, blocks.kapok_leaves }) do
+    blocks.climbing_ivy, blocks.monstera, blocks.pitcher_plant, blocks.kapok_log, blocks.kapok_leaves }) do
     OWNER[material] = "jungle"
 end
 -- The mesa's own, which decide: its dirt, sand and clay are other biomes'.
 for _, material in ipairs({ blocks.rust_red_sandstone, blocks.ochre_sandstone, blocks.pale_terracotta,
-    blocks.juniper_wood, blocks.juniper_needles, blocks.columnar_cactus }) do
+    blocks.juniper_log, blocks.juniper_needles, blocks.cactus }) do
     OWNER[material] = "arid_mesa"
 end
 for _, material in ipairs({ blocks.volcanic_ash, blocks.charcoal, blocks.dried_mud, blocks.dead_sagebrush }) do
     OWNER[material] = "badlands"
 end
-for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lichen }) do
+for _, material in ipairs({ blocks.mulch }) do
     OWNER[material] = "taiga"
 end
 OWNER[blocks.lichen] = "silverwood"
 OWNER[blocks.salt] = "salt_pan"
 OWNER[blocks.obsidian] = "obsidian_barrens"
-OWNER[blocks.sinter] = "geyser_basin"
-OWNER[blocks.thermal_mat] = "geyser_basin"
-OWNER[blocks.black_sand] = "cinder_coast"
+OWNER[blocks.dark_sand] = "cinder_coast"
 OWNER[blocks.heather] = "heather_moor"
-OWNER[blocks.golden_grass] = "savanna"
-OWNER[blocks.acacia_wood] = "savanna"
+OWNER[blocks.acacia_log] = "savanna"
 OWNER[blocks.acacia_leaves] = "savanna"
 OWNER[blocks.reeds] = "peat_fen"
 OWNER[blocks.redwood_log] = "redwood_stands"
 OWNER[blocks.redwood_needles] = "redwood_stands"
-OWNER[blocks.tube_worms] = "abyssal_trench"
 OWNER[blocks.glow_polyp] = "abyssal_trench"
-OWNER[blocks.mangrove_wood] = "mangrove_coast"
+OWNER[blocks.mangrove_log] = "mangrove_coast"
 OWNER[blocks.mangrove_leaves] = "mangrove_coast"
 OWNER[blocks.gorse] = "heather_moor"
 for _, material in ipairs({ blocks.white_sand, blocks.calcite, blocks.pink_algae, blocks.coral_magenta,
-    blocks.coral_cyan, blocks.coral_amber, blocks.sea_anemone }) do
+    blocks.coral_cyan, blocks.coral_amber }) do
     OWNER[material] = "coral_fringed_shallows"
 end
-for _, material in ipairs({ blocks.apple_wood, blocks.apple_leaves, blocks.apple_blossom, blocks.cherry_wood,
+for _, material in ipairs({ blocks.apple_log, blocks.apple_leaves, blocks.apple_blossom, blocks.cherry_log,
     blocks.cherry_leaves, blocks.cherry_blossom, blocks.birch_leaves, blocks.allium, blocks.peony,
     blocks.poppy, blocks.bluebell }) do
     OWNER[material] = "flower_forest"

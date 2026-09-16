@@ -14,7 +14,7 @@
 -- "ember_shore" programs, shape.lua): the floor, the face, the terrace and
 -- the ledge. It paints the shore and the shelf, as the Coastal Cliffs do
 -- everywhere else, and the cliffs keep off the ridge (`shape.off_cinder`).
--- Past the shelf is the Deep Ocean's. New node: `black_sand`.
+-- Past the shelf is the Deep Ocean's. New node: `dark_sand`.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -179,7 +179,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 2, from = 2 * km, to = 12 * km, material = blocks.dark_basalt },
         { code = 3, to = 2 * km, material = blocks.volcanic_ash },
         { code = 3, from = 2 * km, to = 12 * km, material = blocks.dark_basalt },
-        { code = 4, to = 4 * km, material = blocks.black_sand },
+        { code = 4, to = 4 * km, material = blocks.dark_sand },
         { code = 4, from = 4 * km, to = 12 * km, material = blocks.dark_basalt },
         { code = 5, to = 3 * km, material = blocks.lava_rock },
         { code = 5, from = 3 * km, to = 12 * km, material = blocks.dark_basalt },

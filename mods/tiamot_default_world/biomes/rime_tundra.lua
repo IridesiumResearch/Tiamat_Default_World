@@ -280,9 +280,9 @@ tdw.build_biome(ID, function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = 6 * km, material = blocks.permafrost },
-        { code = 2, to = 1 * km, material = blocks.alpine_turf },
+        { code = 2, to = 1 * km, material = blocks.dirt },
         { code = 2, from = 1 * km, to = 6 * km, material = blocks.permafrost },
-        { code = 3, to = 1 * km, material = blocks.creek_bed },
+        { code = 3, to = 1 * km, material = blocks.gravel },
         { code = 3, from = 1 * km, to = 6 * km, material = blocks.permafrost },
         { code = 4, to = 2 * km, material = blocks.snow },
         { code = 4, from = 2 * km, to = 6 * km, material = blocks.permafrost },
@@ -293,7 +293,7 @@ tdw.build_biome(ID, function(ctx)
         n.sub(n.noise("rt_tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
-        { cover = blocks.alpine_grass, cells = 2, take = tufts },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -329,3 +329,9 @@ if tdw.on_chunk_fog then
         return { r = HAZE.r, g = HAZE.g, b = HAZE.b, visibility = b.low > 0 and 320 or 640 }
     end)
 end
+
+-- The colour of its grass, dirt and lichen (2026-09-16): the chunk tint, on
+-- its band of the Hem.
+tdw.biome_tint("rime_tundra", { 0.82, 0.94, 1.0 }, function()
+    return shape.node.min(tdw.biome_mask(shape.node, "rime_tundra"), shape.rim_band(shape.RIM.tundra))
+end)

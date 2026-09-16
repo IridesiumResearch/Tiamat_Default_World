@@ -128,7 +128,7 @@ local BLIND = { blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "salt_template:" .. name)
 end
-local PRIORITY = { [blocks.salt] = 1, [blocks.dead_wood] = 1 }
+local PRIORITY = { [blocks.salt] = 1, [blocks.dead_log] = 1 }
 
 -- A salt pillar: a crusted column two to six blocks tall with a wider
 -- foot and a knobbed top.
@@ -144,7 +144,7 @@ local function snag(rng)
     schem.record_begin()
     local tall = 3 + rng:below(3)
     local d = schem.DIR16[rng:below(16) + 1]
-    schem.push_path(blocks.dead_wood, { { 0.5, -1.5, 0.5, 0.5 }, { 0.5 + d[1] * 0.4, tall, 0.5 + d[2] * 0.4, 0.22 } }, BLIND)
+    schem.push_path(blocks.dead_log, { { 0.5, -1.5, 0.5, 0.5 }, { 0.5 + d[1] * 0.4, tall, 0.5 + d[2] * 0.4, 0.22 } }, BLIND)
     schem.push_ellipsoid(blocks.salt, 0.5, 0.2, 0.5, 1.1, 0.5, 1.1, { rough = 0.4, blind = true })
     return schem.record_schematic(PRIORITY)
 end
