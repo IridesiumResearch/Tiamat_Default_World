@@ -108,6 +108,16 @@ M.BLUFF_PATCH_RAMP = 15.0 -- how quickly a patch fades in past that
 -- line. The relief and the detail are the whole world's and need no blend.
 M.HUMIDITY_FREQ = 1 / 9000
 M.HUMIDITY_OCTAVES = 2
+-- **Flat in y** (2026-09-16). The humidity is a 3D noise, and everything
+-- that asks which half of a ring a place is samples it at a different
+-- height: `/tp` and the HUD at the base dome, a fill at the block it is
+-- painting, which the relief puts up to four hundred blocks away. At
+-- 1/9000 with two octaves that is a tenth of a period — more than
+-- HUMIDITY_BLEND — so a place could be the Taiga to the HUD and the
+-- Frozen Wastes to the generator, and `/tp frozen wastes` landed in
+-- spruce. Stretched a thousand times in y the noise is the same field at
+-- every height a player can stand, and the three agree.
+M.HUMIDITY_STRETCH = { y = 1000 }
 M.HUMIDITY_SPLIT = -0.05  -- the noise runs +/-0.5 after the clamp: the dry half is the smaller
 M.HUMIDITY_BLEND = 0.04   -- in the noise's units: a few hundred blocks of cross-fade
 M.HUMIDITY_DITHER = 0.03  -- +/-, at DITHER_FREQ: the speckle of the material edge
@@ -301,8 +311,11 @@ local function u() return mul(r2(), const(1 / (M.R_DISC * M.R_DISC))) end
 local function ys() return mul(sub(Y(), const(M.Y0)), const(M.SCALE)) end
 -- The radius the BIOMES are placed by: the true one, pushed in and out by
 -- a slow noise so no ring edge is a circle. See M.RING_WOBBLE.
+-- The radius a biome is placed by: the true one pushed in and out by a
+-- slow noise, flat in y for the reason the humidity is (above) — a ring's
+-- edge that wandered with height put `/tp` on the wrong side of it.
 local function u_biome()
-    return add(u(), noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE))
+    return add(u(), noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE, M.HUMIDITY_STRETCH))
 end
 M.sub = { r2 = r2, u = u, ys = ys }
 
@@ -373,7 +386,7 @@ end
 
 -- The humidity noise, +/-0.5.
 function M.humidity()
-    return noise("humidity", M.HUMIDITY_FREQ, M.HUMIDITY_OCTAVES, 1.0)
+    return noise("humidity", M.HUMIDITY_FREQ, M.HUMIDITY_OCTAVES, 1.0, M.HUMIDITY_STRETCH)
 end
 
 

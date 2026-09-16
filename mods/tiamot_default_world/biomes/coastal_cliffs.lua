@@ -49,7 +49,7 @@ local seas = tdw.seas
 local n = shape.node
 
 -- The cliff.
-local FACE_W = 2.0                                    -- blocks from the coastline to the full height: sheer
+local FACE_W = 4.0                                    -- blocks from the coastline to the full height where the rock stands: steep, not a wall
 -- The jag: a fast 3D noise of JAG_AMP added to the terrain within
 -- JAG_REACH of the line, above the splash zone, over the areas JAG_AREA
 -- says — most of them. Ledges, overhangs, a face that is rock and not a
@@ -72,8 +72,8 @@ local JAG_AREA_MIN = -0.28                            -- four fifths of the coas
 -- The beaches: where a slow noise is over BEACH_MIN, the face is BEACH_W
 -- blocks wide instead — a short, abrupt shingle beach up to the cliff.
 local BEACH_FREQ = 1 / 700
-local BEACH_MIN = 0.22                                -- about a tenth of the coast
-local BEACH_W = 28.0
+local BEACH_MIN = 0.02                                -- about half the coast (a tenth until 2026-09-16: "the beach just looks like a sheared off stone pad" - the other nine tenths met the water in a two-block step)
+local BEACH_W = 34.0
 -- The sea stacks.
 local STACK_FREQ = 1 / 45
 local STACK_ERODE = 3.0                               -- blocks: the noise's positive blobs shrunk by this — the ones left are the stacks
@@ -137,7 +137,7 @@ local SPLASH_IN = 6.0                                 -- blocks from the coastli
 local SPLASH_FREQ = 1 / 12
 local CORAL_MIN = 0.12                                -- the splash noise over this: dead coral...
 local GRAVEL_MIN = 0.12                               -- ...under minus this: gravel; between: the strata's own stone and slate
-local BEACH_IN = 14.0                                 -- blocks from the coastline the beach's gravel reaches
+local BEACH_IN = 30.0                                 -- blocks from the coastline the beach's gravel reaches: the whole ramp, so a beach is gravel and not turf
 local TUFT_FREQ = 1.5
 local TUFT_MIN = 0.28                                 -- sparse
 local SAND_DEPTH = 0.004                              -- km: the sand over the shelf's rock
@@ -152,7 +152,7 @@ local BARNACLE_MIN = 0.18
 -- noise says. Never on the face: the rim band starts past it.
 local PINE_CELL = 7
 local PINE_SQUARES = 0.22
-local PINE_RIM = { 3.0, 22.0 }
+local PINE_RIM = { 12.0, 34.0 }                       -- blocks back from the water: off the beach itself (2026-09-16)
 local PINE_PATCH_FREQ = 1 / 120
 local PINE_PATCH_MIN = 0.05
 local PINE_TEMPLATES = 10

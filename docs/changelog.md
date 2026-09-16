@@ -1883,6 +1883,55 @@ Three biomes from one brief, and a mode fault they turned up.
   the Hem's outer half is bare. It predates this batch and wants a batch of
   its own.
 
+### The half that moved with height, the sea floor's palm trees, and a round of trims
+
+- **The wet/dry split moved with height, and `/tp` landed on the wrong
+  side of it** ("I tp to frozen wastes and end up in clear taiga"). The
+  humidity is a 3D noise at 1/9000 with two octaves, and everything that
+  asks which half of a ring a place is samples it at a different height:
+  `/tp` and the HUD at the base dome, a fill at the block it paints, which
+  the relief puts up to four hundred blocks away — a tenth of a period,
+  more than the blend either side of the split. So the generator and the
+  HUD could disagree about which biome a place was, and they did. The
+  humidity and the ring wobble are stretched a thousand times in y now
+  (engine 12bd662), which makes them the same field at every height a
+  player can stand.
+- **Palm trees under the ocean**: the river's gate against the sea only
+  ran in the shore modes, so in the "deep" programs its bed, banks, grass,
+  willows and palms were laid on the ocean floor. The gate is in every
+  mode now, and a river is not present past a shelf at all. The woodland,
+  the grassland, the Dunes and the Flower Forest were painting their turf
+  under the water for the same reason — their code fields had the ring
+  mask but no sea exclusion — so the seabed was grass in places. Fixed.
+- **The beach was a sheared-off stone pad.** The coast met the water in a
+  two-block vertical face everywhere except the tenth of it the beach
+  noise picked. Half the coast is a beach now (the noise's cut from 0.22
+  to 0.02), the ramp is 34 blocks wide, the face where the rock does stand
+  is 4 blocks rather than 2, the beach's gravel reaches 30 blocks in
+  instead of 14, and the pines start 12 blocks back from the water instead
+  of 3.
+- **The Dunes are 91% sand**, measured over an 89-block square: the
+  deflation basins take a fifth of the sand sea at most, their lag and
+  crust are a corner of a basin each, the yardangs are down to the ribs'
+  spines, and what little grows is down to a few per cent. The shape is
+  the dunes and the swells, as asked.
+- **Badlands halved again**: hills, fins, rills, gullies, the long wave and
+  the piping voids are all half what they were this morning, which is a
+  quarter of the first cut.
+- **Cherry leaves are pink** (and keep their own tint rather than the
+  green one, which was pulling them back toward the canopy's colour).
+- **Fewer of things**: river courses 4.5 km apart rather than 2.6 ("river
+  valleys seems excessively common"); the rivers' palms to 30%; the Frozen
+  Wastes' seracs to a quarter, and the grass I added there yesterday from
+  a third of Frostmoor to 6% — at one octave a fine noise sits AT the
+  clamp about an eighth of the time, so a threshold near 0.5 still takes
+  an eighth of the ground; two octaves and a patch noise fix it. The
+  grassland's bare crests are a tenth the area and a third the size ("the
+  mud swatches are still way too big").
+- **The HUD asks the Dunes last**, after the ground's own materials: sand,
+  sandstone and gravel are the coast's and the mesa's too, and standing on
+  a beach inside their ring it used to say Dunes.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

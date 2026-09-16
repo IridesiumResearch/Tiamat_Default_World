@@ -288,7 +288,7 @@ block("apple_wood", "Apple wood", "Short, crooked, pale-barked: an orchard tree 
 block("apple_leaves", "Apple leaves", "A low, broad crown of them.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 block("apple_blossom", "Apple blossom", "White-pink blossom through the crown, and fallen under it.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
 block("cherry_wood", "Cherry wood", "Dark, banded bark; a wild cherry leans toward the light.", { hardness = 0.9, tint = SOIL })
-block("cherry_leaves", "Cherry leaves", "Fine leaves under the blossom.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
+block("cherry_leaves", "Cherry leaves", "Pink from the first thaw to the last of the summer.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
 block("cherry_blossom", "Cherry blossom", "Deep pink, and it drifts.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true })
 block("birch_leaves", "Birch leaves", "Small, bright, always moving.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true })
 block("allium", "Allium", "A tall stem under a violet globe of florets.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })

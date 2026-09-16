@@ -185,6 +185,11 @@ tdw.build_biome("temperate_woodlands", function(ctx)
     if mask then
         code = n.mul(code, step(mask))
     end
+    if shape.sea_exclude then
+        -- Not on a seabed: the shore is the coast's and the reef's, and
+        -- without this the turf was painted under the water (2026-09-16).
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
+    end
     local depth = shape.compile("biome.woodlands.depth", shape.terrain(false))
     local codes = shape.compile("biome.woodlands.codes", code)
     -- Its own soil under its own top, so a chunk another biome shares

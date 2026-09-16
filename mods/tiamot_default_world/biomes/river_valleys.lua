@@ -47,7 +47,7 @@ local edits = tdw.edits
 
 -- The course, and the trough's cross-section. Distances in blocks from the
 -- line; heights in km, as the terrain has them.
-local COURSE_FREQ = 1 / 2600                          -- courses about two and a half kilometres apart
+local COURSE_FREQ = 1 / 4500                          -- courses about four and a half kilometres apart (2.6 until 2026-09-16: "river valleys seems excessively common")
 local CHANNEL = 9.0                                   -- blocks: where the bed comes up to the water's level
 local BANK_W = 3.0                                    -- from the water's edge to the top of the bank
 local BAR = 17.0                                      -- to the top of the gravel bank and the point bars
@@ -102,7 +102,7 @@ local GRASS_FREQ, GRASS_MIN = 1.5, 0.12   -- 0.20 until "more grass" (2026-09-14
 local DRY_THIN = 0.20                      -- in the Arid Mesa, a second noise over this: 62% fewer grass cells, measured against none
 -- The trees.
 local WILLOW_CELL, WILLOW_SQUARES, WILLOW_SALT = 5, 0.55, 41
-local PALM_CELL, PALM_SQUARES, PALM_SALT = 11, 0.30, 42
+local PALM_CELL, PALM_SQUARES, PALM_SALT = 11, 0.09, 42   -- 30% of what it was (2026-09-16)
 local SNAG_CELL, SNAG_SQUARES, SNAG_SALT = 9, 0.105, 43   -- 70% fewer drift piles than the 0.35 of the first cut
 local STEP_CELL, STEP_SQUARES, STEP_SALT = 14, 0.25, 44
 local WILLOW_TEMPLATES, PALM_TEMPLATES = 5, 4   -- each is thousands of cell tests to cut: enough for variety, not more
@@ -260,6 +260,11 @@ tdw.biomes.river_valleys.locate = function(px, pz, seed)
     return nil
 end
 tdw.biomes.river_valleys.present = function(pos)
+    -- Not past a shelf: a river has no business on an ocean floor, and
+    -- its fills would paint one.
+    if tdw.seas and tdw.seas.on() and tdw.seas.class(pos) == "deep" then
+        return false
+    end
     local x, z = pos.x * 16 + 8, pos.z * 16 + 8
     return REACH:at(x + 0.5, 0.0, z + 0.5, pos.seed) < shape.RIVER_REACH + 24
 end
@@ -268,6 +273,13 @@ tdw.build_biome("river_valleys", function(ctx)
     local function masked(field)
         local mask = tdw.biome_mask(n, "river_valleys")
         field = mask and n.min(field, mask) or field
+        -- **Never at sea, in any mode.** The gate below only ran in the
+        -- shore modes, so in the "deep" programs the bed, the banks, the
+        -- grass and the willows and palms were laid on the ocean floor —
+        -- the palms the designer found under the water (2026-09-16).
+        if shape.sea_exclude then
+            field = shape.sea_exclude(field, 20.0)
+        end
         -- Nothing of the river's past the point on a shore's FADE band
         -- where its valley has been lifted away (shape.RIVER_LIFT_KM):
         -- the bed and the banks were painted on the uplands beyond it.

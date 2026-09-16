@@ -97,7 +97,7 @@ BLOCKS = {
     "apple_leaves":   ( 76, 110,  52,  0),
     "apple_blossom":  (238, 216, 220,  0),
     "cherry_wood":    ( 84,  62,  58,  0),
-    "cherry_leaves":  ( 88, 116,  60,  0),
+    "cherry_leaves":  (222, 140, 168,  0),   # pink, not green (2026-09-16)
     "cherry_blossom": (232, 168, 186,  0),
     "birch_leaves":   (112, 148,  68,  0),
     "allium":         (150, 116, 188,  0),

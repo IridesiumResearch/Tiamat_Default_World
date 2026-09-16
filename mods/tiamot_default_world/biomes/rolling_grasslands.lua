@@ -23,9 +23,9 @@ local TRAIL_WIDTH = 0.012      -- noise units: a line two or three blocks wide
 local TRAIL_PATCH_FREQ = 1 / 700
 local TRAIL_PATCH_MIN = 0.08   -- trails in some stretches of the grass, not everywhere
 
-local LEDGE_CREST = 0.7        -- a crest must reach this share of RIDGE_AMP to bare its dirt
-local LEDGE_PATCH_FREQ = 1 / 300
-local LEDGE_PATCH_MIN = 0.05   -- which crests are bared: the windward ones, as chance has it
+local LEDGE_CREST = 0.85       -- a crest must reach this share of RIDGE_AMP to bare its dirt
+local LEDGE_PATCH_FREQ = 1 / 95        -- patches a dozen blocks across, not a hundred (2026-09-16)
+local LEDGE_PATCH_MIN = 0.30   -- which crests are bared: a few of the windward ones (0.05 until 2026-09-16: "the mud swatches are still way too big")
 
 local ERRATIC_CHANCE = 400     -- one grass block in this many, in a square that has one (the square and the spacing set the density)
 local ERRATIC_CELL = 64        -- squares this wide...
@@ -101,6 +101,11 @@ tdw.build_biome("rolling_grasslands", function(ctx)
     local mask = tdw.biome_mask(n, "rolling_grasslands", false)
     if mask then
         code = n.mul(code, step(mask))
+    end
+    if shape.sea_exclude then
+        -- Not on a seabed: the shore is the coast's and the reef's, and
+        -- without this the turf was painted under the water (2026-09-16).
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
     end
     local depth = shape.compile("biome.grasslands.depth", shape.terrain(false))
     local codes = shape.compile("biome.grasslands.codes", code)

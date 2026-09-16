@@ -49,12 +49,12 @@ local schem = tdw.schem
 
 local ID = "badlands"
 
-local HILL_FREQ, HILL_H = 1 / 100, 0.017                 -- 0.020 until 2026-09-15 ("tone down the noise a little")
-local FIN_FREQ, FIN_H = 1 / 28, 0.011                  -- fine and steep: the razorbacks (0.014 until 2026-09-15)
-local RILL_FREQ, RILL_STRETCH, RILL_D = 1 / 7, 4.0, 0.0010     -- 0.0025 until 2026-09-15 ("some of the noise is a little too crazy"): the rills are 3D and left clumps floating
-local GULLY_A_FREQ, GULLY_B_FREQ, GULLY_W, GULLY_D = 1 / 90, 1 / 150, 4.0, 0.008
-local PIPE_FREQ, PIPE_W, PIPE_CUT = 1 / 24, 0.022, 0.012        -- was 0.035, 0.020: smaller and shallower, for the same reason
-local WAVE_FREQ, WAVE_AMP = 1 / 60, 0.003
+local HILL_FREQ, HILL_H = 1 / 100, 0.008                 -- 0.020, then 0.017, then half again (2026-09-16)                 -- 0.020 until 2026-09-15 ("tone down the noise a little")
+local FIN_FREQ, FIN_H = 1 / 28, 0.005                  -- fine and steep: the razorbacks (0.014, 0.011, then half again)
+local RILL_FREQ, RILL_STRETCH, RILL_D = 1 / 7, 4.0, 0.0005     -- 0.0025 until 2026-09-15 ("some of the noise is a little too crazy"): the rills are 3D and left clumps floating
+local GULLY_A_FREQ, GULLY_B_FREQ, GULLY_W, GULLY_D = 1 / 90, 1 / 150, 4.0, 0.004
+local PIPE_FREQ, PIPE_W, PIPE_CUT = 1 / 24, 0.016, 0.006        -- was 0.035/0.020, then 0.022/0.012: smaller and shallower each time
+local WAVE_FREQ, WAVE_AMP = 1 / 60, 0.0015
 -- The fold only zig-zags over 0 to twice its first point, so the height is
 -- lifted by BAND_LIFT into that range first: without it everything under
 -- the smooth ground folded to one side and rounded to the fifth material.

@@ -124,10 +124,6 @@ function tdw.biome_under(x, y, z)
     if tdw.volcanic_at and tdw.volcanic_at(x, z) then
         return "volcanic_foothills"
     end
-    -- Goldwater's sand is the coast's and the mesa's too.
-    if tdw.dunes_at and tdw.dunes_at(x, z) then
-        return "dunes"
-    end
     local owner = tdw.biome_under_ground(x, y, z)
     -- The alpine's snow, ice and permafrost are the Frozen Wastes' too:
     -- which of them a place is, is the placement field's to say.
@@ -138,6 +134,12 @@ function tdw.biome_under(x, y, z)
     -- mud, which say nothing: the placement field says.
     if owner == nil and tdw.jungle_at and tdw.jungle_at(x, z) then
         return "jungle"
+    end
+    -- Goldwater's sand is the coast's and the mesa's too, so the dunes
+    -- answer only where nothing else claims the ground: a shore inside
+    -- their ring is the Coastal Cliffs', not theirs (2026-09-16).
+    if owner == nil and tdw.dunes_at and tdw.dunes_at(x, z) then
+        return "dunes"
     end
     return owner
 end

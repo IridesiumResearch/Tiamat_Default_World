@@ -43,16 +43,16 @@ local DUNE_FREQ, DUNE_STRETCH, DUNE_H = 1 / 120, 2.6     -- the barchans: crests
 DUNE_H = 0.024                                           -- the shape peaks at 0.55 of this: thirteen blocks of dune
 local DUNE_UP, DUNE_UP_K = 0.10, 2.0                     -- the windward face: opens slowly
 local DUNE_DOWN, DUNE_DOWN_K = 0.30, 8.0                 -- the slip face: shuts four times as fast
-local BASIN_FREQ, BASIN_MIN, BASIN_EDGE = 1 / 620, -0.06, 5.0   -- where this is low the dunes stop: flat deflation basins
-local YARD_FREQ, YARD_W, YARD_H = 1 / 340, 7.0, 0.010    -- yardangs: rock ribs along a contour, ten blocks over the sand
-local YARD_SEG_FREQ, YARD_SEG_MIN = 1 / 420, 0.14        -- in rare stretches
+local BASIN_FREQ, BASIN_MIN, BASIN_EDGE = 1 / 620, -0.24, 5.0   -- where this is low the dunes stop: flat deflation basins, a fifth of the sand sea at most
+local YARD_FREQ, YARD_W, YARD_H = 1 / 340, 7.0, 0.007    -- yardangs: rock ribs along a contour, seven blocks over the sand
+local YARD_SEG_FREQ, YARD_SEG_MIN = 1 / 420, 0.34        -- in rare stretches: an accent, not a feature
 
 -- The surface.
-local LAG_FREQ, LAG_MIN = 1 / 22, 0.20                   -- the deflation lag: gravel bared in the basins
-local CRUST_FREQ, CRUST_MIN = 1 / 9, 0.34                -- a wind-packed crust on it
-local GRASS_FREQ, GRASS_MIN = 1.4, 0.47                  -- hardy grass, only in the sheltered hollows: one column in forty of them
-local SAGE_FREQ, SAGE_MIN = 1.4, 0.46
-local PATCH_FREQ, PATCH_MIN = 1 / 70, 0.30               -- and only in a few of the hollows at that: the sand sea is barren
+local LAG_FREQ, LAG_MIN = 1 / 22, 0.42                   -- the deflation lag: gravel bared in a corner of a basin
+local CRUST_FREQ, CRUST_MIN = 1 / 9, 0.44                -- a wind-packed crust on it
+local GRASS_FREQ, GRASS_MIN = 1.4, 0.50                  -- hardy grass, only in the sheltered hollows: one column in forty of them
+local SAGE_FREQ, SAGE_MIN = 1.4, 0.50
+local PATCH_FREQ, PATCH_MIN = 1 / 70, 0.42               -- and only in a few of the hollows at that: nine tenths of the sand sea is sand
 local HOLLOW = 0.10                                      -- the dune weight under this is the floor between the dunes
 
 -- The structures: cell, share of squares, salt.
@@ -264,7 +264,7 @@ tdw.build_biome(ID, function(ctx)
     -- well as in the basins, and the sand sea came up half covered in
     -- sagebrush.)
     local function basin()
-        return n.sub(n.const(0.30), seg("dn_basin", BASIN_FREQ, BASIN_MIN, BASIN_EDGE))
+        return n.sub(n.const(0.08), seg("dn_basin", BASIN_FREQ, BASIN_MIN, BASIN_EDGE))
     end
     local conditions = {
         -- 1: deep loose sand, everywhere.
@@ -273,8 +273,10 @@ tdw.build_biome(ID, function(ctx)
         n.min(basin(), n.sub(n.noise("dn_lag", LAG_FREQ, 2, 1.0), n.const(LAG_MIN))),
         -- 3: and the wind-packed crust between the patches of it.
         n.min(basin(), n.sub(n.noise("dn_crust", CRUST_FREQ, 1, 1.0), n.const(CRUST_MIN))),
-        -- 4: the yardangs: rock, standing out of the sand.
-        n.sub(yardang(), n.const(0.45)),
+        -- 4: the yardangs: rock, standing out of the sand — the rib's
+        -- spine alone, so the sand runs up to it rather than round a
+        -- shelf of stone ("90% of materials in the desert is sand").
+        n.sub(yardang(), n.const(0.72)),
     }
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
@@ -283,6 +285,10 @@ tdw.build_biome(ID, function(ctx)
     local mask = tdw.biome_mask(n, ID)
     if mask then
         code = n.mul(code, step(mask))
+    end
+    if shape.sea_exclude then
+        -- Not on a seabed (2026-09-16), as the woodland and the grassland.
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
     end
     local depth = shape.compile("biome.dunes.depth", shape.terrain(false))
     local codes = shape.compile("biome.dunes.codes", code)

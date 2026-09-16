@@ -294,6 +294,10 @@ tdw.build_biome(ID, function(ctx)
     if mask then
         code = n.mul(code, step(mask))
     end
+    if shape.sea_exclude then
+        -- Not on a seabed (2026-09-16), as the woodland and the grassland.
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
+    end
     local depth = shape.compile("biome.flowers.depth", shape.terrain(false))
     local codes = shape.compile("biome.flowers.codes", code)
     local km = 0.001
