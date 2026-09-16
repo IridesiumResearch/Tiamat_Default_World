@@ -58,8 +58,11 @@ local SEEP_FREQ, SEEP_MIN = 1 / 30, 0.30                 -- spring seeps pooling
 -- The surface.
 local MULCH_FREQ, MULCH_MIN = 1 / 11, 0.30               -- small patches of rich dark mulch
 local STONE_FREQ, STONE_MIN = 1 / 13, 0.38               -- moss-dusted stones half-buried in the ground
-local GRASS_FREQ, GRASS_MIN = 1.5, 0.02                  -- lush, dense: the grass takes the high side of this noise
-local FLOWER_MIN = 0.20                                  -- and the flowers the low fifth of it: dense carpets with grass between them
+local GRASS_FREQ, GRASS_MIN = 1.5, 0.26                  -- the grass takes the high side of this noise: 60% fewer columns than the first cut (2026-09-16)
+local FLOWER_MIN = 0.20                                  -- and the flowers the low fifth of it
+local THIN_FREQ, THIN_MIN = 1.3, 0.28                    -- thinned by a second, independent noise to 40% of that: 60% fewer than the first cut (2026-09-16).
+                                                         -- A threshold alone could not do it: one octave of a fine noise sits AT the clamp an eighth of the time, so
+                                                         -- raising the cut from 0.20 to 0.35 took only a third of the flowers away, not the three fifths asked for.
 local WAVE_FREQ = 1 / 110                                -- the colour gradient's own wave
 -- Each flower's band of the wave, overlapping at the edges so the colours
 -- mix where two meet.
@@ -73,7 +76,7 @@ local BANDS = {
 -- The trees: cell, share of squares, salt. The groves are a slow noise;
 -- inside one the cells are dense, outside it there are no trees at all,
 -- which is what leaves the sunlit clearings between them.
-local GROVE_FREQ, GROVE_MIN = 1 / 72, 0.06
+local GROVE_FREQ, GROVE_MIN = 1 / 95, 0.15               -- the groves are the same size and further apart: the sunlit gaps between them are about three quarters wider (2026-09-16)
 local APPLE_CELL, APPLE_SQUARES = 6, 0.42
 local CHERRY_CELL, CHERRY_SQUARES = 7, 0.38
 local BIRCH_CELL, BIRCH_SQUARES = 6, 0.40
@@ -324,10 +327,15 @@ tdw.build_biome(ID, function(ctx)
     local function dry_ground(field)
         return n.min(field, n.sub(n.const(BROOK_BED - 0.04), gully()))
     end
+    -- The grass is thinned by its own second noise, as the flowers are:
+    -- both are 40% of what they were (2026-09-16, "reduce the amount of
+    -- flowers and grass in the flower forest by 60%").
     local grass = shape.compile("biome.flowers.grass", masked(off_river(dry_ground(
-        n.sub(n.noise("ff_grass", GRASS_FREQ, 1, 1.0), n.const(GRASS_MIN))))))
+        n.min(n.sub(n.noise("ff_grass", GRASS_FREQ, 1, 1.0), n.const(GRASS_MIN)),
+            n.sub(n.noise("ff_grass_thin", THIN_FREQ, 1, 1.0), n.const(THIN_MIN)))))))
     local function off_grass()
-        return n.sub(n.mul(n.noise("ff_grass", GRASS_FREQ, 1, 1.0), n.const(-1.0)), n.const(FLOWER_MIN))
+        return n.min(n.sub(n.mul(n.noise("ff_grass", GRASS_FREQ, 1, 1.0), n.const(-1.0)), n.const(FLOWER_MIN)),
+            n.sub(n.noise("ff_thin", THIN_FREQ, 1, 1.0), n.const(THIN_MIN)))
     end
     local function flower(name)
         local band = BANDS[name]

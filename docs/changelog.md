@@ -1986,6 +1986,21 @@ Found by sampling the whole disc on a grid to draw a map of it.
   1.8%, Frozen Wastes 0.8%, Alpine Highlands 0.7%. The 0.9% left over is
   the outermost sliver, past where anything paints.
 
+### The Flower Forest reads as meadow, not carpet
+
+- **Flowers and grass cut by about half each** ("reduce the amount of
+  flowers and grass in the flower forest by 60%"). Measured over the same
+  89-block square before and after: flowers 40% of the ground to 20%,
+  tall grass 26% to 14%, with bare turf, mulch and moss showing through
+  where they were. A higher threshold alone could not do it — one octave
+  of a fine noise sits AT its clamp about an eighth of the time, so
+  raising the cut from 0.20 to 0.35 took only a third away — so both are
+  thinned by a second, independent noise instead, which multiplies
+  cleanly.
+- **The clearings are about three quarters wider**: the grove noise is
+  slower (1/95 rather than 1/72) and its cut higher, so the groves come
+  out the same size with more sunlit ground between them.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
