@@ -106,6 +106,10 @@ BLOCKS = {
     "bluebell":       ( 94, 106, 190,  0),
     "lichen":         (158, 170, 142,  0),   # the Silverwood floor (2.8)
     "salt":           (234, 232, 224,  0),   # the Salt Pan (2.9)
+    "obsidian":       ( 24,  20,  30,  0),   # the Obsidian Barrens (3.3)
+    "sinter":         (214, 206, 188,  0),   # the Geyser Basin (3.4)
+    "thermal_mat":    (206, 122,  40,  0),
+    "black_sand":     ( 40,  38,  42,  0),   # the Cinder Coast (3.5)
     "lava":           (214,  84,  22,  0),   # the fluid's block
     "glow_cap":       (150, 224, 226,  0),   # the river's mushrooms (2026-09-15)
     "charcoal":       ( 58,  56,  60,  0),

@@ -331,7 +331,9 @@ end
 tdw.build_biome(ID, function(ctx)
     local function masked(field)
         local mask = tdw.biome_mask(n, ID)
-        return mask and n.min(field, mask) or field
+        field = mask and n.min(field, mask) or field
+        -- Off the sea since the ridge has one (2026-09-16).
+        return shape.sea_exclude and shape.sea_exclude(field, 20.0) or field
     end
     local function step(field)
         return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
@@ -359,10 +361,7 @@ tdw.build_biome(ID, function(ctx)
     for k, condition in ipairs(conditions) do
         code = n.max(code, n.mul(step(condition), n.const(k)))
     end
-    local mask = tdw.biome_mask(n, ID)
-    if mask then
-        code = n.mul(code, step(mask))
-    end
+    code = n.mul(code, step(masked(n.const(1.0))))
     local depth = shape.compile("biome.volcanic.depth", shape.terrain(false))
     local codes = shape.compile("biome.volcanic.codes", code)
     local km = 0.001

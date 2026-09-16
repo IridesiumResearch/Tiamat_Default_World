@@ -2102,6 +2102,43 @@ Found by sampling the whole disc on a grid to draw a map of it.
   Belt and Long Shore toured again with nothing refused. **A fresh world is
   needed.**
 
+### The Ember Ridge broken up: a sea, the Obsidian Barrens, the Geyser Basin, the Cinder Coast
+
+- **A sea lane through the ridge** ("the volcanic foothills needs to be
+  broken up with some oceans"), 21.0 to 22.8 km, its outer shore cut by
+  the Glass Waste's keep-out. The ridge could not have a shore before:
+  its terms and the full coast profile were 1,030 operations. The "ember"
+  programs now take the sea suffix with the plain shore profile the rim
+  got (`shape.coast_plain`). Programs: ember 824, ember_shore 947.
+- **Half the ridge is a second province** ("and a couple more biomes that
+  are still vaguely in the same theme"). In the "ember" programs the
+  Foothills' terms stand on province "a", and on "b" the dry side's and
+  the wet side's own, weighted by a province weight centred on the line
+  (`shape.ember_province_a`) so the two always sum to one. The lava pits'
+  cap stands a kilometre up on "b".
+  - **3.3 Obsidian Barrens**, dry: sheets of black glass laid in lobes with
+    steep fronts, razor pressure ridges along a contour, shard fields,
+    glass spires, ash and pumice in the lows.
+  - **3.4 Geyser Basin**, wet: a shallow basin of pale sinter stepped in
+    terrace dams round hot pools (water, by the terraced fluid fill),
+    orange thermal mats in the runoff, mud pots, sinter mounds, geyser
+    cones with sulfur throats that puff steam by the Foothills' random
+    tick, dead snags at the edges.
+- **3.5 Cinder Coast**, the lane's shores: black sand beaches and shelf,
+  basalt faces glazed with obsidian, lava rock pavements in the shallows,
+  sulfur at the tide line, basalt sea stacks and glazed boulders. It
+  paints the shore and the shelf, and the Coastal Cliffs keep off the
+  ridge (`shape.off_cinder`); `/tp coastal cliffs` skips its lane.
+- The Foothills' fills keep twenty blocks off the sea now. The HUD asks the
+  Barrens' and the Basin's placement fields before the Foothills'.
+  `seas.locate` takes a list of lanes to skip.
+- **New nodes**: `obsidian`, `sinter`, `thermal_mat`, `black_sand`.
+- Checked headless on fresh worlds: all four teleported to and named (the
+  Cinder Coast's landing is inland of its beach, where the HUD reads the
+  ground behind it), the Basin's pools wet, the lane's deep water, the
+  Coastal Cliffs unchanged on the first lane, nothing refused. **A fresh
+  world is needed.**
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

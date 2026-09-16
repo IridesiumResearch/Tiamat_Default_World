@@ -198,6 +198,20 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 3.3 Obsidian Barrens, 3.4 Geyser Basin, 3.5 Cinder Coast (2026-09-16)
+
+The Barrens share `dark_basalt`, `volcanic_ash`, `pumice`. The Basin shares
+`mud`, `sulfur` (its geyser throats steam by the Foothills' random tick),
+`volcanic_ash`, `dead_wood`, and the `water` FLUID. The Cinder Coast
+shares `dark_basalt`, `volcanic_ash`, `lava_rock`, `sulfur`.
+
+| Block | Where | Why |
+|---|---|---|
+| `obsidian` | the Barrens' sheets, razor ridges, shards and spires; glaze on the Cinder Coast's faces | the biome is named for it and nothing registered is black glass |
+| `sinter` | the Basin's floor, terrace dams, pool beds and geyser cones | nothing registered is a pale hot-spring crust |
+| `thermal_mat` | the orange microbial mats in the Basin's runoff | the brief's "mineral colours", and nothing registered is orange |
+| `black_sand` | the Cinder Coast's beaches and shelf | the brief's black sand; `black_mud` is a mud |
+
 ### 2.7 Icefall, 2.8 Silverwood, 2.9 Salt Pan (2026-09-16)
 
 The Icefall shares `ice`, `clear_ice`, `snow` and `creek_bed` (moraine).

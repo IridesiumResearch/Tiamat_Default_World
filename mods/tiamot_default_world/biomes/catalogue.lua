@@ -83,8 +83,20 @@ biome{ id = "salt_pan", name = "Salt Pan", area = "surface",
     ring = "glass",
     note = "2.9 — a third of the Glass Waste (2026-09-16), inset from its outer edge: a dead-flat white crust, polygon cracks, brine pools, salt pillars. The ground is clamped to the pan's floor from both sides in the glass programs." }
 biome{ id = "volcanic_foothills", name = "Volcanic Foothills", area = "surface",
+    spans = { { "ember", "ember", nil, "a" } },
+    ring = "ember", note = "2.3 — the Ember Ridge, the only surface sign of the magma shell: stepped basalt ridges, cinder cones, lava levees, gouges, ash gullies, thermal fissures venting steam. Half of it by province since 2026-09-16." }
+biome{ id = "obsidian_barrens", name = "Obsidian Barrens", area = "surface",
+    spans = { { "ember", "ember", "dry", "b" } },
+    ring = "ember",
+    note = "3.3 — the Ember Ridge's other province, dry side (2026-09-16): sheets of black glass in flow lobes, razor pressure ridges, shard fields, ash in the lows." }
+biome{ id = "geyser_basin", name = "Geyser Basin", area = "surface",
+    spans = { { "ember", "ember", "wet", "b" } },
+    ring = "ember",
+    note = "3.4 — the Ember Ridge's other province, wet side (2026-09-16): terraced sinter round hot pools, orange thermal mats in the runoff, mud pots, geyser cones venting steam." }
+biome{ id = "cinder_coast", name = "Cinder Coast", area = "surface",
     spans = { { "ember", "ember" } },
-    ring = "ember", note = "2.3 — the Ember Ridge, the only surface sign of the magma shell: stepped basalt ridges, cinder cones, lava levees, gouges, ash gullies, thermal fissures venting steam." }
+    ring = "ember",
+    note = "3.5 — the Ember Ridge's sea lane's shores (21.0 to 22.8 km, 2026-09-16): black sand beaches, basalt faces glazed with obsidian, sea stacks, steam vents at the tide line. Its `present` is the sea map's class and the ridge's band; the Coastal Cliffs keep off it." }
 biome{ id = "deep_ocean", name = "Deep Ocean", area = "surface",
     spans = { { "temperate", "hem" } },
     ring = "hem",

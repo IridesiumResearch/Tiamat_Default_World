@@ -94,7 +94,8 @@ M.SEA_DROP = M.STEP / 2                                 -- km under the dome at 
 -- out across the Long Shore to the Hem. The Glass Waste (24.8 to 28.3 km)
 -- and the cold core have none.
 M.LANES = {
-    { r = 17.7, w = 2.8 },                              -- the temperate ring's: 16.3 to 19.1 km, its shore's reach short of the Ember Ridge (2.3) at 19.5, which vents steam and pools no water and has no room in its programs for a shore
+    { r = 17.7, w = 2.8 },                              -- the temperate ring's: 16.3 to 19.1 km
+    { r = 21.9, w = 1.8 },                              -- the Ember Ridge's (2026-09-16): 21.0 to 22.8, its outer shore cut by the Glass Waste's keep-out at 22.9; the Cinder Coast (3.5)
     { r = 36.8, w = 5.4 },                              -- 34.1 to 39.5, off the rainforest
     { r = 44.8, w = 7.4 },
     { r = 53.4, w = 7.2 },
@@ -352,7 +353,7 @@ function M.zone(x, z)
             zone_cache, zone_cached = {}, 0
         end
         local d = M.at(x, z, seed)
-        local shore = (tdw.reef_zone and tdw.reef_zone(x, z)) or "coastal_cliffs"
+        local shore = (tdw.cinder_zone and tdw.cinder_zone(x, z)) or (tdw.reef_zone and tdw.reef_zone(x, z)) or "coastal_cliffs"
         hit = (d > M.SHELF_END and "deep_ocean") or (d > -30.0 and shore) or false
         zone_cache[key] = hit
         zone_cached = zone_cached + 1
@@ -366,11 +367,26 @@ end
 -- to one band of the radius, which is how the reef's lane is found and
 -- the other three lanes are not (2.4).
 function M.locate(px, pz, seed, lo, hi, u_lo, u_hi, skip)
+    -- `skip`: a range of u, or a list of them.
+    local skips = {}
+    if skip and type(skip[1]) == "table" then
+        skips = skip
+    elseif skip then
+        skips = { skip }
+    end
+    local function skipped(a, b)
+        for _, s in ipairs(skips) do
+            if a >= s[1] and b <= s[2] then
+                return true
+            end
+        end
+        return false
+    end
     local lanes = {}
     local pu = (px * px + pz * pz) * 1e-6 / R2
     for _, lane in ipairs(M.LANES) do
         local inside = u_lo == nil or (lane.u_hi >= u_lo and lane.u_lo <= u_hi)
-        if skip and lane.u_lo >= skip[1] and lane.u_hi <= skip[2] then
+        if skipped(lane.u_lo, lane.u_hi) then
             inside = false
         end
         if inside then
@@ -392,7 +408,7 @@ function M.locate(px, pz, seed, lo, hi, u_lo, u_hi, skip)
                 local x, z = math.floor(ax * r), math.floor(az * r)
                 local u = (x * x + z * z) * 1e-6 / R2
                 local ok = u_lo == nil or (u >= u_lo and u <= u_hi)
-                if skip and u >= skip[1] and u <= skip[2] then
+                if skipped(u, u) then
                     ok = false
                 end
                 if ok then

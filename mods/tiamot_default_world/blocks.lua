@@ -302,6 +302,14 @@ block("bluebell", "Bluebells", "Nodding violet-blue bells; they carpet the grove
 block("lichen", "Lichen", "A pale grey-green crust over the ground under the birches, crisp underfoot.", { hardness = 0.3, tint = { strength = 0.14, scale = 96 } })
 block("salt", "Salt", "The pan's crust: white, hard, cracked into polygons, glaring in the sun.", { hardness = 0.7, tint = { strength = 0.06, scale = 128 } })
 
+-- 3.3 Obsidian Barrens, 3.4 Geyser Basin and 3.5 Cinder Coast (2026-09-16):
+-- the Ember Ridge's black glass, its hot springs' sinter and the mats that
+-- grow in their runoff, and the black sand where the ridge meets its sea.
+block("obsidian", "Obsidian", "Black volcanic glass in sheets and razor ridges; it breaks to an edge.", { hardness = 5.0, tint = { strength = 0.05, scale = 128 } })
+block("sinter", "Sinter", "Pale mineral crust laid down by the hot springs, in terraces round their pools.", { hardness = 1.2, tint = { strength = 0.08, scale = 96 } })
+block("thermal_mat", "Thermal mat", "Orange and ochre slime of heat-loving microbes in the springs' runoff.", { hardness = 0.3, tint = { strength = 0.22, scale = 48 } })
+block("black_sand", "Black sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
+
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",
     { hardness = 0.1, transparent = true })

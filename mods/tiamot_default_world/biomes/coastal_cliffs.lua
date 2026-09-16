@@ -447,7 +447,7 @@ end
 tdw.biomes.coastal_cliffs.locate = function(px, pz, seed)
     -- Not the reef's lane: its water is the Coral-Fringed Shallows' and
     -- `/tp coastal cliffs` should not land on the lagoon's own beach.
-    return seas.locate(px, pz, seed, -40.0, -6.0, nil, nil, tdw.reef_u)
+    return seas.locate(px, pz, seed, -40.0, -6.0, nil, nil, { tdw.reef_u, tdw.cinder_u })
 end
 tdw.build_biome("coastal_cliffs", function(ctx)
     -- This biome's ground: SHORE_LAND blocks inland to SHELF_END blocks out.
@@ -457,7 +457,9 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         -- Not in the reef's lane: its sand, its algae and its corals are
         -- the Coral-Fringed Shallows', and so is everything this biome
         -- would otherwise put there — the strata, the turf, the pines.
-        return shape.off_reef and n.min(band, shape.off_reef()) or band
+        band = shape.off_reef and n.min(band, shape.off_reef()) or band
+        -- Nor on the Ember Ridge: its shores are the Cinder Coast's (3.5).
+        return shape.off_cinder and n.min(band, shape.off_cinder()) or band
     end
     local function masked(field)
         return n.min(field, zone())

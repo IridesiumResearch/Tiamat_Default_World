@@ -74,6 +74,10 @@ for _, material in ipairs({ blocks.mulch, blocks.rust_grass, blocks.hanging_lich
 end
 OWNER[blocks.lichen] = "silverwood"
 OWNER[blocks.salt] = "salt_pan"
+OWNER[blocks.obsidian] = "obsidian_barrens"
+OWNER[blocks.sinter] = "geyser_basin"
+OWNER[blocks.thermal_mat] = "geyser_basin"
+OWNER[blocks.black_sand] = "cinder_coast"
 for _, material in ipairs({ blocks.white_sand, blocks.calcite, blocks.pink_algae, blocks.coral_magenta,
     blocks.coral_cyan, blocks.coral_amber, blocks.sea_anemone }) do
     OWNER[material] = "coral_fringed_shallows"
@@ -88,7 +92,8 @@ for _, material in ipairs({ blocks.lava_rock, blocks.pumice, blocks.lava }) do  
 end
 -- Whose ground answers at once, wherever in the column it is found.
 local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true,
-    taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true, salt_pan = true }
+    taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true, salt_pan = true,
+    obsidian_barrens = true, geyser_basin = true, cinder_coast = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -144,6 +149,16 @@ function tdw.biome_under(x, y, z)
     if (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC) <= shape.ALPINE_EDGE_U + shape.wobble(shape.ALPINE_EDGE_U) then
         for _, id in ipairs(COLD) do
             if tdw.placed_at(id, x, z) then
+                return id
+            end
+        end
+    end
+    -- The Ember Ridge's three share basalt, ash and pumice: its other
+    -- province's placement fields first (2026-09-16).
+    local u_here = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+    if u_here >= shape.EMBER_U[1] - shape.wobble(u_here) and u_here <= shape.EMBER_U[2] + shape.wobble(u_here) then
+        for _, id in ipairs({ "obsidian_barrens", "geyser_basin" }) do
+            if tdw.biomes[id] and tdw.biomes[id].built and tdw.placed_at(id, x, z) then
                 return id
             end
         end

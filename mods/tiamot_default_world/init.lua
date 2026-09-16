@@ -73,6 +73,9 @@ load("biomes.salt_pan")              -- 2.9, a third of the Glass Waste: the fla
 load("biomes.taiga")                 -- 2.2, Firwold: spruce uplands and peat basins
 load("biomes.silverwood")            -- 2.8, Firwold's other half: birch on lichen
 load("biomes.volcanic_foothills")    -- 2.3, the Ember Ridge: basalt terraces, cinder cones, fissures
+load("biomes.obsidian_barrens")      -- 3.3, the Ember Ridge's other province, dry: black glass flows
+load("biomes.geyser_basin")          -- 3.4, the Ember Ridge's other province, wet: sinter terraces and hot pools
+load("biomes.cinder_coast")          -- 3.5, the Ember Ridge's shores: black sand and basalt
 load("biomes.coral_fringed_shallows") -- 2.4, the second lane's sea: lagoon flats behind a barrier reef
 load("biomes.dunes")                 -- 2.5, Goldwater: barchan dunes and deflation basins
 load("biomes.flower_forest")         -- 2.6, the Long Shore's wet half: parkland groves and flower carpets

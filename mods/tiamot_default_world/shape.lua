@@ -495,6 +495,14 @@ function M.province_weight(side, split)
     local raw = side == "b" and sub(p, const(split)) or sub(const(split), p)
     return clamp(mul(raw, const(1.0 / M.PROVINCE_BLEND)), 0.0, 1.0)
 end
+-- The province's "a" side as a weight centred on the line (2026-09-16): 1
+-- well into "a", 0 well into "b", one half on the line, so it and one less
+-- it sum to one across the blend — which `province_weight` on its two
+-- sides does not (both are 0 on the line). For the Ember Ridge's terms.
+function M.ember_province_a()
+    local p = noise("province", M.PROVINCE_FREQ, M.PROVINCE_OCTAVES, 1.0, M.HUMIDITY_STRETCH)
+    return clamp(add(mul(p, const(-0.5 / M.PROVINCE_BLEND)), const(0.5)), 0.0, 1.0)
+end
 
 -- The dry side's weight, 0 in the wet half to 1 in the dry, crossing over
 -- HUMIDITY_BLEND either side of the split.
@@ -645,10 +653,11 @@ end
 -- The mode for a chunk spanning [u_lo, u_hi]: one ring's own programs
 -- wherever the alpine weight is exactly 0 or 1 over the whole chunk, the
 -- cross-faded ones in the band between.
--- Not "ember": its terms and the shore's together are 1030 ops, six over
+-- "ember" since 2026-09-16, with the plain shore profile (below): its terms
+-- and the full shore's together were 1030 ops, six over
 -- the compiler's cap, so the first lane keeps its shore reach (FADE, 920
 -- blocks) short of the Ember Ridge's first "ember" chunk at 19.5 km.
-local SEA_MODES = { temperate = true, belt = true, wet = true, dry = true, hem = true, edge = true }
+local SEA_MODES = { temperate = true, belt = true, wet = true, dry = true, hem = true, edge = true, ember = true }
 -- The modes whose programs carry the body's wall themselves: the generator
 -- paints their chunks whether or not its gate can prove them inside.
 M.CLIPPED = { edge = true, edge_shore = true }
@@ -979,13 +988,29 @@ function M.terrain(flank)
         -- The Volcanic Foothills' terms over the pair, weighted across the
         -- ring. The volcanic FIRST: the deepest term in the program.
         local pair = add(mul(wet_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))), mul(swells(), dry_weight()))
-        terms = add(mul(M.volcanic_terms(), ember_weight()), pair)
+        local ridge = M.volcanic_terms()
+        local split = M.obsidian_terms and M.geyser_terms
+        if split then
+            -- The ridge's other province (2026-09-16): the Obsidian Barrens'
+            -- flows on the dry side, the Geyser Basin's terraces on the wet,
+            -- where the Foothills' ridges and cones are not. The province
+            -- weight is centred on the line the materials change on, so the
+            -- two sides always sum to one. The Foothills FIRST: the deepest.
+            local other = add(mul(M.obsidian_terms(), dry_weight()), mul(M.geyser_terms(), add(mul(dry_weight(), const(-1.0)), const(1.0))))
+            ridge = add(mul(ridge, M.ember_province_a()), mul(other, add(mul(M.ember_province_a(), const(-1.0)), const(1.0))))
+        end
+        terms = add(mul(ridge, ember_weight()), pair)
         if M.volcanic_cap then
             -- The lava pits: the ground capped down to a flat floor where
             -- a pit is (`volcanic_cap`, far above the ground elsewhere),
             -- after the pair, so the floor is where the lava's level
-            -- expects it whatever the hills were doing.
-            terms = min(terms, M.volcanic_cap())
+            -- expects it whatever the hills were doing. Not in the other
+            -- province: the cap a kilometre up there.
+            local cap = M.volcanic_cap()
+            if split then
+                cap = add(cap, add(mul(M.ember_province_a(), const(-1.0)), const(1.0)))
+            end
+            terms = min(terms, cap)
         end
     elseif mode == "rainforest" then
         terms = M.rainforest_terms()
@@ -1051,7 +1076,7 @@ function M.terrain(flank)
         -- own shape (coastal_cliffs.lua). The Hem's shores take the plain
         -- profile: the full one is five hundred operations, and the Hem's
         -- blend band carries two rings' terms.
-        local coast = (mode == "hem" or mode == "edge") and M.coast_plain or M.coast_shore
+        local coast = (mode == "hem" or mode == "edge" or mode == "ember") and M.coast_plain or M.coast_shore
         out = add(coast(add(terms, shape)), M.depth())
     else
         out = add(add(terms, shape), M.depth())
