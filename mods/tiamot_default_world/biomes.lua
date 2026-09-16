@@ -50,15 +50,18 @@ function tdw.register_biome(spec)
         assert(tdw.layers.ring_by_id[spec.ring], "biome " .. spec.id .. " names an unknown ring " .. spec.ring)
     end
     -- `spans` is where a biome stands: a list of { innermost, outermost,
-    -- half }, each a run of rings (they are contiguous in u, so a run is
-    -- one band and one test) and which humidity half of it — "wet", "dry",
-    -- or nil for the whole width.
+    -- half, province }, each a run of rings (they are contiguous in u, so a
+    -- run is one band and one test), which humidity half of it — "wet",
+    -- "dry", or nil for the whole width — and which side of the province
+    -- noise, "a" or "b", or nil for both (shape.province_mask).
     if spec.spans then
         for _, span in ipairs(spec.spans) do
             assert(tdw.layers.ring_by_id[span[1]] and tdw.layers.ring_by_id[span[2]],
                 "biome " .. spec.id .. " names an unknown ring in a span")
             assert(span[3] == nil or span[3] == "wet" or span[3] == "dry",
                 "biome " .. spec.id .. ": a span's half is \"wet\", \"dry\" or nothing")
+            assert(span[4] == nil or span[4] == "a" or span[4] == "b",
+                "biome " .. spec.id .. ": a span's province is \"a\", \"b\" or nothing")
         end
     end
     spec.fills = nil
@@ -199,6 +202,9 @@ function tdw.biome_mask(n, id, _)
         local band = reachable and tdw.shape.ring(first.u[1], last.u[2]) or nil
         if band and span[3] then
             band = n.min(band, tdw.shape.humidity_mask(span[3] == "wet"))
+        end
+        if band and span[4] then
+            band = n.min(band, tdw.shape.province_mask(span[4]))
         end
         if band then
             acc = acc and n.max(acc, band) or band

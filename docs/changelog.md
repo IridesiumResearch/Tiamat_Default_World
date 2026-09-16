@@ -1932,6 +1932,36 @@ Three biomes from one brief, and a mode fault they turned up.
   sandstone and gravel are the coast's and the mesa's too, and standing on
   a beach inside their ring it used to say Dunes.
 
+### Provinces: two biomes to a ring's half
+
+- **A ring's half was one biome all the way round**, which is a five to
+  fifteen kilometre walk through one thing. A second slow noise
+  (`shape.province_mask`, 1/3000, stretched flat in y like the humidity)
+  cuts each half again into patches two or three kilometres across, and the
+  two biomes that share the half take one side each:
+  - the Long Shore and the Hem, dry side: **The Dunes** and the **Rolling
+    Grasslands** in turn;
+  - the mild rings' wet side — the Greensward, the Long Shore and the Hem —
+    the **Flower Forest** and the **Temperate Woodlands** in turn.
+  Measured: walking 32 km around the Long Shore now crosses eleven biome
+  boundaries, a change every 2.3 km on average, where before it crossed
+  one or two. The Flower Forest reaches the spawn ring for the first time.
+- **The terms follow the materials.** The Dunes' barchans are thirteen
+  blocks tall, so their weight is gated by the province too and the sand
+  starts exactly where the dune field rises (six operations, and
+  `temperate_shore` is at 993 of the compiler's 1,024). The Flower Forest's
+  knolls are six blocks of gentle roll, so they are NOT gated — the
+  woodland reads no differently for having them, and that saves the six.
+- **The HUD asks the masks when the ground cannot say.** Four biomes now
+  share grass, loam, dirt, mulch and moss, so a bare patch of turf no
+  longer names a biome: `tdw.placed_at` samples the biome's own placement
+  field, cached by eight-block square, and a material one biome owns alone
+  — a poppy, an apple tree, leaf litter, sand — still decides above it.
+- **`/tp` stays inside 52 km.** The Hem's spans run to the rim, but past
+  about 54 km the chunks leave the body, the generator uses its flank
+  programs and nothing paints: `/tp dunes` was landing on bare placeholder
+  62 km out.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

@@ -27,11 +27,11 @@ area{ id = "surface", name = "Surface", kind = "surface",
 -- shape.RING_WOBBLE, the wet/dry line by the humidity noise, which is a
 -- blob field and never a circle.
 biome{ id = "temperate_woodlands", name = "Temperate Woodlands", area = "surface",
-    spans = { { "temperate", "temperate", "wet" }, { "hem", "hem", "wet" } },
+    spans = { { "temperate", "temperate", "wet", "a" }, { "shore", "hem", "wet", "a" } },
     humidity = { -0.05, 0.42 },
     note = "1.1 — oak woodland, the first biome built. The wet half of the mild rings: the temperate ring, the Long Shore and the Hem. It skips the two hot rings, which are all grassland, and the Verdant Belt, whose wet half is the rainforest." }
 biome{ id = "rolling_grasslands", name = "Rolling Grasslands", area = "surface",
-    spans = { { "temperate", "temperate", "dry" }, { "verdant", "verdant", "dry" }, { "hem", "hem", "dry" } },
+    spans = { { "temperate", "temperate", "dry" }, { "verdant", "verdant", "dry" }, { "shore", "hem", "dry", "a" } },
     humidity = { -0.42, -0.05 },
     note = "The dry half of every ring outside the cold core, AND the whole width of the Ember Ridge and the Glass Waste: the dry band round the middle of the world, which is what the driest biome there is stands in for until there is a desert." }
 biome{ id = "alpine_highlands", name = "Alpine Highlands", area = "surface",
@@ -47,13 +47,13 @@ biome{ id = "coastal_cliffs", name = "Coastal Cliffs", area = "surface",
 biome{ id = "sandy_shores", name = "Sandy Shores", area = "surface",
     ring = "shore", note = "Gentle stretches of the Long Shore." }
 biome{ id = "dunes", name = "The Dunes", area = "surface",
-    spans = { { "shore", "shore", "dry" } },
+    spans = { { "shore", "hem", "dry", "b" } },
     ring = "shore", humidity = { -0.42, -0.05 },
-    note = "2.5 — Goldwater, the Long Shore's dry half (35.4 to 50.1 km): barchan dunes with steep slip faces, flat deflation basins, yardang rock ribs, megafauna ribcages." }
+    note = "2.5 — Goldwater: the dry half of the Long Shore and the Hem, in the provinces the Rolling Grasslands do not take (2026-09-16) — barchan dunes with steep slip faces, flat deflation basins, yardang rock ribs, megafauna ribcages." }
 biome{ id = "flower_forest", name = "Flower Forest", area = "surface",
-    spans = { { "shore", "shore", "wet" } },
+    spans = { { "temperate", "temperate", "wet", "b" }, { "shore", "hem", "wet", "b" } },
     ring = "shore", humidity = { -0.05, 0.42 },
-    note = "2.6 — the Long Shore's wet half: parkland groves of apple, cherry and birch over carpets of allium, peony, poppy and bluebell in sweeping bands, with brooks in the gully floors." }
+    note = "2.6 — the wet half of the mild rings, in the provinces the woodland does not take (2026-09-16): parkland groves of apple, cherry and birch over carpets of allium, peony, poppy and bluebell in sweeping bands, with brooks in the gully floors." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
     ring = "temperate",
     note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }

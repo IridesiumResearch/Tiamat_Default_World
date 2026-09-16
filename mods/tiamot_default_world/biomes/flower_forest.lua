@@ -85,12 +85,17 @@ local LOG_CELL, LOG_SQUARES = 34, 0.30
 function shape.knoll_terms()
     return n.noise("ff_knoll", KNOLL_FREQ, 2, KNOLL_AMP)
 end
+-- **Not gated by the province**, unlike the Dunes' terms: a knoll is six
+-- blocks of gentle roll over two hundred, and the Temperate Woodlands on
+-- the other side of the line reads no differently for having them. That
+-- saves the six operations the gate costs in the world's deepest program
+-- (`temperate_shore`, 991 of 1,024 with the Dunes' gate in it).
 function shape.knoll_weight()
     if tdw.config.everywhere == ID then
         return n.const(1.0)
     end
-    local ring = tdw.layers.ring_by_id.shore
-    return n.mul(n.clamp(n.mul(shape.ring(ring.u[1], ring.u[2]), n.const(1.0 / 0.010)), 0.0, 1.0),
+    local first, last = tdw.layers.ring_by_id.temperate, tdw.layers.ring_by_id.hem
+    return n.mul(n.clamp(n.mul(shape.ring(first.u[1], last.u[2]), n.const(1.0 / 0.010)), 0.0, 1.0),
         n.sub(n.const(1.0), shape.dry_weight()))
 end
 

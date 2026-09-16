@@ -20,6 +20,7 @@ local SAMPLE_EVERY = 10        -- ticks between looks at where a player is
 -- (The name stayed up a second and went, until 2026-09-15: "for now at
 -- least let's have the biome always displayed on the screen".)
 local SCAN = 8                 -- blocks below the feet the ground is looked for
+local RIM_KEEP_U = (52.0 / 59.0) ^ 2   -- `/tp` stays inside 52 km: past ~54 the flank programs make the ground and no biome paints it
 local SEEK_TRIES = 20          -- steps tried before a search settles for what it found
 local SEEK_SKY = 220           -- blocks over the base dome a seeker is dropped from
 
@@ -107,6 +108,16 @@ local function materials_of(b, out)
     end
 end
 
+-- The four that share a ring's halves between them (2026-09-16): grass,
+-- loam, dirt, mulch and moss belong to more than one of these, so a bare
+-- patch of turf cannot say which biome it is and the placement field is
+-- asked instead. A material one of them owns ALONE — a poppy, an apple
+-- tree, leaf litter, sand — still decides, above this.
+local MOSAIC = { "flower_forest", "dunes", "temperate_woodlands", "rolling_grasslands" }
+-- And the owners a shared material can name, which the field overrules.
+local MOSAIC_MEMBER = { flower_forest = true, dunes = true, temperate_woodlands = true,
+    rolling_grasslands = true, taiga = true, jungle = true }
+
 -- The biome whose ground is under (x, y, z), or nil when the column is
 -- unloaded or made of nothing anybody claims.
 function tdw.biome_under(x, y, z)
@@ -141,8 +152,59 @@ function tdw.biome_under(x, y, z)
     if owner == nil and tdw.dunes_at and tdw.dunes_at(x, z) then
         return "dunes"
     end
+    -- Nothing under the player said which of the four neighbours of the
+    -- mild rings this is — bare grass, loam, a patch of mulch or a mossy
+    -- stone belongs to two or three of them. Their masks do say.
+    if owner == nil or MOSAIC_MEMBER[owner] then
+        for _, id in ipairs(MOSAIC) do
+            if tdw.placed_at(id, x, z) then
+                return id
+            end
+        end
+    end
     return owner
 end
+-- **Where a biome is placed, asked of its own mask** — the same test the
+-- Taiga's and the Ember Ridge's have of their own, written once for any
+-- biome and cached by eight-block square. Sampled at the base dome, which
+-- since the humidity and the province were stretched flat in y is the same
+-- answer the generator gets at the ground (2026-09-16).
+local place_fields, place_cache, place_cached = {}, {}, 0
+function tdw.placed_at(id, x, z)
+    local only = tdw.config.everywhere
+    if only then
+        return only == id
+    end
+    local seed = game.world_seed or tdw.seed
+    if seed == nil then
+        return false
+    end
+    local lo, hi = tdw.biome_span_u(id)
+    local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+    local w = shape.RING_WOBBLE
+    if u < lo - w or u > hi + w then
+        return false
+    end
+    local key = id .. ":" .. (x // 8) .. "," .. (z // 8)
+    local hit = place_cache[key]
+    if hit == nil then
+        if place_cached > 20000 then
+            place_cache, place_cached = {}, 0
+        end
+        local field = place_fields[id]
+        if field == nil then
+            field = shape.compile("placed." .. id, tdw.biome_mask(shape.node, id))
+            place_fields[id] = field
+        end
+        local y = shape.Y0 + 1000 * shape.dome_at(u)
+        hit = field:at(x + 0.5, y + 0.5, z + 0.5, seed) > 0
+        place_cache[key] = hit
+        place_cached = place_cached + 1
+    end
+    return hit
+end
+
+
 function tdw.biome_under_ground(x, y, z)
     local first = nil
     for dy = 2, -SCAN, -1 do
@@ -317,8 +379,15 @@ local function locate(id, px, pz)
     local spans = {}
     for _, span in ipairs(tdw.biome_spans(id)) do
         local lo = tdw.layers.ring_by_id[span[1]].u[1]
-        local hi = tdw.layers.ring_by_id[span[2]].u[2]
-        spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
+        -- **Not out to the rim.** The Hem runs to u = 1, and past about
+        -- 54 km the chunks leave the body: the generator uses its flank
+        -- programs, no biome paints, and `/tp` put a player on bare
+        -- placeholder 62 km out (2026-09-16). The spans reach the rim; the
+        -- landings stop short of it.
+        local hi = math.min(tdw.layers.ring_by_id[span[2]].u[2], RIM_KEEP_U)
+        if hi > lo then
+            spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
+        end
     end
     table.sort(spans, function(a, b) return a.away < b.away end)
     local headings = headings_from(px, pz)
@@ -385,8 +454,15 @@ local function trial_places(id, px, pz)
     local spans = {}
     for _, span in ipairs(tdw.biome_spans(id)) do
         local lo = tdw.layers.ring_by_id[span[1]].u[1]
-        local hi = tdw.layers.ring_by_id[span[2]].u[2]
-        spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
+        -- **Not out to the rim.** The Hem runs to u = 1, and past about
+        -- 54 km the chunks leave the body: the generator uses its flank
+        -- programs, no biome paints, and `/tp` put a player on bare
+        -- placeholder 62 km out (2026-09-16). The spans reach the rim; the
+        -- landings stop short of it.
+        local hi = math.min(tdw.layers.ring_by_id[span[2]].u[2], RIM_KEEP_U)
+        if hi > lo then
+            spans[#spans + 1] = { lo = lo, hi = hi, away = math.max(lo - pu, pu - hi, 0.0) }
+        end
     end
     table.sort(spans, function(a, b) return a.away < b.away end)
     local places = {}

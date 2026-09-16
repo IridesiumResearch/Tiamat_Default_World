@@ -96,8 +96,13 @@ function shape.dune_weight()
     if tdw.config.everywhere == ID then
         return n.const(1.0)
     end
-    local ring = tdw.layers.ring_by_id.shore
-    return n.mul(n.clamp(n.mul(shape.ring(ring.u[1], ring.u[2]), n.const(1.0 / 0.010)), 0.0, 1.0), shape.dry_weight())
+    -- The Long Shore and the Hem, the dry side, and the province the sand
+    -- takes (2026-09-16): the barchans are thirteen blocks tall and nothing
+    -- else on the dry side wants them, so the terms stop exactly where the
+    -- Rolling Grasslands' turf starts.
+    local first, last = tdw.layers.ring_by_id.shore, tdw.layers.ring_by_id.hem
+    local band = n.mul(n.clamp(n.mul(shape.ring(first.u[1], last.u[2]), n.const(1.0 / 0.010)), 0.0, 1.0), shape.dry_weight())
+    return n.mul(band, shape.province_weight("b"))
 end
 
 tdw.biomes[ID].ring_mode = "temperate"

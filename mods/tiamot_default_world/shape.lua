@@ -118,6 +118,20 @@ M.HUMIDITY_OCTAVES = 2
 -- spruce. Stretched a thousand times in y the noise is the same field at
 -- every height a player can stand, and the three agree.
 M.HUMIDITY_STRETCH = { y = 1000 }
+
+-- **The provinces** (2026-09-16). A ring's half used to be one biome all
+-- the way round, and at nine kilometres of humidity that is a five to
+-- fifteen kilometre walk through one thing. A second slow noise cuts each
+-- half again, into patches two or three kilometres across, and the two
+-- biomes that share the half take one side each: the Long Shore's dry side
+-- is the Dunes and the Rolling Grasslands in turn, its wet side the Flower
+-- Forest and the Temperate Woodlands. Same field, same stretch in y as the
+-- humidity, and a different stream — a province that followed the humidity
+-- would only move the same edge.
+M.PROVINCE_FREQ = 1 / 3000
+M.PROVINCE_OCTAVES = 2
+M.PROVINCE_SPLIT = 0.0    -- the noise runs +/-0.5: an even share either side
+M.PROVINCE_BLEND = 0.05   -- in the noise's units: the terms fade up over this, from the line the materials change on
 M.HUMIDITY_SPLIT = -0.05  -- the noise runs +/-0.5 after the clamp: the dry half is the smaller
 M.HUMIDITY_BLEND = 0.04   -- in the noise's units: a few hundred blocks of cross-fade
 M.HUMIDITY_DITHER = 0.03  -- +/-, at DITHER_FREQ: the speckle of the material edge
@@ -399,6 +413,25 @@ function M.humidity_mask(wet)
         return sub(h, const(M.HUMIDITY_SPLIT))
     end
     return mul(sub(h, const(M.HUMIDITY_SPLIT)), const(-1.0))
+end
+
+-- Which side of a province a place is, as a mask positive on its side:
+-- "a" and "b" are exact complements, as the humidity's halves are.
+function M.province_mask(side)
+    local p = noise("province", M.PROVINCE_FREQ, M.PROVINCE_OCTAVES, 1.0, M.HUMIDITY_STRETCH)
+    if side == "b" then
+        return sub(p, const(M.PROVINCE_SPLIT))
+    end
+    return mul(sub(p, const(M.PROVINCE_SPLIT)), const(-1.0))
+end
+-- The same as a 0-to-1 weight for a biome's TERMS, rising from nothing at
+-- the line its materials change on: a dune field starts flat exactly where
+-- the sand starts. Six operations, which is what it costs every program
+-- that carries the terms.
+function M.province_weight(side)
+    local p = noise("province", M.PROVINCE_FREQ, M.PROVINCE_OCTAVES, 1.0, M.HUMIDITY_STRETCH)
+    local raw = side == "b" and sub(p, const(M.PROVINCE_SPLIT)) or sub(const(M.PROVINCE_SPLIT), p)
+    return clamp(mul(raw, const(1.0 / M.PROVINCE_BLEND)), 0.0, 1.0)
 end
 
 -- The dry side's weight, 0 in the wet half to 1 in the dry, crossing over
