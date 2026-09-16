@@ -2282,6 +2282,40 @@ Found by sampling the whole disc on a grid to draw a map of it.
   trench's floor mud, polyps and basalt with no soil; every block has its
   texture; nothing refused. **A fresh world is needed** (block ids changed).
 
+### Lava that glows, and peat hags that are not stripes (2026-09-16)
+
+Asked: "lets make lava glow and fix the weird geometric mud stain", with a
+screenshot of the Heather Moor crossed by a long, straight-edged band of
+black ground.
+
+- **Lava glows.** Engine b6935c3 (engine-asks 31) made a fluid give off the
+  light of the block it is drawn as. The mod's `lava` block already emits
+  `r15 g8 b1`, so the pits and channels light up with no change to the
+  lava itself. The fluid is now declared `opacity = 1.0` too: a surface
+  of molten rock, not a window onto the pit's floor. Measured headless
+  (engine HEAD b03fa42, seed 12345): a generated lava block reads
+  `r15 g8 b1`, and two blocks over its surface still reads `r14`.
+  An engine older than b6935c3 refuses `opacity` as an unknown field, which
+  disables the whole mod (the Sep 15 `server.exe` did), so the lava is
+  registered without it there. Glowing needs a client built from b6935c3
+  or later.
+- **The mud band was the moor's peat hags.** They were one octave of noise
+  drawn out five times along x, so every hag was a ruler-straight band
+  about two hundred blocks long, all running east–west, laid over the
+  hills and down into the gullies. Now two octaves drawn out twice, with
+  a ragged edge (a noise at 1/7, amplitude 0.25) that breaks them into
+  irregular patches. Their share stays the same: 19.1% of the field over
+  6 km, against the old field's 20.0% (threshold 0.30, was 0.40). Checked
+  headless: the old field mapped as long bars, the new one as broken
+  patches, and a Heather Moor landing painted heather 32%, grass 23%,
+  black mud 6%. The codes program is 3 operations longer.
+- **Found on the way, not fixed:** a Volcanic Foothills pit near the
+  ember sea lane (21.1 km) has the full pit weight but no bowl, so it
+  holds one block of lava where it should hold a pool. That spot's shore
+  terrain looks like it overrides the pit's cap. A search for pits deeper
+  in the ring (23.3–24.3 km, 6 km either way) found none.
+- `stubs/game.lua` brought up to engine HEAD (fluid `opacity`).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

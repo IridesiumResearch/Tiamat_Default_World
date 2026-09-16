@@ -16,6 +16,12 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+*Landed 2026-09-16: **31, a fluid gives no light** (engine b6935c3). A
+fluid now gives off the `light_emit` of the block it is drawn as, and
+declares its own `opacity`. The mod's lava is opaque and lights its pits:
+measured headless on a generated lava block, `r15 g8 b1` in it and `r14`
+two blocks over its surface. The magma shell is still the look-alike solid.*
+
 ## 30. A program cannot spend the same value twice (2026-09-16)
 
 **The binding constraint on the whole world.** A density program may hold
@@ -52,26 +58,6 @@ is why this ask is really "either more of one or more of the other": more
 buffers with spilling, or the cap raised, or both. Any of the three buys
 the same thing, which is that a biome can carry the detail its brief asks
 for without another one losing some.
-
-## 31. A fluid gives no light (2026-09-16)
-
-The Volcanic Foothills' lava pits are dark. `light_emit` is a property of
-a BLOCK, and a block that holds a fluid is air in the store with a volume
-beside it — the fluid's `material` is what it is DRAWN as, never what is
-placed — so the emission table never sees it. Measured headless in a pit:
-a block holding 21 cells of lava reads `r0 g0 b0`, lit only by the sky
-(`sun 15`). At night, and anywhere a pit is roofed, molten rock is black.
-
-The mod cannot work round it. It cannot place the lava block instead: a
-solid look-alike does not flow, cannot be swum or drained, and would have
-to be swapped for the fluid the moment anything touched it. Ringing every
-pit with lantern stone is a lie the player can dig up.
-
-The smallest change is a `light_emit` on `Tiamot.FluidSpec`, seeded like a
-block's in `seed_emission` for any block whose fluid volume is over some
-share of full (or scaled by the volume, which also makes a draining pit
-dim as it empties). The magma shell's look-alike solid can then become the
-fluid too, which is what it was always meant to be.
 
 ## 33. A chunk tint cannot brighten (2026-09-16)
 

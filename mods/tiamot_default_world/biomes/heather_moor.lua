@@ -35,8 +35,14 @@ local HEATHER_FREQ, HEATHER_MIN = 1 / 14, -0.18          -- the heather: most of
 local HEATHER_THIN_FREQ, HEATHER_THIN_MIN = 1.4, -0.25   -- broken up at the cell's scale
 local BRACKEN_FREQ, BRACKEN_MIN = 1 / 50, 0.16           -- bracken patches, where the heather is not
 local GRASS_FREQ, GRASS_MIN = 1.5, 0.30
-local PEAT_FREQ, PEAT_MIN = 1 / 40, 0.40                 -- the peat hags: long strips of bare black peat, a tenth of the ground (0.30 was more than a quarter)
-local PEAT_STRETCH = { x = 5 }
+-- The peat hags: bare black peat, a fifth of the field (19%, measured
+-- over 6 km; the old field's was 20%). Until 2026-09-16
+-- one octave drawn out five times along x, which laid ruler-straight bands
+-- two hundred blocks long across the moor ("the weird geometric mud
+-- stain"); now two octaves drawn out twice, with a ragged edge.
+local PEAT_FREQ, PEAT_MIN = 1 / 40, 0.30
+local PEAT_STRETCH = { x = 2 }
+local PEAT_RAG_FREQ, PEAT_RAG_AMP = 1 / 7, 0.25          -- the hags' edges torn up at a few blocks
 local STONE_FREQ, STONE_MIN = 1 / 15, 0.40               -- moss-grown granite in the turf
 local GULLY_WET, BROOK_AT = 0.45, 0.76                   -- the gully depth that is wet ground, and that holds water
 local GORSE_FREQ, GORSE_MIN = 1 / 60, 0.05
@@ -123,6 +129,12 @@ end
 
 -- ------------------------------------------------------------ the fills
 
+-- Where the peat hags are: positive on bare peat.
+function tdw.heather_peat(min)
+    return n.sub(n.add(n.noise("hm_peat", PEAT_FREQ, 2, 1.0, PEAT_STRETCH),
+        n.noise("hm_peat_rag", PEAT_RAG_FREQ, 1, PEAT_RAG_AMP)), n.const(min or PEAT_MIN))
+end
+
 tdw.build_biome(ID, function(ctx)
     local function masked(field)
         local mask = tdw.biome_mask(n, ID)
@@ -138,9 +150,7 @@ tdw.build_biome(ID, function(ctx)
     local function gully()
         return n.add(shape.gully_floor(), n.const(0.6))
     end
-    local function peat()
-        return n.sub(n.noise("hm_peat", PEAT_FREQ, 1, 1.0, PEAT_STRETCH), n.const(PEAT_MIN))
-    end
+    local peat = tdw.heather_peat
     local conditions = {
         -- 1: heath turf over peat.
         n.const(1.0),

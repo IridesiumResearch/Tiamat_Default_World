@@ -245,15 +245,19 @@ block("sulfur", "Sulfur", "Bright orange-yellow crust round a thermal fissure; i
     { hardness = 0.5, tint = { strength = 0.10, scale = 64 }, light_emit = { r = 3, g = 2, b = 0 } })
 -- Lava (2026-09-15, "a very rare flowing lava channel or boiling lava
 -- pit"): the block a full block of the fluid is drawn as, lit, and the
--- fluid — slow and heavy, orange from inside.
+-- fluid — slow and heavy, orange from inside. Since engine b6935c3
+-- (2026-09-16, engine-asks 31) a fluid gives off its block's `light_emit`,
+-- so a pit lights its bowl and a roofed channel its tunnel; and it is drawn
+-- OPAQUE, a surface rather than a window onto the pit's floor.
 block("lava", "Lava", "Drawn wherever lava is. Not something you place.", { hardness = 4.0, light_emit = { r = 15, g = 8, b = 1 } })
-game.register_fluid{
-    id = "lava",
-    material = "lava",
-    tick_rate = 10,
-    evaporates = 0,
-    color = { r = 240, g = 96, b = 16 },
-}
+-- An engine older than b6935c3 refuses `opacity` as an unknown field, and a
+-- mod failing here is disabled whole: register without it there.
+local LAVA_FLUID = { id = "lava", material = "lava", tick_rate = 10, evaporates = 0,
+    opacity = 1.0, color = { r = 240, g = 96, b = 16 } }
+if not pcall(game.register_fluid, LAVA_FLUID) then
+    LAVA_FLUID.opacity = nil
+    game.register_fluid(LAVA_FLUID)
+end
 -- Bioluminescent mushrooms (2026-09-15) on the river's wet banks.
 block("glow_cap", "Glow caps", "Small pale mushrooms that glow blue-green after dark.",
     { hardness = 0.1, passable = true, billboard = "cross", light_emit = { r = 2, g = 6, b = 8 } })

@@ -273,6 +273,10 @@ function ChunkBuffer:fill_fluid_below(level, fluid) end
 ---give no lips and are not counted as neighbours. Whatever stands at its edge
 ---must hold the fluid in — make the banks higher than the level.
 ---
+---**Nothing here moves on its own**, banks or no banks: three touching blocks
+---of fluid are a body and loading a chunk never wakes one (Contract §4.5). The
+---banks are what keeps it there once a player digs into it, which wakes it.
+---
 ---```lua
 ---buf:fill_fluid_terraced{
 ---    level = river_surface,           -- world heights, per column
@@ -414,7 +418,7 @@ function Stream:next_bool() end
 ---@field cutout boolean? Whether this block is see-through in PLACES rather than everywhere: leaves, a fern, a grate. **Not a variant of `transparent` — the opposite culling rule**, and a block declaring both is refused rather than given whichever the engine tests first. Glass hides the face between two panes so a window does not double up; foliage KEEPS the faces between two leaf blocks, because culled, a canopy is a hollow shell whose alpha holes look straight through the world at the sky. Drawn alpha-tested with the opaque world rather than blended, so it writes depth, occludes itself correctly at every angle, and needs none of the sorting §8.1 gave up on. Light passes as it does through glass; dappled shade is not expressible. Collision does NOT change — leaves are solid. The cost is that every interior face of a mass of foliage is drawn (Sub-Node Contract §8.2), which is what makes it look like foliage rather than a painted box.
 ---@field passable boolean? Whether a body walks through it: grass, ferns, vines. **Collision only.** The cell is still there for everything else — it meshes, it is lit, it holds fluid out, and a ray still STOPS at it, which is what lets a player aim at a tuft and break it. Without this every plant is a lip: collision is at sub-node resolution, so a two-cell fern is two thirds of a yard to climb, and foliage has to be built around that rather than around what it should look like (Sub-Node Contract §2).
 ---@field sway boolean? Whether the top of it moves in a fake wind: grass, leaves, a banner. **Presentation only** — the world does not know it is moving, so collision, lighting and the server's idea of where anything is are all untouched. The mesher marks the TOP EDGE of each face and the shader bends only those, so a plant bends from base to tip rather than sliding, and its base stays planted. The motion is smooth noise over world position and time, so a field leans in gusts rather than each plant buzzing on its own (Sub-Node Contract §8.3).
----@field billboard boolean|"cross"? Whether its cells are drawn as SPRITES rather than as geometry: grass, ferns, flowers. `true` is one card that turns to face the camera; `"cross"` is two FIXED cards on the diagonals of the run's column — the X Minecraft and Minetest draw, which reads as a plant and holds still as the player walks round it. **This is what a sprite card is here** — the engine has no diagonal geometry, and a cell drawn as a cube shows a NINTH of its texture per face (a texture repeats once per block), so grass built from cells reads as little floating boxes. A run of cells in a column is ONE sprite as tall as the run: one cell is a third of a yard, three is a yard. It turns about the vertical axis only, so it never lies over when you look down. The cells stay where they are for collision, light, fluid and the dig ray — only the drawing changes (Sub-Node Contract §8.4).
+---@field billboard boolean|"cross"? Whether its cells are drawn as SPRITES rather than as geometry: grass, ferns, flowers. `true` is one card that turns to face the camera; `"cross"` is two FIXED cards on the diagonals of the run's column — the X Minecraft and Minetest draw, which reads as a plant and holds still as the player walks round it. **This is what a sprite card is here** — the engine has no diagonal geometry, and a cell drawn as a cube shows a NINTH of its texture per face (a texture repeats once per block), so grass built from cells reads as little floating boxes. A run of cells in a column is ONE sprite as tall as the run: one cell is a third of a yard, three is a yard. It turns about the vertical axis only, so it never lies over when you look down. The cells stay where they are for collision, light, fluid and the dig ray — only the drawing changes (Sub-Node Contract §8.4). A billboard may not also declare `transparent` or `cutout` — those are rules about a cell's cube faces and a sprite has none; the pair is refused.
 ---@field tint table? How this block's colour varies across the world: `{ strength = 0.15, scale = 32, low = {0.9, 1.0, 0.85}, high = {1.0, 0.95, 1.0} }`. **This is what stops ground reading as a repeating texture.** The client multiplies the texture by a colour sampled from one smooth field of world position — the same field for every material, so neighbouring materials vary together rather than each drifting on its own. `strength` (0..1) moves the TONE and is the whole of what most mods want: brightness variation alone breaks up the repeat. `low` and `high` are optional RGB multipliers at the two ends of the same field, for a hue shift — grass greener in one place than another — and default to no shift at all. `scale` is how many blocks one period spans, tens rather than ones: a period near a block makes noise rather than ground. Presentation only — nothing in the simulation reads it, and it is not in any determinism hash.
 ---@field absorbs { rate: integer, becomes: string? }? Ground that drinks. `rate` is how many of the block's 27 cells it takes out of fluid touching it, per fluid tick, 1..=27. `becomes` is the block it turns into once it has taken them, qualified against your own mod — omit it for ground that drinks for ever without changing, which is a drain rather than a sponge. **Saturation is a chain of materials, not engine state** (Sub-Node Contract §4.3): `dirt` → `damp_dirt` → `saturated_dirt`, and the chain ends where a block stops naming a successor. A block of two or more materials never absorbs, because there is no way to turn one material inside a mix into its successor without per-cell saturation state.
 
@@ -537,6 +541,7 @@ function Stream:next_bool() end
 ---@field ITEMS_PER_STACK integer How many of a thing one inventory slot holds. 90. Anything over it spills into the next slot rather than being refused, so this is what a recipe means by "a stack" and never a limit on what a player may own.
 ---@field AIR integer The numeric id of air. Always 0.
 ---@field mod_id string Your mod's id, and your registration namespace.
+---@field world_seed integer? The world's seed — the same number a generator's `pos.seed` carries — for sampling a density or a map outside a generator (`density:at(x, y, z, game.world_seed)` to aim a spawn at the ground). `nil` during registration, which runs before the world opens; set in every VM, the generation workers' included, by the time anything else runs.
 game = {}
 
 ---Writes a line to the server log, attributed to your mod.
@@ -828,6 +833,50 @@ function game.register_on_generate(callback) end
 ---`domain`.
 ---@param callback fun(pos: table): number, number, number
 function game.register_chunk_tint(callback) end
+
+---Gives one chunk's column its own fog — a rainforest's ground mist, a marsh's
+---murk — on top of the sky's distance fog.
+---
+---```lua
+---game.register_chunk_fog(function(pos)
+---    local wet = game.density(HUMIDITY):bounds(pos)
+---    if wet.low < 0.3 then return nil end              -- clear air
+---    return {
+---        r = 0.55, g = 0.62, b = 0.55,                  -- the mist, in daylight
+---        visibility = 20,                               -- blocks you see into it
+---        top = 70,                                      -- lies under y = 70
+---    }
+---end)
+---```
+---
+---- `visibility` (required): how far a player sees into it, in blocks. At that
+---  distance it hides 95% of what is behind it. At least 1.
+---- `r`, `g`, `b`: its colour in DAYLIGHT, 0..1, clamped; an unnamed channel
+---  is 1. The engine dims it with the sky, because a fog you describe once
+---  cannot know it is midnight.
+---- `top`: the height it lies under. Above it the fog thins by `e` every four
+---  blocks — thick in the valley, clear on the hill, and a layer seen from
+---  above. Leave it out for fog at every height.
+---
+---Return `nil` for no fog of your own. Answering at all speaks for the place, so
+---a later mod is not asked. A table with no `visibility`, or anything that is
+---not a table, is a bug and disables your mod the way an error would.
+---
+---**Per COLUMN, and blended.** Every chunk column's fog is filtered with its
+---neighbours', so a foggy biome thins over a chunk's width rather than ending
+---in a wall — and it is seen from outside as well as within: looking at a
+---misty forest from a clear hill, the forest is misty.
+---
+---Asked every time a chunk is served, never stored, one per mod, first answer
+---wins — exactly the terms `game.register_chunk_tint` has, and for its reasons.
+---Presentation only: nothing in the simulation sees through fog any worse.
+---
+---**Limits, stated.** The horizon past the detail radius is drawn from summaries
+---that carry no fog, so a fogged place far away reads as its nearest column's
+---fog; under water the water's murk replaces it; and a body (a mob, a player)
+---is fogged by the camera's own column, not its own.
+---@param callback fun(pos: table): { r: number?, g: number?, b: number?, visibility: number, top: number? }|nil
+function game.register_chunk_fog(callback) end
 
 ---Called when somebody leaves. **Registration window only.**
 ---
@@ -1737,6 +1786,49 @@ function game.register_hud_script(file) end
 ---@return integer told
 function game.play_sound(spec) end
 
+---Fields accepted by `game.emit_particles`. Every number is clamped into its
+---range rather than refused; a wrong TYPE is an error.
+---@class Tiamot.ParticleSpec
+---@field pos { x: number, y: number, z: number, domain: string? } Required. The burst's centre, in world blocks.
+---@field count integer? How many particles. Default 8, at most 256.
+---@field colour { r: number?, g: number?, b: number?, a: number? }? Colour and opacity, 0..1; an unnamed channel is 1. Lit by where the burst is, so a spray at night is dim.
+---@field size number? Blocks across. Default 0.1, at most 4.
+---@field lifetime number? Seconds each lives, give or take a quarter. Default 1, at most 30. Particles fade over the second half.
+---@field velocity { x: number?, y: number?, z: number? }? The velocity all start with, blocks per second. Default still; each axis at most 64.
+---@field spread number? Random velocity each adds, in a random direction, blocks per second. Default 0.
+---@field area { x: number?, y: number?, z: number? }? Half-size of the box they start in, per axis. Default a point; at most 16.
+---@field gravity number? How fast they fall, blocks per second per second. Default 0 (they drift); negative rises, like steam.
+---@field collide boolean? Whether one vanishes on reaching a solid cell — a drip stops at the floor. Default true. Passable blocks do not stop them.
+---@field radius number? How far away a player may be and still be sent it. Default 32, at most 128.
+
+---Scatters a burst of short-lived sprites — sea spray, a drip, mist.
+---
+---**Presentation, and nothing more.** The server simulates none of it: it sends
+---the burst to every player in the same domain within `radius`, and each client
+---animates its own copy. Nothing reads a particle back, so do not build anything
+---that needs one to be somewhere.
+---
+---```lua
+------ A blowhole: white spray up and falling back.
+---game.emit_particles{ pos = { x = 10, y = 40, z = -3 }, count = 60,
+---    colour = { r = 0.9, g = 0.95, b = 1, a = 0.8 }, size = 0.25,
+---    velocity = { y = 14 }, spread = 4, gravity = 20, lifetime = 1.5 }
+---
+------ Mist over a forest floor: large, faint, slow, and through the undergrowth.
+---game.emit_particles{ pos = at, count = 6, size = 2.5, lifetime = 8,
+---    colour = { r = 0.8, g = 0.85, b = 0.8, a = 0.15 }, area = { x = 8, y = 1, z = 8 },
+---    spread = 0.2, collide = false }
+---```
+---
+---Returns how many players were told — not a promise anybody SAW it. Bursts are
+---dropped rather than queued without end if a mod sprays faster than a player's
+---connection sends, and a client draws at most 8,192 particles at once. Call it
+---from a tick or a hook; from a generator it does nothing, since generation runs
+---in worker VMs with nobody to show a spray to.
+---@param spec Tiamot.ParticleSpec
+---@return integer told
+function game.emit_particles(spec) end
+
 ---A walkable route between two points, or why there is not one.
 ---
 ---Navigation is **block resolution** and deliberately simple (Sub-Node Contract
@@ -1789,6 +1881,7 @@ function game.find_path(from, to, options) end
 ---@field color? { r: integer, g: integer, b: integer } What the world looks like from INSIDE the fluid — the tint and fog a submerged camera sees. Channels are 0..=255 and default to white. Deliberately not derived from `material`: a texture is what the surface looks like from outside, and clear water has a vivid surface with a faint tint. The engine has no opinion about either.
 ---@field waterlogs_at? integer How full of terrain a block must be before this fluid treats it as floor, in cells of 27. Default 14 — over half. Below it the block is more air than anything and the fluid runs through; at or above it the block holds the fluid up and a mod can swap it for a waterlogged one from `register_on_fluid_flow`. Set it to 1 for the blocky rule where a single chiselled cell makes a block waterproof.
 ---@field evaporates? integer One in how many fluid ticks a block open to the air loses a cell. Default 0, which never evaporates. **This destroys matter**, which is why the engine defaults it off and leaves the decision to you — a wide shallow pool goes before a deep narrow one, because more of it is exposed.
+---@field opacity? number How much of what is behind it a surface of this fluid hides, 0.0..=1.0. Default 0.72, which is what every fluid was drawn at before the field existed: you can make out a riverbed through it, and a deep pool still reads as deep. `1.0` is lava — a surface, not a window. `0.0` is invisible, which is legitimate and is not the same as "unsaid".
 
 ---Registers a fluid.
 ---
@@ -1807,9 +1900,22 @@ Fluid is BLOCK resolution, not sub-node: one volume per block, never a
 ---there are no source blocks, because an infinite spring is a conservation
 ---violation by definition. A bucket is a measurement.
 ---
+---**A fluid glows with whatever the block it is DRAWN as emits.** There is no
+---glow field here and there should not be: a fluid already names a block, and a
+---second place to say how bright it is would be two things to keep in step. Put
+---`light_emit` on that block and a pool of it lights the cave it stands in,
+---exactly as a lamp of the same material would — a block full of lava is AIR in
+---the block store, so this is the engine looking at the fluid layer on purpose.
+---A flow relights as it moves, and only a fluid whose material emits costs
+---anything: a world of water never pays for this.
+---
 ---```lua
 ---game.register_block{ id = "milk", texture = "milk.png" }
 ---game.register_fluid{ id = "milk", material = "milk" }
+---
+----- Lava: opaque, and a light source because its block is one.
+---game.register_block{ id = "molten", texture = "lava.png", light_emit = { r = 15, g = 8, b = 2 } }
+---game.register_fluid{ id = "lava", material = "molten", opacity = 1.0, tick_rate = 4 }
 ---```
 ---@param spec Tiamot.FluidSpec
 function game.register_fluid(spec) end
@@ -1999,6 +2105,16 @@ function game.set_block(position, block, occupancy, options) end
 ---@field occupancy integer Bitmask of which of the block's 27 cells would be filled.
 ---@field units integer How many units it would cost, which is the number of set bits in `occupancy`.
 
+---The place control landing on a block with nothing to place.
+---@class Tiamot.UseEvent
+---@field player string Who is using, as 64 hex characters.
+---@field x integer The CELL under the crosshair — cell coordinates, three to a block, as a dig's are. `x // 3` is the block.
+---@field y integer
+---@field z integer
+---@field domain string The space the player is in, so `game.get_block{ x, y, z, domain = e.domain }` reads the right world.
+---@field material integer What that cell is made of.
+---@field held { material: integer, units: integer, blocks: integer, nodes: integer, count: integer, shape: integer|nil, detail: string|nil }|nil What is in the main hand — the shape `game.held` answers with — or `nil` for an empty one. An item, when not nil: a placeable stack is a placement, not a use.
+
 ---Registers a veto on completed digs.
 ---
 ---**Registration window only.**
@@ -2022,6 +2138,11 @@ function game.set_block(position, block, occupancy, options) end
 ---Return `false` to refuse with the engine's wording, a string to refuse with
 ---your own, or `""` to cancel silently — the same ladder
 ---`game.register_on_place` uses.
+---
+---**The world can be read from inside it.** `game.get_block` on the block being
+---dug answers what it holds before anything is removed, so a hook can decide by
+---the whole block rather than by the one material the event names. Writes from
+---a veto are still refused.
 ---@param callback fun(event: Tiamot.DigEvent): boolean|string|nil
 function game.register_on_dig_complete(callback) end
 
@@ -2050,9 +2171,48 @@ function game.register_on_dig_complete(callback) end
 ---
 ---The same rules as `game.register_on_dig_complete` otherwise: the first
 ---cancellation stops the rest, and an error disables your mod while letting the
----placement through.
+---placement through — and `game.get_block` answers inside it.
 ---@param callback fun(event: Tiamot.PlaceEvent): boolean|string|nil
 function game.register_on_place(callback) end
+
+---Registers a handler for USING a block: the place control with nothing to place.
+---
+---**Registration window only.**
+---
+---Called when a player presses the place control (right mouse, by default) at a
+---block in reach with an empty hand or an item in it — picking a bush, opening
+---a door, pulling a lever. A hand holding something placeable places it
+---instead, and this is not called.
+---
+---The same return ladder as `game.register_on_place`, read as "handled":
+---
+---| returned | meaning |
+---|---|---|
+---| `nil`, `true` | not mine — the next mod is asked |
+---| `false` | handled, and the player is told the engine's wording |
+---| a string | handled, and the player is told that |
+---| `""` | handled, and the player is told nothing |
+---
+---The first mod to handle it stops the rest. A use nobody handles is answered
+---with the warning an empty hand has always had ("nothing selected to build
+---with"), so a world with no `on_use` plays as it did.
+---
+---**The world can be read inside it** — `game.get_block` on the cell answers
+---what the block holds, which is the point: the event names one material of a
+---block that may hold three. The event carries the cell, not the block; divide
+---by three for the block. An error disables your mod and the use is treated as
+---unhandled.
+---
+---```lua
+---game.register_on_use(function(e)
+---    local at = game.get_block{ x = e.x // 3, y = e.y // 3, z = e.z // 3, domain = e.domain }
+---    if not (at and has_blooms(at)) then return end   -- not ours: let it pass
+---    game.give(e.player, { material = "my_mod:rose", units = 27 })
+---    return ""                                          -- handled, silently
+---end)
+---```
+---@param callback fun(event: Tiamot.UseEvent): boolean|string|nil
+function game.register_on_use(callback) end
 
 ---Somebody hitting something.
 ---@class Tiamot.PunchEvent
@@ -2381,6 +2541,10 @@ function Density:at(x, y, z, seed) end
 ---  `stream` really matters: it is a NAME, hashed into the world seed, and two
 ---  nodes with different names give independent fields. Give your terrain and
 ---  your caves different streams or the caves will follow the hills exactly.
+---  `stretch = { x = 1, y = 4, z = 1 }` draws the field out along an axis —
+---  features four times as tall here, as if sampled at `y / 4` — for rock that
+---  flutes vertically or strata that run level; an axis left out is 1. Every
+---  value must be above zero. Bounds follow it, so pruning still works.
 ---- `{ op = "map", map = <a Tiamot.Map> }` — the map's value under this
 ---  sample, ignoring y. **The way an eroded field becomes terrain.** A map is
 ---  a surface, so subtract `y` to get a density from it. The node takes a COPY
