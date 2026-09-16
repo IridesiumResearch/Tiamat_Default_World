@@ -64,6 +64,8 @@ function tdw.register_biome(spec)
                 "biome " .. spec.id .. ": a span's province is \"a\", \"b\" or nothing")
             assert(span[5] == nil or type(span[5]) == "number",
                 "biome " .. spec.id .. ": a span's province split is a number or nothing")
+            assert(span[6] == nil or (type(span[6]) == "number" and span[4] ~= nil),
+                "biome " .. spec.id .. ": a span's sixth entry is an upper province split, with a side")
         end
     end
     spec.fills = nil
@@ -208,6 +210,11 @@ function tdw.biome_mask(n, id, _)
         end
         if band and span[4] then
             band = n.min(band, tdw.shape.province_mask(span[4], span[5]))
+            if span[6] then
+                -- An upper split: the province noise between the two
+                -- (the Heather Moor, 2026-09-16).
+                band = n.min(band, tdw.shape.province_mask(span[4] == "b" and "a" or "b", span[6]))
+            end
         end
         if band then
             acc = acc and n.max(acc, band) or band

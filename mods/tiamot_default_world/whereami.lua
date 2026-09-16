@@ -78,6 +78,8 @@ OWNER[blocks.obsidian] = "obsidian_barrens"
 OWNER[blocks.sinter] = "geyser_basin"
 OWNER[blocks.thermal_mat] = "geyser_basin"
 OWNER[blocks.black_sand] = "cinder_coast"
+OWNER[blocks.heather] = "heather_moor"
+OWNER[blocks.gorse] = "heather_moor"
 for _, material in ipairs({ blocks.white_sand, blocks.calcite, blocks.pink_algae, blocks.coral_magenta,
     blocks.coral_cyan, blocks.coral_amber, blocks.sea_anemone }) do
     OWNER[material] = "coral_fringed_shallows"
@@ -93,7 +95,7 @@ end
 -- Whose ground answers at once, wherever in the column it is found.
 local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true,
     taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true, salt_pan = true,
-    obsidian_barrens = true, geyser_basin = true, cinder_coast = true }
+    obsidian_barrens = true, geyser_basin = true, cinder_coast = true, heather_moor = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.
@@ -120,11 +122,11 @@ end
 -- patch of turf cannot say which biome it is and the placement field is
 -- asked instead. A material one of them owns ALONE — a poppy, an apple
 -- tree, leaf litter, sand — still decides, above this.
-local MOSAIC = { "flower_forest", "dunes", "temperate_woodlands", "rolling_grasslands" }
+local MOSAIC = { "flower_forest", "heather_moor", "dunes", "temperate_woodlands", "rolling_grasslands" }
 -- The cold core, in the order to ask: the two on the Crown, then the ring.
 local COLD = { "frozen_wastes", "icefall", "alpine_highlands", "taiga", "silverwood" }
 -- And the owners a shared material can name, which the field overrules.
-local MOSAIC_MEMBER = { flower_forest = true, dunes = true, temperate_woodlands = true,
+local MOSAIC_MEMBER = { flower_forest = true, heather_moor = true, dunes = true, temperate_woodlands = true,
     rolling_grasslands = true, taiga = true, jungle = true }
 
 -- The biome whose ground is under (x, y, z), or nil when the column is

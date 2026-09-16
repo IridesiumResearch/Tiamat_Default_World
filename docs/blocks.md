@@ -198,6 +198,17 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 3.6 Heather Moor (2026-09-16)
+
+Shares `grass`, `black_mud` (the peat), `moss`, `granite`, `mud`,
+`creek_bed`, `fern` (the bracken), `tall_grass`, `oak_log` and `oak_leaves`
+(the hawthorns), and the `water` FLUID.
+
+| Block | Where | Why |
+|---|---|---|
+| `heather` | the moor's carpet, a cover two cells tall | the biome is named for it and no registered cover is purple heath |
+| `gorse` | the moor's bushes | nothing registered is a yellow-green flowering shrub |
+
 ### 3.3 Obsidian Barrens, 3.4 Geyser Basin, 3.5 Cinder Coast (2026-09-16)
 
 The Barrens share `dark_basalt`, `volcanic_ash`, `pumice`. The Basin shares

@@ -308,6 +308,9 @@ block("salt", "Salt", "The pan's crust: white, hard, cracked into polygons, glar
 block("obsidian", "Obsidian", "Black volcanic glass in sheets and razor ridges; it breaks to an edge.", { hardness = 5.0, tint = { strength = 0.05, scale = 128 } })
 block("sinter", "Sinter", "Pale mineral crust laid down by the hot springs, in terraces round their pools.", { hardness = 1.2, tint = { strength = 0.08, scale = 96 } })
 block("thermal_mat", "Thermal mat", "Orange and ochre slime of heat-loving microbes in the springs' runoff.", { hardness = 0.3, tint = { strength = 0.22, scale = 48 } })
+-- 3.6 Heather Moor (2026-09-16): the heath's carpet and its bushes.
+block("heather", "Heather", "Low wiry heath in purple flower, ankle-deep.", { hardness = 0.1, tint = { strength = 0.14, scale = 64 }, passable = true, sway = true, billboard = "cross" })
+block("gorse", "Gorse", "Spiny yellow-green bush in yellow flower; it smells of coconut.", { hardness = 0.3, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
 block("black_sand", "Black sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.

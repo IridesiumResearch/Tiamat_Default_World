@@ -79,6 +79,7 @@ load("biomes.cinder_coast")          -- 3.5, the Ember Ridge's shores: black san
 load("biomes.coral_fringed_shallows") -- 2.4, the second lane's sea: lagoon flats behind a barrier reef
 load("biomes.dunes")                 -- 2.5, Goldwater: barchan dunes and deflation basins
 load("biomes.flower_forest")         -- 2.6, the Long Shore's wet half: parkland groves and flower carpets
+load("biomes.heather_moor")          -- 3.6, three quarters of the Flower Forest's ground: open heath
 load("biomes.rime_tundra")           -- 3.1, the Hem's ground and its middle band: permafrost, pingos, frozen tarns
 load("biomes.frostpine_coast")       -- 3.0, the Hem's inner band: snowbound firs
 load("biomes.rime_wall")             -- 3.2, the last two hundred blocks: the ice wall on the rim

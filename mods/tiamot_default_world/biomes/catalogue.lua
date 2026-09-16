@@ -51,9 +51,13 @@ biome{ id = "dunes", name = "The Dunes", area = "surface",
     ring = "shore", humidity = { -0.42, -0.05 },
     note = "2.5 — Goldwater: the dry half of the Long Shore (the Hem's too until 2026-09-16), in the provinces the Rolling Grasslands do not take (2026-09-16) — barchan dunes with steep slip faces, flat deflation basins, yardang rock ribs, megafauna ribcages." }
 biome{ id = "flower_forest", name = "Flower Forest", area = "surface",
-    spans = { { "temperate", "temperate", "wet", "b" }, { "shore", "shore", "wet", "b" } },
+    spans = { { "temperate", "temperate", "wet", "b", 0.383 }, { "shore", "shore", "wet", "b", 0.383 } },
     ring = "shore", humidity = { -0.05, 0.42 },
     note = "2.6 — the wet half of the mild rings, in the provinces the woodland does not take (2026-09-16): parkland groves of apple, cherry and birch over carpets of allium, peony, poppy and bluebell in sweeping bands, with brooks in the gully floors." }
+biome{ id = "heather_moor", name = "Heather Moor", area = "surface",
+    spans = { { "temperate", "temperate", "wet", "b", 0.0, 0.383 }, { "shore", "shore", "wet", "b", 0.0, 0.383 } },
+    ring = "shore", humidity = { -0.05, 0.42 },
+    note = "3.6 — three quarters of the Flower Forest's ground (2026-09-16): open heath of heather, gorse and bracken over peat, granite tors and boulders, peat hags, wind-bent hawthorns, dark water in the gullies." }
 biome{ id = "river_valleys", name = "River Valleys", area = "surface",
     ring = "temperate",
     note = "1.6 — troughs cut across every ring they cross, from the temperate one outward. Its spans and its `present` are set in its own file: a river is a LINE, not a band, so it answers for the chunks its course runs near and no others." }

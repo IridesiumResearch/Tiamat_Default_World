@@ -2139,6 +2139,30 @@ Found by sampling the whole disc on a grid to draw a map of it.
   Coastal Cliffs unchanged on the first lane, nothing refused. **A fresh
   world is needed.**
 
+### The Heather Moor, on three quarters of the Flower Forest's ground
+
+- **3.6 Heather Moor** ("flower forest should be much more rare and to do
+  that I want to add another biome that will take up about 75% of what
+  flower forest does now"): open heath on the wet side of the mild rings —
+  a purple carpet of heather over peaty turf, gorse in yellow-green clumps,
+  bracken in patches, granite boulders and tors, strips of bare black peat
+  where it has been cut, wind-bent hawthorns alone, and dark water in the
+  gullies' deepest reaches.
+- **Where**: the Flower Forest's province side, "b", from the line to a
+  split of 0.383 of the province noise, and the Flower Forest past it.
+  0.383 is the noise's 87.5th percentile, measured over 40,000 samples, so
+  the forest keeps an eighth of the wet side where it had a half: a quarter
+  of its ground. A span's **sixth entry** is an upper province split.
+- A dressing biome: the mild rings' programs are at 999 of 1,024. It
+  stands on the wet side's gullies and bluffs and the Flower Forest's
+  knolls.
+- **New nodes**: `heather`, `gorse`. Bracken is the woodland's fern, peat
+  is `black_mud`. The HUD's mild-ring placement fields include it.
+- Checked headless on a fresh world, in the temperate ring and on the Long
+  Shore: heather 25–40% of the surface, peat 6–19% (a first cut of 28% was
+  thinned), gorse, bracken, the gullies' water, named on the HUD; the
+  Flower Forest and the Woodlands unchanged; nothing refused.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
