@@ -198,6 +198,19 @@ palms).
 | `juniper_needles` | their flat, sparse crowns | asked for by name 2026-09-14 |
 | `columnar_cactus` | columnar cacti, and the barrel cacti and prickly pear cut from it | asked for by name 2026-09-14 |
 
+### 3.9 Abyssal Trench, 3.10 Mangrove Coast (2026-09-16)
+
+The trench shares `black_mud`, `dark_basalt`, `sulfur`, `magma` (the
+smokers' throats), `thermal_mat` (the bacterial mats). The mangroves share
+`mud`, `black_mud`, `creek_bed`, `moss`.
+
+| Block | Where | Why |
+|---|---|---|
+| `tube_worms` | a cover round the smokers' feet | the brief's tube worms; nothing registered is a crowd of tubes |
+| `glow_polyp` | a sparse cover over the trench's mud; gives a cold blue light | the brief's bioluminescence, in water no light reaches |
+| `mangrove_wood` | the mangroves' stems and prop roots | nothing registered is a dark red-brown tropical wood |
+| `mangrove_leaves` | their crowns | nothing registered is a thick glossy leaf |
+
 ### 3.6 Heather Moor (2026-09-16)
 
 Shares `grass`, `black_mud` (the peat), `moss`, `granite`, `mud`,

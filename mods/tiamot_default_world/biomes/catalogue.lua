@@ -134,6 +134,14 @@ biome{ id = "pack_ice", name = "Pack Ice", area = "surface",
     spans = { { "hem", "hem" } },
     ring = "hem",
     note = "3.8 — the fourth sea lane's surface (49.8 to 57 km, 2026-09-16): floes with drifted snow, open leads, pressure ridges, icebergs. Laid by the sea's own fill; no fills of its own." }
+biome{ id = "abyssal_trench", name = "Abyssal Trench", area = "surface",
+    spans = { { "temperate", "hem" } },
+    ring = "hem",
+    note = "3.9 — a province of the deep floors (2026-09-16): rifts a couple of hundred blocks across and as deep again, black smoker chimneys, tube worms, bacterial mats, glowing polyps. Cut into the Deep Ocean's floor in `shape.sea_deep`." }
+biome{ id = "mangrove_coast", name = "Mangrove Coast", area = "surface",
+    spans = { { "verdant", "shore", "wet" } },
+    ring = "verdant", humidity = { -0.05, 0.42 },
+    note = "3.10 — the reef lane's wet-side shores (2026-09-16): mangroves on prop roots at the tide line, mud flats, tidal channels, saplings in the shallows. The reef and the Coastal Cliffs keep off it." }
 
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }

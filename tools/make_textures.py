@@ -111,6 +111,10 @@ BLOCKS = {
     "thermal_mat":    (206, 122,  40,  0),
     "black_sand":     ( 40,  38,  42,  0),   # the Cinder Coast (3.5)
     "heather":        (150,  84, 150,  0),   # the Heather Moor (3.6)
+    "tube_worms":     (224, 214, 206,  0),   # the Abyssal Trench (3.9)
+    "glow_polyp":     (150, 220, 240,  0),
+    "mangrove_wood":  ( 96,  62,  48,  0),   # the Mangrove Coast (3.10)
+    "mangrove_leaves": ( 52,  92,  48,  0),
     "gorse":          (168, 160,  52,  0),
     "lava":           (214,  84,  22,  0),   # the fluid's block
     "glow_cap":       (150, 224, 226,  0),   # the river's mushrooms (2026-09-15)
@@ -169,6 +173,7 @@ DOTS = {
     "oak_leaves": (2.6, 0.4, 0.6),
     "rose_bush": (2.9, 0.4, 0.5),   # a denser, rounder leaf than the oak's
     "gorse": (2.2, 0.5, 0.7),       # small dense spiny clumps (3.6)
+    "mangrove_leaves": (2.5, 0.4, 0.6),  # thick glossy leaves (3.10)
     "fir_needles": (2.3, 0.5, 0.7), # smaller, more scattered: needles in tufts
     "ironwood_leaves": (2.8, 0.3, 0.5),  # big, crowded: the canopy lets little through
     "climbing_ivy": (2.0, 0.5, 0.8),     # small leaves on a rope
@@ -230,6 +235,7 @@ BLADES = {
     "rust_grass": (5, 9, 15),     # acidic tufts
     "hanging_lichen": (6, 10, 16), # strands the length of the card
     "sea_anemone": (8, 5, 10),     # a fat tuft of tentacles (2.4)
+    "tube_worms": (7, 6, 13),      # a crowd of white tubes (3.9)
 }
 
 # Rosettes and sprays, for the mantle: a rosette is a few round leaves
@@ -249,6 +255,7 @@ SPRAYS = {
     "roman_chamomile": 6,    # many short ones, a card a third of a block
     "allium": 3,             # three tall stems under globes (2.6)
     "heather": 8,            # many short wiry stems in flower (3.6)
+    "glow_polyp": 3,         # a few stalks under glowing heads (3.9)
     "bluebell": 5,           # nodding bells, a card a block high
 }
 

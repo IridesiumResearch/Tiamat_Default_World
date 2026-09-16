@@ -311,6 +311,11 @@ block("thermal_mat", "Thermal mat", "Orange and ochre slime of heat-loving micro
 -- 3.6 Heather Moor (2026-09-16): the heath's carpet and its bushes.
 block("heather", "Heather", "Low wiry heath in purple flower, ankle-deep.", { hardness = 0.1, tint = { strength = 0.14, scale = 64 }, passable = true, sway = true, billboard = "cross" })
 block("gorse", "Gorse", "Spiny yellow-green bush in yellow flower; it smells of coconut.", { hardness = 0.3, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
+-- 3.9 Abyssal Trench and 3.10 Mangrove Coast (2026-09-16).
+block("tube_worms", "Tube worms", "White tubes tipped with red plumes, crowding round the vents.", { hardness = 0.2, tint = { strength = 0.10, scale = 48 }, passable = true, sway = true, billboard = "cross" })
+block("glow_polyp", "Glow polyp", "A small pale polyp giving off a cold blue light in the dark of the deep.", { hardness = 0.1, tint = { strength = 0.10, scale = 48 }, passable = true, sway = true, billboard = "cross", light_emit = { r = 2, g = 7, b = 11 } })
+block("mangrove_wood", "Mangrove wood", "Dark reddish wood of the mangroves' stems and prop roots.", { hardness = 2.0, tint = { strength = 0.08, scale = 64 } })
+block("mangrove_leaves", "Mangrove leaves", "Thick glossy leaves in a low roof over the tide.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true })
 block("black_sand", "Black sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.

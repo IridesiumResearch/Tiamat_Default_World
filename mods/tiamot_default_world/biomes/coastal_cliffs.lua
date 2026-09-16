@@ -333,6 +333,11 @@ end
 function shape.sea_deep()
     local b = n.clamp(n.mul(n.sub(offshore(), n.const(seas.SHELF_END)), n.const(1.0 / (seas.DEEP_FROM - seas.SHELF_END))), 0.0, 1.0)
     local bed = n.add(n.mul(seabed(), n.sub(n.const(1.0), b)), n.mul(shape.ocean_floor(), b))
+    if shape.abyss_terms then
+        -- The Abyssal Trench's rifts (3.9), in its province, past the shelf.
+        local b2 = n.clamp(n.mul(n.sub(offshore(), n.const(seas.SHELF_END)), n.const(1.0 / (seas.DEEP_FROM - seas.SHELF_END))), 0.0, 1.0)
+        bed = n.sub(bed, n.mul(n.mul(shape.abyss_terms(), shape.abyss_weight()), b2))
+    end
     return n.add(seas.rel(), bed)
 end
 
@@ -461,7 +466,9 @@ tdw.build_biome("coastal_cliffs", function(ctx)
         -- Nor on the Ember Ridge: its shores are the Cinder Coast's (3.5).
         band = shape.off_cinder and n.min(band, shape.off_cinder()) or band
         -- Nor the third lane's water: the Kelp Forest's (3.7).
-        return shape.off_kelp and n.min(band, shape.off_kelp()) or band
+        band = shape.off_kelp and n.min(band, shape.off_kelp()) or band
+        -- Nor the reef lane's wet-side shores: the Mangrove Coast's (3.10).
+        return shape.off_mangrove and n.min(band, shape.off_mangrove()) or band
     end
     local function masked(field)
         return n.min(field, zone())

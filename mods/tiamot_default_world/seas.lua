@@ -363,7 +363,10 @@ function M.zone(x, z)
         -- fourth lane's water, deep or not; the kelp over the third's shelf.
         local pack = d > 0 and tdw.pack_zone and tdw.pack_zone(x, z)
         local kelp = d > 0 and tdw.kelp_zone and tdw.kelp_zone(x, z)
-        hit = pack or (d > M.SHELF_END and "deep_ocean") or kelp or (d > -30.0 and shore) or false
+        -- The deep floor's province, and the reef lane's wet-side shores.
+        local deep = d > M.SHELF_END and ((tdw.abyss_zone and tdw.abyss_zone(x, z)) or "deep_ocean")
+        local mangrove = tdw.mangrove_at and tdw.mangrove_at(x, z, d)
+        hit = pack or deep or kelp or mangrove or (d > -30.0 and shore) or false
         zone_cache[key] = hit
         zone_cached = zone_cached + 1
     end
@@ -375,7 +378,7 @@ end
 -- forty-block steps, the nearest lane first. `u_lo` and `u_hi` narrow it
 -- to one band of the radius, which is how the reef's lane is found and
 -- the other three lanes are not (2.4).
-function M.locate(px, pz, seed, lo, hi, u_lo, u_hi, skip)
+function M.locate(px, pz, seed, lo, hi, u_lo, u_hi, skip, accept)
     -- `skip`: a range of u, or a list of them.
     local skips = {}
     if skip and type(skip[1]) == "table" then
@@ -422,7 +425,7 @@ function M.locate(px, pz, seed, lo, hi, u_lo, u_hi, skip)
                 end
                 if ok then
                     local dist = M.at(x, z, seed)
-                    if dist >= lo and dist <= hi then
+                    if dist >= lo and dist <= hi and (accept == nil or accept(x, z)) then
                         return x, z
                     end
                 end

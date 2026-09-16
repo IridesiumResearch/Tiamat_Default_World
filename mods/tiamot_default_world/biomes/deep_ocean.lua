@@ -154,7 +154,10 @@ tdw.biomes[ID].present = function(pos)
     return seas.class(pos) == "deep"
 end
 tdw.biomes[ID].locate = function(px, pz, seed)
-    return seas.locate(px, pz, seed, seas.DEEP_FROM + 20.0, seas.DIST_FAR)
+    -- Not in the Abyssal Trench's province (3.9).
+    return seas.locate(px, pz, seed, seas.DEEP_FROM + 20.0, seas.DIST_FAR, nil, nil, nil, function(x, z)
+        return not (tdw.abyss_zone and tdw.abyss_zone(x, z))
+    end)
 end
 
 -- ------------------------------------------------------------ the structures
@@ -293,7 +296,9 @@ end
 tdw.build_biome(ID, function(ctx)
     -- This biome's floor: past the coast's shelf.
     local function zone()
-        return n.sub(seas.d_map(), n.const(seas.SHELF_END))
+        local band = n.sub(seas.d_map(), n.const(seas.SHELF_END))
+        -- Not the Abyssal Trench's province (3.9).
+        return shape.off_abyss and n.min(band, n.mul(shape.off_abyss(), n.const(1000.0))) or band
     end
     local function masked(field)
         return n.min(field, zone())

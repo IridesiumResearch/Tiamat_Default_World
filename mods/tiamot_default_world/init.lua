@@ -85,6 +85,8 @@ load("biomes.frostpine_coast")       -- 3.0, the Hem's inner band: snowbound fir
 load("biomes.rime_wall")             -- 3.2, the last two hundred blocks: the ice wall on the rim
 load("biomes.kelp_forest")           -- 3.7, the third lane's water: kelp groves on the shelf
 load("biomes.pack_ice")              -- 3.8, the fourth lane's surface: floes, leads and bergs
+load("biomes.abyssal_trench")        -- 3.9, a province of the deep floors: rifts and black smokers
+load("biomes.mangrove_coast")        -- 3.10, the reef lane's wet-side shores: mangroves on the mud
 load("whereami")                     -- the biome you are in, on the HUD and from chat
 
 -- The HUD script runs on the CLIENT, once a frame, and sees only what

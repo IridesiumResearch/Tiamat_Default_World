@@ -79,6 +79,10 @@ OWNER[blocks.sinter] = "geyser_basin"
 OWNER[blocks.thermal_mat] = "geyser_basin"
 OWNER[blocks.black_sand] = "cinder_coast"
 OWNER[blocks.heather] = "heather_moor"
+OWNER[blocks.tube_worms] = "abyssal_trench"
+OWNER[blocks.glow_polyp] = "abyssal_trench"
+OWNER[blocks.mangrove_wood] = "mangrove_coast"
+OWNER[blocks.mangrove_leaves] = "mangrove_coast"
 OWNER[blocks.gorse] = "heather_moor"
 for _, material in ipairs({ blocks.white_sand, blocks.calcite, blocks.pink_algae, blocks.coral_magenta,
     blocks.coral_cyan, blocks.coral_amber, blocks.sea_anemone }) do
@@ -95,7 +99,8 @@ end
 -- Whose ground answers at once, wherever in the column it is found.
 local DECIDES = { alpine_highlands = true, river_valleys = true, jungle = true, arid_mesa = true, badlands = true,
     taiga = true, volcanic_foothills = true, coral_fringed_shallows = true, flower_forest = true, salt_pan = true,
-    obsidian_barrens = true, geyser_basin = true, cinder_coast = true, heather_moor = true }
+    obsidian_barrens = true, geyser_basin = true, cinder_coast = true, heather_moor = true,
+    abyssal_trench = true, mangrove_coast = true }
 
 -- Every material in a block, appended to `out`: a surface block is usually
 -- cells of two materials and names neither.

@@ -127,6 +127,7 @@ end
 -- **The reef's floor**, km over the pool's level: the flats, the barrier
 -- crest on them, the bars and spits, less the channels. The shore program
 -- blends this into the shelf's own floor by the weight below.
+shape.reef_band = band
 function shape.reef_bed()
     local acc = n.add(n.noise("reef_vary", VARY_FREQ, 2, VARY_AMP), n.const(-LAGOON_D))
     acc = n.add(acc, n.mul(crest_w(), n.const(CREST_H)))
@@ -363,7 +364,9 @@ tdw.build_biome(ID, function(ctx)
     -- coastline out to the foot of the ledge. The sea map's distance says
     -- both, so there is no ring mask and no humidity half here.
     local function reef_only(field)
-        return n.min(field, n.sub(band(), n.const(0.5)))
+        field = n.min(field, n.sub(band(), n.const(0.5)))
+        -- Not the Mangrove Coast's strip on the wet side (3.10).
+        return shape.off_mangrove and n.min(field, shape.off_mangrove()) or field
     end
     local function at_sea()
         return n.min(seas.d_map(), n.sub(n.const(seas.SHELF_END + 20.0), out()))

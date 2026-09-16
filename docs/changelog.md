@@ -2188,6 +2188,32 @@ Found by sampling the whole disc on a grid to draw a map of it.
   sand 40%, moss-grown rock 37%, barrens 12%, kelp standing; the pack's
   surface 57% ice and 40% open water; both named; nothing refused.
 
+### Two more seas: the Abyssal Trench and the Mangrove Coast
+
+- **3.9 Abyssal Trench**, a province of the deep floors (the province
+  noise's "b" side past 0.1, about two fifths of them): rifts a hundred
+  and ten blocks either side of a contour and 170 deep, with a slot in
+  their floors 200 deeper; along a vent line in them black smoker chimneys
+  to twenty blocks, sulfur-crusted with magma glowing in their throats,
+  tube worms round their feet, bacterial mats, and glowing polyps over
+  the dark mud. The rifts are cut into the Deep Ocean's floor in the
+  coast's `shape.sea_deep`, weighted by the province and the shelf's blend
+  (deep programs 357, were 323). The Deep Ocean keeps off the province
+  (`shape.off_abyss`), and its `/tp` does too.
+- **3.10 Mangrove Coast**, the reef lane's wet-side shores, from 24 blocks
+  inland to 20 out: mangroves standing on arched prop roots at the tide
+  line under a low roof of leaves, saplings in the shallows, mud flats,
+  black silt, tidal channels, moss behind. The reef and the Coastal Cliffs
+  keep off it (`shape.off_mangrove`).
+- `seas.locate` takes an `accept(x, z)` test. The HUD names the trench over
+  its province's deep water and the mangroves on their strip.
+- **New nodes**: `tube_worms`, `glow_polyp` (it gives light),
+  `mangrove_wood`, `mangrove_leaves`.
+- Checked headless on a fresh world: the mangroves' strip leaves 25%, mud
+  19%, silt and channels; the reef beside it unchanged; the trench landing
+  over a rift with its walls, polyps and mats; the Deep Ocean's landing
+  off the province; nothing refused. **A fresh world is needed.**
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
