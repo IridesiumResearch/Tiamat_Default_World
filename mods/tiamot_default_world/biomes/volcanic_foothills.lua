@@ -66,6 +66,7 @@ local PIT_FREQ, PIT_MIN, PIT_EDGE, PIT_D = 1 / 380, 0.32, 10.0, 0.008
 local CHANNEL_FREQ, CHANNEL_W, CHANNEL_SEG_FREQ, CHANNEL_SEG_MIN = 1 / 520, 3.0, 1 / 700, 0.28
 local PIT_RAMP = 0.02                                      -- km: the cap's slope in from the pit's edge — twenty blocks over p, so the rim is a bowl's
 local LAVA_FILL = 0.004
+local PIT_INLAND = { 380.0, 460.0 }                      -- blocks inland of any sea a pit fades in over
 local LAVA = "tiamot_default_world:lava"
 -- The surface.
 local LOBE_FREQ, LOBE_MIN = 1 / 90, 0.28                 -- fresh lava lobes: nothing grows
@@ -84,12 +85,18 @@ local HOLLOW = -0.0025                                   -- km: a foothill hollo
 
 -- ------------------------------------------------------------ the ground
 
+-- The gates are FLAT in y (2026-09-16): a 3D gate on a term turned it on
+-- and off with height, so a cone, a gouge or a pit's cap had a different
+-- footprint a few blocks up — lids, ledges and floating crusts — and a pit
+-- was not where the ground's height said it was. Flat, each is one shape
+-- at every height. No operations: the stretch is the noise node's.
+local FLAT = shape.HUMIDITY_STRETCH
 local function seg(stream, freq, min, edge)
-    return n.clamp(n.mul(n.sub(n.noise(stream, freq, 1, 1.0), n.const(min)), n.const(edge)), 0.0, 1.0)
+    return n.clamp(n.mul(n.sub(n.noise(stream, freq, 1, 1.0, FLAT), n.const(min)), n.const(edge)), 0.0, 1.0)
 end
 local function both(stream, freq, min, edge)
-    return n.clamp(n.mul(n.min(n.sub(n.noise(stream, freq, 2, 1.0), n.const(min)),
-        n.sub(n.noise(stream .. "_b", freq, 2, 1.0), n.const(min))), n.const(edge)), 0.0, 1.0)
+    return n.clamp(n.mul(n.min(n.sub(n.noise(stream, freq, 2, 1.0, FLAT), n.const(min)),
+        n.sub(n.noise(stream .. "_b", freq, 2, 1.0, FLAT), n.const(min))), n.const(edge)), 0.0, 1.0)
 end
 -- A tent along a contour: 1 on the line, 0 `w` blocks out.
 local function tent(stream, freq, w)
@@ -119,7 +126,19 @@ local function pit_w()
     local pit = both("vf_pit", PIT_FREQ, PIT_MIN, PIT_EDGE)
     local channel = n.mul(tent("vf_lava_ch", CHANNEL_FREQ, CHANNEL_W), seg("vf_lava_seg", CHANNEL_SEG_FREQ, CHANNEL_SEG_MIN, 8.0))
     local core = n.clamp(n.mul(n.sub(shape.ember_weight(), n.const(0.9)), n.const(10.0)), 0.0, 1.0)
-    return n.mul(n.max(pit, channel), core)
+    local w = n.mul(n.max(pit, channel), core)
+    local seas = tdw.seas
+    if seas and seas.on() then
+        -- Not near a sea (2026-09-16): within a few hundred blocks of a
+        -- shore the coast lifts the ground to its beach plain (`coast_plain`,
+        -- `max(land, floor)`), which filled the pit's bowl back in. Measured
+        -- over the ridge: every pit less than ~400 blocks inland was dry, up
+        -- to ninety blocks over its lava's level, holding a stray block or
+        -- two of lava where the ground dipped. Pits fade in from PIT_INLAND.
+        local inland = n.clamp(n.mul(n.add(seas.d_map(), n.const(PIT_INLAND[1])), n.const(-1.0 / (PIT_INLAND[2] - PIT_INLAND[1]))), 0.0, 1.0)
+        w = n.mul(w, inland)
+    end
+    return w
 end
 -- The ridges' height, terraced: the tent's height climbed in TERRACE_STEP
 -- steps, each a hard clamp, so the flanks are stepped basalt.

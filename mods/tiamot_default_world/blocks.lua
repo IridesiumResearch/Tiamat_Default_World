@@ -258,6 +258,11 @@ if not pcall(game.register_fluid, LAVA_FLUID) then
     LAVA_FLUID.opacity = nil
     game.register_fluid(LAVA_FLUID)
 end
+-- Metal (2026-09-16, "lava needs to create blocks that are a mix of lava
+-- rock, stone, obsidian, and metal when they come into contact"): beads and
+-- veins of raw metal frozen out of quenched lava. Only ever a few cells of
+-- such a block (rules.lua); nothing else registered is a metal.
+block("metal", "Metal", "Raw metal in beads and veins, frozen out of lava where it met water.", { hardness = 3.0, tint = ROCK })
 -- Bioluminescent mushrooms (2026-09-15) on the river's wet banks.
 block("glow_cap", "Glow caps", "Small pale mushrooms that glow blue-green after dark.",
     { hardness = 0.1, passable = true, billboard = "cross", light_emit = { r = 2, g = 6, b = 8 } })

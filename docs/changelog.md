@@ -2316,6 +2316,68 @@ black ground.
   in the ring (23.3–24.3 km, 6 km either way) found none.
 - `stubs/game.lua` brought up to engine HEAD (fluid `opacity`).
 
+### Lava that quenches, pits that hold it, and calmer mountains (2026-09-16)
+
+Asked: "look into the lava issue. also lava needs to create a blocks that
+are a mix of lavarock, stone, obsidian, and metal when they come into
+contact with each other", and, with a screenshot of the Alpine Highlands
+full of floating lumps, rings and hollow bowls: "the blend between biomes
+[should be] damped down and smoother rather than crazier".
+
+**Dry lava pits.** A survey of the whole Ember Ridge (seed 12345) found 160
+pit sites, and almost all of them sat inside the ember sea lane or within a
+few hundred blocks of its shores. There the coast lifts the ground to its
+beach plain (`coast_plain`, `max(land, floor)`) and fills the bowl, up to
+90 blocks over the lava's level. Every pit less than ~400 blocks inland
+was dry and held at most a stray block of lava. Two fixes:
+- **Pits keep off the seas.** Their weight fades in from 380 to 460 blocks
+  inland (`PIT_INLAND`, from the sea distance map).
+- **The Foothills' gates are flat in y.** `seg` and `both` (pits, channels,
+  cones, levees, gouges, tuff, fissures) were 3D noise, so a pit's
+  footprint at the ground's height was not the one a probe or the lava's
+  own mask saw a few hundred blocks up, and a gated term could change shape
+  a few blocks up the slope. Stretched a thousand times in y (no ops).
+- After: 3 pits on this seed, all holding lava (ground 4 blocks under the
+  level). Pits are much rarer than before, because most of the ridge's
+  core is the sea lane.
+
+**Lava meets water.** Engine 62608bf now reports a flow blocked by a
+DIFFERENT fluid, beside or below, and names it (`event.meets`). The mod's
+flow rule (rules.lua) quenches the lava's block when lava meets water or
+brine: the fluid is cleared and the block is solid, its 27 cells lava rock
+8/20, stone 5/20, obsidian 5/20 and metal 2/20, by a hash of its position.
+New block `metal` (docs/blocks.md). Tested headless in built troughs: lava
+beside water, water on lava and lava on water all quenched, e.g.
+`lava_rock 15, stone 6, obsidian 5, metal 1`. **Needs engine 62608bf**: an
+older engine never reports the meeting, so nothing quenches (nothing
+breaks either).
+
+**The Alpine Highlands' wild terrain.** The biome blends were not the
+cause: every blend is a linear cross-fade whose weights are flat in y. The
+cause was 3D noise in the Alpine terms, amplified by the world's 3D relief
+(its vertical slope reaches ~0.6 in the frost ring, so a small vertical
+wobble in a term moves the surface several times as far):
+- **The crack cut** was 27 blocks deep with its segment and area gates 3D
+  noise. The cut flickered on and off with height, leaving lids, bridges,
+  rings along the contour and hanging shelves. The gates are flat in y now.
+- **The crack's wedge** grew without limit above the map's surface. Where
+  the relief lifts the real ground a few hundred blocks over the map, a
+  crack was a trench up to 90 blocks wide. Clamped at its mouth (+1 op).
+- **The steps** (1/18, steep) are flat in y: terraces in plan. **The ridged
+  detail** is drawn out six times in y, so it leans a sixth as much.
+- **The snow lift's** wander and fleck noises are flat in y, so no loose
+  slabs at the snowline.
+- Measured headless over the ground in the frost ring (columns with more
+  than one surface within 120 blocks of the ground): **Alpine Highlands
+  10.3% → 0.0%** (611 columns). After: Taiga 0.2%, Silverwood 0.1%, Frozen
+  Wastes 0.6%, Icefall 0.8%. Op counts: alpine 608, rim 724.
+- Not changed: the world relief itself is still 3D. Flattening it would
+  reshape every ring and put a seam against every chunk already generated.
+  With the Alpine terms flat it no longer shows here.
+
+**A fresh world is needed** for the terrain (existing chunks will seam
+against new ones in the Alpine Highlands and the Volcanic Foothills).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

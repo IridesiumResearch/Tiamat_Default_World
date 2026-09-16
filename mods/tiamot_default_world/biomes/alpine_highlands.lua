@@ -199,8 +199,15 @@ local PATCH_DITHER = 0.18                             -- noise amplitude (+/- ha
 local PATCH_DITHER_FREQ = 1 / 5
 -- The field's own detail, under the map's resolution: a mid ridged noise
 -- (ledges and ribs a few blocks high, strongest on the walls and crests,
--- quiet under the snowfields) and the fine crags. Both are 3D, so up
--- close they make the small ledges and overhangs that rock has.
+-- quiet under the snowfields) and the fine crags. Both were 3D, for the
+-- small ledges and overhangs rock has; on the relief's slopes that ran
+-- wild — spurs, bowls and hanging slabs ("weird generation ... the blend
+-- between biomes damped down and smoother rather than crazier",
+-- 2026-09-16). The steps are FLAT in y now (terraces in plan, one shape at
+-- every height) and the ridged detail is drawn out six times in y, so it
+-- leans a sixth as much.
+local FLAT = { y = 1000 }                             -- shape.HUMIDITY_STRETCH's
+local DETAIL_STRETCH = { y = 6 }
 local DETAIL_FREQ = 1 / 70
 local DETAIL_H = 0.006                                -- km: up to two and a half blocks on the flats...
 local DETAIL_ROCK = 2.0                               -- ...and three times that on a wall or a crest
@@ -359,8 +366,8 @@ end
 -- The same, wandering and flecked: positive where the ground is above
 -- the line as it is drawn.
 local function snow_high()
-    local h = n.add(snow_base(), n.noise("snow_wander", SNOW_WANDER_FREQ, 2, SNOW_WANDER))
-    return n.add(h, n.noise("snow_fleck", SNOW_FLECK_FREQ, 1, SNOW_FLECK))
+    local h = n.add(snow_base(), n.noise("snow_wander", SNOW_WANDER_FREQ, 2, SNOW_WANDER, FLAT))
+    return n.add(h, n.noise("snow_fleck", SNOW_FLECK_FREQ, 1, SNOW_FLECK, FLAT))
 end
 -- Off the lakes, the walls and the crests: the gates on the snow, each
 -- positive where snow may lie. Applied as a chain of minimums on a field
@@ -436,14 +443,17 @@ end
 -- u, the y ramp, the map) is the deepest operand — pushed after a
 -- constant and a noise it was the ninth buffer.
 local function crack_wedge(w)
-    local wedge = n.add(n.mul(map_depth(), n.const(-1 / CRACK.D)), n.const(1.0))
+    -- Clamped at 1 (2026-09-16): above the map's surface the wedge grew
+    -- without end, and where the world's relief lifts the real ground a few
+    -- hundred blocks over the map a crack was a trench ninety blocks wide.
+    local wedge = n.clamp(n.add(n.mul(map_depth(), n.const(-1 / CRACK.D)), n.const(1.0)), -1e6, 1.0)
     return n.sub(wedge, n.mul(n.contour("crack", CRACK.FREQ), n.const(1 / (CRACK.W + w))))
 end
 -- Where the cracks are: the segment and the area gates and the lakes, 0
 -- to 1.
 local function crack_gate()
-    local seg = n.clamp(n.mul(n.sub(n.noise("crack_seg", CRACK.SEG_FREQ, 1, 1.0), n.const(CRACK.SEG_T)), n.const(CRACK.SEG_K)), 0.0, 1.0)
-    local area = n.clamp(n.mul(n.sub(n.noise("crack_area", CRACK.AREA_FREQ, 1, 1.0), n.const(CRACK.AREA_T)), n.const(CRACK.AREA_K)), 0.0, 1.0)
+    local seg = n.clamp(n.mul(n.sub(n.noise("crack_seg", CRACK.SEG_FREQ, 1, 1.0, FLAT), n.const(CRACK.SEG_T)), n.const(CRACK.SEG_K)), 0.0, 1.0)
+    local area = n.clamp(n.mul(n.sub(n.noise("crack_area", CRACK.AREA_FREQ, 1, 1.0, FLAT), n.const(CRACK.AREA_T)), n.const(CRACK.AREA_K)), 0.0, 1.0)
     return n.mul(n.mul(seg, area), n.clamp(n.mul(dry(), n.const(4.0)), 0.0, 1.0))
 end
 -- The crack term of the terrain: the wedge clamped crisp, times the gate,
@@ -469,9 +479,9 @@ function shape.alpine_terms()
     -- maps; the mid detail is DETAIL_ROCK times stronger there.
     local rock = n.clamp(n.add(n.mul(n.mul(map_node("alp_floor"), n.sub(n.const(1.0), map_node("alp_floor"))), n.const(WALL_GAIN)),
         map_node("alp_crest")), 0.0, 1.0)
-    local detail = n.mul(n.mul(n.abs(n.noise("alp_detail", DETAIL_FREQ, 1, 1.0)), n.const(DETAIL_H)),
+    local detail = n.mul(n.mul(n.abs(n.noise("alp_detail", DETAIL_FREQ, 1, 1.0, DETAIL_STRETCH)), n.const(DETAIL_H)),
         n.add(n.const(1.0), n.mul(rock, n.const(DETAIL_ROCK))))
-    local steps = n.mul(n.clamp(n.mul(n.noise("alp_steps", STEP_FREQ, 1, 1.0), n.const(STEP_STEEP)), -1.0, 1.0), n.const(STEP_H))
+    local steps = n.mul(n.clamp(n.mul(n.noise("alp_steps", STEP_FREQ, 1, 1.0, FLAT), n.const(STEP_STEEP)), -1.0, 1.0), n.const(STEP_H))
     -- The crack FIRST, then the lift: the deepest terms, and evaluated
     -- first they hold one buffer through the rest, the same as the height
     -- alone did.

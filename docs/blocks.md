@@ -15,6 +15,17 @@ carries variation. What breaks up a surface is the renderer's — the
 large-scale `tint`, and per-cell value jitter once the engine has it (asks,
 item 5). A textured material is a decision the designer makes by name.
 
+## Quenched lava (2026-09-16)
+
+"lava needs to create a blocks that are a mix of lavarock, stone, obsidian,
+and metal when they come into contact". Where lava meets water or brine the
+lava's block turns solid, its 27 cells shared out by a hash of its place:
+`lava_rock` 8 in 20, `stone` 5, `obsidian` 5, `metal` 2 (rules.lua).
+
+| Block | Where | Why |
+|---|---|---|
+| `metal` | a few cells of every quenched lava block | asked for by name; nothing registered is a metal |
+
 ## One of each (2026-09-16)
 
 The designer's rule: **no variants of a block.** One grass, one dirt, one

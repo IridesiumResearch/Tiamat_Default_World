@@ -115,6 +115,7 @@ BLOCKS = {
     "mangrove_leaves": ( 52,  92,  48,  0),
     "gorse":          (168, 160,  52,  0),
     "lava":           (214,  84,  22,  0),   # the fluid's block
+    "metal":          (150, 124,  92,  0),   # quenched lava's beads (2026-09-16): dull raw bronze
     "glow_cap":       (150, 224, 226,  0),   # the river's mushrooms (2026-09-15)
     "charcoal":       ( 58,  56,  60,  0),
     "dried_mud":      (148, 132, 148,  0),
