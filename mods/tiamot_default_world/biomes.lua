@@ -199,7 +199,8 @@ function tdw.biome_mask(n, id, _)
                 end
             end
         end
-        local band = reachable and tdw.shape.ring(first.u[1], last.u[2]) or nil
+        local inner = first.u[1] <= 0 and -last.u[2] or first.u[1]
+        local band = reachable and tdw.shape.ring(inner, last.u[2]) or nil
         if band and span[3] then
             band = n.min(band, tdw.shape.humidity_mask(span[3] == "wet"))
         end

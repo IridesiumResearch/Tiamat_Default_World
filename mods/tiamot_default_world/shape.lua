@@ -169,7 +169,8 @@ M.ALPINE_BLEND_U = 0.024
 --
 -- Every Lua-side test against a ring widens by this, since a chunk within
 -- RING_WOBBLE of an edge may be either side of it.
-M.RING_WOBBLE = 0.010
+M.RING_WOBBLE = 0.010     -- kept as the slack every span and mode range is widened by, in u
+M.RING_WOBBLE_SHARE = 0.04   -- what the edge actually wanders: a fortieth of the radius, either way
 -- The Verdant Belt, whose wet half is the rainforest (1.7): its span in u,
 -- repeated from layers.lua (which loads after this file), and how wide the
 -- cross-fade into the rainforest's own terrain is at either edge — about
@@ -328,8 +329,18 @@ local function ys() return mul(sub(Y(), const(M.Y0)), const(M.SCALE)) end
 -- The radius a biome is placed by: the true one pushed in and out by a
 -- slow noise, flat in y for the reason the humidity is (above) — a ring's
 -- edge that wandered with height put `/tp` on the wrong side of it.
+--
+-- **The wobble is a SHARE of the radius, not an amount of u** (2026-09-16).
+-- u is r^2/R^2, so a fixed wobble in u is a fixed wobble in r only at one
+-- radius: at 0.010 it was 580 m out at 30 km, 3.5 km out at the Crown's
+-- edge, and more than the whole Crown at the axis — which left the middle
+-- of the world unclaimed and made the Taiga/Frozen Wastes line wander by
+-- kilometres. Written as `u * (1 + noise)` it is the same fraction of the
+-- radius everywhere (±2% of r, so ±600 m at 30 km, ±94 m at the Crown's
+-- edge, nothing at the axis) and costs two operations over the old form,
+-- because `u` is still evaluated once.
 local function u_biome()
-    return add(u(), noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE, M.HUMIDITY_STRETCH))
+    return mul(u(), add(noise("ring_wobble", M.RING_WOBBLE_FREQ, M.RING_WOBBLE_OCTAVES, 2.0 * M.RING_WOBBLE_SHARE, M.HUMIDITY_STRETCH), const(1.0)))
 end
 M.sub = { r2 = r2, u = u, ys = ys }
 

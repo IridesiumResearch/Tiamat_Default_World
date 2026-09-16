@@ -1962,6 +1962,30 @@ Three biomes from one brief, and a mode fault they turned up.
   programs and nothing paints: `/tp dunes` was landing on bare placeholder
   62 km out.
 
+### The middle of the world, and a wobble that was worth kilometres
+
+Found by sampling the whole disc on a grid to draw a map of it.
+
+- **The centre was unclaimed.** A ring band is `half - |u - mid|`, zero at
+  both edges — and the Crown's inner edge is the axis, so the alpine mask
+  fell to nothing exactly at the middle of the world. The innermost ring
+  is mirrored through zero now, so its band is widest at the axis.
+- **The ring wobble was a fixed amount of u, which is not a fixed amount of
+  ground.** u is r squared over R squared: 0.010 of it was 580 m at 30 km,
+  3.5 km at the Crown's edge, and more than the whole Crown at the axis.
+  That is why the middle of the world was patchy even after the first fix,
+  and why the Taiga and the Frozen Wastes traded places over kilometres.
+  It is a share of the radius now — two per cent either way, so 600 m at
+  30 km and 94 m at the Crown's edge — which costs two operations, since
+  `u * (1 + noise)` still evaluates the radius once. `temperate_shore` is
+  at 999 of 1,024.
+- Measured over the whole disc afterwards: Deep Ocean 22.8%, Rolling
+  Grasslands 16.0%, Temperate Woodlands 11.7%, Flower Forest 11.5%,
+  Coastal Cliffs 7.6%, The Dunes 6.9%, Jungle 6.1%, Volcanic Foothills
+  5.3%, Badlands 2.8%, Coral-Fringed Shallows 2.6%, Arid Mesa 2.6%, Taiga
+  1.8%, Frozen Wastes 0.8%, Alpine Highlands 0.7%. The 0.9% left over is
+  the outermost sliver, past where anything paints.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
