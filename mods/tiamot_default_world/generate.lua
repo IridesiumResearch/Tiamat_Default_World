@@ -47,6 +47,13 @@ local HOLLOW_IN = (shape.HOLLOW_R - SAFETY) * (shape.HOLLOW_R - SAFETY)
 -- blocks thick. Laid only in chunks wholly of the gloam's rock, so no bed
 -- runs into the stone above or out past the body's wall.
 local SEDIMENT_BEDS = shape.compile("sediment.beds", shape.node.sub(shape.node.noise("sediment_beds", 1 / 24, 2, 1.0, { x = 10, z = 10 }), shape.node.const(0.12)))
+-- The body's own code field: a constant, because its two bands are code -1
+-- and take every block whatever the code says. Engine 92267e7 evaluates a
+-- layered fill's terrain only where a block's code matches one of that
+-- call's layers — so a -1 band in a BIOME's call would force that biome's
+-- terrain evaluation everywhere. The body's bands go in a call of their
+-- own (the engine agent's note, 2026-09-17).
+local BODY_CODE = shape.compile("body.code", shape.node.const(0.0))
 
 -- Chunk-class counters, logged now and then so the cost mix is visible.
 local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0, by_layers = 0 }
@@ -261,32 +268,34 @@ local function generate(buf, pos)
         base = tdw.surface_soil(ulo, uhi)
     end
 
-    -- **The body by a biome's layered fill, where there is one.** A surface
-    -- chunk gets its body — the soil to SKIN_DIRT, the stone below — from
-    -- the same terrain evaluation that lays a biome's layers (the engine's
-    -- wildcard layer, code -1, which takes EVERY block whatever its code),
-    -- and the generator's own body fill and its stone fill are not run:
-    -- three evaluations of the terrain a chunk are one.
+    -- **The body by the layered fill.** A surface chunk's body — the soil
+    -- to SKIN_DIRT and the stone below — is two bands of the terrain, and
+    -- one `fill_layers` call lays both from ONE evaluation where the
+    -- generator's own body fill and its stone fill were two.
     --
-    -- Until 2026-09-17 only a chunk wholly in ONE biome took this path, and
-    -- the gate's biome list is conservative — the rivers, the coasts and
-    -- every province's neighbour are "maybe" nearly everywhere — so across
-    -- a headless tour it was taken by 0 of 4,038 surface chunks. The body
-    -- is the chunk's, not a biome's (`base` is the chunk's soil either
-    -- way), so ANY one biome's layered fill can lay it, provided it runs
-    -- FIRST, before any other biome's layers overwrite the ground they
-    -- claim, and provided no deep band shares the chunk (the wildcard's
-    -- stone would overwrite it). Where either cannot hold, the old path.
+    -- The bands are code -1, which takes every block whatever the code
+    -- says. They ride in the FIRST fill that paints the chunk when that is
+    -- a body-capable layered fill: that call evaluates the terrain anyway,
+    -- so the body is free. Only where the chunk's first paint cannot carry
+    -- them do they go in a call of their own — one evaluation rather than
+    -- the two the old body and stone fills took. (Measured on engine
+    -- 92267e7, which skips a layered fill whose codes match nothing: a
+    -- separate call for every chunk was 75.7 ms a surface chunk against
+    -- 69.3 riding along, because it is one more evaluation where a biome's
+    -- call was already paying for one.)
+    --
+    -- Not where a deep band shares the chunk: the -1 stone would overwrite
+    -- the gloam. Then the old path, two evaluations.
     local found = (skin and painted and tmin < shape.SKIN_TOP) and tdw.present_biomes_in(ulo, uhi, pos) or nil
-    local body_by_layers = nil
     local deep_bands = (WHITE and dmin <= DEEP_D + SAFETY and dmax > DEEP_D - SAFETY)
         or (level < 1 and dmax > shape.GLOAM_D - SAFETY)
         or (level < 2 and dmax > shape.ABYSS_D - SAFETY)
-    if found and not tail and not deep_bands then
-        -- The FIRST fill that paints the ground, in the order the loop below
-        -- runs them, and only if it is a body-capable layered fill: were a
-        -- later one moved in front, the paint of two biomes where their
-        -- masks overlap would land in the other order.
+    local body_rides = nil          -- the fill whose call carries the -1 bands
+    local body_by_layers = (found ~= nil and not tail and not deep_bands) and buf.fill_layers ~= nil
+    if body_by_layers then
+        -- The first fill that paints the ground, in the order below: were a
+        -- later one moved in front, two biomes' paint where their masks
+        -- overlap would land in the other order.
         for _, biome in ipairs(found) do
             local first = nil
             for _, fill in ipairs(tdw.fills_for(biome, mode)) do
@@ -297,7 +306,7 @@ local function generate(buf, pos)
             end
             if first then
                 if first.layers and first.body then
-                    body_by_layers = first
+                    body_rides = first
                 end
                 break
             end
@@ -342,14 +351,12 @@ local function generate(buf, pos)
             local function fills_of(biome)
                 return tdw.fills_for(biome, mode)
             end
-            -- The body first, by the one layered fill chosen above: its
-            -- coded bands, then the wildcard bands under everything else.
-            if body_by_layers then
-                local entries = {}
-                for _, e in ipairs(body_by_layers.entries) do entries[#entries + 1] = e end
-                entries[#entries + 1] = { code = -1, to = shape.SKIN_DIRT, material = base }
-                entries[#entries + 1] = { code = -1, from = shape.SKIN_DIRT, to = math.huge, material = blocks.stone }
-                buf:fill_layers(body_by_layers.depth, body_by_layers.code, entries)
+            -- The body first, under every biome's paint: in the first
+            -- painting fill's own call where it can ride, else its own.
+            local BODY = { { code = -1, to = shape.SKIN_DIRT, material = base },
+                { code = -1, from = shape.SKIN_DIRT, to = math.huge, material = blocks.stone } }
+            if body_by_layers and not body_rides then
+                buf:fill_layers(V.solid, BODY_CODE, BODY)
             end
             for _, biome in ipairs(found) do
                 for _, fill in ipairs(fills_of(biome)) do
@@ -357,9 +364,16 @@ local function generate(buf, pos)
                         -- Every layer of the surface from one evaluation of
                         -- the terrain and one of a code field (engine
                         -- `fill_layers`); eight fills were eight evaluations.
-                        if fill ~= body_by_layers then
-                            buf:fill_layers(fill.depth, fill.code, fill.entries)
+                        -- Since engine 92267e7 a call whose code can match no
+                        -- layer costs its code's bound alone.
+                        local entries = fill.entries
+                        if fill == body_rides then
+                            entries = {}
+                            for _, e in ipairs(fill.entries) do entries[#entries + 1] = e end
+                            entries[#entries + 1] = BODY[1]
+                            entries[#entries + 1] = BODY[2]
                         end
+                        buf:fill_layers(fill.depth, fill.code, entries)
                     elseif fill.field and (not fill.shared_only or #found > 1) then
                         -- A fill may ask for its own detail.
                         buf:fill_density(fill.field, fill.material, fill.detail or DETAIL)

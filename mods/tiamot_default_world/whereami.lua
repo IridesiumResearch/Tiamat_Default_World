@@ -251,7 +251,7 @@ function tdw.biome_under_ground(x, y, z)
         local list = {}
         materials_of(game.get_block{ x = x, y = y + dy, z = z }, list)
         for _, m in ipairs(list) do
-            local owner = OWNER[m]
+            local owner = OWNER[tdw.soil_alias(m)]
             if owner and DECIDES[owner] then
                 return owner
             end

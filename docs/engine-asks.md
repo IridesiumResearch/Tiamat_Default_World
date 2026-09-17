@@ -16,40 +16,20 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+*Landed 2026-09-17: **34, a layered fill evaluated the terrain where none
+of its layers paints** (engine 92267e7). `fill_layers` now checks the code's
+bound, then the code, and evaluates the terrain only where some block's code
+matches one of that call's layers. Two rules come with it, and this mod
+follows both: keep a biome's code field cheap and low-frequency, so the
+bound decides most chunks for free; and keep `code = -1` bands out of a
+biome's call — ANY matches everywhere and forces the evaluation — so the
+generator lays the body's two wildcard bands in a call of their own.*
+
 *Landed 2026-09-16: **31, a fluid gives no light** (engine b6935c3). A
 fluid now gives off the `light_emit` of the block it is drawn as, and
 declares its own `opacity`. The mod's lava is opaque and lights its pits:
 measured headless on a generated lava block, `r15 g8 b1` in it and `r14`
 two blocks over its surface. The magma shell is still the look-alike solid.*
-
-## 34. A layered fill evaluates the terrain where none of its layers paints (2026-09-17)
-
-A performance pass over the world mod (headless, generating on the tick,
-a fixed tour of nine biomes). A surface chunk averages **3.85 biomes** in
-the generator's gate: the gate is conservative, and the rivers, the coasts
-and every province's neighbour are "maybe" nearly everywhere. Each biome
-paints its ground with one `fill_layers` call, and each call evaluates the
-~1,000-op terrain over the padded 18³ region **before** its code field
-(detgen/buffer.rs, `fill_layers`: `depth.evaluate_with` then
-`code.evaluate_with`). Where the biome's mask is zero across the chunk every
-block's code is 0, no layer matches, and the whole terrain evaluation paints
-nothing. Most of those 3.85 calls are that.
-
-The mod has cut what it can: the chunk's body now comes from the first
-biome's layered fill (the wildcard layer) in 1,656 of 3,015 surface chunks
-where it came from none, removing two terrain evaluations there, about 10%
-per surface chunk (≈120 → ≈108 ms on the tick). It cannot skip a biome's
-fill without evaluating its code, and a `Density:bounds` on the code cannot
-prove it zero (a noise node's bound is its whole range).
-
-**The smallest change:** in `fill_layers`, evaluate `code` first; if no
-block's rounded code equals any layer's `code` (and no layer is
-`Layer::ANY`), return before evaluating `depth`. Exact — nothing would have
-been written. The code fields are 100–700 ops against the terrain's
-~1,000, so a skipped call costs a fifth of what it does now. A larger step
-would cache the depth evaluation within a chunk for a program already
-evaluated (every biome in a chunk passes the same terrain program for the
-chunk's mode); the mod could pass one shared compiled object if that helps.
 
 ## 30. A program cannot spend the same value twice (2026-09-16)
 

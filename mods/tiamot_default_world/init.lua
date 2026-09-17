@@ -100,6 +100,7 @@ game.register_hud_script("hud.lua")
 load("generate")
 load("player")
 load("rules")             -- leaves and water, and other rules of the whole world
+load("exports")           -- what the other mods may read: climate, biomes, the two unlocks
 
 game.log(string.format("tiamot_default_world ready: %d areas, %d biomes (%d built)",
     #tdw.area_list, #tdw.biome_list, tdw.built_count()))

@@ -10,6 +10,10 @@
 
 local blocks = tdw.blocks
 local LEAVES = "tiamot_default_world:oak_leaves"
+-- Fluids another mod has asked this one to ignore (exports.lua,
+-- `add_harmless_fluid`: Weather's rainwater). They break no leaves and
+-- quench no lava — that mod makes steam of its own where they meet.
+tdw.harmless_fluids = {}
 local MERGE = { merge = true }
 
 local function wet(x, y, z)
@@ -71,12 +75,18 @@ local function quench(pos)
 end
 
 game.register_on_fluid_flow(function(event)
+    if tdw.harmless_fluids[event.fluid] then
+        return
+    end
     if event.block == LEAVES then
         game.set_block(event.into, "engine:air")
         return
     end
     -- `meets` (engine, 2026-09-16) names the other fluid when one is in the
     -- way; an older engine never reports a meeting, and sends no `meets`.
+    if tdw.harmless_fluids[event.meets or ""] then
+        return
+    end
     if event.fluid == LAVA and QUENCHES[event.meets or ""] then
         quench(event.from)
     elseif event.meets == LAVA and QUENCHES[event.fluid] then

@@ -320,10 +320,37 @@ function tdw.soil_under(x, y, z)
             return nil
         end
         if b.material ~= grass then
-            return b.material
+            return tdw.soil_alias(b.material)
         end
     end
     return nil
+end
+
+-- **Another mod's block counted as one of ours** (exports.lua,
+-- `add_soil_alias`: Weather's damp dirt is dirt). The names are given
+-- before those blocks exist, so the ids are resolved on the first ask
+-- after a name is added, and a name that still does not resolve is left
+-- for the next one.
+tdw.soil_alias_names = {}
+tdw.soil_alias_ready = true
+local alias_ids = {}
+function tdw.soil_alias(material)
+    if material == nil then
+        return nil
+    end
+    if not tdw.soil_alias_ready then
+        tdw.soil_alias_ready = true
+        for block, dry in pairs(tdw.soil_alias_names) do
+            local ok_a, from = pcall(game.get_block_id, block)
+            local ok_b, to = pcall(game.get_block_id, dry)
+            if ok_a and ok_b and from and to then
+                alias_ids[from] = to
+            else
+                tdw.soil_alias_ready = false
+            end
+        end
+    end
+    return alias_ids[material] or material
 end
 
 function tdw.built_count()

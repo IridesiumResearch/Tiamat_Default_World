@@ -2539,6 +2539,44 @@ with more needles".
 - **The Silverwood "broken spawn"**: the screenshot did not come through;
   not looked at yet.
 
+### Exports for Weather, and the body ride (2026-09-17)
+
+**The Spindle exports version 1 of Weather's contract** (`exports.lua`,
+engine `game.export`): `humidity` (the compiled field, no dither),
+`HUMIDITY_SPLIT`, `climate(x, z)` — the ring temperature T = 4t(1 - t),
+0 at the axis and the rim, 1 half way out, its square root by the same
+twenty-step Newton that Weather's mirror runs so both answer the same bits
+— `biome_under(x, y, z)`, and the two unlocks:
+
+- `add_soil_alias(block, dry)` keeps both names as STRINGS and resolves
+  them to ids on first use, since the damp blocks register after this mod
+  loads. The alias then applies in `tdw.soil_under` (so the grass and rose
+  growth ticks count damp dirt as dirt) and in the HUD's owner table.
+- `add_harmless_fluid(fluid)` marks a fluid the leaves rule leaves alone
+  and the lava rule does not quench against.
+
+An exported function runs in THIS mod's sandbox, and an error in one would
+disable the whole world, so each checks its arguments and answers nil or
+false. Checked against the weather mod on engine 92267e7: "humidity
+exported, warmth exported, biomes exported; damp ground on, puddles on".
+
+**Engine ask 34 landed** (engine 92267e7): a layered fill evaluates the
+terrain only where a block's code matches one of that call's layers. On the
+same tour as the performance pass, **109.7 → 69.3 ms per surface chunk**.
+
+**The body rides, or takes its own call.** The engine's note says a
+`code = -1` band forces its call's terrain evaluation, so the body's two
+bands should not sit in a biome's call. Measured both ways: a call of their
+own for every surface chunk was **75.7 ms**, riding in the first painting
+fill **69.3**, and riding where it can with its own call only where it
+cannot **68.4** — riding is free, because that call pays for the terrain
+anyway. The generator now does the last of those. Where a deep band shares
+the chunk, the old body and stone fills still run.
+
+Over the whole pass: **124 → 68.4 ms per surface chunk**, and block hashes
+at nine fixed points match the committed generator except where lava
+quenching or settling water makes a point vary between runs anyway.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
