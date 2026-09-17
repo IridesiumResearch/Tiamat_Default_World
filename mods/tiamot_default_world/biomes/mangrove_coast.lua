@@ -25,6 +25,8 @@ local ID = "mangrove_coast"
 local REEF_U = { 0.30, 0.466 }                           -- the reef's lane (coral_fringed_shallows.lua)
 local LAND, OUT = 24.0, 20.0                             -- blocks inland and out to sea
 local SILT_FREQ, SILT_MIN = 1 / 25, 0.20
+local SILT_STRETCH = { y = 6 }                            -- drawn out in y (2026-09-17): on a bank it streaks rather than blotches
+local FACE_OVER = 0.010                                  -- km over the sea: past this a face is the cliffs' rock bands, not mud and moss
 local CHANNEL_FREQ, CHANNEL_W = 1 / 70, 1.6
 local TREE_CELL, TREE_SQUARES = 6, 0.55
 local SAPLING_CELL, SAPLING_SQUARES = 5, 0.30
@@ -153,7 +155,7 @@ tdw.build_biome(ID, function(ctx)
         -- 1: the mud flats.
         n.const(1.0),
         -- 2: black silt in the hollows.
-        n.sub(n.noise("mg_silt", SILT_FREQ, 2, 1.0), n.const(SILT_MIN)),
+        n.sub(n.noise("mg_silt", SILT_FREQ, 2, 1.0, SILT_STRETCH), n.const(SILT_MIN)),
         -- 3: a tidal channel's gravel.
         n.sub(n.const(CHANNEL_W), n.contour("mg_channel", CHANNEL_FREQ, 1)),
         -- 4: moss on the land behind, over the tide.
@@ -162,6 +164,15 @@ tdw.build_biome(ID, function(ctx)
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
         code = n.max(code, n.mul(step(condition), n.const(k)))
+    end
+    -- Over FACE_OVER the ground is the land behind the mud: where a shore
+    -- stands as a bank or a cliff, the Coastal Cliffs' horizontal strata
+    -- (codes 11 to 14), not moss and mud laid in blotches down the face
+    -- (2026-09-17, "more natural looking material distribution").
+    if shape.coast_strata_code then
+        local high = step(n.sub(over_sea(), n.const(FACE_OVER)))
+        code = n.add(n.mul(code, n.sub(n.const(1.0), high)),
+            n.mul(n.add(shape.coast_strata_code(over_sea), n.const(10.0)), high))
     end
     code = n.mul(code, step(masked(n.const(1.0))))
     local depth = shape.compile("biome.mangrove.depth", shape.terrain(false))
@@ -175,6 +186,11 @@ tdw.build_biome(ID, function(ctx)
         { code = 3, from = 2 * km, to = 4 * km, material = blocks.mud },
         { code = 4, to = 1 * km, material = blocks.moss },
         { code = 4, from = 1 * km, to = 4 * km, material = blocks.mud },
+        { code = 11, to = 1 * km, material = blocks.moss },
+        { code = 11, from = 1 * km, to = 12 * km, material = blocks.stone },
+        { code = 12, to = 12 * km, material = blocks.dark_basalt },
+        { code = 13, to = 12 * km, material = blocks.slate },
+        { code = 14, to = 12 * km, material = blocks.stone },
     }
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries },

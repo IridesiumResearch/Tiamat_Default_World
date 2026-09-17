@@ -2405,6 +2405,51 @@ could use some erosion".
   ground and reach 21.6 blocks. Ops: belt 485 → 500, belt_shore 994 → 1,009,
   verdant 989 → 1,001 (cap 1,024).
 
+### Cliffs brought down to size, and banded (2026-09-17)
+
+Asked, with a screenshot of a grey wall behind a mangrove forest: "a cliff
+that looks awful ... about 4x too tall. It also needs to have its noise
+stretched out on the vertical axis and have some more natural looking
+material distribution." Two water glitches were reported with it (below).
+
+**Why the cliffs were so tall.** At a shore the land was lifted to a beach
+floor if it stood lower, but nothing held it down if it stood higher. The
+world's relief puts hills hundreds of blocks over a pool, and the coast met
+the sea as a face as tall as the hill. Measured over 2,019 shore points
+(8–30 blocks inland): median 1 block, 90th percentile 112, **21.2% over 60
+blocks**, the tallest 205.
+
+- **A ceiling at every shore** (`seas.CLIFF_H` and after): land stands at
+  most 40 blocks over the level for 60 blocks inland, and the ceiling rises
+  one block in two past that, so a hill comes down to the sea as a slope.
+  A flat-in-y noise (±5 blocks at 1/60) roughens the ceiling, so a hill cut
+  down to it is not a plane.
+- **The floor and the ceiling are maps** (`sea_floor`, `sea_ceiling`, built
+  in the world pre-pass from the distance and level maps), so the shore
+  programs read one op for each where the floor alone was fourteen. The
+  shore programs got **cheaper**: temperate_shore 999 → 991, belt_shore
+  1,009 → 1,001, ember_shore 947 → 946, hem_shore 759 → 751, edge_shore
+  462 → 454.
+- After: 90th percentile 41, 0% over 60, tallest 54.
+- **The faces.** The Coastal Cliffs' faces are their horizontal strata
+  (stone, dark basalt, slate), which reach 40 blocks over the sea and now
+  cover a face whole. The Mangrove Coast's faces were moss and mud laid in
+  blotches over bare stone by a 3D noise (a face in the reef lane measured
+  46% stone and 16% moss). Over 10 blocks above the sea it now takes the
+  cliffs' strata (`shape.coast_strata_code`), and its silt noise is drawn
+  out six times in y. After, the same kind of face measured as trees and
+  ferns with 5% stone and 3% mud showing.
+
+**The water walls** (a curved wall of water along a river valley in the
+Heather Moor, and water in a moor gully). Not changed: probed headless at
+five places where the moor's brooks lie inside a river valley, and in River
+Valleys landings, and no water stood more than one block tall against open
+air anywhere. The generator is not laying the walls at those places. The
+engine has a report of walls of water in an ocean under investigation,
+which may be the same thing. Coordinates of a wall would settle it. Noted
+on the way: the brook fills of the Heather Moor, Flower Forest and Peat Fen
+keep 21 blocks off a river (its bar), not its 150-block valley.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

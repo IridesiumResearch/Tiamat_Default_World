@@ -293,10 +293,16 @@ end
 --      tunnels, on land only.
 -- (A sill is land in the map, and the lift in 2 is what makes it a bank:
 -- the level ramps across it from one pool's to the next.)
+-- The land at a shore: lifted to the floor, held under the ceiling
+-- (seas.CLIFF_H), the ceiling roughened so a hill cut down to it is not a
+-- plane. Flat in y. The land FIRST, the deepest operand.
+local CEILING_ROUGH_FREQ, CEILING_ROUGH = 1 / 60, 0.012
+local function shore_land(land)
+    return n.min(n.max(land, seas.floor()),
+        n.add(seas.ceiling(), n.noise("cliff_ceiling", CEILING_ROUGH_FREQ, 2, CEILING_ROUGH, shape.HUMIDITY_STRETCH)))
+end
 function shape.coast_shore(land)
-    local inland = n.clamp(n.mul(n.add(n.mul(seas.d_map(), n.const(-1.0)), n.const(-seas.PLAIN_W)), n.const(1.0 / seas.FADE)), 0.0, 1.0)
-    local floor = n.sub(n.add(seas.rel(), n.const(seas.BEACH)), n.mul(inland, n.const(seas.FLOOR_KM)))
-    local g = n.max(land, floor)
+    local g = shore_land(land)
     local f = n.mul(face(), on_land())
     local h = n.add(n.mul(g, f), n.mul(n.add(seas.rel(), seabed()), n.sub(n.const(1.0), f)))
     h = n.add(h, jag())
@@ -318,9 +324,7 @@ end
 -- about a fifth of the full shore's five hundred operations. The land
 -- FIRST, as above.
 function shape.coast_plain(land)
-    local inland = n.clamp(n.mul(n.add(n.mul(seas.d_map(), n.const(-1.0)), n.const(-seas.PLAIN_W)), n.const(1.0 / seas.FADE)), 0.0, 1.0)
-    local floor = n.sub(n.add(seas.rel(), n.const(seas.BEACH)), n.mul(inland, n.const(seas.FLOOR_KM)))
-    local g = n.max(land, floor)
+    local g = shore_land(land)
     local f = n.mul(face(), n.clamp(n.mul(shore(), n.const(2.0)), 0.0, 1.0))
     local out = offshore()
     local terrace = n.add(n.mul(n.clamp(n.mul(out, n.const(1.0 / TERRACE_W)), 0.0, 1.0), n.const(-(TERRACE[2] - TERRACE[1]))), n.const(-TERRACE[1]))
@@ -453,6 +457,24 @@ tdw.biomes.coastal_cliffs.locate = function(px, pz, seed)
     -- Not the reef's lane: its water is the Coral-Fringed Shallows' and
     -- `/tp coastal cliffs` should not land on the lagoon's own beach.
     return seas.locate(px, pz, seed, -40.0, -6.0, nil, nil, { tdw.reef_u, tdw.cinder_u })
+end
+-- The strata's code, 1 to 4, from a node of y over the sea in km:
+-- horizontal bands from STRATA_BASE up (the Mangrove Coast's faces use it).
+function shape.coast_strata_code(over_sea_fn)
+    local function step(field)
+        return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
+    end
+    local code = n.const(STRATA[1][2])
+    local level_, previous = STRATA_BASE, STRATA[1][2]
+    for k = 2, #STRATA do
+        level_ = level_ + STRATA[k - 1][1]
+        local delta = STRATA[k][2] - previous
+        if delta ~= 0 then
+            code = n.add(code, n.mul(step(n.sub(over_sea_fn(), n.const(level_))), n.const(delta)))
+        end
+        previous = STRATA[k][2]
+    end
+    return code
 end
 tdw.build_biome("coastal_cliffs", function(ctx)
     -- This biome's ground: SHORE_LAND blocks inland to SHELF_END blocks out.

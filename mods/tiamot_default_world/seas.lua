@@ -124,6 +124,18 @@ M.PLAIN_W = 130.0                                       -- blocks: inland of any
 M.FADE = 900.0                                          -- blocks: past PLAIN_W the floor falls away from the level over this; the rivers stop over it
 M.FLOOR_KM = 0.45                                       -- km the floor falls to over FADE: deeper than any relief low, a one-in-two slope
 M.BEACH = 0.002                                         -- km: the lifted ground stands this over the level
+-- The ceiling (2026-09-17, "a cliff behind it that is about 4x too tall"):
+-- the floor lifts low ground to a beach, and nothing held high ground DOWN,
+-- so wherever the world's relief stood a hill at a pool the coast was a
+-- face as tall as the hill — a fifth of all shores over sixty blocks, up
+-- to two hundred. Land at a shore now stands at most CLIFF_H over the
+-- level for CLIFF_FLAT blocks inland, the ceiling rising CLIFF_RISE over
+-- CLIFF_FADE past that (one in two), so a hill comes down to the sea as a
+-- slope and meets it as a cliff of forty blocks at most.
+M.CLIFF_H = 0.040
+M.CLIFF_FLAT = 60.0
+M.CLIFF_FADE = 900.0
+M.CLIFF_RISE = 0.45
 M.SHELF_END = 130.0                                     -- blocks out: the coast's shelf ends, the ocean's floor begins...
 M.DEEP_FROM = 200.0                                     -- ...and is the whole floor from here
 -- Where a sea may not be.
@@ -249,6 +261,18 @@ tdw.on_world_init(function()
     dist:fill(shape.compile("sea.dist_fill", dist_field(everywhere)), fill)
     level:fill(shape.compile("sea.level_fill", level_field()), fill)
     rel:fill(shape.compile("sea.rel_fill", n.sub(level_field(), shape.dome_node())), fill)
+    -- The shore's floor and ceiling, km over the dome, from the two maps
+    -- above: each a map read in the programs where the floor was fourteen
+    -- operations of the distance and the level.
+    local function inland(from, over)
+        return n.clamp(n.mul(n.add(n.mul(M.d_map(), n.const(-1.0)), n.const(-from)), n.const(1.0 / over)), 0.0, 1.0)
+    end
+    local floor = game.map(map_spec("sea_floor"))
+    floor:fill(shape.compile("sea.floor_fill", n.sub(n.add(M.rel(), n.const(M.BEACH)),
+        n.mul(inland(M.PLAIN_W, M.FADE), n.const(M.FLOOR_KM)))), fill)
+    local ceiling = game.map(map_spec("sea_ceiling"))
+    ceiling:fill(shape.compile("sea.ceiling_fill", n.add(n.add(M.rel(), n.const(M.CLIFF_H)),
+        n.mul(inland(M.CLIFF_FLAT, M.CLIFF_FADE), n.const(M.CLIFF_RISE)))), fill)
     game.log(string.format("tiamot_default_world seas: maps built, %d samples a side at %d blocks; %d lanes, %d steps of %.0f blocks",
         MAP_SIDE, MAP_SCALE, #M.LANES, #M.STEPS, M.STEP * KM))
 end)
@@ -278,6 +302,13 @@ end
 -- The pool's level over the dome, km: its own map.
 function M.rel()
     return { op = "map", map = game.map(map_spec("sea_rel")) }
+end
+-- The shore's floor and ceiling, km over the dome (see M.CLIFF_H).
+function M.floor()
+    return { op = "map", map = game.map(map_spec("sea_floor")) }
+end
+function M.ceiling()
+    return { op = "map", map = game.map(map_spec("sea_ceiling")) }
 end
 -- The water's level, world y: the map's level quantised DOWN to the
 -- steps — the greatest level at or under the sample's value (a block of
