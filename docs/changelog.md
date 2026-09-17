@@ -2485,6 +2485,14 @@ a cell). The ground's shape is identical.
 3.85 layered fills paint nothing (the biome's mask is zero across the
 chunk) but evaluate the whole terrain before their code field.
 
+### Hand-made textures (2026-09-17)
+
+The designer's own textures for the leaves (acacia, apple, birch, cherry,
+cherry blossom, ironwood, kapok, mangrove, oak, willow), `dirt`,
+`packed_dirt` and `stone`: 16×16 pictures where each was one flat colour
+from `tools/make_textures.py`. Running that script again would overwrite
+them with flat colours.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
