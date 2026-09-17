@@ -2489,8 +2489,11 @@ chunk) but evaluate the whole terrain before their code field.
 
 The designer's own textures for the leaves (acacia, apple, birch, cherry,
 cherry blossom, ironwood, kapok, mangrove, oak, willow), `dirt`,
-`packed_dirt` and `stone`: 16×16 pictures where each was one flat colour
-from `tools/make_textures.py`. Running that script again would overwrite
+`packed_dirt` and `stone`, and in a second batch `barnacles`, `bone`,
+`calcite`, `charcoal`, `dark_basalt`, `dark_sand`, `dead_log`, `dried_mud`,
+`fir_needles`, `granite`, `grass`, `gravel`, `light_sediment`,
+`morphic_rock`, `mud`, `permafrost`, `pumice` and `sand`: 16×16 pictures
+where each was one flat colour from `tools/make_textures.py`. Running that script again would overwrite
 them with flat colours.
 
 ### Housekeeping
