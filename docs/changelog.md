@@ -2577,6 +2577,27 @@ Over the whole pass: **124 → 68.4 ms per surface chunk**, and block hashes
 at nine fixed points match the committed generator except where lava
 quenching or settling water makes a point vary between runs anyway.
 
+### The shore's bank, less of a ramp (2026-09-17)
+
+Asked, of the new cliff ceiling: "the ramp bank at costal cliffs looks a
+little too smooth. I like the little mini cliff ridge but the rest is kind
+weirdly ramp like". The ceiling rose one block in two for nine hundred
+blocks inland, and where a hill was cut down to it the ground WAS the
+ceiling: a plane, which in blocks is a staircase of wide terraces.
+
+- **The climb is twice as steep**: `CLIFF_FADE` 900 → 450 blocks, so the
+  ceiling passes over the land quickly and clips much less of it. Cut
+  columns 100–250 blocks inland fell from 35 in a sample to 7, and 250–500
+  from 32 to none.
+- **The ceiling wanders along the coast**: a slow noise in the map itself
+  (`CLIFF_WANDER`, ±15 blocks at 1/900), so one headland is low and the
+  next a high bluff.
+- **Rougher where it still cuts**: the single 6-block ripple is a shoulder
+  noise of nine blocks and a crag noise of three. Cut ground steps 2.70
+  blocks per four where it stepped 1.72.
+- Cliff heights over 1,200 shore samples: median 1, p90 44, p99 62, max 69,
+  none over 80 (before the ceiling: p90 112, max 205).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

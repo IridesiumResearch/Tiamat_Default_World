@@ -132,10 +132,18 @@ M.BEACH = 0.002                                         -- km: the lifted ground
 -- level for CLIFF_FLAT blocks inland, the ceiling rising CLIFF_RISE over
 -- CLIFF_FADE past that (one in two), so a hill comes down to the sea as a
 -- slope and meets it as a cliff of forty blocks at most.
+-- 2026-09-17, from the window: the bank read as "weirdly ramp like" — a
+-- 1-in-2 slope held for nine hundred blocks is a plane, and a gentle plane
+-- in blocks is a staircase of wide terraces. The climb is twice as steep
+-- now (1 in 1.1, over 450 blocks), and the ceiling's own height wanders
+-- along the coast (CLIFF_WANDER on a slow noise), so a shore is a low
+-- headland in one place and a high bluff in the next rather than one
+-- height everywhere.
 M.CLIFF_H = 0.040
 M.CLIFF_FLAT = 60.0
-M.CLIFF_FADE = 900.0
+M.CLIFF_FADE = 450.0
 M.CLIFF_RISE = 0.45
+M.CLIFF_WANDER_FREQ, M.CLIFF_WANDER = 1 / 900, 0.030    -- km: +/-15 blocks of headland and bay, at the map's scale
 M.SHELF_END = 130.0                                     -- blocks out: the coast's shelf ends, the ocean's floor begins...
 M.DEEP_FROM = 200.0                                     -- ...and is the whole floor from here
 -- Where a sea may not be.
@@ -271,8 +279,10 @@ tdw.on_world_init(function()
     floor:fill(shape.compile("sea.floor_fill", n.sub(n.add(M.rel(), n.const(M.BEACH)),
         n.mul(inland(M.PLAIN_W, M.FADE), n.const(M.FLOOR_KM)))), fill)
     local ceiling = game.map(map_spec("sea_ceiling"))
-    ceiling:fill(shape.compile("sea.ceiling_fill", n.add(n.add(M.rel(), n.const(M.CLIFF_H)),
-        n.mul(inland(M.CLIFF_FLAT, M.CLIFF_FADE), n.const(M.CLIFF_RISE)))), fill)
+    ceiling:fill(shape.compile("sea.ceiling_fill",
+        n.add(n.add(n.add(M.rel(), n.const(M.CLIFF_H)),
+            n.mul(inland(M.CLIFF_FLAT, M.CLIFF_FADE), n.const(M.CLIFF_RISE))),
+            n.noise("cliff_wander", M.CLIFF_WANDER_FREQ, 2, M.CLIFF_WANDER, shape.HUMIDITY_STRETCH))), fill)
     game.log(string.format("tiamot_default_world seas: maps built, %d samples a side at %d blocks; %d lanes, %d steps of %.0f blocks",
         MAP_SIDE, MAP_SCALE, #M.LANES, #M.STEPS, M.STEP * KM))
 end)

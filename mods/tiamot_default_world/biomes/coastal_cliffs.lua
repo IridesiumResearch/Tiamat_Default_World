@@ -296,10 +296,16 @@ end
 -- The land at a shore: lifted to the floor, held under the ceiling
 -- (seas.CLIFF_H), the ceiling roughened so a hill cut down to it is not a
 -- plane. Flat in y. The land FIRST, the deepest operand.
-local CEILING_ROUGH_FREQ, CEILING_ROUGH = 1 / 60, 0.012
+-- The ceiling's roughness, under the map's scale: a shoulder noise of nine
+-- blocks and a crag noise of three, both flat in y. One noise of six was a
+-- plane with a ripple on it (2026-09-17, "the rest is kind weirdly ramp
+-- like"); the ground a cut hill shows is these.
+local ROUGH_FREQ, ROUGH_AMP = 1 / 90, 0.018
+local CRAG_FREQ, CRAG_AMP = 1 / 22, 0.005
 local function shore_land(land)
-    return n.min(n.max(land, seas.floor()),
-        n.add(seas.ceiling(), n.noise("cliff_ceiling", CEILING_ROUGH_FREQ, 2, CEILING_ROUGH, shape.HUMIDITY_STRETCH)))
+    local ceiling = n.add(n.add(seas.ceiling(), n.noise("cliff_ceiling", ROUGH_FREQ, 2, ROUGH_AMP, shape.HUMIDITY_STRETCH)),
+        n.noise("cliff_crag", CRAG_FREQ, 1, CRAG_AMP, shape.HUMIDITY_STRETCH))
+    return n.min(n.max(land, seas.floor()), ceiling)
 end
 function shape.coast_shore(land)
     local g = shore_land(land)
