@@ -934,6 +934,13 @@ function M.terrain(flank)
     if not flank then
         relief = mul(relief, plain_mask())
     end
+    if mode == "glass" and M.salt_weight and M.SALT_RELIEF_DAMP then
+        -- The Salt Pan (2026-09-17, "a little flatter"): the pan caps the
+        -- ring's terms at its floor, but the world's relief comes after the
+        -- cap and tilted the pan by tens of blocks a kilometre; part of it
+        -- is taken out on the pan.
+        relief = mul(relief, add(mul(M.salt_weight(), const(-M.SALT_RELIEF_DAMP)), const(1.0)))
+    end
     local shape = add(relief, detail)
     if mode == "coast" then
         -- The coast stands on a flat sea, not on the dome or the world's

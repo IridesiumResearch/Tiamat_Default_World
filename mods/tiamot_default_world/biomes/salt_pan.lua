@@ -39,7 +39,8 @@ local BRINE = "tiamot_default_world:brine"
 
 local SPLIT = 0.2                                        -- the province's line: side "b" past this is the pan
 local FLOOR = -0.003                                     -- km: the pan's floor, three blocks under the ring's base
-local RIPPLE_FREQ, RIPPLE_AMP = 1 / 60, 0.0006           -- the crust is not a plane: a third of a block either way
+local RIPPLE_FREQ, RIPPLE_AMP = 1 / 60, 0.0002           -- the crust is not a plane: a tenth of a block either way (a third until 2026-09-17, "a little flatter")
+shape.SALT_RELIEF_DAMP = 0.5                             -- the share of the world's relief the pan takes out (shape.lua, `M.terrain`)
 local POOL_FREQ, POOL_MIN, POOL_EDGE, POOL_D = 1 / 70, 0.24, 6.0, 0.0016   -- the brine pools: a slow noise's high side, a block and a half down
 local POOL_FILL = 0.0010                                 -- km: the brine stands a block deep in them
 local CRACK_FREQ, CRACK_W = 1 / 9, 0.45                  -- the polygon cracks: two fine contours

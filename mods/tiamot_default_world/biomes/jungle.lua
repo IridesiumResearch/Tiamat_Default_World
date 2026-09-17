@@ -153,6 +153,7 @@ local KAPOK = {
     limbs = { 6, 2 }, limb_from = 0.78, limb_reach = { 11, 5 }, limb_rise = { 1, 2 },
     clump = { 6, 2 }, flat = 0.38, crown = { 7, 2 },
     bridge_one_in = 2,
+    mounds = true,
 }
 
 -- Vines (2026-09-15: "links of vine that grow after some amount of ticks
@@ -217,6 +218,29 @@ local function megatree(rng, sp)
                 { kx + s[1] * reach * 0.3, ky * 0.5 + 0.1, kz + s[2] * reach * 0.3, 0.42 },
                 { kx + s[1] * reach * 0.55, -1.0, kz + s[2] * reach * 0.55, 0.3 },
             }, BLIND)
+        end
+    end
+    -- Earth heaped round the roots (2026-09-17, "random clumps of dirt at
+    -- the roots of the giant kapok trees so that when it spawns on a
+    -- hillside it does not look super strange with roots sticking out"):
+    -- a low mound under the foot, a clump over each root's knee, and two
+    -- or three more at random round the base. Under the wood's priority,
+    -- so a root still breaks the surface of its mound.
+    if sp.mounds then
+        local rough = { rough = 0.45, blind = true }
+        schem.push_ellipsoid(blocks.dirt, 0.5, -0.8, 0.5, r0 + 2.5 + rng:below(3) * 0.5, 2.0, r0 + 2.5 + rng:below(3) * 0.5, rough)
+        for _, heading in ipairs(headings) do
+            local d = schem.DIR16[heading + 1]
+            local at = 0.4 + rng:below(3) * 0.1
+            local reach = pick(rng, sp.fin_reach) + 2
+            schem.push_ellipsoid(blocks.dirt, 0.5 + d[1] * reach * at, -0.5, 0.5 + d[2] * reach * at,
+                2.0 + rng:below(3) * 0.5, 1.4 + rng:below(3) * 0.3, 2.0 + rng:below(3) * 0.5, rough)
+        end
+        for _ = 1, 2 + rng:below(2) do
+            local d = schem.DIR16[rng:below(16) + 1]
+            local dist = r0 + 1.5 + rng:below(5)
+            schem.push_ellipsoid(blocks.dirt, 0.5 + d[1] * dist, -0.6, 0.5 + d[2] * dist,
+                1.5 + rng:below(3) * 0.5, 1.2 + rng:below(2) * 0.4, 1.5 + rng:below(3) * 0.5, rough)
         end
     end
     -- Pitcher plants in the root hollows: in some of the bays between two

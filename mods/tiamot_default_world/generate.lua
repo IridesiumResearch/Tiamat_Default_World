@@ -139,7 +139,7 @@ end
 -- stamped nothing**, since the generator returns early for air — so a
 -- rainforest megatree was cut off at the first chunk boundary above its
 -- roots, and seventy blocks of tree were fifteen.
-local STRUCTURE_ABOVE = 0.08               -- km: the tallest reach of any fill that says
+local STRUCTURE_ABOVE = 0.30               -- km: the tallest reach of any fill that says (0.08 until the redwoods grew to 270 blocks, 2026-09-17)
 local function structures_into(buf, found, mode, tmax)
     if not buf.scatter then
         return

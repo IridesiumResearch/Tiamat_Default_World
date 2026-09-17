@@ -2506,6 +2506,39 @@ charcoal, dark basalt, dark sand, dead log, dirt, dried mud, granite,
 grass, gravel, light sediment, morphic rock, mud, packed dirt, permafrost,
 pumice, sand, stone.
 
+### Giant redwoods, earth round the kapoks, a flatter Salt Pan (2026-09-17)
+
+Asked: "random clumps of dirt at the roots of the giant kapok trees so that
+when it spawns on a hillside it does not look super strange with roots
+sticking out", "salt pan can be a little flatter", and "the redwood trees
+need to be about 3 times that big around and about 4.5 times that tall.
+with more needles".
+
+- **Redwoods.** Giants 180–270 blocks tall (40–60) with trunks 4.8–7 blocks
+  in radius (1.6–2.35); the young trees 81–126 tall (18–28), radius 2.4–3.3.
+  Five to seven buttress roots on a giant. More needles: the crown's tiers
+  are thicker and wider (up to 13 blocks out), each on a ring of limbs with
+  a clump of needles at every limb's end, and a taller spire. The fallen
+  giants grew to match (40–60 long, radius 3.2–4.4). The squares they stand
+  in widened so trunks don't merge (giants 14 → 36, young 8 → 18, fallen
+  48 → 60), and the generator stamps structures up to 300 blocks over the
+  ground (was 80). Measured headless: trunks 16 blocks across, tops 283
+  blocks over the ground.
+- **Kapok roots.** Every kapok template has earth heaped round its foot: a
+  low mound under the trunk, a clump over each root's knee and two or three
+  more at random round the base, all dirt under the wood's priority, so the
+  roots still break through. Checked headless: dirt round kapok feet, most of
+  it under ferns and grass.
+- **Salt Pan.** The pan capped the ring's terms at its floor, but the
+  world's relief came after the cap and tilted the pan. Half the relief is
+  taken out on the pan (`shape.SALT_RELIEF_DAMP`), and the crust's ripple
+  is a third of what it was. Over 500 columns: height range across 1.2 km
+  60 → 47 blocks, mean step over three blocks 0.47 → 0.41. The glass
+  programs 968 → 1,005 ops. (Damping the fine hills instead measured no
+  flatter and was not kept.)
+- **The Silverwood "broken spawn"**: the screenshot did not come through;
+  not looked at yet.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
