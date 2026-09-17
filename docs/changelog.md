@@ -2496,6 +2496,16 @@ cherry blossom, ironwood, kapok, mangrove, oak, willow), `dirt`,
 where each was one flat colour from `tools/make_textures.py`. Running that script again would overwrite
 them with flat colours.
 
+### Non-leaf textures back to flat colours (2026-09-17)
+
+Asked: "lets put all the non leaf textures back to what they were". The
+hand-made textures stay for the leaves (acacia, apple, birch, cherry,
+cherry blossom, ironwood, kapok, mangrove, oak, willow) and the fir
+needles. Back to their generated flat colour: barnacles, bone, calcite,
+charcoal, dark basalt, dark sand, dead log, dirt, dried mud, granite,
+grass, gravel, light sediment, morphic rock, mud, packed dirt, permafrost,
+pumice, sand, stone.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
