@@ -261,20 +261,45 @@ local function generate(buf, pos)
         base = tdw.surface_soil(ulo, uhi)
     end
 
-    -- **The body by the biome's layered fill, where there is one.** A chunk
-    -- wholly in one biome whose surface is a layered fill gets its body —
-    -- the soil to SKIN_DIRT, the stone below — from the same evaluation
-    -- that lays the layers (the engine's wildcard layer, code -1), and the
-    -- generator's own body fill and its stone fill are not run: three
-    -- evaluations of the terrain a chunk were one, and the coast at
-    -- forty-eight milliseconds a chunk asked for it. A chunk two biomes
-    -- share keeps the old path: a wildcard cannot know whose ground it is.
+    -- **The body by a biome's layered fill, where there is one.** A surface
+    -- chunk gets its body — the soil to SKIN_DIRT, the stone below — from
+    -- the same terrain evaluation that lays a biome's layers (the engine's
+    -- wildcard layer, code -1, which takes EVERY block whatever its code),
+    -- and the generator's own body fill and its stone fill are not run:
+    -- three evaluations of the terrain a chunk are one.
+    --
+    -- Until 2026-09-17 only a chunk wholly in ONE biome took this path, and
+    -- the gate's biome list is conservative — the rivers, the coasts and
+    -- every province's neighbour are "maybe" nearly everywhere — so across
+    -- a headless tour it was taken by 0 of 4,038 surface chunks. The body
+    -- is the chunk's, not a biome's (`base` is the chunk's soil either
+    -- way), so ANY one biome's layered fill can lay it, provided it runs
+    -- FIRST, before any other biome's layers overwrite the ground they
+    -- claim, and provided no deep band shares the chunk (the wildcard's
+    -- stone would overwrite it). Where either cannot hold, the old path.
     local found = (skin and painted and tmin < shape.SKIN_TOP) and tdw.present_biomes_in(ulo, uhi, pos) or nil
     local body_by_layers = nil
-    if found and #found == 1 then
-        for _, fill in ipairs(tdw.fills_for(found[1], mode)) do
-            if fill.layers and fill.body then
-                body_by_layers = fill
+    local deep_bands = (WHITE and dmin <= DEEP_D + SAFETY and dmax > DEEP_D - SAFETY)
+        or (level < 1 and dmax > shape.GLOAM_D - SAFETY)
+        or (level < 2 and dmax > shape.ABYSS_D - SAFETY)
+    if found and not tail and not deep_bands then
+        -- The FIRST fill that paints the ground, in the order the loop below
+        -- runs them, and only if it is a body-capable layered fill: were a
+        -- later one moved in front, the paint of two biomes where their
+        -- masks overlap would land in the other order.
+        for _, biome in ipairs(found) do
+            local first = nil
+            for _, fill in ipairs(tdw.fills_for(biome, mode)) do
+                if fill.layers or fill.field then
+                    first = fill
+                    break
+                end
+            end
+            if first then
+                if first.layers and first.body then
+                    body_by_layers = first
+                end
+                break
             end
         end
     end
@@ -314,9 +339,17 @@ local function generate(buf, pos)
         end
         if skin and painted and tmin < shape.SKIN_TOP then
             -- The biome's own top.
-            local found = tdw.present_biomes_in(ulo, uhi, pos)
             local function fills_of(biome)
                 return tdw.fills_for(biome, mode)
+            end
+            -- The body first, by the one layered fill chosen above: its
+            -- coded bands, then the wildcard bands under everything else.
+            if body_by_layers then
+                local entries = {}
+                for _, e in ipairs(body_by_layers.entries) do entries[#entries + 1] = e end
+                entries[#entries + 1] = { code = -1, to = shape.SKIN_DIRT, material = base }
+                entries[#entries + 1] = { code = -1, from = shape.SKIN_DIRT, to = math.huge, material = blocks.stone }
+                buf:fill_layers(body_by_layers.depth, body_by_layers.code, entries)
             end
             for _, biome in ipairs(found) do
                 for _, fill in ipairs(fills_of(biome)) do
@@ -324,16 +357,9 @@ local function generate(buf, pos)
                         -- Every layer of the surface from one evaluation of
                         -- the terrain and one of a code field (engine
                         -- `fill_layers`); eight fills were eight evaluations.
-                        -- And the body too, where this chunk is the biome's
-                        -- alone: the wildcard bands after the coded ones.
-                        local entries = fill.entries
-                        if fill == body_by_layers then
-                            entries = {}
-                            for _, e in ipairs(fill.entries) do entries[#entries + 1] = e end
-                            entries[#entries + 1] = { code = -1, to = shape.SKIN_DIRT, material = base }
-                            entries[#entries + 1] = { code = -1, from = shape.SKIN_DIRT, to = math.huge, material = blocks.stone }
+                        if fill ~= body_by_layers then
+                            buf:fill_layers(fill.depth, fill.code, fill.entries)
                         end
-                        buf:fill_layers(fill.depth, fill.code, entries)
                     elseif fill.field and (not fill.shared_only or #found > 1) then
                         -- A fill may ask for its own detail.
                         buf:fill_density(fill.field, fill.material, fill.detail or DETAIL)

@@ -2450,6 +2450,41 @@ which may be the same thing. Coordinates of a wall would settle it. Noted
 on the way: the brook fills of the Heather Moor, Flower Forest and Peat Fen
 keep 21 blocks off a river (its bar), not its 150-block valley.
 
+### Performance pass: the body from the layers in shared chunks (2026-09-17)
+
+Asked: "lets do a performance pass. just check and see if we can speed any
+of the stuff we already have up."
+
+**Measured** headless with generation on the tick (`TIAMOT_GEN_THREADS=0`),
+touring fixed coordinates, timing the generator's own 1,024-chunk counters:
+about 120 ms per surface chunk (114.6, 123.4 and 124.0 over three runs of
+the old code). A surface chunk ran, on average, 3.85 biomes' layered fills
+(each a full terrain evaluation), 6.2 covers and 13.4 structure scatters.
+
+**The body by layers was dead code.** The generator lays a chunk's body
+(soil, then stone) from a biome's layered fill with the engine's wildcard
+layer, saving two of the terrain evaluations, but only where the chunk
+held ONE biome, and the gate lists several nearly everywhere: **0 of 4,038**
+surface chunks took it. The body is the chunk's, not a biome's, so it now
+comes from the first ground-painting fill in the chunk whenever that is a
+body-capable layered fill (and no deep band shares the chunk), run before
+every other biome's paint so the order the biomes paint in is unchanged.
+Taken by 1,656 of 3,015 surface chunks in the same tour. **About 10%
+faster** per surface chunk (107.6 and 109.7 ms).
+
+**Checked against the old generator** by hashing every block within 32 of
+nine fixed points on fresh worlds. Seven match exactly, including after a
+repeat of the old code. At the Temperate Woodlands and Heather Moor points
+237 blocks of 12,675 differ, all at material seams inside a block: the
+dirt-to-stone seam five blocks down is drawn a block at a time by the
+layered fill where the separate stone fill drew it by cell, and a few
+surface blocks lose a stray dirt cell (and the tall grass on them moves by
+a cell). The ground's shape is identical.
+
+**What would help most is in the engine** (engine-asks 34): most of those
+3.85 layered fills paint nothing (the biome's mask is zero across the
+chunk) but evaluate the whole terrain before their code field.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
