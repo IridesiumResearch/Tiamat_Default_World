@@ -144,6 +144,15 @@ M.CLIFF_FLAT = 60.0
 M.CLIFF_FADE = 450.0
 M.CLIFF_RISE = 0.45
 M.CLIFF_WANDER_FREQ, M.CLIFF_WANDER = 1 / 900, 0.030    -- km: +/-15 blocks of headland and bay, at the map's scale
+-- **The cap gives** (2026-09-17): a hard cap shears a hill to a surface of
+-- its own, which reads as a ramp however it is roughened. The ceiling
+-- carries SOFT of however far the world's RELIEF stands over it, so the
+-- ground it cuts keeps the hill's broad shape while a cliff stays a
+-- fraction of the hill's height. It is done in the MAP, so the terrain
+-- programs pay nothing for it — they are at 994 and 1,004 of 1,024, and a
+-- cap that gives INSIDE a program would need the land's height twice,
+-- five hundred operations, which is engine-asks 30.
+M.CLIFF_SOFT = 0.35
 M.SHELF_END = 130.0                                     -- blocks out: the coast's shelf ends, the ocean's floor begins...
 M.DEEP_FROM = 200.0                                     -- ...and is the whole floor from here
 -- Where a sea may not be.
@@ -279,10 +288,16 @@ tdw.on_world_init(function()
     floor:fill(shape.compile("sea.floor_fill", n.sub(n.add(M.rel(), n.const(M.BEACH)),
         n.mul(inland(M.PLAIN_W, M.FADE), n.const(M.FLOOR_KM)))), fill)
     local ceiling = game.map(map_spec("sea_ceiling"))
-    ceiling:fill(shape.compile("sea.ceiling_fill",
-        n.add(n.add(n.add(M.rel(), n.const(M.CLIFF_H)),
+    local function base_ceiling()
+        return n.add(n.add(n.add(M.rel(), n.const(M.CLIFF_H)),
             n.mul(inland(M.CLIFF_FLAT, M.CLIFF_FADE), n.const(M.CLIFF_RISE))),
-            n.noise("cliff_wander", M.CLIFF_WANDER_FREQ, 2, M.CLIFF_WANDER, shape.HUMIDITY_STRETCH))), fill)
+            n.noise("cliff_wander", M.CLIFF_WANDER_FREQ, 2, M.CLIFF_WANDER, shape.HUMIDITY_STRETCH))
+    end
+    -- The base, plus SOFT of what the relief stands over it: the hill's own
+    -- shape kept. `relief_node` is km over the dome, as the ceiling is.
+    ceiling:fill(shape.compile("sea.ceiling_fill",
+        n.add(base_ceiling(),
+            n.mul(n.max(n.sub(shape.relief_node(), base_ceiling()), n.const(0.0)), n.const(M.CLIFF_SOFT)))), fill)
     game.log(string.format("tiamot_default_world seas: maps built, %d samples a side at %d blocks; %d lanes, %d steps of %.0f blocks",
         MAP_SIDE, MAP_SCALE, #M.LANES, #M.STEPS, M.STEP * KM))
 end)

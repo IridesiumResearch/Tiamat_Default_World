@@ -191,9 +191,15 @@ local function over_sea()
 end
 -- 1 on land or a stack, 0 at sea. The shore first (deeper), then the
 -- stacks: a stack counts as land within STACK_NEAR of the shore.
+--
+-- The MAP's distance, not the detailed one (2026-09-17): this is a gate
+-- two blocks wide against a coastline the fine detail moves by thirty, and
+-- the face it multiplies carries that detail itself, so the product is the
+-- same shape for seven operations less — twice, since `coast_shore` spends
+-- the weight in both halves of its cross-fade (engine-asks 30).
 local function on_land()
     local stack = n.clamp(n.sub(n.contour("stack", STACK_FREQ, 1, true), n.const(STACK_ERODE)), 0.0, 1.0)
-    return n.clamp(n.mul(n.add(shore(), n.mul(stack, n.const(STACK_NEAR))), n.const(2.0)), 0.0, 1.0)
+    return n.clamp(n.mul(n.sub(n.mul(stack, n.const(STACK_NEAR)), seas.d_map()), n.const(2.0)), 0.0, 1.0)
 end
 -- The face: 0 at the coastline, 1 FACE_W blocks in — or BEACH_W where the
 -- beach noise says. The distance first, then the width it is divided by.
@@ -235,6 +241,14 @@ end
 local function near_shore_map(blocks_in)
     return n.clamp(n.mul(n.add(seas.d_map(), n.const(blocks_in)), n.const(-0.5)), 0.0, 1.0)
 end
+-- 0 to 1 between `lo` and `hi` km over the sea, over one block at each
+-- edge: `half - |h - mid|` reads the height ONCE where `above(lo)` times
+-- `below(hi)` read it twice, and the two shapes differ nowhere a block can
+-- tell (2026-09-17, freeing operations in the shore programs).
+local function band_over_sea(lo, hi)
+    local mid, half = (lo + hi) / 2, (hi - lo) / 2
+    return n.clamp(n.mul(n.sub(n.const(half), n.abs(n.sub(over_sea(), n.const(mid)))), n.const(1000.0)), 0.0, 1.0)
+end
 -- 0 to 1 from `lo` km over the sea up; 0 to 1 up to `hi` km over the sea.
 local function above(lo)
     return n.clamp(n.mul(n.sub(over_sea(), n.const(lo)), n.const(1000.0)), 0.0, 1.0)
@@ -247,7 +261,7 @@ local CUT_IN = 70.0                                   -- blocks: the tunnels and
 -- The undercut notch and the sea caves.
 local function face_cuts()
     local holes = n.clamp(n.mul(n.sub(n.noise("arch", ARCH_FREQ, 1, 1.0), n.const(ARCH_MIN)), n.const(30.0)), 0.0, 1.0)
-    local caves = n.mul(n.mul(holes, above(ARCH_LO)), below(ARCH_HI))
+    local caves = n.mul(holes, band_over_sea(ARCH_LO, ARCH_HI))
     return n.mul(near_shore(CUT_NEAR), n.add(at_sea_level(NOTCH_HALF), caves))
 end
 -- The flooded tunnels, and the blowholes where a tunnel line crosses a
@@ -255,7 +269,7 @@ end
 local function deep_cuts()
     local line = n.clamp(n.mul(n.add(n.contour("tunnel", TUNNEL_FREQ), n.const(-TUNNEL_W)), n.const(-1.0)), 0.0, 1.0)
     local area = n.clamp(n.mul(n.sub(n.noise("tunnel_area", TUNNEL_AREA_FREQ, 1, 1.0), n.const(TUNNEL_AREA_MIN)), n.const(8.0)), 0.0, 1.0)
-    local tunnels = n.mul(n.mul(n.mul(line, above(TUNNEL_LO)), below(TUNNEL_HI)), area)
+    local tunnels = n.mul(n.mul(line, band_over_sea(TUNNEL_LO, TUNNEL_HI)), area)
     return n.mul(near_shore_map(CUT_IN), tunnels)
 end
 -- The jag, km, either sign: within JAG_REACH of the line, above the splash
@@ -266,7 +280,10 @@ end
 local function jag()
     -- On land only (2026-09-15): thrown either side of the line, the jag
     -- lifted the seabed off the coast into ribs that read as floating.
-    local near = n.clamp(n.min(n.mul(shore(), n.const(0.5)), n.mul(n.add(shore(), n.const(-JAG_REACH)), n.const(-0.3))), 0.0, 1.0)
+    -- The inner edge on the detailed distance (it sits at the waterline),
+    -- the outer one on the map's: nine blocks in, where the detail is
+    -- nothing to it, for seven operations less.
+    local near = n.clamp(n.min(n.mul(shore(), n.const(0.5)), n.mul(n.add(n.mul(seas.d_map(), n.const(-1.0)), n.const(-JAG_REACH)), n.const(-0.3))), 0.0, 1.0)
     local area = n.clamp(n.mul(n.sub(n.noise("jag_area", JAG_AREA_FREQ, 1, 1.0), n.const(JAG_AREA_MIN)), n.const(8.0)), 0.0, 1.0)
     local throw = n.mul(rib("jag_rib", JAG_RIB_FREQ, JAG_RIB_W), n.const(JAG_RIB_AMP))
     throw = n.add(throw, n.noise("jag_grain", JAG_GRAIN_FREQ, 1, JAG_GRAIN))

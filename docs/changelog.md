@@ -2598,6 +2598,45 @@ ceiling: a plane, which in blocks is a staircase of wide terraces.
 - Cliff heights over 1,200 shore samples: median 1, p90 44, p99 62, max 69,
   none over 80 (before the ceiling: p90 112, max 205).
 
+### The shore programs' budget, and a cap that gives (2026-09-17)
+
+Asked: "lets work on that shore terrain program and find the op budget if
+we can". Measured first, by compiling each piece on its own at load:
+
+| piece | ops |
+|---|---|
+| the ring's own land terms (temperate) | 490 |
+| `coast_shore` | 496 |
+| — the shelf (`seabed`) | 128 |
+| — the notch and sea caves | 62 |
+| — the jag | 59 |
+| — the tunnels and blowholes | 47 |
+| — the face weight, spent TWICE in the cross-fade | 42 |
+| — the shore's distance, each use | 9 |
+
+**Fifty operations freed**, `coast_shore` 496 → 446, so temperate_shore is
+944 of 1,024 and belt_shore 954 (they were 994 and 1,004):
+
+- **The land/sea gate reads the map's distance**, not the distance with the
+  shore's fine detail. It is two blocks wide against a coastline the detail
+  moves by thirty, and the face it multiplies carries that detail itself —
+  and `coast_shore` spends that weight twice, so this is 14 operations.
+- **The jag's outer gate** likewise, nine blocks inland: 6 operations.
+- **A height band in one evaluation.** The sea caves and the tunnels each
+  asked "above LO" and "below HI", reading the height over the sea twice;
+  `half - |h - mid|` reads it once. 20 operations.
+
+**A cap that gives.** A hard cap shears a hill to a surface of its own,
+which reads as a ramp however it is roughened ("the rest is kind weirdly
+ramp like"). Softening it inside the program needs the land's height twice
+— five hundred operations, which is engine-asks 30 — so it is done in the
+ceiling MAP, which costs the programs nothing: the ceiling now carries
+`CLIFF_SOFT` (0.35) of however far the world's relief stands over it, so
+cut ground keeps the hill's broad shape. Cliffs over 1,200 shore samples:
+median 1, p90 49, p99 81, max 99, 1.1% over 80 (before the soft cap: p90
+44, max 69; before any ceiling: p90 112, max 205). Lower `CLIFF_SOFT` for
+shorter cliffs, raise it to keep more of the hill.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
