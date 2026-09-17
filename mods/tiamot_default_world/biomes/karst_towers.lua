@@ -3,8 +3,9 @@
 --
 -- 3.12 Karst Towers: a third of the Jungle's ground (2026-09-16).
 --
--- Limestone pinnacles standing straight up out of the forest floor, up to
--- fifty blocks, sheer grey walls streaked with moss, their tops crowned in
+-- Limestone pinnacles standing up out of the forest floor, up to twenty
+-- blocks (fifty until 2026-09-17), weathered grey walls streaked with moss
+-- over a skirt of scree, their tops crowned in
 -- scrub and small trees; between them a floor of grass, ferns and mud
 -- pools under scattered broadleaf trees. Where the Jungle is karst UNDER a
 -- canopy, this is karst standing OVER one.
@@ -21,9 +22,23 @@ local n = shape.node
 local ID = "karst_towers"
 
 local SPLIT = 0.25
-local TOWER_FREQ, TOWER_MIN, TOWER_EDGE, TOWER_H = 1 / 90, 0.30, 16.0, 0.050
+-- 2026-09-17: "needs its noise turned down about 60% and could use some
+-- erosion". The towers stood fifty blocks with eight of jitter on top, on
+-- sheer walls, from 3D noise (so their outline changed with height and left
+-- hanging slabs), on the Jungle's whole ground: its undulation, ridges,
+-- ravines and sinkholes at full strength. Now: two fifths of the towers'
+-- height and jitter, every noise FLAT in y, the Jungle's terms under them
+-- damped to two fifths (`shape.karst_damp`), and weathering — walls sloped
+-- (edge 16 -> 7), their outline torn by a fine noise, and a skirt of scree
+-- round each tower's foot. The scree is a material, not a rise: the belt's
+-- shore programs had no room for both it and the damping (1,014 of 1,024).
+local FLAT = shape.HUMIDITY_STRETCH
+local TOWER_FREQ, TOWER_MIN, TOWER_EDGE, TOWER_H = 1 / 90, 0.30, 7.0, 0.020
 local THIN_FREQ, THIN_MIN = 1 / 400, -0.05
-local TOP_FREQ, TOP_AMP = 1 / 12, 0.008
+local TOP_FREQ, TOP_AMP = 1 / 12, 0.0032
+local RAG_FREQ, RAG_AMP = 1 / 7, 0.10                    -- the walls' weathered outline
+local APRON_BELOW, APRON_EDGE = 0.10, 5.0               -- the scree skirt: further out than the tower
+local DAMP = 0.6                                        -- the Jungle's terms lose this share in the province
 local IN_U = { 0.271, 0.349 }                           -- where the terms stand, on the wobbled radius
 local STREAK_FREQ, STREAK_MIN = 1 / 6, 0.25
 local POOL_FREQ, POOL_MIN = 1 / 35, 0.30
@@ -31,13 +46,32 @@ local FERN_FREQ, FERN_MIN = 1.5, 0.05
 local SCRUB_CELL, SCRUB_SQUARES = 5, 0.45
 local TREE_CELL, TREE_SQUARES = 16, 0.45
 
+-- Positive over a tower's footprint, before its edge is drawn.
+local function tower_g()
+    return n.min(n.sub(n.noise("kt_tower", TOWER_FREQ, 1, 1.0, FLAT), n.const(TOWER_MIN)),
+        n.sub(n.noise("kt_thin", THIN_FREQ, 1, 1.0, FLAT), n.const(THIN_MIN)))
+end
+-- 0 to 1: the tower, its outline weathered.
 local function tower_w()
-    return n.clamp(n.mul(n.min(n.sub(n.noise("kt_tower", TOWER_FREQ, 1, 1.0), n.const(TOWER_MIN)),
-        n.sub(n.noise("kt_thin", THIN_FREQ, 1, 1.0), n.const(THIN_MIN))), n.const(TOWER_EDGE)), 0.0, 1.0)
+    return n.clamp(n.mul(n.add(tower_g(), n.noise("kt_rag", RAG_FREQ, 1, RAG_AMP, FLAT)), n.const(TOWER_EDGE)), 0.0, 1.0)
+end
+-- 0 to 1: the scree skirt, wider than the tower. Materials only.
+local function apron_w()
+    return n.clamp(n.mul(n.add(tower_g(), n.const(APRON_BELOW)), n.const(APRON_EDGE)), 0.0, 1.0)
 end
 -- The towers' terms, km.
 function shape.karst_terms()
-    return n.mul(tower_w(), n.add(n.noise("kt_top", TOP_FREQ, 1, TOP_AMP), n.const(TOWER_H)))
+    return n.mul(tower_w(), n.add(n.noise("kt_top", TOP_FREQ, 1, TOP_AMP, FLAT), n.const(TOWER_H)))
+end
+-- What the Jungle's terms are multiplied by: 1 off the province, 1 - DAMP
+-- in it. On the province alone (flat, seven operations), not the belt's
+-- inside weight: the Jungle's terms stand in the "verdant" programs too,
+-- and the damping must agree across that chunk boundary.
+function shape.karst_damp()
+    if tdw.config.everywhere == ID then
+        return n.const(1.0 - DAMP)
+    end
+    return n.add(n.mul(shape.province_weight("b", SPLIT), n.const(-DAMP)), n.const(1.0))
 end
 -- 0 to 1: the province, inside the belt.
 function shape.karst_weight()
@@ -117,6 +151,8 @@ tdw.build_biome(ID, function(ctx)
         n.min(n.min(n.sub(tower_w(), n.const(0.03)), n.sub(n.const(0.9), tower_w())), n.sub(n.noise("kt_streak", STREAK_FREQ, 1, 1.0, { y = 8 }), n.const(STREAK_MIN))),
         -- 5: a tower's top: moss.
         n.sub(tower_w(), n.const(0.97)),
+        -- 6: scree on the apron, off the tower.
+        n.min(n.sub(apron_w(), n.const(0.05)), n.sub(n.const(0.03), tower_w())),
     }
     local code = n.const(0.0)
     for k, condition in ipairs(conditions) do
@@ -135,8 +171,10 @@ tdw.build_biome(ID, function(ctx)
         { code = 4, from = 1 * km, to = 80 * km, material = blocks.stone },
         { code = 5, to = 1 * km, material = blocks.moss },
         { code = 5, from = 1 * km, to = 80 * km, material = blocks.stone },
+        { code = 6, to = 1 * km, material = blocks.gravel },
+        { code = 6, from = 1 * km, to = 4 * km, material = blocks.stone },
     }
-    local ferns = shape.compile("biome.karst.ferns", masked(n.min(n.sub(n.const(0.02), tower_w()),
+    local ferns = shape.compile("biome.karst.ferns", masked(n.min(n.sub(n.const(0.02), apron_w()),
         n.sub(n.noise("kt_fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN)))))
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },
@@ -149,7 +187,7 @@ tdw.build_biome(ID, function(ctx)
                 salt = salt, sink = 1, above = above, stand = shape.compile("biome.karst.stand_" .. name, masked(field)) }
         end
         scatter("scrub", built.scrub, n.sub(tower_w(), n.const(0.98)), SCRUB_CELL, SCRUB_SQUARES, 311, 0.005)
-        scatter("tree", built.trees, n.sub(n.const(0.01), tower_w()), TREE_CELL, TREE_SQUARES, 312, 0.022)
+        scatter("tree", built.trees, n.sub(n.const(0.01), apron_w()), TREE_CELL, TREE_SQUARES, 312, 0.022)
     end
     return fills
 end)

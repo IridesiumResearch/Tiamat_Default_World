@@ -92,14 +92,16 @@ local function ravine_w()
     return n.clamp(n.mul(n.add(n.contour("rf_ravine", RAVINE_FREQ, 2), n.const(-RAVINE_W)), n.const(-1.0 / RAVINE_WALL)), 0.0, 1.0)
 end
 -- 1 in a sinkhole, 0 outside it; the noise climbs steeply there, so the
--- sides are near sheer.
+-- sides are near sheer. The sinkholes' and hummocks' noises are flat in y
+-- (2026-09-17): a 3D gate on a depth changes its footprint with height and
+-- leaves lips and hanging slabs.
 local function sink_w()
-    local both = n.min(n.sub(n.noise("rf_sink", SINK_FREQ, 2, 1.0), n.const(SINK_MIN)),
-        n.sub(n.noise("rf_sink_b", SINK_FREQ, 2, 1.0), n.const(SINK_MIN)))
+    local both = n.min(n.sub(n.noise("rf_sink", SINK_FREQ, 2, 1.0, shape.HUMIDITY_STRETCH), n.const(SINK_MIN)),
+        n.sub(n.noise("rf_sink_b", SINK_FREQ, 2, 1.0, shape.HUMIDITY_STRETCH), n.const(SINK_MIN)))
     return n.clamp(n.mul(both, n.const(SINK_EDGE)), 0.0, 1.0)
 end
 local function hummock_w()
-    return n.clamp(n.mul(n.sub(n.noise("rf_hummock", HUMMOCK_FREQ, 1, 1.0), n.const(HUMMOCK_MIN)), n.const(HUMMOCK_EDGE)), 0.0, 1.0)
+    return n.clamp(n.mul(n.sub(n.noise("rf_hummock", HUMMOCK_FREQ, 1, 1.0, shape.HUMIDITY_STRETCH), n.const(HUMMOCK_MIN)), n.const(HUMMOCK_EDGE)), 0.0, 1.0)
 end
 
 -- The rainforest's terms of the terrain, km: each a weight times a height,

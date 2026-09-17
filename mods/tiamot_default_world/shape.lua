@@ -1018,6 +1018,11 @@ function M.terrain(flank)
         -- The Verdant Belt and outward: the rainforest over the wet half,
         -- weighted in across the belt's edges.
         local rain = mul(M.rainforest_terms(), verdant_weight())
+        if M.karst_damp then
+            -- The Karst Towers' province: the Jungle's ground calmed under
+            -- the towers (2026-09-17).
+            rain = mul(rain, M.karst_damp())
+        end
         if M.karst_terms then
             -- The Karst Towers (3.12), in their province well inside the
             -- belt: the pinnacles FIRST, the deepest.
@@ -1059,6 +1064,9 @@ function M.terrain(flank)
         -- weighted in across the Glass Waste's edges. The dry side FIRST: the
         -- mesa is the deepest term in the program.
         local wet = mul(M.rainforest_terms(), verdant_weight())
+        if M.karst_damp then
+            wet = mul(wet, M.karst_damp())
+        end
         if M.badlands_terms then
             wet = add(wet, mul(M.badlands_terms(), glass_weight()))
         end

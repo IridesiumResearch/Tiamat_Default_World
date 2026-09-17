@@ -2378,6 +2378,33 @@ wobble in a term moves the surface several times as far):
 **A fresh world is needed** for the terrain (existing chunks will seam
 against new ones in the Alpine Highlands and the Volcanic Foothills).
 
+### The Karst Towers calmed and weathered (2026-09-17)
+
+Asked: "the Karst towers biome needs its noise turned down about 60% and
+could use some erosion".
+
+- **The towers**: up to twenty blocks where they stood fifty, and the jitter
+  on their tops three blocks where it was eight (both two fifths).
+- **The ground under them**: the Karst Towers stand on the Jungle's terms,
+  which applied at full strength there: ±9 blocks of undulation, 12-block
+  ridges, 16-block ravines, 10-block sinkholes. Inside the Karst Towers'
+  province they are now multiplied by 0.4 (`shape.karst_damp`, on the
+  province weight, in both the "belt" and "verdant" programs so the chunk
+  boundary between them agrees).
+- **Flat in y**: the towers' noises, and the Jungle's sinkhole and hummock
+  noises, were 3D, so their footprint changed with height and left hanging
+  slabs and lips. All flat now. **This also changes the Jungle**: its
+  sinkholes and hummocks sit in new places and no longer overhang.
+- **Erosion**: the walls slope (edge 16 → 7, about 55° where they were
+  sheer), a fine noise (1/7) weathers the towers' outline, and a skirt of
+  gravel scree lies round each foot. The scree is a material only: raising
+  it too cost 15 operations the belt's shore programs did not have.
+- Measured headless (seed 12345, 603 columns over the Karst Towers' ground):
+  columns with more than one surface **9.0% → 0.7%**, mean local rise
+  18.3 → 13.8 blocks (hills included). The towers stand on 14% of the
+  ground and reach 21.6 blocks. Ops: belt 485 → 500, belt_shore 994 → 1,009,
+  verdant 989 → 1,001 (cap 1,024).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
