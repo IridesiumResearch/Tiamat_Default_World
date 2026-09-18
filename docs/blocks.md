@@ -15,6 +15,42 @@ carries variation. What breaks up a surface is the renderer's — the
 large-scale `tint`, and per-cell value jitter once the engine has it (asks,
 item 5). A textured material is a decision the designer makes by name.
 
+## 2. The normal caves (2026-09-18)
+
+The designer's rule for the caves: **one new material and one new plant a
+biome at most**, and none where the biome does not need them. The caves'
+framework is `biomes/caves.lua`; each biome carves its own voids out of
+whatever rock is there and lines them.
+
+### 2.1 Mossy Limestone
+
+Shares `calcite` (its limestone: the "one of each" rule keeps `stone` the
+world's rock and calcite its pale one), `mud`, `gravel`, `moss`,
+`climbing_ivy` (the pale vines), and the `water` fluid. No new material.
+
+| Block | Where | Why |
+|---|---|---|
+| `maidenhair` | micro-ferns a block high at the drips, on the floors | the brief's maidenhair; nothing registered is a fern a hand high |
+
+### 2.2 Crystal Seam
+
+Shares `slate` and `dark_basalt` (the host rock). No plant.
+
+| Block | Where | Why |
+|---|---|---|
+| `crystal` | the planar veins, the geodes' shells, the clusters on the walls, the spires, the shards | the biome is named for it; translucent and faintly lit, which nothing registered is |
+
+### 2.3 Underground River
+
+Shares `stone` (the polished bedrock), `gravel`, `black_mud` (the silt),
+`ocean_moss` (the aquatic moss pads), `dead_log` (the bleached roots and
+the snags), and the `water` fluid.
+
+| Block | Where | Why |
+|---|---|---|
+| `cobbles` | the channel's bed, in patches | the brief's rounded cobblestones; gravel is not round |
+| `glow_algae` | a film on the floor at the waterline | the brief's bioluminescent algae; nothing registered is a lit film |
+
 ## The ores (2026-09-17)
 
 "add a basic list of ores and distribute them at various depths below the
@@ -29,14 +65,14 @@ throughout.
 | `copper_ore` | the surface | asked for by name |
 | `iron_ore` | the surface | asked for by name |
 | `flint` | the surface | asked for by name |
-| `coal` | 100 blocks (the normal caves' top) | asked for by name |
-| `tin_ore` | 350 blocks | asked for by name |
-| `silver_ore` | 350 blocks | asked for by name |
-| `chromium_ore` | 700 blocks | asked for by name |
-| `lead_ore` | 700 blocks | asked for by name |
-| `gold_ore` | 1,200 blocks | asked for by name |
-| `diamond` | 2,000 blocks (the Gloam) | asked for by name; "very rarely should there ever be a full block of diamond" |
-| `orichalcum` | 3,500 blocks | asked for by name; faintly lit from within |
+| `coal` | 60 blocks | asked for by name |
+| `tin_ore` | 200 blocks | asked for by name |
+| `silver_ore` | 200 blocks | asked for by name |
+| `chromium_ore` | 420 blocks | asked for by name |
+| `lead_ore` | 420 blocks | asked for by name |
+| `gold_ore` | 750 blocks | asked for by name |
+| `diamond` | 1,200 blocks | asked for by name; "very rarely should there ever be a full block of diamond" |
+| `orichalcum` | 2,000 blocks (the Gloam) | asked for by name; faintly lit from within |
 
 ## Quenched lava (2026-09-16)
 

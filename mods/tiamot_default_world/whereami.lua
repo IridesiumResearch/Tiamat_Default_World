@@ -139,6 +139,13 @@ local MOSAIC_MEMBER = { karst_towers = true, savanna = true, peat_fen = true, re
 -- The biome whose ground is under (x, y, z), or nil when the column is
 -- unloaded or made of nothing anybody claims.
 function tdw.biome_under(x, y, z)
+    -- Underground, in a cave's void: the caves say (biomes/caves.lua).
+    if tdw.cave_under then
+        local cave = tdw.cave_under(x, y, z)
+        if cave then
+            return cave
+        end
+    end
     -- A shore or a sea floor: the sea map says (seas.lua).
     local sea = tdw.seas and tdw.seas.zone(x, z)
     if sea then
@@ -642,6 +649,23 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         local x, z = math.floor(d[1] * r), math.floor(d[2] * r)
         drop(player, rec, x, z)
         return string.format("to %s, at %d, %d (%s)", ring.name, x, z, distance_text(p.x, p.z, x, z))
+    end
+    -- A cave biome: straight into the nearest of its voids, no landing
+    -- (the landing aims at the ground, which is the surface above).
+    for _, candidate in ipairs(tdw.biome_list) do
+        if candidate.cave and spoken(candidate.id) == word then
+            if world_seed() == nil then
+                return candidate.name .. " is found from the world's seed, and this engine has not told the mod it"
+            end
+            local x, y, z = tdw.caves.locate(candidate.id, p.x, p.z, world_seed())
+            if x == nil then
+                return "found nowhere that is " .. candidate.name .. " within eight kilometres"
+            end
+            rec.seeking, rec.landing = nil, nil
+            rec.pending = { x = x + 0.5, y = y + 0.5, z = z + 0.5 }
+            game.log(string.format("tiamot_default_world: %s teleported into %s at %d, %d, %d", player, candidate.name, x, y, z))
+            return string.format("into %s, at %d, %d, %d (%s)", candidate.name, x, y, z, distance_text(p.x, p.z, x, z))
+        end
     end
     -- A biome.
     local id = nil

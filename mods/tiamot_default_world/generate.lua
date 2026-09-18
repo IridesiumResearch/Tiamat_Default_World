@@ -80,15 +80,15 @@ local ORES = {
     { "copper_ore",   level = 0.00, freq = 1 / 5,   min = 0.42, n = 2, lode = 0.15, stretch = { x = 3 } },
     { "iron_ore",     level = 0.00, freq = 1 / 5,   min = 0.43, n = 2, lode = 0.15, stretch = { z = 3 } },
     { "flint",        level = 0.00, freq = 1 / 3,   min = 0.44, n = 2, lode = 0.15 },
-    { "coal",         level = 0.10, freq = 1 / 8,   min = 0.40, n = 2, lode = 0.15, stretch = { x = 4, z = 3 } },
-    { "salt",         level = 0.10, freq = 1 / 6,   min = 0.44, n = 2, lode = 0.15, stretch = { x = 3, z = 3 } },
-    { "tin_ore",      level = 0.35, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { y = 2 } },
-    { "silver_ore",   level = 0.35, freq = 1 / 3.5, min = 0.46, n = 2, lode = 0.15, stretch = { x = 2 } },
-    { "chromium_ore", level = 0.70, freq = 1 / 4,   min = 0.46, n = 2, lode = 0.15, stretch = { z = 2 } },
-    { "lead_ore",     level = 0.70, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { x = 2 } },
-    { "gold_ore",     level = 1.20, freq = 1 / 3,   min = 0.42, n = 3, lode = 0.25 },
-    { "diamond",      level = 2.00, freq = 1 / 2.5, min = 0.45, n = 3, lode = 0.25 },
-    { "orichalcum",   level = 3.50, freq = 1 / 2.5, min = 0.46, n = 3, lode = 0.32 },
+    { "coal",         level = 0.06, freq = 1 / 8,   min = 0.40, n = 2, lode = 0.15, stretch = { x = 4, z = 3 } },
+    { "salt",         level = 0.06, freq = 1 / 6,   min = 0.44, n = 2, lode = 0.15, stretch = { x = 3, z = 3 } },
+    { "tin_ore",      level = 0.20, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { y = 2 } },
+    { "silver_ore",   level = 0.20, freq = 1 / 3.5, min = 0.46, n = 2, lode = 0.15, stretch = { x = 2 } },
+    { "chromium_ore", level = 0.42, freq = 1 / 4,   min = 0.46, n = 2, lode = 0.15, stretch = { z = 2 } },
+    { "lead_ore",     level = 0.42, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { x = 2 } },
+    { "gold_ore",     level = 0.75, freq = 1 / 3,   min = 0.42, n = 3, lode = 0.25 },
+    { "diamond",      level = 1.20, freq = 1 / 2.5, min = 0.45, n = 3, lode = 0.25 },
+    { "orichalcum",   level = 2.00, freq = 1 / 2.5, min = 0.46, n = 3, lode = 0.32 },
 }
 local ORE_FIELDS = nil
 local function ore_fields()
@@ -480,6 +480,14 @@ local function generate(buf, pos)
         -- A chunk of rock under a sea's floor is still under its water: the
         -- flooded caves and tunnels, and the deep water over a trench.
         sea_into(buf, pos, painted)
+        -- The caves (biomes/caves.lua), carved out of rock that is solid
+        -- throughout, ore and all, AFTER the sea: a terraced fluid fill
+        -- empties the columns outside its `within`, and the sea's is the
+        -- whole underground — laid before it, a cave's pools and rivers
+        -- were gone by the time the chunk was done (2026-09-18).
+        if painted and tmin > 0 and not tail and not WHITE and tdw.caves then
+            tdw.caves.into(buf, pos, dmin, dmax)
+        end
     end
 
     -- The core stack, outermost first, only the shells this chunk can touch.

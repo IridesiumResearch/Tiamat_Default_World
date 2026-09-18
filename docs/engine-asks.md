@@ -31,6 +31,26 @@ declares its own `opacity`. The mod's lava is opaque and lights its pits:
 measured headless on a generated lava block, `r15 g8 b1` in it and `r14`
 two blocks over its surface. The magma shell is still the look-alike solid.*
 
+## 35. A terraced fluid fill reads its fields at y = 0.5, and the docs say the chunk's floor (2026-09-18)
+
+`fill_fluid_terraced` (detgen/buffer.rs) evaluates `level` and `within` on
+a region whose `origin_y` is the constant `LEVEL_SLICE = 0.5`: one slice of
+the whole world, at world height half a block. The stub says the level "is
+read once per column (at the column's centre, on the chunk's lowest layer,
+so give it a field that does not read `y`)". The two agree only for a
+field that reads no `y` at all; a field that reads it a little — a
+province cut that carries the depth band, a noise stretched in y — is
+evaluated thirty thousand blocks from where its water goes.
+
+Found building the Underground River: its `within` carried the caves'
+depth band, and at y = 0.5 the band is nothing, so no column was ever in
+the river and the fill laid no water, with no message. The mod now keeps
+every `level` and `within` free of y (caves.lua, `mine_flat`).
+
+The smallest change is to the doc, so the next person knows where the
+slice is. Better: evaluate the slice on the chunk's own floor, `y0 + 0.5`,
+which is what the doc promises and what a field that reads y expects.
+
 ## 30. A program cannot spend the same value twice (2026-09-16)
 
 **The binding constraint on the whole world.** A density program may hold

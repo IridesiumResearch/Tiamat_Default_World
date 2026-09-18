@@ -362,6 +362,18 @@ block("diamond", "Diamond", "A few bright cells in the dark of the Gloam; almost
 block("orichalcum", "Orichalcum", "The old metal: red-gold, warm, faintly lit from within, deeper than anything.",
     { hardness = 4.0, tint = { strength = 0.08, scale = 48 }, light_emit = { r = 4, g = 2, b = 1 } })
 
+-- The normal caves (2026-09-18), one new material and one new plant a
+-- biome at most: 2.1 Mossy Limestone's `maidenhair` (its limestone is
+-- `calcite`), 2.2 Crystal Seam's `crystal`, 2.3 Underground River's
+-- `cobbles` and `glow_algae`.
+block("maidenhair", "Maidenhair fern", "Fragile micro-ferns a hand high, where the drips fall.",
+    { hardness = 0.1, tint = { strength = 0.12, scale = 32 }, passable = true, sway = true, billboard = "cross" })
+block("crystal", "Crystal", "Clear hexagonal prisms grown out of the seam; they catch a light and hold it.",
+    { hardness = 2.6, transparent = true, tint = { strength = 0.06, scale = 24 }, light_emit = { r = 2, g = 3, b = 5 } })
+block("cobbles", "Cobbles", "Rounded river cobbles, grey and brown, packed in the bed.", { hardness = 0.8, tint = ROCK })
+block("glow_algae", "Glowing algae", "A slick dark-green film on the waterline's stones, lit from within.",
+    { hardness = 0.1, tint = { strength = 0.10, scale = 24 }, light_emit = { r = 1, g = 6, b = 3 } })
+
 -- Depth bands -----------------------------------------------------------
 block("dark_sediment", "Dark sediment", "Dark-cave rock, 1.6 to 4 km down: old mud turned to stone.", { hardness = 2.0, tint = ROCK })
 block("light_sediment", "Light sediment", "Pale beds laid through the dark sediment.", { hardness = 2.0, tint = ROCK })

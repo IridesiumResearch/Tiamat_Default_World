@@ -150,6 +150,11 @@ BLOCKS = {
     "gold_ore":       (196, 160,  74,  0),
     "diamond":        (172, 212, 220,  0),
     "orichalcum":     (196, 128,  84,  0),
+    # The normal caves (2026-09-18).
+    "maidenhair":     (108, 150,  92,  0),
+    "crystal":        (196, 214, 226,  0),
+    "cobbles":        (118, 108,  96,  0),
+    "glow_algae":     ( 52, 120,  74,  0),
 }
 
 # Textures the designer drew by hand (2026-09-17): never overwritten here.
@@ -162,6 +167,7 @@ HAND_MADE = {
 
 # Alpha per texture; everything not listed is opaque.
 ALPHA = {
+    "crystal": 150,
     "water": 150,
     "clear_ice": 120,
 }

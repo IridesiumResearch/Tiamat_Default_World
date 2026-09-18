@@ -2672,6 +2672,74 @@ level downward."
 - `tools/make_textures.py` now keeps the hand-made textures (`HAND_MADE`)
   and only writes the flat ones.
 
+### The ores, shallower (2026-09-18)
+
+"redistribute so the lowest ore is at 2000 blocks with diamond being at
+1200": copper, iron, flint from the surface; coal and salt from 60 blocks;
+tin and silver 200; chromium and lead 420; gold 750; diamond 1,200;
+orichalcum 2,000. The same proportions, scaled to the new bottom.
+
+### The normal caves: Mossy Limestone, Crystal Seam, Underground River (2026-09-18)
+
+The first three cave biomes, from the designer's briefs, under the rule of
+**one new material and one new plant a biome at most**.
+
+**The framework** (`biomes/caves.lua`). The normal caves' band is 100 to
+1,600 blocks under the base dome, its top pushed 120 blocks under the
+smooth ground where the relief sinks it, and a cave is carved only in
+chunks that are rock throughout, so none opens into a biome's soil. A
+slow noise flat in y is the caves' province; each biome takes a band of
+it, so the caves change kind every few hundred blocks across. A chunk
+asks once which biome it is and runs that biome's fills alone: a carve
+(air where a field is positive), linings by a layered fill whose depth is
+the void's negative, covers on the floors, structures rooted on floors —
+or on ceilings, with the field negated, since the engine's `scatter`
+stamps at any rock-over-air crossing — and pools and rivers by the
+terraced fluid fill. Between two biomes is a wall of rock. The HUD names
+the cave a player stands in (`tdw.cave_under`), and `/tp <cave biome>`
+drops them into the nearest of its voids.
+
+- **2.1 Mossy Limestone**: two storeys of vaulted domes (a footprint noise
+  cut by a vertical profile, the footprint shrinking a block per block
+  toward floor and ceiling, scooped by a fine noise) joined by three-block
+  crawlspaces along contour lines at the storeys' floors. Calcite walls,
+  mud floors with gravel beds and calcite rimstone basins holding still
+  water, moss over half the floors, ivy hanging from the ceiling's
+  crevices, maidenhair at the drips, calcite boulders. **New: `maidenhair`.**
+- **2.2 Crystal Seam**: fault corridors along contour lines, four to eight
+  wide at the floor narrowing to a quarter of that at the ceiling twelve to
+  twenty up — the cleft; geodes, blobs of a fine noise within three blocks
+  of the fault, hollowed and lined. Slate over basalt, planar crystal veins
+  (a noise drawn out six times along the ground), crystal knobs sampled to
+  the cells in the last block of rock before the void, shards on the
+  floor, spires at the pinch-points, clusters on floors and hanging from
+  ceilings. **New: `crystal`**, translucent and faintly lit.
+- **2.3 Underground River**: meandering tubes along a two-octave contour,
+  ten to eighteen wide, six to ten high, an undercut outer bank and a
+  sloping inner shelf (the bend's inner side, from the signed contour and
+  a bend noise, rises past the channel's edge); a channel 2.6 blocks deep
+  of water down the middle, over cobbles and gravel; silt flats on the
+  banks, moss pads in the current, glowing algae at the waterline,
+  bleached roots from the ceiling, snags at the choke points. **New:
+  `cobbles`, `glow_algae`.**
+- **Checked headless** on all three: the voids, the linings, the covers
+  and the structures where the briefs put them; the river's channel and
+  the basins holding water; the HUD naming each; `/tp` landing in each.
+- **`white_unbuilt` is off.** The dev switch painted everything under the
+  surface band as the white placeholder, and the ores and the caves keep
+  out of a placeholder world — so neither had ever generated in a chunk.
+  The ores had only been measured as fields. Now that the underground is
+  being built, the switch is off.
+- **Three traps, written down** (engine-asks 35 for the first): a terraced
+  fluid fill reads `level` and `within` on the slice at world y = 0.5, not
+  the chunk's floor, so those fields must read no y at all; the bot has no
+  physics, so a bot dropped into a void hangs where it was put; a program
+  that reads the void twice runs out of the eight buffers, so `-1.2 < v
+  < 0` is written `0.6 - |v + 0.6|`.
+- Not measured: the cost of a cave chunk. Its fields are 270 to 590
+  operations and a chunk runs seven or eight fills; the tour generated its
+  chunks fast enough that a bot's view filled in a minute.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

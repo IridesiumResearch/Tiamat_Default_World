@@ -161,9 +161,12 @@ biome{ id = "redwood_stands", name = "Redwood Stands", area = "surface",
 
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }
-biome{ id = "mossy_limestone", name = "Mossy Limestone", area = "normal_caves" }
-biome{ id = "crystal_seam", name = "Crystal Seam", area = "normal_caves" }
-biome{ id = "underground_river", name = "Underground River", area = "normal_caves", note = "Needs generated water." }
+biome{ id = "mossy_limestone", name = "Mossy Limestone", area = "normal_caves",
+    note = "2.1 (2026-09-18) — vaulted domes joined by crawlspaces; mud floors, rimstone basins with still water, moss over the lower surfaces, vines from the ceiling, maidenhair at the drips. The caves' province noise between -0.12 and 0.14." }
+biome{ id = "crystal_seam", name = "Crystal Seam", area = "normal_caves",
+    note = "2.2 (2026-09-18) — narrow fault corridors with V-shaped ceilings; slate over basalt cut by planar crystal veins; clusters from the walls, spires at the pinch-points, geodes, shards. Province under -0.12." }
+biome{ id = "underground_river", name = "Underground River", area = "normal_caves",
+    note = "2.3 (2026-09-18) — meandering tubes with an undercut bank and a sloping shelf; a flowing channel two deep over cobbles and gravel, silt on the banks, glowing algae at the waterline, moss pads in the current, roots from the ceiling, snags. Province over 0.14." }
 biome{ id = "fungal_grove_chambers", name = "Fungal Grove Chambers", area = "normal_caves" }
 biome{ id = "mineral_vein_tunnels", name = "Mineral Vein Tunnels", area = "normal_caves" }
 biome{ id = "stalactite_forests", name = "Stalactite Forests", area = "normal_caves" }

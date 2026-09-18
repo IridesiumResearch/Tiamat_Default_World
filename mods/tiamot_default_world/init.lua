@@ -29,7 +29,7 @@ tdw.config = {
     -- finished work. White reads as what it is: unclaimed. Everything below
     -- the surface band (a hundred blocks down, layers.DEPTH) takes it. Set
     -- this to false for a world that looks like a world.
-    white_unbuilt = true,
+    white_unbuilt = false,   -- off since 2026-09-18: the ores and the normal caves claim the underground now
     -- Which biome a NEW player starts in, by id, or nil for the fixed spawn
     -- in the woodlands. The landing hunts for it: it drops them on one
     -- azimuth of that biome's ring, reads the ground, and goes round again
@@ -98,6 +98,10 @@ load("whereami")                     -- the biome you are in, on the HUD and fro
 -- decides what the name is and how long it stays up.
 game.register_hud_script("hud.lua")
 load("generate")
+load("biomes.caves")                -- the normal caves' framework (2026-09-18)
+load("biomes.mossy_limestone")      -- 2.1
+load("biomes.crystal_seam")         -- 2.2
+load("biomes.underground_river")    -- 2.3
 load("player")
 load("rules")             -- leaves and water, and other rules of the whole world
 load("exports")           -- what the other mods may read: climate, biomes, the two unlocks
