@@ -55,6 +55,72 @@ local SEDIMENT_BEDS = shape.compile("sediment.beds", shape.node.sub(shape.node.n
 -- own (the engine agent's note, 2026-09-17).
 local BODY_CODE = shape.compile("body.code", shape.node.const(0.0))
 
+-- THE ORES (2026-09-17): veins and clusters of cells inside whatever rock a
+-- chunk is made of, each ore from its own depth downward. A field per ore
+-- — the smooth depth D past the ore's level (exact, so a chunk above it is
+-- skipped for nothing) and a vein noise over a threshold — laid by a smooth
+-- `fill_density`, which samples the field per block and carries the edge
+-- to the cells: a vein is whole blocks of ore in its middle and a few cells
+-- in the rock at its edge. The noise clamps at +/-0.5 and sits at the clamp
+-- an eighth of the time, so a single noise can be no rarer than that: the
+-- rarer ores are where two or three independent noises are ALL high, and
+-- the finer their frequency the smaller the vein and the rarer a whole
+-- block of it. Only in chunks that are solid throughout (`tmin > 0`), so
+-- an ore never stands in air or in a biome's soil: the ores begin a chunk
+-- under the ground.
+--   level  km below the base dome    freq   blocks per vein feature
+--   min    the noise's threshold     n      independent noises, all over it
+--   stretch the vein drawn out along an axis: seams and lodes
+--   lode   the ore lies in lode fields, forty blocks across, where a slow
+--          noise is over this; between them the rock is bare. Measured
+--          without it, every ore was three to seven per cent of the rock
+--          — a third of the underground would have been ore.
+local LODE_FREQ = 1 / 40
+local ORES = {
+    { "copper_ore",   level = 0.00, freq = 1 / 5,   min = 0.42, n = 2, lode = 0.15, stretch = { x = 3 } },
+    { "iron_ore",     level = 0.00, freq = 1 / 5,   min = 0.43, n = 2, lode = 0.15, stretch = { z = 3 } },
+    { "flint",        level = 0.00, freq = 1 / 3,   min = 0.44, n = 2, lode = 0.15 },
+    { "coal",         level = 0.10, freq = 1 / 8,   min = 0.40, n = 2, lode = 0.15, stretch = { x = 4, z = 3 } },
+    { "salt",         level = 0.10, freq = 1 / 6,   min = 0.44, n = 2, lode = 0.15, stretch = { x = 3, z = 3 } },
+    { "tin_ore",      level = 0.35, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { y = 2 } },
+    { "silver_ore",   level = 0.35, freq = 1 / 3.5, min = 0.46, n = 2, lode = 0.15, stretch = { x = 2 } },
+    { "chromium_ore", level = 0.70, freq = 1 / 4,   min = 0.46, n = 2, lode = 0.15, stretch = { z = 2 } },
+    { "lead_ore",     level = 0.70, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { x = 2 } },
+    { "gold_ore",     level = 1.20, freq = 1 / 3,   min = 0.42, n = 3, lode = 0.25 },
+    { "diamond",      level = 2.00, freq = 1 / 2.5, min = 0.45, n = 3, lode = 0.25 },
+    { "orichalcum",   level = 3.50, freq = 1 / 2.5, min = 0.46, n = 3, lode = 0.32 },
+}
+local ORE_FIELDS = nil
+local function ore_fields()
+    if ORE_FIELDS then
+        return ORE_FIELDS
+    end
+    local n = shape.node
+    ORE_FIELDS = {}
+    for i, ore in ipairs(ORES) do
+        -- The depth FIRST (the deepest operand: the dome's polynomial), then
+        -- the noises, each a fresh buffer released as it is min'd in.
+        local field = n.sub(shape.depth(), n.const(ore.level))
+        field = n.min(field, n.sub(n.noise("lode_" .. ore[1], LODE_FREQ, 1, 1.0), n.const(ore.lode)))
+        for k = 1, ore.n do
+            field = n.min(field, n.sub(n.noise("ore_" .. ore[1] .. "_" .. k, ore.freq, 1, 1.0, ore.stretch), n.const(ore.min)))
+        end
+        ORE_FIELDS[i] = { field = shape.compile("ore." .. ore[1], field), material = blocks[ore[1]], level = ore.level }
+    end
+    return ORE_FIELDS
+end
+tdw.ORES = ORES
+tdw.ore_fields = ore_fields
+-- `dmax` is the chunk's greatest smooth depth: an ore whose level is under
+-- it cannot reach the chunk, and costs it nothing.
+local function ores_into(buf, dmax)
+    for _, ore in ipairs(ore_fields()) do
+        if dmax > ore.level then
+            buf:fill_density(ore.field, ore.material, DETAIL)
+        end
+    end
+end
+
 -- Chunk-class counters, logged now and then so the cost mix is visible.
 local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0, by_layers = 0 }
 local LOG_EVERY = 1024        -- was 4096: a ninety-second headless run never reached one line
@@ -345,6 +411,11 @@ local function generate(buf, pos)
         end
         if level < 2 and dmax > shape.ABYSS_D - SAFETY then
             buf:fill_density(V.abyss, unclaimed(blocks.morphic_rock), DETAIL)
+        end
+        -- The ores, into rock that is solid throughout, under the bands
+        -- they sit in and before the core stack, which overwrites them.
+        if painted and tmin > 0 and not WHITE then
+            ores_into(buf, dmax)
         end
         if skin and painted and tmin < shape.SKIN_TOP then
             -- The biome's own top.

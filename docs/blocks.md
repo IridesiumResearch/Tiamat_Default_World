@@ -15,6 +15,29 @@ carries variation. What breaks up a surface is the renderer's — the
 large-scale `tint`, and per-cell value jitter once the engine has it (asks,
 item 5). A textured material is a decision the designer makes by name.
 
+## The ores (2026-09-17)
+
+"add a basic list of ores and distribute them at various depths below the
+world", in the designer's order of depth, each from its level downward, as
+veins and clusters of cells inside blocks of whatever rock is there. The
+salt is the pan's `salt`. Levels are km below the base dome (generate.lua,
+`ORES`); the ores begin a chunk under the ground, in rock that is solid
+throughout.
+
+| Block | From | Why |
+|---|---|---|
+| `copper_ore` | the surface | asked for by name |
+| `iron_ore` | the surface | asked for by name |
+| `flint` | the surface | asked for by name |
+| `coal` | 100 blocks (the normal caves' top) | asked for by name |
+| `tin_ore` | 350 blocks | asked for by name |
+| `silver_ore` | 350 blocks | asked for by name |
+| `chromium_ore` | 700 blocks | asked for by name |
+| `lead_ore` | 700 blocks | asked for by name |
+| `gold_ore` | 1,200 blocks | asked for by name |
+| `diamond` | 2,000 blocks (the Gloam) | asked for by name; "very rarely should there ever be a full block of diamond" |
+| `orichalcum` | 3,500 blocks | asked for by name; faintly lit from within |
+
 ## Quenched lava (2026-09-16)
 
 "lava needs to create a blocks that are a mix of lavarock, stone, obsidian,

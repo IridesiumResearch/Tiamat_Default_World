@@ -343,6 +343,25 @@ game.register_fluid{
     color = { r = 24, g = 44, b = 52 },
 }
 
+-- The ores (2026-09-17, "a basic list of ores ... distribute them at
+-- various depths below the world", in the designer's order of depth):
+-- copper, iron, flint; coal, salt; tin, silver; chromium, lead; gold;
+-- diamond; orichalcum. Each from its level downward, as veins and clusters
+-- of cells inside blocks of whatever rock is there (generate.lua, ORES).
+-- The salt is the pan's `salt`. Eleven new nodes, asked for by name.
+block("copper_ore", "Copper ore", "Green-crusted rusty veins through the stone; the first metal.", { hardness = 1.6, tint = ROCK })
+block("iron_ore", "Iron ore", "Dull red-brown bands and lumps in the rock.", { hardness = 1.8, tint = ROCK })
+block("flint", "Flint", "Dark glassy nodules; it knaps to an edge and strikes a spark.", { hardness = 1.4, tint = ROCK })
+block("coal", "Coal", "Black seams, soft and sooty.", { hardness = 1.2, tint = { strength = 0.10, scale = 64 } })
+block("tin_ore", "Tin ore", "Grey-white streaks; with copper it is bronze.", { hardness = 1.7, tint = ROCK })
+block("silver_ore", "Silver ore", "Pale threads and wires through dark rock.", { hardness = 2.0, tint = ROCK })
+block("chromium_ore", "Chromium ore", "Hard grey-green crystals in the deep stone.", { hardness = 2.4, tint = ROCK })
+block("lead_ore", "Lead ore", "Heavy, dull, blue-grey cubes.", { hardness = 1.9, tint = ROCK })
+block("gold_ore", "Gold ore", "Flecks and stringers of yellow in white quartz.", { hardness = 2.2, tint = ROCK })
+block("diamond", "Diamond", "A few bright cells in the dark of the Gloam; almost never a whole block.", { hardness = 3.5, tint = { strength = 0.06, scale = 32 } })
+block("orichalcum", "Orichalcum", "The old metal: red-gold, warm, faintly lit from within, deeper than anything.",
+    { hardness = 4.0, tint = { strength = 0.08, scale = 48 }, light_emit = { r = 4, g = 2, b = 1 } })
+
 -- Depth bands -----------------------------------------------------------
 block("dark_sediment", "Dark sediment", "Dark-cave rock, 1.6 to 4 km down: old mud turned to stone.", { hardness = 2.0, tint = ROCK })
 block("light_sediment", "Light sediment", "Pale beds laid through the dark sediment.", { hardness = 2.0, tint = ROCK })

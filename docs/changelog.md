@@ -2637,6 +2637,41 @@ median 1, p90 49, p99 81, max 99, 1.1% over 80 (before the soft cap: p90
 44, max 69; before any ceiling: p90 112, max 205). Lower `CLIFF_SOFT` for
 shorter cliffs, raise it to keep more of the hill.
 
+### The ores (2026-09-17)
+
+Asked, as preparation for the caves: "add a basic list of ores and
+distribute them at various depths below the world ... scatter these things
+in veins or clusters as subnodes within full blocks of whatever, very
+rarely should there ever be a full block of diamond though simpler
+materials can more often be full blocks. Each one should appear from its
+level downward."
+
+- **Eleven new blocks** (docs/blocks.md): copper, iron and flint from the
+  surface; coal and the pan's `salt` from 100 blocks; tin and silver from
+  350; chromium and lead from 700; gold from 1,200; diamond from 2,000 (the
+  Gloam); orichalcum, faintly lit, from 3,500.
+- **How they lie** (generate.lua, `ORES`): a field per ore — the smooth
+  depth past the ore's level, so a chunk above it is skipped for nothing,
+  and a vein noise over a threshold — laid by a smooth `fill_density`, which
+  samples per block and carries the edge to the cells. A vein is whole
+  blocks in its middle and cells in the rock round it; the finer the noise
+  the smaller the vein and the rarer a whole block. Seams and lodes are the
+  noise drawn out along an axis. The engine's noise sits at its clamp an
+  eighth of the time, so a single noise cannot be rare: every ore is where
+  two independent noises are both over their threshold, the gold, diamond
+  and orichalcum where three are.
+- **Only in rock that is solid throughout** (`tmin > 0`), so no ore stands
+  in air or in a biome's soil; they begin a chunk under the ground and are
+  overwritten by the core stack where it reaches.
+- **Measured** (eight 12-block cubes per ore, half a kilometre under its
+  level): coal 2.8% of the rock and a third of that whole (seams), iron
+  1.9%, tin 1.7%, copper 1.3%, lead 1.3%, silver 1.2%, salt 1.2% (a quarter
+  whole), chromium 0.9%, flint 0.8%, gold 0.6%, diamond 0.2%, orichalcum
+  0.2% — and not one whole block of diamond or orichalcum. Before the lode
+  gate every ore was three to seven per cent.
+- `tools/make_textures.py` now keeps the hand-made textures (`HAND_MADE`)
+  and only writes the flat ones.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

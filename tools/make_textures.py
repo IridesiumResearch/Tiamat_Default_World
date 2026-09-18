@@ -137,6 +137,27 @@ BLOCKS = {
     "scorch":         ( 66,  48,  36,  0),
     "marrow":         (214, 206, 190,  0),
     "apex_stone":     ( 54,  36,  62,  0),
+    # The ores (2026-09-17), muted like the rest: metals a shade off the
+    # stone they sit in, the coal near-black, the diamond a cold pale blue.
+    "copper_ore":     (140,  96,  66,  0),
+    "iron_ore":       (122,  96,  86,  0),
+    "flint":          ( 56,  54,  58,  0),
+    "coal":           ( 34,  32,  34,  0),
+    "tin_ore":        (160, 162, 158,  0),
+    "silver_ore":     (190, 194, 200,  0),
+    "chromium_ore":   (134, 150, 152,  0),
+    "lead_ore":       ( 90,  92, 106,  0),
+    "gold_ore":       (196, 160,  74,  0),
+    "diamond":        (172, 212, 220,  0),
+    "orichalcum":     (196, 128,  84,  0),
+}
+
+# Textures the designer drew by hand (2026-09-17): never overwritten here.
+# Add a name to this set when a hand-made picture replaces a flat colour.
+HAND_MADE = {
+    "acacia_leaves", "apple_leaves", "birch_leaves", "cherry_blossom", "cherry_leaves",
+    "fir_needles", "ironwood_leaves", "kapok_leaves", "mangrove_leaves", "oak_leaves",
+    "willow_leaves",
 }
 
 # Alpha per texture; everything not listed is opaque.
@@ -469,6 +490,9 @@ def item_picture(name, colours):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, (r, g, b, grain) in BLOCKS.items():
+        if name in HAND_MADE:
+            print(f"kept {name}.png (hand-made)")
+            continue
         (OUT / f"{name}.png").write_bytes(texture(name, r, g, b, grain))
         print(f"wrote {name}.png")
     for name, colours in ITEMS.items():
