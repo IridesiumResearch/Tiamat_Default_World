@@ -1113,7 +1113,9 @@ function M.terrain(flank)
     -- deeper of `peak(a)` and `1 + peak(b)`, and the terrain is much the
     -- deeper of the two, so this costs no buffer at all.
     if not flank and mode ~= "alpine" and mode ~= "coast" and mode ~= "ocean" and mode ~= "edge" and M.river_valley then
-        local trough = M.river_valley()
+        -- In the shore programs the valley is cut from the coast's beach
+        -- floor where that stands higher (river_valleys.lua): two ops.
+        local trough = M.river_valley(shore and tdw.seas and tdw.seas.floor() or nil)
         if mode == "all" or mode == "rim" then
             -- Not into the mountains: where the alpine weight is up, the
             -- trough's surface is put a kilometre out of reach.

@@ -481,10 +481,12 @@ local function generate(buf, pos)
         -- flooded caves and tunnels, and the deep water over a trench.
         sea_into(buf, pos, painted)
         -- The caves (biomes/caves.lua), carved out of rock that is solid
-        -- throughout, ore and all, AFTER the sea: a terraced fluid fill
-        -- empties the columns outside its `within`, and the sea's is the
-        -- whole underground — laid before it, a cave's pools and rivers
-        -- were gone by the time the chunk was done (2026-09-18).
+        -- throughout, ore and all, AFTER the sea: the sea's fill puts water
+        -- in every open space under its level inside its area, so a cave
+        -- carved before it under a sea was flooded a hundred blocks under
+        -- the sea floor. (Not, as first written here, because a terraced
+        -- fill empties the columns outside its `within` — it leaves them
+        -- alone; the caves' own water was lost to engine-asks 35.)
         if painted and tmin > 0 and not tail and not WHITE and tdw.caves then
             tdw.caves.into(buf, pos, dmin, dmax)
         end

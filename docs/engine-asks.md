@@ -31,6 +31,58 @@ declares its own `opacity`. The mod's lava is opaque and lights its pits:
 measured headless on a generated lava block, `r15 g8 b1` in it and `r14`
 two blocks over its surface. The magma shell is still the look-alike solid.*
 
+## 36. Walls of water: what the world's data says, and where the rest may be (2026-09-18)
+
+For the engine's own hunt ("chunk walls in large bodies of water ... cannot
+find it"). The mod's side, measured headless: every fluid block within 40 of
+a landing, 30 under to 10 over the water's surface, checked for a SIDEWAYS
+face open to air (no terrain, no fluid) — in the columns either side of every
+chunk seam, and as a control the mid-chunk columns — and for water over open
+air on y seams and mid-chunk heights.
+
+**The open sea is seamless in the data.** Deep Ocean, Coral-Fringed
+Shallows, Kelp Forest, Pack Ice: about 363,000 water blocks, **zero** open
+faces anywhere and zero water over air.
+
+**The coasts were not — the mod's fault, fixed (mod, this date).** Every
+coast had a dry slope under the sea's level on the land side of the
+shoreline (the coast's terrain rises from the sea floor to the land there,
+and the sea's `within` stopped at the line), and every river valley near a
+sea was cut dry to thirty blocks under it. The sea stood against both: up to
+31 blocks of water face, 144 faces on seams and 84 inside chunks in one
+81x81 patch. After the fix, zero, at both coasts measured. Lakes show only
+the one- and two-block edges of ordinary shorelines.
+
+**So what is left is the client's**, and one place fits "chunk walls in
+large water, not reproducible between two loaded chunks": `ABSENT_POLICY =
+Absent::Air` (client/src/world.rs). A water column whose neighbour chunk
+has not arrived — the streaming frontier, absent AND not summarised — has
+its side faces drawn against air, the whole depth of the water in that
+chunk: a chunk-wide sheet, flush with the seam, standing until the neighbour
+lands. In rock that wall is invisible; in water you look straight at it,
+and a sea is where the frontier is in plain view (vertically too: the view
+distance ends inside deep water). `Neighbours::summarised` already hides
+faces at the LOD boundary; the frontier inside water has no such cover.
+`ChunkFluid::solid` counts an unsent block as a wall for the SKIRT, but the
+FACE culling goes by the grid's shell, which is `Absent::Air`.
+
+**The code that fills the water**, all through `fill_fluid_terraced`:
+
+- the seas: `seas.lua`, `M.fill` — `level` is `M.fluid_level()` (the level
+  map, quantised to the pool's step; no y), `within` is `M.d()` (the sea
+  distance map plus two fine noises) plus `WATER_INLAND`; no lip. Called for
+  every chunk inside the body from `generate.lua` (`sea_into`), after the
+  terrain and structures;
+- a biome's pools and rivers: its `fluid` fill (level, within, lip) from
+  `generate.lua`, `waters_into`, after the sea;
+- the caves' pools and rivers: `biomes/caves.lua`, `M.into`, in chunks of
+  solid rock, after the sea.
+
+Every `level` and `within` reads no y (engine-asks 35), so stacked chunk
+layers ask the same question of a column and cannot disagree at a y seam:
+the measured water-over-air at y seams was zero in the open sea, and the few
+at the coast went with the dry slopes.
+
 ## 35. A terraced fluid fill reads its fields at y = 0.5, and the docs say the chunk's floor (2026-09-18)
 
 `fill_fluid_terraced` (detgen/buffer.rs) evaluates `level` and `within` on

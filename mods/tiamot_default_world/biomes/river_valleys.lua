@@ -162,14 +162,29 @@ end
 -- smooth whatever the ground above it does.
 -- The relief FIRST: it is the deeper of the two, and with the depth held
 -- first the whole code field reached the ninth buffer.
-local function smooth_height()
-    return n.add(shape.relief_node(), shape.depth())
+-- `floor`, when given, is a height (km over the dome) the smooth height is
+-- never taken under: the shore programs pass the coast's beach floor.
+local function smooth_height(floor)
+    local h = shape.relief_node()
+    if floor then
+        h = n.max(h, floor)
+    end
+    return n.add(h, shape.depth())
 end
 -- The trough's surface as a terrain field: the smooth height lowered by the
 -- valley's depth and put back by the rise. `M.terrain` takes the lesser of
 -- itself and this, so the trough cuts and the uplands keep their shape.
-function shape.river_valley()
-    return n.add(n.add(smooth_height(), n.const(-VALLEY_DEPTH)), rise())
+--
+-- **Near a sea the valley is cut from the coast's floor, not the land's**
+-- (2026-09-18). The coast lifts the land within a few hundred blocks of a
+-- shore to a plain at the water's height, and the valley was cut from the
+-- land UNDER that plain — in a basin, thirty blocks below the sea, fifty to
+-- a hundred and twenty blocks from it, where the river's own water is
+-- turned off near seas. The sea stood against that dry trench as a wall of
+-- water. With the floor, a river reaches the coast as a plain at the
+-- water's height and still cuts as deep as it likes inland.
+function shape.river_valley(floor)
+    return n.add(n.add(smooth_height(floor), n.const(-VALLEY_DEPTH)), rise())
 end
 -- The water's level as a depth field: positive under it.
 local function water_level()

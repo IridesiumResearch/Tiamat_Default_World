@@ -2730,6 +2730,10 @@ drops them into the nearest of its voids.
   out of a placeholder world — so neither had ever generated in a chunk.
   The ores had only been measured as fields. Now that the underground is
   being built, the switch is off.
+- **The caves are carved after the sea's fill**, which floods every open
+  space under the sea's level inside its area: carved first, a cave under a
+  sea would be flooded a hundred blocks under its floor. (The next day's
+  entry corrects the reason first given.)
 - **Three traps, written down** (engine-asks 35 for the first): a terraced
   fluid fill reads `level` and `within` on the slice at world y = 0.5, not
   the chunk's floor, so those fields must read no y at all; the bot has no
@@ -2739,6 +2743,42 @@ drops them into the nearest of its voids.
 - Not measured: the cost of a cave chunk. Its fields are 270 to 590
   operations and a chunk runs seven or eight fills; the tour generated its
   chunks fast enough that a bot's view filled in a minute.
+
+### Walls of water at the coasts (2026-09-18)
+
+Asked: "there are chunk walls in large bodies of water and my engine cannot
+find it ... Could you check and see if you can find out why". Measured
+headless: every water block near a landing, checked for a sideways face open
+to air, on chunk seams and inside chunks.
+
+- **The open sea was already seamless**: Deep Ocean, the reef, Kelp Forest
+  and Pack Ice, about 363,000 water blocks, no open face anywhere.
+- **The coasts were not.** The coast's terrain rises from the sea floor to
+  the land on the LAND side of the shoreline (the face, four blocks; a
+  beach, thirty-four; the notch, sea caves and tunnels cut inland of it),
+  and the sea's water stopped at the line, so all of that lay dry under the
+  sea's level and the sea stood against it. One 81x81 patch of the reef
+  lane's coast: 144 open faces on seams, 84 inside chunks, up to 16 blocks
+  tall; the Mangrove Coast 49. **The sea's water now reaches 80 blocks past
+  the shoreline** (`seas.WATER_INLAND`), where there is room under its
+  level — which is only the ramp and the cuts; dry land is untouched.
+- **River valleys near a sea were cut 30 blocks under it.** The coast lifts
+  the land near a shore to a plain at the water's height, but the valley
+  was cut from the land under the plain, 50 to 120 blocks from the sea,
+  where the river's own water is off. With the water reaching inland, the
+  sea stood against the trench: a wall 31 blocks tall. **In the shore
+  programs the valley is now cut from the coast's beach floor** where that
+  stands higher (`shape.river_valley(floor)`, two ops: temperate_shore 946,
+  belt_shore 956), so a river reaches the coast as a plain at the water's
+  height and still cuts as deep as it likes inland.
+- After: zero open faces at both coasts measured, and across the seas
+  again; lakes keep only the one- and two-block edges of shorelines.
+- **What is left looks like the client's** (engine-asks 36): water beside a
+  chunk that has not arrived is meshed against air (`ABSENT_POLICY`), a
+  chunk-wide sheet of water at the streaming frontier.
+- Corrected: the caves run after the sea because the sea's fill floods
+  every open space under its level inside its area, not because a terraced
+  fill empties columns outside its `within` (it leaves them alone).
 
 ### Housekeeping
 

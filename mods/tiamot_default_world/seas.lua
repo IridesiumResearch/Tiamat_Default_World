@@ -153,6 +153,7 @@ M.CLIFF_WANDER_FREQ, M.CLIFF_WANDER = 1 / 900, 0.030    -- km: +/-15 blocks of h
 -- cap that gives INSIDE a program would need the land's height twice,
 -- five hundred operations, which is engine-asks 30.
 M.CLIFF_SOFT = 0.35
+M.WATER_INLAND = 80.0                                   -- blocks past the shoreline the sea's water may lie, where there is room under its level
 M.SHELF_END = 130.0                                     -- blocks out: the coast's shelf ends, the ocean's floor begins...
 M.DEEP_FROM = 200.0                                     -- ...and is the whole floor from here
 -- Where a sea may not be.
@@ -390,9 +391,17 @@ function M.fill(buf, pos)
     if not buf.fill_fluid_terraced then
         return
     end
+    -- `within` reaches WATER_INLAND blocks past the shoreline (2026-09-18):
+    -- the coast's terrain rises from the sea floor to the land on the LAND
+    -- side of the line (the face, four blocks; a beach, thirty-four), and
+    -- the notch, sea caves and tunnels are cut inland of it, so a `within`
+    -- that stopped at the line left all of that dry under the sea's level —
+    -- and the sea stood against it as a wall of water, up to sixteen blocks
+    -- tall. Water goes only where there is room under the level, so past
+    -- the line it fills that and nothing on dry land.
     FLUID = FLUID or {
         level = shape.compile("sea.level", M.fluid_level()),
-        within = shape.compile("sea.within", M.d()),
+        within = shape.compile("sea.within", n.add(M.d(), n.const(M.WATER_INLAND))),
     }
     -- The pack's ice first (biomes/pack_ice.lua): the water takes the room
     -- it leaves.
