@@ -131,15 +131,15 @@ tdw.build_biome(ID, function(ctx)
     local codes = shape.compile("biome.icefall.codes", code)
     local km = 0.001
     local entries = {
-        { code = 1, to = 40 * km, material = blocks.ice },
+        { code = 1, to = 24 * km, material = blocks.ice },
         { code = 2, to = 1 * km, material = blocks.snow },
-        { code = 2, from = 1 * km, to = 40 * km, material = blocks.ice },
+        { code = 2, from = 1 * km, to = 24 * km, material = blocks.ice },
         { code = 3, to = 6 * km, material = blocks.clear_ice },
-        { code = 3, from = 6 * km, to = 40 * km, material = blocks.ice },
+        { code = 3, from = 6 * km, to = 24 * km, material = blocks.ice },
         { code = 4, to = 1 * km, material = blocks.gravel },
-        { code = 4, from = 1 * km, to = 40 * km, material = blocks.ice },
+        { code = 4, from = 1 * km, to = 24 * km, material = blocks.ice },
         { code = 5, to = 4 * km, material = blocks.clear_ice },
-        { code = 5, from = 4 * km, to = 40 * km, material = blocks.ice },
+        { code = 5, from = 4 * km, to = 24 * km, material = blocks.ice },
     }
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },

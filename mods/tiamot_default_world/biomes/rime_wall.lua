@@ -148,12 +148,14 @@ tdw.build_biome(ID, function(ctx)
     -- depth under the top, and stone must not show on it.
     local entries = {
         { code = 1, to = 3 * km, material = blocks.snow },
-        { code = 1, from = 3 * km, to = 120 * km, material = blocks.ice },
-        { code = 2, to = 120 * km, material = blocks.ice },
+        -- The wall's 70 and its top's 7, and fifteen into the ground (120
+        -- until 2026-09-18).
+        { code = 1, from = 3 * km, to = 92 * km, material = blocks.ice },
+        { code = 2, to = 92 * km, material = blocks.ice },
         { code = 3, to = 2 * km, material = blocks.snow },
-        { code = 3, from = 2 * km, to = 120 * km, material = blocks.ice },
+        { code = 3, from = 2 * km, to = 92 * km, material = blocks.ice },
         { code = 4, to = 8 * km, material = blocks.clear_ice },
-        { code = 4, from = 8 * km, to = 120 * km, material = blocks.ice },
+        { code = 4, from = 8 * km, to = 92 * km, material = blocks.ice },
     }
     local fills = {
         { layers = true, depth = depth, code = codes, entries = entries, body = true },

@@ -2780,6 +2780,61 @@ to air, on chunk seams and inside chunks.
   every open space under its level inside its area, not because a terraced
   fill empties columns outside its `within` (it leaves them alone).
 
+### More caves, their mouths, and the surface kept to the surface (2026-09-18)
+
+The designer: "lets be sure that surface biomes dont really extend down
+into the ground too far. The caves seem just a little sparse to me. lets
+add a few more and lets be sure they sometimes come to the surface so you
+can stumble across one."
+
+- **Denser caves.** Mossy Limestone has a third storey of rooms (0.74 km
+  down, between the two) and a lower room threshold (`ROOM_MIN` 0.06 to
+  0.03). Crystal Seam has a second level of corridors at 1.25 km on its own
+  fault and floor streams, and closer fault planes (1/160 to 1/100).
+  Underground River has a second river at 0.42 km on its own course, with
+  its own terraced water fill, and closer meanders (1/420 to 1/260). The
+  first level, storey and river stay where they were. Measured over 160
+  columns per biome, the share of columns that meet a cave and the void
+  per column:
+
+  | biome | before | after |
+  |---|---|---|
+  | Crystal Seam | 11 %, 1.4 blocks | 41 %, 5.5 blocks |
+  | Mossy Limestone | 60 %, 7.3 blocks | 69 %, 11.4 blocks |
+  | Underground River | 7 %, 0.6 blocks | 18 %, 1.6 blocks |
+
+- **Cave mouths** (`caves.lua`, "the mouths"). A mouth is a tunnel five
+  wide and five tall that winds along a contour line. Its depth under the
+  smooth ground follows a slow noise, from 40 blocks above the ground down
+  to 500 blocks. Where it crosses the real ground it opens as a slit or a
+  hole, then runs down toward the cave band. Mouths appear only in mouth
+  zones, which cover about half the land, and never within 150 blocks of
+  the sea or inside river valleys, because water would pour in and stand
+  as a wall where its fill ends. The tunnel is carved in surface chunks
+  after the biome's paint, plants and trees, and in the rock chunks below.
+  The first cut sat about 400 blocks down almost everywhere, which gave
+  0.25 openings per km². The depth now centres at 80 blocks, with a wider,
+  gentler noise. Over three 6 km squares, a 24-block grid finds
+  0.4 to 1.8 openings per km². The grid misses most of a five-wide slit,
+  so the real count is higher.
+- **The surface biomes stay at the surface.** The HUD now names the depth
+  band ("Normal Caves" and the bands below it) anywhere more than 40 blocks
+  under the smooth ground, instead of the surface biome above
+  (`tdw.depth_area_under`, `whereami.lua`). A cave biome's own ground still
+  names its cave biome. The deepest bands of the biomes that painted far
+  down were cut back:
+
+  | biome | depth, before → after |
+  |---|---|
+  | Deep Ocean | 400 → 370 |
+  | Abyssal Trench | 500 → 390 |
+  | Rime Wall | 120 → 92 |
+  | Karst Towers | 80 → 30 |
+  | Frozen Wastes | 40/45 → 24 |
+  | Icefall | 40 → 24 |
+  | Kelp Forest | 40 → 12 |
+  | Dunes | 30 → 20 |
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

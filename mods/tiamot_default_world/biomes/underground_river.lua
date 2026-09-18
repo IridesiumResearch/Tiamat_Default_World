@@ -28,9 +28,15 @@ local schem = tdw.schem
 local n = shape.node
 local ID = "underground_river"
 
-local FLOOR_D, FLOOR_WANDER = 0.80, 0.25                -- km under the dome, and how far the bed wanders either way
+-- Two rivers since 2026-09-18 ("a little sparse": a column through this
+-- ground met a river 7% of the time): the first where it was, a second
+-- shallower on its own course. The meanders closer together too.
+local RIVERS = {
+    { floor = 0.80, wander = 0.25, course = "ur_course", floor_stream = "ur_floor", bend = "ur_bend" },
+    { floor = 0.42, wander = 0.15, course = "ur_course2", floor_stream = "ur_floor2", bend = "ur_bend2" },
+}
 local FLOOR_FREQ = 1 / 1400                              -- the bed's fall: a quarter-kilometre over a kilometre and a half, a block in six at the steepest
-local COURSE_FREQ = 1 / 420                             -- the meander
+local COURSE_FREQ = 1 / 260                             -- the meander (1/420 until 2026-09-18)
 local HALF, HALF_VARY = 7.0, 2.0                        -- half-width: 10 to 18 across
 local TALL, TALL_VARY = 8.0, 2.0                        -- 6 to 10 high
 local SHELF = 0.45                                      -- the inner shelf's rise per block toward its wall
@@ -85,14 +91,21 @@ end
 
 tdw.cave_biome(ID, { 0.14, 1 }, function(ctx)
     local caves = ctx.caves
-    local function floor_d()
-        return n.add(n.noise("ur_floor", FLOOR_FREQ, 1, 2.0 * FLOOR_WANDER, shape.HUMIDITY_STRETCH), n.const(FLOOR_D))
+    local function floor_d(k)
+        local river = RIVERS[k]
+        return n.add(n.noise(river.floor_stream, FLOOR_FREQ, 1, 2.0 * river.wander, shape.HUMIDITY_STRETCH), n.const(river.floor))
     end
+    local function across_of(k)
+        return n.contour(RIVERS[k].course, COURSE_FREQ, 2)
+    end
+    local function signed(k)
+        return n.contour(RIVERS[k].course, COURSE_FREQ, 2, true)
+    end
+    -- The nearer of the two courses, for the linings and the covers: they
+    -- paint only rock within a block or two of a void, so the course they
+    -- belong to is the one that void is.
     local function across()
-        return n.contour("ur_course", COURSE_FREQ, 2)
-    end
-    local function signed()
-        return n.contour("ur_course", COURSE_FREQ, 2, true)
+        return n.min(across_of(1), across_of(2))
     end
     local function half()
         return n.add(n.noise("ur_half", 1 / 60, 1, HALF_VARY, shape.HUMIDITY_STRETCH), n.const(HALF))
@@ -104,19 +117,19 @@ tdw.cave_biome(ID, { 0.14, 1 }, function(ctx)
     -- side (the signed contour times a bend noise says which side), and
     -- nothing in the channel — the first cut raised the channel's own floor
     -- on that side and left the water level under it.
-    local function inner()
-        local side = n.clamp(n.mul(n.mul(signed(), n.noise("ur_bend", BEND_FREQ, 1, 1.0)), n.const(10.0)), 0.0, 1.0)
-        return n.mul(n.clamp(n.sub(across(), n.mul(half(), n.const(CHANNEL))), 0.0, 40.0), side)
+    local function inner(k)
+        local side = n.clamp(n.mul(n.mul(signed(k), n.noise(RIVERS[k].bend, BEND_FREQ, 1, 1.0)), n.const(10.0)), 0.0, 1.0)
+        return n.mul(n.clamp(n.sub(across_of(k), n.mul(half(), n.const(CHANNEL))), 0.0, 40.0), side)
     end
-    -- Blocks above the local floor, the floor rising over the shelf.
-    local function up()
-        return n.sub(n.mul(n.sub(floor_d(), caves.D()), n.const(1000.0)), n.mul(inner(), n.const(SHELF)))
+    -- Blocks above a river's local floor, the floor rising over the shelf.
+    local function up(k)
+        return n.sub(n.mul(n.sub(floor_d(k), caves.D()), n.const(1000.0)), n.mul(inner(k), n.const(SHELF)))
     end
-    local function tube()
-        local h = up()
-        return n.min(n.min(n.add(h, n.const(0.5)), n.sub(tall(), up())), n.sub(half(), across()))
+    local function tube(k)
+        local h = up(k)
+        return n.min(n.min(n.add(h, n.const(0.5)), n.sub(tall(), up(k))), n.sub(half(), across_of(k)))
     end
-    local void = ctx.mine(tube())
+    local void = ctx.mine(n.max(tube(1), tube(2)))
     local carve = ctx.compile("carve", void)
     local function step(f) return n.clamp(n.mul(f, n.const(1e4)), 0.0, 1.0) end
     -- Linings, by distance from the course: the channel's bed cobbles and
@@ -163,16 +176,18 @@ tdw.cave_biome(ID, { 0.14, 1 }, function(ctx)
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.snags, cell = SNAG_CELL, chance = SNAG_SQUARES, salt = 422, sink = 1,
             stand = ctx.compile("stand_snag", ctx.mine(n.min(in_channel, n.sub(n.const(HALF - 0.8), half())))) }
     end
-    -- The river: WATER_DEEP over the channel's floor, in world y. The floor
+    -- Each river: WATER_DEEP over its channel's floor, in world y. The floor
     -- is the tube's, without the shelf (the channel is the middle).
-    local floor_y = n.sub(n.mul(n.sub(shape.dome_node(), floor_d()), n.const(1000.0)), n.const(-shape.Y0))
-    fills[#fills + 1] = {
-        fluid = "tiamot_default_world:water",
-        lip = blocks.stone,
-        level = ctx.compile("river_level", n.add(floor_y, n.const(WATER_DEEP))),
-        -- `mine_flat`, not `mine`: a fluid fill's fields are read on the
-        -- slice at y = 0.5 (caves.lua).
-        within = ctx.compile("river_within", ctx.mine_flat(in_channel)),
-    }
+    for k = 1, #RIVERS do
+        local floor_y = n.sub(n.mul(n.sub(shape.dome_node(), floor_d(k)), n.const(1000.0)), n.const(-shape.Y0))
+        fills[#fills + 1] = {
+            fluid = "tiamot_default_world:water",
+            lip = blocks.stone,
+            level = ctx.compile("river_level" .. k, n.add(floor_y, n.const(WATER_DEEP))),
+            -- `mine_flat`, not `mine`: a fluid fill's fields are read on the
+            -- slice at y = 0.5 (caves.lua).
+            within = ctx.compile("river_within" .. k, ctx.mine_flat(n.sub(n.mul(half(), n.const(CHANNEL)), across_of(k)))),
+        }
+    end
     return fills
 end)

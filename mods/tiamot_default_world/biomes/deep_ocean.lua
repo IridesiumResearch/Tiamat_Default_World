@@ -349,9 +349,11 @@ tdw.build_biome(ID, function(ctx)
         { code = 3, from = 2 * km, to = 4 * km, material = blocks.mud },
         -- The basalt reaches far down: a pillar's sides, a trench's walls and a
         -- guyot's steep flanks are hundreds of blocks under the column's top.
-        { code = 4, to = 400 * km, material = blocks.dark_basalt },
+        -- As far as the deepest of them, the trenches' 350, and twenty more
+        -- (400 until 2026-09-18: no further into the ground than it shows).
+        { code = 4, to = 370 * km, material = blocks.dark_basalt },
         { code = 5, to = 3 * km, material = blocks.stone },
-        { code = 5, from = 3 * km, to = 400 * km, material = blocks.dark_basalt },
+        { code = 5, from = 3 * km, to = 370 * km, material = blocks.dark_basalt },
         { code = 6, to = 2 * km, material = blocks.black_mud },
         { code = 6, from = 2 * km, to = 5 * km, material = blocks.dark_basalt },
         { code = 7, to = 1 * km, material = blocks.stone },
@@ -361,7 +363,7 @@ tdw.build_biome(ID, function(ctx)
         { code = 9, to = 3 * km, material = blocks.magma },
         { code = 9, from = 3 * km, to = 8 * km, material = blocks.dark_basalt },
         { code = 10, to = 1 * km, material = blocks.barnacles },
-        { code = 10, from = 1 * km, to = 400 * km, material = blocks.dark_basalt },
+        { code = 10, from = 1 * km, to = 370 * km, material = blocks.dark_basalt },
     }
     -- Seagrass only where there is growth: round a live crack's vents, and
     -- on a pillar's top near the light.

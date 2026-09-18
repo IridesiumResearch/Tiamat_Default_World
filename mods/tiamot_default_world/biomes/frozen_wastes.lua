@@ -342,8 +342,10 @@ tdw.build_biome(ID, function(ctx)
         { code = 3, from = 1 * km, to = 5 * km, material = blocks.permafrost },
         { code = 4, to = 14 * km, material = blocks.ice },
         { code = 5, to = 1 * km, material = blocks.snow },
-        { code = 5, from = 1 * km, to = 40 * km, material = blocks.ice },
-        { code = 6, to = 45 * km, material = blocks.ice },
+        -- The glaciers' 12, and a sheet under them (40 and 45 until
+        -- 2026-09-18).
+        { code = 5, from = 1 * km, to = 24 * km, material = blocks.ice },
+        { code = 6, to = 24 * km, material = blocks.ice },
         { code = 7, to = 3 * km, material = blocks.clear_ice },
         { code = 7, from = 3 * km, to = 14 * km, material = blocks.ice },
     }

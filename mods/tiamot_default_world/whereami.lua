@@ -138,6 +138,33 @@ local MOSAIC_MEMBER = { karst_towers = true, savanna = true, peat_fen = true, re
 
 -- The biome whose ground is under (x, y, z), or nil when the column is
 -- unloaded or made of nothing anybody claims.
+-- The depth area under the ground at a place, or nil within UNDER_GROUND
+-- blocks of it: more than that under the SMOOTH ground (the dome and the
+-- relief; the biomes' own hills are within that of it), the layer table's
+-- area for the depth (layers.DEPTH: the normal caves, the Gloam, the abyss).
+local UNDER_GROUND = 40
+local SMOOTH = nil
+function tdw.depth_area_under(x, y, z)
+    local seed = game.world_seed or tdw.seed
+    if seed == nil then
+        return nil
+    end
+    SMOOTH = SMOOTH or shape.compile("hud.relief", shape.relief_node())
+    local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+    local dome = shape.dome_at(u)
+    local depth = dome - (y - shape.Y0) * shape.SCALE
+    if (depth + SMOOTH:at(x + 0.5, 0.5, z + 0.5, seed)) * 1000 < UNDER_GROUND then
+        return nil
+    end
+    for _, band in ipairs(tdw.layers.DEPTH) do
+        -- The surface band's own name is the surface biome's: only the
+        -- bands under it name themselves.
+        if band.id ~= "surface" and depth >= band.d[1] and depth < band.d[2] then
+            return band.id
+        end
+    end
+    return nil
+end
 function tdw.biome_under(x, y, z)
     -- Underground, in a cave's void: the caves say (biomes/caves.lua).
     if tdw.cave_under then
@@ -150,6 +177,13 @@ function tdw.biome_under(x, y, z)
     local sea = tdw.seas and tdw.seas.zone(x, z)
     if sea then
         return sea
+    end
+    -- Deep under the ground and in no cave's void: the depth's own area,
+    -- not the surface biome over it (2026-09-18, "be sure that surface
+    -- biomes dont really extend down into the ground too far").
+    local under = tdw.depth_area_under(x, y, z)
+    if under then
+        return under
     end
     -- The cold core's five share snow, ice, permafrost, granite, fir and
     -- moss between them, so inside the frost ring's edge the placement
@@ -300,7 +334,7 @@ tdw.on_tick(function(dt)
             -- arrived must not blank the name and put it back again.
             if here and here ~= state.biome then
                 state.biome = here
-                local biome = tdw.biomes[here]
+                local biome = tdw.biomes[here] or tdw.areas[here]
                 say(uuid, biome and biome.name or here)
             end
         end

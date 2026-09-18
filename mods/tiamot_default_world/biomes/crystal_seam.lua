@@ -25,8 +25,15 @@ local schem = tdw.schem
 local n = shape.node
 local ID = "crystal_seam"
 
-local FLOOR_D, FLOOR_WANDER = 0.75, 0.45                -- km under the dome: the corridors' floors, and how far they wander
-local FAULT_FREQ = 1 / 160                              -- the shear planes
+-- Two levels of corridors since 2026-09-18 ("a little sparse": a column
+-- through the Seam met a corridor 11% of the time), and the shear planes
+-- closer together. Level 1 keeps its streams, so the first level's
+-- corridors stay where they were; level 2 has its own.
+local LEVELS = {
+    { floor = 0.75, wander = 0.45, fault = "cs_fault", floor_stream = "cs_floor" },
+    { floor = 1.25, wander = 0.25, fault = "cs_fault2", floor_stream = "cs_floor2" },
+}
+local FAULT_FREQ = 1 / 100                              -- the shear planes (1/160 until 2026-09-18)
 local WIDTH, WIDTH_VARY = 3.0, 1.0                      -- half-width at the floor: 4 to 8 across
 local TALL, TALL_VARY = 16.0, 4.0                       -- blocks: 12 to 20
 local NARROW = 0.75                                     -- the cleft: the half-width lost by the ceiling
@@ -80,12 +87,18 @@ end
 
 tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
     local caves = ctx.caves
-    local function floor_d()
-        return n.add(n.noise("cs_floor", 1 / 900, 1, 2.0 * FLOOR_WANDER, shape.HUMIDITY_STRETCH), n.const(FLOOR_D))   -- a slow wander: the floors were climbing a block a block at 1/260
+    -- A level's floor, km under the dome: a slow wander (the floors were
+    -- climbing a block a block at 1/260).
+    local function floor_d(k)
+        local level = LEVELS[k]
+        return n.add(n.noise(level.floor_stream, 1 / 900, 1, 2.0 * level.wander, shape.HUMIDITY_STRETCH), n.const(level.floor))
     end
-    -- Blocks above the corridor's floor (positive up).
-    local function up()
-        return n.mul(n.sub(floor_d(), caves.D()), n.const(1000.0))
+    -- Blocks above a level's floor (positive up).
+    local function up(k)
+        return n.mul(n.sub(floor_d(k), caves.D()), n.const(1000.0))
+    end
+    local function fault(k)
+        return n.contour(LEVELS[k].fault, FAULT_FREQ, 2)
     end
     local function tall()
         return n.add(n.noise("cs_tall", 1 / 40, 1, TALL_VARY, shape.HUMIDITY_STRETCH), n.const(TALL))
@@ -98,19 +111,26 @@ tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
     -- operand first** at every step (the engine holds a buffer per pending
     -- left operand, eight at most; the first cut nested the height under
     -- the width and was refused at ten).
-    local function corridor()
-        local across = n.sub(n.sub(width(), n.mul(up(), n.const(NARROW / TALL))), n.contour("cs_fault", FAULT_FREQ, 2))
-        local under = n.min(across, n.sub(tall(), up()))
-        return n.min(under, n.add(up(), n.const(0.5)))
+    local function corridor(k)
+        local across = n.sub(n.sub(width(), n.mul(up(k), n.const(NARROW / TALL))), fault(k))
+        local under = n.min(across, n.sub(tall(), up(k)))
+        return n.min(under, n.add(up(k), n.const(0.5)))
     end
     -- Geodes: blobs of a fine noise within GEODE_R of the fault line, at
     -- the corridor's heights; one that meets the corridor opens into it.
-    local function geode()
-        local band = n.min(n.sub(n.add(tall(), n.const(2.0)), up()), n.add(up(), n.const(2.0)))
+    local function geode(k)
+        local band = n.min(n.sub(n.add(tall(), n.const(2.0)), up(k)), n.add(up(k), n.const(2.0)))
         local blob = n.min(band, n.mul(n.sub(n.noise("cs_geode", GEODE_FREQ, 1, 1.0), n.const(GEODE_MIN)), n.const(12.0)))
-        return n.min(blob, n.sub(n.add(width(), n.const(GEODE_R)), n.contour("cs_fault", FAULT_FREQ, 2)))
+        return n.min(blob, n.sub(n.add(width(), n.const(GEODE_R)), fault(k)))
     end
-    local void = ctx.mine(n.max(corridor(), geode()))
+    local function level_void(k)
+        return n.max(corridor(k), geode(k))
+    end
+    local void = level_void(1)
+    for k = 2, #LEVELS do
+        void = n.max(void, level_void(k))
+    end
+    void = ctx.mine(void)
     local carve = ctx.compile("carve", void)
     local function step(f) return n.clamp(n.mul(f, n.const(1e4)), 0.0, 1.0) end
     -- Linings: slate two blocks in, dark basalt to four; the planar veins
@@ -118,7 +138,7 @@ tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
     local conditions = {
         n.const(1.0),
         n.sub(n.noise("cs_vein", VEIN_FREQ, 1, 1.0, VEIN_STRETCH), n.const(VEIN_MIN)),
-        n.add(geode(), n.const(1.5)),
+        n.add(n.max(geode(1), geode(2)), n.const(1.5)),
     }
     -- The code needs no province cut: the layers paint only INTO rock
     -- within reach of a void, and the void is already the biome's own.

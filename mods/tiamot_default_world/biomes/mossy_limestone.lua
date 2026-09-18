@@ -10,8 +10,8 @@
 -- ceiling's crevices, maidenhair micro-ferns at the drips; eroded calcite
 -- boulders and gravel beds.
 --
--- THE ROOMS are two storeys of them (the band is fifteen hundred blocks
--- tall). A storey is a footprint noise — positive where a room is, at the
+-- THE ROOMS are three storeys of them (the band is fifteen hundred blocks
+-- tall; two until 2026-09-18). A storey is a footprint noise — positive where a room is, at the
 -- rooms' own scale — cut by a vertical profile about the storey's centre,
 -- which wanders with a slow noise so no two rooms are at one depth: the
 -- footprint shrinks toward the floor and the ceiling (the vault), and a
@@ -29,9 +29,11 @@ local schem = tdw.schem
 local n = shape.node
 local ID = "mossy_limestone"
 
-local STOREYS = { 0.42, 1.05 }                          -- km under the dome, the centres' means
+-- Three storeys since 2026-09-18 ("the caves seem just a little sparse"):
+-- a column through the Limestone met a room 60% of the time with two.
+local STOREYS = { 0.42, 1.05, 0.74 }                    -- km under the dome, the centres' means
 local STOREY_WANDER = 0.30                              -- km either way, on a slow noise
-local ROOM_FREQ, ROOM_MIN, ROOM_W = 1 / 24, 0.06, 30.0  -- the footprint: blobs some twenty across; W scales it to blocks
+local ROOM_FREQ, ROOM_MIN, ROOM_W = 1 / 24, 0.03, 30.0  -- the footprint: blobs some twenty across; W scales it to blocks (0.06 until 2026-09-18)
 local VAULT = 0.9                                       -- how much the footprint shrinks per block from the centre
 local HEIGHT, HEIGHT_VARY = 11.0, 6.0                   -- blocks: 8 to 14
 local SCOOP_FREQ, SCOOP = 1 / 5, 1.2                    -- the walls' scoops, blocks

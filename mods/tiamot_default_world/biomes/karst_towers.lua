@@ -166,11 +166,12 @@ tdw.build_biome(ID, function(ctx)
         { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
         { code = 1, from = shape.SKIN_TOP, to = 5 * km, material = blocks.dirt },
         { code = 2, to = 3 * km, material = blocks.mud },
-        { code = 3, to = 80 * km, material = blocks.stone },
+        -- The towers' 22, and some (80 when they stood fifty; 2026-09-18).
+        { code = 3, to = 30 * km, material = blocks.stone },
         { code = 4, to = 1 * km, material = blocks.moss },
-        { code = 4, from = 1 * km, to = 80 * km, material = blocks.stone },
+        { code = 4, from = 1 * km, to = 30 * km, material = blocks.stone },
         { code = 5, to = 1 * km, material = blocks.moss },
-        { code = 5, from = 1 * km, to = 80 * km, material = blocks.stone },
+        { code = 5, from = 1 * km, to = 30 * km, material = blocks.stone },
         { code = 6, to = 1 * km, material = blocks.gravel },
         { code = 6, from = 1 * km, to = 4 * km, material = blocks.stone },
     }

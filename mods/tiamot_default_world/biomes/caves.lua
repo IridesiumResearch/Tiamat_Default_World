@@ -223,6 +223,80 @@ function M.into(buf, pos, dmin, dmax)
     end
 end
 
+-- ------------------------------------------------------------ the mouths
+
+-- **Where the caves come to the surface** (2026-09-18, "be sure they
+-- sometimes come to the surface so you can stumble across one"). A mouth is
+-- a winding tunnel along a contour line, MOUTH.W either side of it and
+-- MOUTH.H tall, whose depth under the SMOOTH ground follows a slow noise
+-- along the way: from MOUTH.LIFT blocks over it down to MOUTH.DEEPEST, at
+-- about a block per block at the steepest. Where the descending tube
+-- crosses the real ground -- which the biomes' hills put anywhere within
+-- tens of blocks of the smooth one -- it opens there; below, it runs on
+-- down into the caves' band, where the cave biomes' voids meet it.
+--
+-- Only in mouth zones (a slow noise over MOUTH.ZONE_MIN), off the seas and
+-- out of the river valleys, whose water would pour into it and stand as a
+-- wall where its fill stops. Carved in the surface chunks after the biome's
+-- paint, its plants and its trees, and in the chunks of rock under them.
+-- Bare rock: a mouth has no biome.
+local MOUTH = {
+    ZONE_FREQ = 1 / 900, ZONE_MIN = 0.04,   -- 0.30 in the first cut: a mouth every four km2
+    LINE_FREQ = 1 / 160, W = 2.5, H = 5.0,  -- 1/300 in the first cut
+    -- The depth: CENTRE + K times a slow noise (most of it within 0.15 of
+    -- zero), so the tube is within a few tens of blocks of the ground for
+    -- a stretch in every few hundred (the first cut, (s + 0.5) * 900 - 40,
+    -- kept it some 400 down nearly everywhere: 0.25 mouths a km2).
+    SLOPE_FREQ = 1 / 4000, K = 2400.0, CENTRE = 80.0, LIFT = 40.0, DEEPEST = 500.0,
+    ROUGH_FREQ = 1 / 6, ROUGH = 0.8,
+    OFF_SEA = 150.0,
+}
+M.MOUTH = MOUTH
+local MOUTH_FIELD, MOUTH_ZONE = nil, nil
+function M.mouth_node()
+    local flat = shape.HUMIDITY_STRETCH
+    -- Blocks under the smooth ground: the dome's depth plus the relief
+    -- (km over the dome), the depth FIRST.
+    local under = n.mul(n.add(M.D(), shape.relief_node()), n.const(1000.0))
+    local target = n.clamp(n.add(n.mul(n.noise("cave_mouth_slope", MOUTH.SLOPE_FREQ, 1, 1.0, flat), n.const(MOUTH.K)),
+        n.const(MOUTH.CENTRE)), -MOUTH.LIFT, MOUTH.DEEPEST)
+    -- Within H/2 of the tube's middle height, and W of the line.
+    local tall = n.sub(n.const(MOUTH.H / 2), n.abs(n.sub(n.sub(under, target), n.const(MOUTH.H / 2))))
+    local void = n.min(tall, n.sub(n.const(MOUTH.W), n.contour("cave_mouth_line", MOUTH.LINE_FREQ, 1)))
+    void = n.add(void, n.noise("cave_mouth_rough", MOUTH.ROUGH_FREQ, 1, MOUTH.ROUGH))
+    -- The zone, faded over a little of the noise's edge.
+    void = n.min(void, n.mul(n.sub(n.noise("cave_mouth_zone", MOUTH.ZONE_FREQ, 1, 1.0, flat), n.const(MOUTH.ZONE_MIN)), n.const(60.0)))
+    local seas = tdw.seas
+    if seas and seas.on() then
+        void = n.min(void, n.mul(n.sub(n.mul(seas.d_map(), n.const(-1.0)), n.const(MOUTH.OFF_SEA)), n.const(0.2)))
+    end
+    if shape.river_exclude then
+        void = shape.river_exclude(void, (shape.RIVER_REACH or 174) + 10)
+    end
+    return void
+end
+function M.mouth_field()
+    MOUTH_FIELD = MOUTH_FIELD or shape.compile("cave.mouth", M.mouth_node())
+    return MOUTH_FIELD
+end
+-- Whether a chunk may hold a mouth: its centre in or near a zone, and not
+-- deeper than the deepest a mouth goes under the highest the smooth ground
+-- stands (the relief is never more than RELIEF_MAX km over the dome).
+local RELIEF_MAX = 0.45
+function M.mouth_chunk(pos, dmin)
+    if dmin > (MOUTH.DEEPEST + MOUTH.H) / 1000 + RELIEF_MAX then
+        return false
+    end
+    MOUTH_ZONE = MOUTH_ZONE or shape.compile("cave.mouth_zone",
+        n.noise("cave_mouth_zone", MOUTH.ZONE_FREQ, 1, 1.0, shape.HUMIDITY_STRETCH))
+    return MOUTH_ZONE:at(pos.x * 16 + 8.5, 0.5, pos.z * 16 + 8.5, pos.seed) > MOUTH.ZONE_MIN - 0.03
+end
+function M.mouths_into(buf, pos, dmin)
+    if M.mouth_chunk(pos, dmin) then
+        buf:fill_density(M.mouth_field(), AIR, DETAIL)
+    end
+end
+
 -- ------------------------------------------------------------ the HUD and /tp
 
 local CAVITY = {}

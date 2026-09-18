@@ -299,13 +299,13 @@ tdw.build_biome(ID, function(ctx)
     local codes = shape.compile("biome.dunes.codes", code)
     local km = 0.001
     local entries = {
-        { code = 1, to = 30 * km, material = blocks.sand },
+        { code = 1, to = 20 * km, material = blocks.sand },
         { code = 2, to = 1 * km, material = blocks.gravel },
-        { code = 2, from = 1 * km, to = 30 * km, material = blocks.sand },
+        { code = 2, from = 1 * km, to = 20 * km, material = blocks.sand },
         { code = 3, to = 1 * km, material = blocks.packed_dirt },
-        { code = 3, from = 1 * km, to = 30 * km, material = blocks.sand },
+        { code = 3, from = 1 * km, to = 20 * km, material = blocks.sand },
         { code = 4, to = 3 * km, material = blocks.ochre_sandstone },
-        { code = 4, from = 3 * km, to = 30 * km, material = blocks.rust_red_sandstone },
+        { code = 4, from = 3 * km, to = 20 * km, material = blocks.rust_red_sandstone },
     }
     -- What grows: nothing on a dune. In the hollows between them, sparse
     -- sagebrush and a little hardy grass, and not on the bare rock.

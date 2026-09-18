@@ -169,11 +169,13 @@ tdw.build_biome(ID, function(ctx)
     local km = 0.001
     local entries = {
         { code = 1, to = 4 * km, material = blocks.black_mud },
-        { code = 2, to = 500 * km, material = blocks.dark_basalt },
+        -- The rift and its slot are 370 from rim to floor; twenty more (500
+        -- until 2026-09-18).
+        { code = 2, to = 390 * km, material = blocks.dark_basalt },
         { code = 3, to = 1 * km, material = blocks.magma },
         { code = 3, from = 1 * km, to = 4 * km, material = blocks.black_mud },
         { code = 4, to = 1 * km, material = blocks.sulfur },
-        { code = 4, from = 1 * km, to = 500 * km, material = blocks.dark_basalt },
+        { code = 4, from = 1 * km, to = 390 * km, material = blocks.dark_basalt },
         { code = 5, to = 1 * km, material = blocks.barnacles },
         { code = 5, from = 1 * km, to = 4 * km, material = blocks.black_mud },
     }

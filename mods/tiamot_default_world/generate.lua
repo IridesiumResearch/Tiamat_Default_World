@@ -468,6 +468,11 @@ local function generate(buf, pos)
             -- engine's `scatter` does the whole neighbourhood pass — every
             -- chunk within reach derives the same trees and keeps its slice.
             structures_into(buf, found, mode, math.huge)
+            -- A cave's mouth where one comes up through this ground
+            -- (biomes/caves.lua), after the paint, the plants and the trees.
+            if tdw.caves then
+                tdw.caves.mouths_into(buf, pos, dmin)
+            end
             -- The sea, after the terrain AND the structures: the fluid fill
             -- takes only the room they leave (it was before the structures,
             -- which put water inside every kelp stand and boulder).
@@ -489,6 +494,7 @@ local function generate(buf, pos)
         -- alone; the caves' own water was lost to engine-asks 35.)
         if painted and tmin > 0 and not tail and not WHITE and tdw.caves then
             tdw.caves.into(buf, pos, dmin, dmax)
+            tdw.caves.mouths_into(buf, pos, dmin)
         end
     end
 
