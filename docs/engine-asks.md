@@ -33,6 +33,19 @@ addressed by `SUMMARY_RULE = 2`; **11**, an item dropped at a position —
 answered on 2026-09-11: `game.spawn_entity{ item = stack }` is the mechanism
 and `core_gear` the worked example. It should not have been carried as open.*
 
+*Landed 2026-09-19 (engine eab4c2d, a5c83ec, a3db9fa; the sheet pruned
+in aaf619c): **30**, a density program may hold 4,096 operations and 16
+live buffers (was 1,024 and 8); **32**, a cover run over three cells
+carries into the block above; **29**, a passable cell no longer displaces
+fluid; **25**, `light_falloff` on `register_fluid`; **28**, a summary
+carries the sea (a fluid block reads as its drawn material); **26**, a
+chunk of open sea wakes nothing when it loads (the deep ocean's fluid tick
+was 45 to 100 ms); **35** answered: the y = 0.5 slice stays (reading on
+the chunk's floor brings back the seam between layers) and a terraced
+fill that reads height now says so; and the second half of **37**,
+`register_on_fluid_flow` can read the world. Open: 37's `washes_away`,
+27, and 24's foliage shade.*
+
 *Closed the same day, found stale when the sheet was pruned: **36**, walls
 of water. Its engine-side hypothesis — a fluid face drawn against a chunk
 that has not arrived — was already fixed in engine f9874c0 (2026-09-14,
