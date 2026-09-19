@@ -39,7 +39,6 @@ local n = shape.node
 local schem = tdw.schem
 
 local ID = "taiga"
-local WATER = "tiamot_default_world:water"
 
 -- The ground, km. Thresholds against the measured noise: one octave over 0.35
 -- on 22% of the ground and at the +0.5 clamp on 13%; two over 0.3 on 18%.
@@ -48,7 +47,6 @@ local RIDGE_FREQ, RIDGE_W, RIDGE_H = 1 / 420, 18.0, 0.006 -- glacial ridges: six
 local HUMMOCK_FREQ, HUMMOCK_AMP = 1 / 9, 0.00275         -- the hummocks: a block or two, heaviest on the ridges
 local BASIN_FREQ, BASIN_MIN, BASIN_EDGE, BASIN_DROP = 1 / 300, 0.14, 7.0, 0.0066
 local CHANNEL_FREQ, CHANNEL_W, CHANNEL_D = 1 / 160, 1.3, 0.0014
-local POOL_FILL = -0.0003                                -- the stagnant water's level against the basin's own floor: the dips and the channels hold it
 -- The surface.
 local MOSS_FREQ, MOSS_MIN = 1 / 16, 0.26
 local RUBBLE_FREQ, RUBBLE_MIN = 1 / 6, 0.05
@@ -416,18 +414,18 @@ tdw.build_biome(ID, function(ctx)
         scatter("rubble", built.rubble, n.sub(ridge_w(), n.const(0.8)), RUBBLE_CELL, RUBBLE_SQUARES, 125, 0.003)
         scatter("log", built.logs, n.min(n.sub(basin_w(), n.const(0.3)), n.sub(n.const(0.7), basin_w())), LOG_CELL, LOG_SQUARES, 126, 0.006)
     end
-    -- The stagnant pools: water to POOL_FILL over the basin's floor, where
-    -- the floor's hummocks and channels dip under it, deep in a basin and
-    -- only where the taiga is the whole of the ground (its cross-fades with
-    -- the mountains and the wastes are not flat, and water there would stand
-    -- on nothing). The level reads x and z only.
-    local level = n.add(n.mul(n.add(n.add(n.add(shape.relief_node(), shape.dome_node()), upland()), n.const(POOL_FILL - BASIN_DROP)),
-        n.const(1.0 / shape.SCALE)), n.const(shape.Y0))
-    local within = masked(n.sub(basin_w(), n.const(0.9)))
-    if not tdw.config.everywhere and shape.taiga_weight then
-        within = n.min(within, n.sub(shape.taiga_weight(), n.const(0.97)))
-    end
-    fills[#fills + 1] = { fluid = WATER, level = shape.compile("biome.taiga.level", level), within = shape.compile("biome.taiga.within", within) }
+    -- **No standing water** (2026-09-18, "aggressive, weird water blobs
+    -- all over the hillsides, covering the trees"). The pools were a fluid
+    -- fill a third of a block under the basin's floor, and a basin's floor is the
+    -- Taiga's terms over the world's relief. Out here the relief is 30 to 80
+    -- per cent of its full strength (`relief_mask`: the Taiga runs from the
+    -- Ice Cap's edge to u = 0.032), so it slopes a third of a block to a
+    -- block and more per block, and a level that follows it is a sheet of
+    -- water down a hillside: measured, a surface falling six blocks in four,
+    -- five deep, through the spruce. Nothing in a program can find where
+    -- that relief is level, and lips would make stairs of it. The basins
+    -- keep their black mud, peat and moss; the Alpine's lakes are the frost
+    -- ring's water (they flatten their own ground, through the maps).
     return fills
 end)
 

@@ -153,7 +153,11 @@ function tdw.depth_area_under(x, y, z)
     local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
     local dome = shape.dome_at(u)
     local depth = dome - (y - shape.Y0) * shape.SCALE
-    if (depth + SMOOTH:at(x + 0.5, 0.5, z + 0.5, seed)) * 1000 < UNDER_GROUND then
+    -- The relief read at the player's own height: it is a 3D noise, and
+    -- read at y = 0.5 (the first cut) it was another hill altogether, five
+    -- hundred blocks off by the Ice Cap, and named the Taiga's slopes the
+    -- normal caves.
+    if (depth + SMOOTH:at(x + 0.5, y + 0.5, z + 0.5, seed)) * 1000 < UNDER_GROUND then
         return nil
     end
     for _, band in ipairs(tdw.layers.DEPTH) do

@@ -810,7 +810,8 @@ local function frozen_weight()
     return mul(frost_ring_w(), frost_dry_w())
 end
 -- The Taiga's weight (2.2): the frost ring's share times the wet side's.
--- Its pools stand only where this is all but 1 (biomes/taiga.lua).
+-- (Its pools stood only where this was all but 1, until they went,
+-- 2026-09-18: biomes/taiga.lua.)
 function M.taiga_weight()
     return mul(frost_ring_w(), add(mul(frost_dry_w(), const(-1.0)), const(1.0)))
 end

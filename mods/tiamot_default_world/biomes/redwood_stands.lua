@@ -4,9 +4,10 @@
 -- 3.14 Redwood Stands: a quarter of the Temperate Woodlands' province on
 -- the Long Shore (2026-09-16).
 --
--- Giants: redwoods 180 to 270 blocks tall (forty to sixty until 2026-09-17,
+-- Giants: redwoods 108 to 162 blocks tall (forty to sixty until 2026-09-17,
 -- "about 3 times that big around and about 4.5 times that tall. with more
--- needles") on buttressed feet, bare
+-- needles"; the whole tree taken to 60% of that on 2026-09-18, `SIZE`) on
+-- buttressed feet, bare
 -- red trunks for two thirds of their height and narrow spires of needles
 -- above, with younger trees between; a floor of needle mulch and moss
 -- under dense ferns, and fallen giants lying across it, mossed along their
@@ -25,10 +26,13 @@ local ID = "redwood_stands"
 local MOSS_FREQ, MOSS_MIN = 1 / 18, 0.20
 local FERN_FREQ, FERN_MIN = 1.4, -0.12                   -- ferns over most of the floor
 local FERN_PATCH_FREQ, FERN_PATCH_MIN = 1 / 30, -0.20
-local GIANT_CELL, GIANT_SQUARES = 36, 0.55              -- 14 until the giants were made three times as thick
-local YOUNG_CELL, YOUNG_SQUARES = 18, 0.40
-local FALLEN_CELL, FALLEN_SQUARES = 60, 0.35
-local GIANT_ABOVE, YOUNG_ABOVE = 0.290, 0.140           -- km: the tallest of each, and their crowns' tips
+-- Every length in a tree, a fallen trunk and the spacing, against the
+-- 2026-09-17 giants (2026-09-18: "reduce the size of the redwoods to 60%").
+local SIZE = 0.6
+local GIANT_CELL, GIANT_SQUARES = 22, 0.55              -- 14 until the giants were made three times as thick, 36 until SIZE
+local YOUNG_CELL, YOUNG_SQUARES = 11, 0.40              -- 18 until SIZE
+local FALLEN_CELL, FALLEN_SQUARES = 36, 0.35            -- 60 until SIZE
+local GIANT_ABOVE, YOUNG_ABOVE = 0.290 * SIZE, 0.140 * SIZE   -- km: the tallest of each, and their crowns' tips
 
 tdw.biomes[ID].ring_mode = "temperate"
 tdw.biomes[ID].lazy = true
@@ -46,44 +50,44 @@ local PRIORITY = { [blocks.redwood_log] = 1 }
 -- limbs only in the top third, and narrow tiers of needles there.
 local function redwood(rng, big)
     schem.record_begin()
-    local tall = big and (180 + rng:below(91)) or (81 + rng:below(46))
-    local r0 = big and (4.8 + rng:below(4) * 0.75) or (2.4 + rng:below(3) * 0.45)
-    schem.push_path(blocks.redwood_log, { { 0.5, -3.0, 0.5, r0 * 1.35 }, { 0.5, 4.0, 0.5, r0 }, { 0.5, tall * 0.7, 0.5, r0 * 0.6 }, { 0.5, tall, 0.5, 0.5 } }, BLIND)
+    local tall = math.floor((big and (180 + rng:below(91)) or (81 + rng:below(46))) * SIZE)
+    local r0 = (big and (4.8 + rng:below(4) * 0.75) or (2.4 + rng:below(3) * 0.45)) * SIZE
+    schem.push_path(blocks.redwood_log, { { 0.5, -3.0 * SIZE, 0.5, r0 * 1.35 }, { 0.5, 4.0 * SIZE, 0.5, r0 }, { 0.5, tall * 0.7, 0.5, r0 * 0.6 }, { 0.5, tall, 0.5, 0.5 } }, BLIND)
     -- The buttresses: five to seven flaring out and down into the ground.
     local roots = big and (5 + rng:below(3)) or 3
     for i = 0, roots - 1 do
         local d = schem.DIR16[(i * 16 // roots + rng:below(2)) % 16 + 1]
-        schem.push_path(blocks.redwood_log, { { 0.5, 7.0, 0.5, r0 * 0.5 }, { 0.5 + d[1] * r0 * 1.6, 1.0, 0.5 + d[2] * r0 * 1.6, r0 * 0.3 },
-            { 0.5 + d[1] * r0 * 2.2, -2.0, 0.5 + d[2] * r0 * 2.2, 1.0 } }, BLIND)
+        schem.push_path(blocks.redwood_log, { { 0.5, 7.0 * SIZE, 0.5, r0 * 0.5 }, { 0.5 + d[1] * r0 * 1.6, 1.0 * SIZE, 0.5 + d[2] * r0 * 1.6, r0 * 0.3 },
+            { 0.5 + d[1] * r0 * 2.2, -2.0 * SIZE, 0.5 + d[2] * r0 * 2.2, 1.0 * SIZE } }, BLIND)
     end
     -- The crown: dense tiers of needles over the top third, each on a ring
     -- of limbs with a clump at every limb's end.
     local from = math.floor(tall * (big and 0.62 or 0.45))
-    local step = big and 4 or 3
+    local step = big and 3 or 2                           -- 4 and 3 until SIZE: the tiers keep their count
     for h = from, tall - 1, step do
         local t = (h - from) / math.max(1, tall - from)
-        local r = (big and 11.0 or 5.5) * (1.0 - t) + 2.0
-        schem.push_ellipsoid(blocks.redwood_needles, 0.5, h + 0.5, 0.5, r, 2.2, r, { rough = 0.4, jitter = rng, blind = true })
+        local r = ((big and 11.0 or 5.5) * (1.0 - t) + 2.0) * SIZE
+        schem.push_ellipsoid(blocks.redwood_needles, 0.5, h + 0.5, 0.5, r, 2.2 * SIZE + 0.4, r, { rough = 0.4, jitter = rng, blind = true })
         local limbs = big and 3 or 2
         local first = rng:below(16)
         for k = 0, limbs - 1 do
             local d = schem.DIR16[(first + k * 16 // limbs + rng:below(3)) % 16 + 1]
             local reach = r * 1.15
-            schem.push_path(blocks.redwood_log, { { 0.5, h, 0.5, big and 0.9 or 0.5 }, { 0.5 + d[1] * reach, h + 1.5, 0.5 + d[2] * reach, 0.35 } }, BLIND)
-            schem.push_ellipsoid(blocks.redwood_needles, 0.5 + d[1] * reach, h + 1.8, 0.5 + d[2] * reach, r * 0.45 + 1.0, 1.6, r * 0.45 + 1.0, { rough = 0.4, jitter = rng, blind = true })
+            schem.push_path(blocks.redwood_log, { { 0.5, h, 0.5, big and 0.6 or 0.4 }, { 0.5 + d[1] * reach, h + 1.0, 0.5 + d[2] * reach, 0.3 } }, BLIND)
+            schem.push_ellipsoid(blocks.redwood_needles, 0.5 + d[1] * reach, h + 1.2, 0.5 + d[2] * reach, (r * 0.45 + 1.0) * SIZE + 0.4, 1.6 * SIZE + 0.3, (r * 0.45 + 1.0) * SIZE + 0.4, { rough = 0.4, jitter = rng, blind = true })
         end
     end
-    schem.push_ellipsoid(blocks.redwood_needles, 0.5, tall + 1.5, 0.5, 2.4, 4.8, 2.4, { rough = 0.25, blind = true })
+    schem.push_ellipsoid(blocks.redwood_needles, 0.5, tall + 1.0, 0.5, 2.4 * SIZE, 4.8 * SIZE, 2.4 * SIZE, { rough = 0.25, blind = true })
     return schem.record_schematic(PRIORITY)
 end
 -- A fallen giant: twenty to thirty blocks of trunk on its side, moss along
 -- its top.
 local function fallen(rng)
     schem.record_begin()
-    local length = 40 + rng:below(21)                      -- the fallen giants grew with the standing ones (2026-09-17)
+    local length = (40 + rng:below(21)) * SIZE             -- the fallen giants grew with the standing ones (2026-09-17), and shrank with them
     local d = schem.DIR16[rng:below(16) + 1]
     local half = length / 2
-    local r = 3.2 + rng:below(3) * 0.6
+    local r = (3.2 + rng:below(3) * 0.6) * SIZE
     schem.push_path(blocks.redwood_log, { { 0.5 - d[1] * half, r * 0.6, 0.5 - d[2] * half, r }, { 0.5 + d[1] * half, r * 0.4, 0.5 + d[2] * half, r * 0.6 } }, BLIND)
     schem.push_path(blocks.moss, { { 0.5 - d[1] * half, r * 1.5, 0.5 - d[2] * half, r * 0.6 }, { 0.5 + d[1] * half, r * 1.0, 0.5 + d[2] * half, r * 0.4 } }, { rough = 0.5, blind = true })
     return schem.record_schematic(PRIORITY)

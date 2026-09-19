@@ -2835,6 +2835,44 @@ can stumble across one."
   | Kelp Forest | 40 → 12 |
   | Dunes | 30 → 20 |
 
+### Smaller redwoods; the Taiga's water taken off its hillsides (2026-09-18)
+
+- **Redwoods at 60%** ("reduce the size of the redwoods to 60% of what they
+  are"). `SIZE = 0.6` in `redwood_stands.lua` scales every length in a
+  tree: height (giants 108 to 162 blocks, young trees 48 to 75), girth,
+  buttresses, the crown's tiers and limbs, the spire, and the fallen
+  trunks. The spacing shrinks with it (giant cells 36 to 22, young 18 to
+  11, fallen 60 to 36), so a stand is as dense as before. The crown's
+  tiers are three blocks apart instead of four, so a smaller tree keeps as
+  many.
+- **No standing water in the Taiga** ("aggressive, weird water blobs all
+  over the hillsides, covering the trees"). The Taiga's pools were a fluid
+  fill whose level was the basin floor over the world's relief. The Taiga
+  runs from the Ice Cap's edge to u = 0.032, where the relief is 30 to 80%
+  of full strength and slopes a third of a block to over a block per
+  block. A level that follows that slope is a sheet of water down a
+  hillside: at one spot the surface fell six blocks in four columns and
+  stood five deep, through the spruce. There were two more faults:
+  - Pools were allowed where the Taiga's weight exceeded 0.97, and 3% of
+    the Frostmoor's mountains is tens of blocks.
+  - The engine reads a fluid's `within` at y = 0.5 (engine-asks 35), and
+    the basin noise is 3D, so the pools were cut out of the wrong places.
+
+  Nothing in a density program can find where the relief is level, and
+  lips would only turn the sheets into stairs. So the fill is gone. The
+  basins keep their black mud, peat and moss. Measured after the change
+  at seven Taiga spots of 128 × 128 blocks: no water. The Alpine lakes,
+  which flatten their own ground through the maps, are the frost ring's
+  water.
+- **The HUD's depth check reads the relief at the player's height.** The
+  first cut read it at y = 0.5, where the 3D relief noise is another hill,
+  up to 500 blocks off near the Ice Cap. It named Taiga hillsides "Normal
+  Caves".
+- **The mouth count, measured again** with the smooth ground solved at its
+  own height (the earlier probe made the same y = 0.5 mistake): 0.2 to 0.7
+  openings per km² on the 24-block grid over three 6 km squares, against
+  0.4 to 1.8 before. The samples are small; the order holds.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.
