@@ -21,6 +21,25 @@ engine that `buf:set_subnode` already preserves a uniform block's other
 cells, so generation-time embedding needs nothing new, only the
 cross-chunk pass.*
 
+*Closed 2026-09-18, and taken off the engine's sheet (the engine agent: "a
+stale sheet is worse than a short one"): **16**, a right-click on a block —
+`register_on_use` (engine d13dc13, protocol 52); **17**, the world unreadable
+in the dig and place hooks — "the dig, place and punch hooks are asked with
+the world lent" (7579e22); **13**, a billboard that is also cutout — the pair
+is refused at registration (fccaa68), the second option asked for; **33**, a
+chunk tint cannot brighten — `Tint::channel` is byte / 128.0, so 128 is 1.0
+and a tint reaches 2.0; **7**, summaries of partial blocks read as crosses —
+addressed by `SUMMARY_RULE = 2`; **11**, an item dropped at a position —
+answered on 2026-09-11: `game.spawn_entity{ item = stack }` is the mechanism
+and `core_gear` the worked example. It should not have been carried as open.*
+
+*Closed the same day, found stale when the sheet was pruned: **36**, walls
+of water. Its engine-side hypothesis — a fluid face drawn against a chunk
+that has not arrived — was already fixed in engine f9874c0 (2026-09-14,
+four days before it was filed), and bde88d9 streams a real sea from a real
+server and finds no walls on its seams. The walls the mod could reproduce
+were at the coasts and were the mod's (e50ca42).*
+
 *Landed 2026-09-17: **34, a layered fill evaluated the terrain where none
 of its layers paints** (engine 92267e7). `fill_layers` now checks the code's
 bound, then the code, and evaluates the terrain only where some block's code

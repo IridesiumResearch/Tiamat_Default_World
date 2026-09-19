@@ -8,8 +8,9 @@
 --
 -- Leaves and water. Leaves placed into water, or against it, fall apart:
 -- the placement is refused and the player keeps them. Water that reaches
--- a leaves block breaks it. There is no way yet to drop what it was as an
--- item at that spot (docs/engine-asks.md, item 11), so for now it is gone.
+-- a leaves block breaks it, and what it was is gone. The engine CAN drop it
+-- as an item there, `game.spawn_entity{ item = stack }` (core_gear is the
+-- worked example; engine-asks 11, answered 2026-09-11); not wired in yet.
 
 local blocks = tdw.blocks
 local LEAVES = "tiamot_default_world:oak_leaves"
