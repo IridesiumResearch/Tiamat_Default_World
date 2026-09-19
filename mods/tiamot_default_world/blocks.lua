@@ -380,6 +380,17 @@ block("crystal", "Crystal", "Clear hexagonal prisms grown out of the seam; they 
 block("cobbles", "Cobbles", "Rounded river cobbles, grey and brown, packed in the bed.", { hardness = 0.8, tint = ROCK })
 block("glow_algae", "Glowing algae", "A slick dark-green film on the waterline's stones, lit from within.",
     { hardness = 0.1, tint = { strength = 0.10, scale = 24 }, light_emit = { r = 1, g = 6, b = 3 } })
+-- 2.4 Fungal Grove Chambers' `mycelium` (the mats and the giant stalks) and
+-- `mushroom_cap` (the parasols, the wall brackets and the little caps; its
+-- puffballs are the river's `glow_cap`); 2.5 Mineral Vein Tunnels' `pyrite`
+-- and no plant (its brief: inorganics only); 2.6 Stalactite Forests'
+-- `flowstone` and no plant (2026-09-18).
+block("mycelium", "Mycelium", "White fibrous threads matted through the loam, and the stalks of the great mushrooms.",
+    { hardness = 0.4, tint = { strength = 0.08, scale = 48 } })
+block("mushroom_cap", "Mushroom cap", "Tan fungal flesh, spongy, faintly lit amber from underneath.",
+    { hardness = 0.3, tint = { strength = 0.12, scale = 32 }, light_emit = { r = 5, g = 3, b = 1 } })
+block("pyrite", "Pyrite", "Brassy cubes of fool's gold, grown in clusters out of the fractures.", { hardness = 2.2, tint = { strength = 0.06, scale = 24 } })
+block("flowstone", "Flowstone", "Cream and honey dripstone, rippled like a frozen wave over every surface.", { hardness = 1.4, tint = ROCK })
 
 -- Depth bands -----------------------------------------------------------
 block("dark_sediment", "Dark sediment", "Dark-cave rock, 1.6 to 4 km down: old mud turned to stone.", { hardness = 2.0, tint = ROCK })

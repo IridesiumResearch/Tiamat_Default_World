@@ -96,7 +96,7 @@ end
 
 -- ------------------------------------------------------------ the fields
 
-tdw.cave_biome(ID, { -0.30, 0.14 }, function(ctx)     -- -0.12 until 2026-09-18, when the Crystal Seam shrank
+tdw.cave_biome(ID, { 0.0, 0.15 }, function(ctx)       -- -0.12..0.14 at first; a sixth since the six (2026-09-18)
     local caves = ctx.caves
     -- A storey's centre, km under the dome, and the height of its rooms.
     local function centre(k)

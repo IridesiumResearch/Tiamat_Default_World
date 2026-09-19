@@ -91,7 +91,7 @@ end
 
 -- ------------------------------------------------------------ the fields
 
-tdw.cave_biome(ID, { -1, -0.30 }, function(ctx)      -- -0.12 until 2026-09-18: 37% of the caves, now 18%
+tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)      -- -0.12 until 2026-09-18 (37% of the caves); -0.30 (18%); a sixth since the six
     local caves = ctx.caves
     -- A level's floor, km under the dome: a slow wander (the floors were
     -- climbing a block a block at 1/260).

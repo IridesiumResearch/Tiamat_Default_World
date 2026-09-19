@@ -2940,6 +2940,80 @@ can stumble across one."
   now. Ask 35 is marked half landed: the level is solved at its own
   height, but `within` is still read at y = 0.5.
 
+### Three more caves: Fungal Grove Chambers, Mineral Vein Tunnels, Stalactite Forests (2026-09-18)
+
+The normal caves are six now. The province noise is cut into sixths, each
+measured at 16 to 17% of the ground. Neighbours are kin: Crystal Seam
+(under -0.33), Mineral Vein Tunnels (to -0.15), Stalactite Forests (to 0),
+Mossy Limestone (to 0.15), Fungal Grove Chambers (to 0.33), Underground
+River (over). Each new cave follows the rule of one new material and one
+new plant at most, and each lays the crystal veins through its rock.
+
+- **2.4 Fungal Grove Chambers.** Two storeys of bulbous chambers: 20 to
+  35 across, 12 to 18 high, vaulted like the Limestone's rooms.
+  - The walls step in and out in tiered shelves (a noise that changes only
+    with height) and are cupped with alcoves. A crawlway runs along each
+    storey's floor.
+  - The floor is loam (`mulch`) over peat (`black_mud`) with mycelium mats;
+    the walls are slick `mud`.
+  - Growths:
+    - parasol mushrooms 5 to 11 tall, with caps 4 to 7 across hollowed
+      underneath, so a cap is a shell you can stand on;
+    - thin bracket shelves out of the walls, in tiers, only at wall heights
+      and only in the chambers;
+    - carpets of glowing puffballs (`glow_cap`, cyan);
+    - clusters of slender caps;
+    - hollow dead stalks lying on the floor, 12 to 20 long with a
+      walk-through bore, running on into the wall as tunnels;
+    - compost heaps.
+  - A warm spore haze lies under the chambers' ceiling in their columns.
+  - The puffballs are the spore pods: walk into one and it bursts in a puff
+    of spores.
+  - **New: `mycelium`** (the mats and the stalks) **and `mushroom_cap`**
+    (caps, brackets, the little caps; it glows a low amber).
+- **2.5 Mineral Vein Tunnels.** Three levels of box-section corridors,
+  flat-roofed and flat-floored, 5 to 9 wide and 4 to 7 high, along two
+  crossing families of fracture lines, with rough fractured faces.
+  - The walls are strata (a noise that changes only with height): granite,
+    slate, and a band of ironstone alternating `iron_ore` and `dark_basalt`.
+  - Jagged ribbons of `copper_ore` and `lead_ore` (galena) run through
+    them, with rust streaks (`rust_red_sandstone`) and scree (`gravel`) on
+    the floor.
+  - Growths and features: dendritic `calcite` frostings on the walls;
+    cubic clusters of pyrite and of galena, made of whole-block and
+    two-thirds-block cubes; iron-ore knuckles jutting into the air;
+    slab-collapses of slate; and quartz seams, which are the crystal veins,
+    set closer together here.
+  - **New: `pyrite`; no plant** (inorganics only). The drafts from the
+    fissures are not in.
+- **2.6 Stalactite Forests.** Two storeys of tall halls, 16 to 28 across
+  and 20 to 35 high, with straight walls. The stalactites (2 to 12 long),
+  stalagmites (3 to 15 tall), columns (2 to 4 thick) and draperies are cut
+  out of the void as fields:
+  - a flat noise's blobs hang a length that grows toward the blob's middle,
+    which makes a cone;
+  - the columns are a coarser noise over a higher threshold;
+  - the draperies are a flat noise's zero line hanging a few blocks, in
+    patches.
+  - Flowstone lines everything; the floor is `calcite` pavement with
+    rimstone pools held in by calcite lips.
+  - Soda straws hang from the ceilings, stalactite debris lies on the
+    floor, and drops fall near a player.
+  - **New: `flowstone`; no plant.** The echoing drip sound is not in.
+- Measured, per biome over 100 columns through the band: the share of
+  columns that meet a cave, and the void per column. Fungal Grove 51%
+  (7.7 blocks), Mineral Vein 31% (2.7), Stalactite Forests 30% (6.3),
+  Crystal Seam 40%, Mossy Limestone 45%, Underground River 24%.
+  - At a visited spot of each new cave, the HUD named it and its materials
+    were there. Fungal Grove: 147 mycelium, 112 cap, 68 puffball blocks.
+    Mineral Vein: 94 iron ore, 62 lead ore, 6 pyrite, 10 frosting blocks.
+  - The largest program is 776 operations (the Stalactite Forests' veins).
+- **Two fixes on the way.**
+  - The Stalactite Forests' hall read the ceiling and the floor six times,
+    and came to 1,082 operations. It reads each once now.
+  - `/tp` into a cave searched only 0.12 inside a band, which is no ground
+    at all in a band 0.18 wide. It now searches a third of the band in.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

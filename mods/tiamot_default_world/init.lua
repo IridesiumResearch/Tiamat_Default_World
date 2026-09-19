@@ -102,6 +102,9 @@ load("biomes.caves")                -- the normal caves' framework (2026-09-18)
 load("biomes.mossy_limestone")      -- 2.1
 load("biomes.crystal_seam")         -- 2.2
 load("biomes.underground_river")    -- 2.3
+load("biomes.fungal_grove_chambers")  -- 2.4
+load("biomes.mineral_vein_tunnels")  -- 2.5
+load("biomes.stalactite_forests")    -- 2.6
 load("player")
 load("rules")             -- leaves and water, and other rules of the whole world
 load("exports")           -- what the other mods may read: climate, biomes, the two unlocks

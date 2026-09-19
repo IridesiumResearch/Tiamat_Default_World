@@ -52,6 +52,10 @@ M.PROVINCE_STRETCH = shape.HUMIDITY_STRETCH
 M.BLEND = 0.04                  -- the province noise's units: a biome fades out over this at its line
 -- The biomes' bands of the province noise, low to high. A biome is
 -- registered with its band; the list is what `biomes_in` walks.
+-- Six since 2026-09-18, a sixth of the ground each (the noise runs about
+-- normal, sd 0.34), neighbours kin: Crystal Seam under -0.33, Mineral Vein
+-- Tunnels to -0.15, Stalactite Forests to 0, Mossy Limestone to 0.15,
+-- Fungal Grove Chambers to 0.33, Underground River over it.
 M.bands = {}
 
 -- The smooth depth in km, positive down (shape.depth), and the band.
@@ -377,6 +381,10 @@ function M.locate(id, px, pz, seed)
         return nil
     end
     local band = M.bands[id]
+    -- How far inside the band to look: three blends, or a third of the band
+    -- where that is less (the six bands of 2026-09-18 are 0.18 wide, and an
+    -- inset of 0.12 either side left no ground at all to find).
+    local inset = math.min(3 * M.BLEND, (math.min(band[2], 1) - math.max(band[1], -1)) * 0.3)
     local best = nil
     for ring = 0, 40 do
         local r = ring * 200
@@ -392,7 +400,7 @@ function M.locate(id, px, pz, seed)
                 local p = PROVINCE:at(x + 0.5, y_mid + 0.5, z + 0.5, seed)
                 -- Well inside the band, or the first void found is the
                 -- wall on the province line.
-                if p > band[1] + 3 * M.BLEND and p < band[2] - 3 * M.BLEND then
+                if p > band[1] + inset and p < band[2] - inset then
                     for y = math.floor(dome_y - 1000 * M.TOP - 60), math.floor(dome_y - 1000 * M.BOTTOM), -2 do
                         if cavity:at(x + 0.5, y + 0.5, z + 0.5, seed) > 1.0 then
                             return x, y, z

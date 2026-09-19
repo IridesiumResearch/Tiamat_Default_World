@@ -89,7 +89,7 @@ end
 
 -- ------------------------------------------------------------ the fields
 
-tdw.cave_biome(ID, { 0.14, 1 }, function(ctx)
+tdw.cave_biome(ID, { 0.33, 1 }, function(ctx)         -- from 0.14 at first; a sixth since the six (2026-09-18)
     local caves = ctx.caves
     local function floor_d(k)
         local river = RIVERS[k]

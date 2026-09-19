@@ -59,6 +59,10 @@ BLOCKS = {
     "wild_mint":      ( 86, 126,  78,  0),
     "kelp":           ( 96, 104,  40,  0),
     "moss":           (142, 178, 104,  0),   # soft light green (2026-09-18; a deep wet 70,102,54 for the rainforest until then)
+    "mycelium":       (226, 222, 208, 10),   # 2.4: white fibre over the loam
+    "mushroom_cap":   (176, 132,  86, 12),   # 2.4: a tan parasol
+    "pyrite":         (196, 170,  84, 10),   # 2.5: brassy
+    "flowstone":      (214, 186, 140, 14),   # 2.6: cream and honey
     "black_mud":      ( 34,  30,  28,  0),
     "ironwood_log":   ( 62,  46,  40,  0),
     "ironwood_leaves":( 42,  78,  48,  0),
