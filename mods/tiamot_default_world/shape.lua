@@ -455,6 +455,28 @@ end
 function M.gully_floor()
     return sub(gully_depth(), const(0.6))
 end
+-- **A gully's water level, on the real ground** (2026-09-18: "water
+-- running across a cherry tree field ... originating from a little cubby
+-- hole"). World y, `at` of GULLY_DEPTH under the ground as it would stand
+-- without the gully: the terrain of the program's own mode, plus the
+-- gully's cut, less the water's depth under the rim, read as a level.
+--
+-- The brooks' and pools' levels used to be the SMOOTH ground (relief,
+-- dome, knolls) less that depth, and the real ground carries the world's
+-- detail (+/-3 blocks) and the bluffs' steps (+/-1) besides, so where a
+-- gully ran through a dip of the detail its bank stood under the water and
+-- the brook poured out over the grass. This is the ground itself, so the
+-- bank is always `at` of the gully's depth over the water.
+--
+-- The engine solves a terraced fill's level at its own height (a fixed
+-- point, engine ed211d8): `y + (T + cut - at) / SCALE` is still at the
+-- height where the ungullied terrain is `at` deep, and it moves with y
+-- only by the relief's own lean, so the iteration settles in a step or two.
+-- The terrain FIRST: it is the deepest operand by far.
+function M.gully_water_level(at)
+    local ungullied = add(M.terrain(false), mul(gully_depth(), const(M.GULLY_DEPTH)))
+    return add(mul(sub(ungullied, const(M.GULLY_DEPTH * at)), const(1.0 / M.SCALE)), M.node.Y())
+end
 
 -- The humidity noise, +/-0.5.
 function M.humidity()

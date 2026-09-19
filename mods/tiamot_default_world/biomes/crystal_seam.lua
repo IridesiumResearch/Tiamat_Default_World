@@ -38,12 +38,18 @@ local WIDTH, WIDTH_VARY = 3.0, 1.0                      -- half-width at the flo
 local TALL, TALL_VARY = 16.0, 4.0                       -- blocks: 12 to 20
 local NARROW = 0.75                                     -- the cleft: the half-width lost by the ceiling
 local GEODE_FREQ, GEODE_MIN, GEODE_R = 1 / 5, 0.40, 3.0 -- geodes: fine noise blobs, this many blocks into the wall
-local VEIN_FREQ, VEIN_MIN = 1 / 12, 0.36                -- the planar veins in the host rock
-local VEIN_STRETCH = { x = 6, z = 6 }                   -- sheets: drawn out along the ground plane
-local CLUSTER_FREQ, CLUSTER_MIN = 1 / 2.2, 0.38         -- crystal clusters jutting from the walls
-local SHARD_FREQ, SHARD_MIN = 1.4, 0.40                 -- shards on the floor
-local SPIRE_CELL, SPIRE_SQUARES = 9, 0.30
-local CLUSTER_CELL, CLUSTER_SQUARES = 5, 0.40
+-- Less crystal lying about, and veins of it instead (2026-09-18: "reduce
+-- the amount of random Crystal and Crystal seams. Rather let's have veins
+-- of it running through the rock around and also through the caves"). The
+-- lining's short vein-blobs are gone, the knobs, shards, clusters and
+-- spires are a third to a half of what they were, and the rock is laced
+-- with the caves' crystal veins (caves.lua, `vein_fill`), which every cave
+-- biome carries and this one most of all.
+local VEIN_ZONE, VEIN_FREQ = -0.30, 1 / 30             -- the veins' fields cover nearly all this rock, and closer (the others': 0.0, 1/48)
+local CLUSTER_FREQ, CLUSTER_MIN = 1 / 2.2, 0.45         -- crystal clusters jutting from the walls (0.38 until 2026-09-18)
+local SHARD_FREQ, SHARD_MIN = 1.4, 0.47                 -- shards on the floor (0.40)
+local SPIRE_CELL, SPIRE_SQUARES = 9, 0.12               -- (0.30)
+local CLUSTER_CELL, CLUSTER_SQUARES = 5, 0.15           -- (0.40)
 
 -- ------------------------------------------------------------ the structures
 
@@ -85,7 +91,7 @@ end
 
 -- ------------------------------------------------------------ the fields
 
-tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
+tdw.cave_biome(ID, { -1, -0.30 }, function(ctx)      -- -0.12 until 2026-09-18: 37% of the caves, now 18%
     local caves = ctx.caves
     -- A level's floor, km under the dome: a slow wander (the floors were
     -- climbing a block a block at 1/260).
@@ -133,11 +139,12 @@ tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
     void = ctx.mine(void)
     local carve = ctx.compile("carve", void)
     local function step(f) return n.clamp(n.mul(f, n.const(1e4)), 0.0, 1.0) end
-    -- Linings: slate two blocks in, dark basalt to four; the planar veins
-    -- crystal; a geode's shell crystal all round.
+    -- Linings: slate two blocks in, dark basalt to four; a geode's shell
+    -- crystal all round. (Code 2, the planar vein-blobs, is gone: the
+    -- veins are the caves' own now.)
     local conditions = {
         n.const(1.0),
-        n.sub(n.noise("cs_vein", VEIN_FREQ, 1, 1.0, VEIN_STRETCH), n.const(VEIN_MIN)),
+        n.const(-1.0),
         n.add(n.max(geode(1), geode(2)), n.const(1.5)),
     }
     -- The code needs no province cut: the layers paint only INTO rock
@@ -151,7 +158,6 @@ tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
     local entries = {
         { code = 1, to = 2.0, material = blocks.slate },
         { code = 1, from = 2.0, to = 4.0, material = blocks.dark_basalt },
-        { code = 2, to = 4.0, material = blocks.crystal },
         { code = 3, to = 1.0, material = blocks.crystal },
         { code = 3, from = 1.0, to = 3.0, material = blocks.slate },
     }
@@ -170,6 +176,7 @@ tdw.cave_biome(ID, { -1, -0.12 }, function(ctx)
     local fills = {
         { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
+        caves.vein_fill(ctx, void, VEIN_ZONE, VEIN_FREQ),
         { field = knobs, material = blocks.crystal, detail = { detail = "sampled" } },
         { cover = blocks.crystal, cells = 1, take = shards },
     }

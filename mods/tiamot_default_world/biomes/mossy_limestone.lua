@@ -40,6 +40,7 @@ local SCOOP_FREQ, SCOOP = 1 / 5, 1.2                    -- the walls' scoops, bl
 local CRAWL_FREQ, CRAWL_W, CRAWL_H = 1 / 90, 1.5, 1.6   -- the tubes: a contour, half-width, half-height
 local BASIN_FREQ, BASIN_MIN = 1 / 9, 0.30               -- the rimstone basins on the floor
 local MOSS_FREQ, MOSS_MIN = 1 / 7, -0.10                -- moss over about half the floor
+local CUSHION_CELL, CUSHION_SQUARES = 3, 0.70           -- a moss cushion every few blocks of that half
 local FERN_FREQ, FERN_MIN = 1.3, 0.34                   -- maidenhair: sparse
 local GRAVEL_FREQ, GRAVEL_MIN = 1 / 12, 0.36
 local VINE_CELL, VINE_SQUARES = 4, 0.35
@@ -65,20 +66,37 @@ local function boulder(rng)
     schem.push_ellipsoid(blocks.calcite, 0.5, r * 0.4, 0.5, r, r * 0.8, r * (0.8 + rng:below(3) * 0.15), { rough = 0.15, blind = true })
     return schem.record_schematic({})
 end
+-- A moss cushion (2026-09-18: "Moss should not be on cards it should be a
+-- decoration like thin bushes except soft light green"): three to six
+-- rough lumps huddled on the floor, a block to two across and half a block
+-- to a block high, the lower half of each pressed into the rock. The floor's moss was
+-- a cover one cell thick, which read as flat cards laid on the mud.
+local function cushion(rng)
+    schem.record_begin()
+    for _ = 1, 3 + rng:below(4) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local off = rng:below(4) * 0.35
+        local r = 0.45 + rng:below(4) * 0.15
+        local h = 0.5 + rng:below(4) * 0.17
+        schem.push_ellipsoid(blocks.moss, 0.5 + d[1] * off, 1.0, 0.5 + d[2] * off, r, h, r * (0.8 + rng:below(3) * 0.15), { rough = 0.5, blind = true })
+    end
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { vines = {}, boulders = {} }
+    BUILT = { vines = {}, boulders = {}, cushions = {} }
     if game.schematic_shapes then
         for i = 1, 4 do BUILT.vines[i] = vine(rng_for("vine:" .. i)) end
         for i = 1, 4 do BUILT.boulders[i] = boulder(rng_for("boulder:" .. i)) end
+        for i = 1, 6 do BUILT.cushions[i] = cushion(rng_for("cushion:" .. i)) end
     end
     return BUILT
 end
 
 -- ------------------------------------------------------------ the fields
 
-tdw.cave_biome(ID, { -0.12, 0.14 }, function(ctx)
+tdw.cave_biome(ID, { -0.30, 0.14 }, function(ctx)     -- -0.12 until 2026-09-18, when the Crystal Seam shrank
     local caves = ctx.caves
     -- A storey's centre, km under the dome, and the height of its rooms.
     local function centre(k)
@@ -159,7 +177,7 @@ tdw.cave_biome(ID, { -0.12, 0.14 }, function(ctx)
     local fills = {
         { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        { cover = blocks.moss, cells = 1, take = moss },
+        ctx.caves.vein_fill(ctx, void, 0.0),          -- the crystal veins through the rock (caves.lua)
         { cover = blocks.maidenhair, cells = 3, take = fern },
     }
     if game.schematic_shapes then
@@ -170,6 +188,9 @@ tdw.cave_biome(ID, { -0.12, 0.14 }, function(ctx)
             stand = ctx.compile("stand_vine", ctx.mine(n.sub(n.noise("ml_crevice", 1 / 6, 1, 1.0), n.const(0.15)))) }
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.boulders, cell = BOULDER_CELL, chance = BOULDER_SQUARES, salt = 402, sink = 1,
             stand = ctx.compile("stand_boulder", ctx.mine(n.sub(n.noise("ml_boulder", 1 / 15, 1, 1.0), n.const(0.1)))) }
+        -- The moss: cushions where the flat cover was (the same field).
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cushions, cell = CUSHION_CELL, chance = CUSHION_SQUARES, salt = 403, sink = 1,
+            stand = moss }
     end
     -- The basins' water: a block deep over the floor, where the basin noise
     -- says, in a room. The level is the storey floor in world y, per storey.

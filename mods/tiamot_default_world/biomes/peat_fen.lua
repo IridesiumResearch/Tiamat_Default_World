@@ -135,10 +135,9 @@ tdw.build_biome(ID, function(ctx)
         scatter("stump", built.stumps, n.sub(n.const(REED_BAND[1]), gully()), STUMP_CELL, STUMP_SQUARES, 321, 0.005)
         scatter("log", built.logs, n.sub(n.const(0.5), gully()), LOG_CELL, LOG_SQUARES, 322, 0.002)
     end
-    -- The pools: dark water over the gullies' floors, wider than a brook.
-    local level = n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()),
-        n.mul(shape.knoll_terms(), shape.knoll_weight())), n.const(1.0 / shape.SCALE)),
-        n.const(shape.Y0 - shape.GULLY_DEPTH * POOL_AT / shape.SCALE))
+    -- The pools: dark water over the gullies' floors, wider than a brook,
+    -- on the ground beside them as the brooks are (shape.lua).
+    local level = shape.gully_water_level(POOL_AT)
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.fen.pool_level", level),

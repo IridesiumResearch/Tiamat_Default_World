@@ -217,10 +217,8 @@ tdw.build_biome(ID, function(ctx)
         scatter("thorn", built.thorns, n.min(dry, n.sub(n.const(GORSE_MIN), n.noise("hm_gorse", GORSE_FREQ, 2, 1.0))), THORN_CELL, THORN_SQUARES, 264, 0.008)
     end
     -- Dark water in the gullies' deepest reaches, as the Flower Forest's
-    -- brooks: the smooth ground's height less most of the gully's depth.
-    local level = n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()),
-        n.mul(shape.knoll_terms(), shape.knoll_weight())), n.const(1.0 / shape.SCALE)),
-        n.const(shape.Y0 - shape.GULLY_DEPTH * BROOK_AT / shape.SCALE))
+    -- brooks: most of the gully's depth under the ground beside it.
+    local level = shape.gully_water_level(BROOK_AT)
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.heather.brook_level", level),

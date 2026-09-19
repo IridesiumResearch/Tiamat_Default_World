@@ -166,6 +166,7 @@ tdw.cave_biome(ID, { 0.14, 1 }, function(ctx)
     local fills = {
         { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
+        caves.vein_fill(ctx, void, 0.0),              -- the crystal veins through the rock (caves.lua)
         { cover = blocks.glow_algae, cells = 1, take = algae },
         { cover = blocks.ocean_moss, cells = 1, take = pads },
     }

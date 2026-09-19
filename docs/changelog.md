@@ -2873,6 +2873,73 @@ can stumble across one."
   openings per km² on the 24-block grid over three 6 km squares, against
   0.4 to 1.8 before. The samples are small; the order holds.
 
+### Brooks that stay in their gullies, water that breaks grass, crystal veins, moss cushions (2026-09-18)
+
+- **The brooks no longer pour out over the meadows** ("water running
+  across a cherry tree field ... originating from a little cubby hole").
+  The Flower Forest's brooks, the Heather Moor's brooks and the Peat Fen's
+  pools set their water level from the SMOOTH ground (relief, dome, knolls)
+  less most of the gully's depth. The real ground also carries the world's
+  detail (±3 blocks) and the bluffs' steps (±1). So where a gully ran
+  through a dip in the detail, its bank stood under the water, and the
+  brook spilled out of the gully's end and ran across the grass.
+  `shape.gully_water_level(at)` now puts the level `at` of the gully's
+  depth under the ground as it would stand without the gully: the terrain
+  program of the fill's own mode, plus the gully's cut. The engine solves
+  a fluid level at its own height, which is what lets a level ride the
+  terrain. The bank is always over the water. Measured at eight Flower
+  Forest spots: 17 wet columns outside the brooks at one spot before the
+  change, none at any spot after.
+- **Running water breaks grass** ("Grass should probably get broken by
+  water"). Every block a body walks through (`passable`: grass, ferns,
+  flowers, reeds, mint and the rest) is listed in `tdw.washes_away`. Where
+  water is moving, the plants in its path go and the water stays
+  (`rules.lua`). The engine gives no direct way to do this, so the rule
+  works round two gaps:
+  - A tuft is too few cells to stop water, so no report ever names a
+    plant.
+  - The fluid hook cannot read the world: every `get_block` in it came
+    back nil.
+
+  So the hook notes where water was stopped, and on the next tick the
+  rule sweeps 7 × 7 blocks around each of those places for a plant with
+  water in it. Measured with a flood poured on a meadow: the 20 plants in
+  water went, the 82 dry ones stayed, and the mod's share of a tick peaked
+  at 1.4 ms. Engine-asks 37 asks for the direct way.
+- **Crystal veins, and less crystal lying about** ("reduce the amount of
+  random Crystal and Crystal seams. Rather let's have veins of it running
+  through the rock around and also through the caves").
+  - The Crystal Seam's share of the caves' provinces fell from 37% to 18%
+    (its edge moved from -0.12 to -0.30, and Mossy Limestone takes the
+    difference).
+  - Its lining's short vein blobs are gone. Its knobs, shards, clusters
+    and spires are a third to a half of what they were.
+  - Every cave biome now lays **crystal veins** (`caves.vein_node`): tubes
+    a block or two thick, one wherever two flattened noises cross zero
+    together, running along the rock for tens of blocks. Each cave biome
+    lays them after its lining and outside its own void, so a vein runs
+    on through the rock and shows on every wall, floor and ceiling a cave
+    cuts through it.
+  - Measured through the cave band: veins are 0.93% of the Seam's rock
+    (a finer vein noise there) and about 0.3% of the other caves' rock.
+    Near a Seam corridor, 75 crystal blocks were on show.
+- **Moss cushions on the cave floors, and moss soft light green** ("Moss
+  should not be on cards it should be a decoration like thin bushes except
+  soft light green"). The Mossy Limestone floor's moss was a one-cell
+  cover, which read as flat cards on the mud. Where it was, a scatter of
+  cushions now stands instead: three to six rough lumps each, a block or
+  two across and half a block to a block high. Measured in one room: 91
+  moss blocks, all partly filled, 60 of them two cells or more high. The
+  `moss` texture is now soft light green, 142, 178, 104, where it had been
+  the rainforest's deep 70, 102, 54. The mod keeps one moss block (no
+  variants), so all moss changed colour: the Jungle's floors, the Taiga's
+  hummocks, the mossed logs and stones.
+- **Engine asks moved** to the engine repo, `docs/engine-asks/
+  tiamot_default_world.md` (engine ae7d45b), beside the other mods' asks,
+  where the engine agent reads them. `docs/engine-asks.md` is the history
+  now. Ask 35 is marked half landed: the level is solved at its own
+  height, but `within` is still read at y = 0.5.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

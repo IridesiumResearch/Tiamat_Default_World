@@ -58,7 +58,7 @@ BLOCKS = {
     "water_iris":     ( 74, 116,  64,  0),
     "wild_mint":      ( 86, 126,  78,  0),
     "kelp":           ( 96, 104,  40,  0),
-    "moss":           ( 70, 102,  54,  0),   # the rainforest (1.7): a deep wet green
+    "moss":           (142, 178, 104,  0),   # soft light green (2026-09-18; a deep wet 70,102,54 for the rainforest until then)
     "black_mud":      ( 34,  30,  28,  0),
     "ironwood_log":   ( 62,  46,  40,  0),
     "ironwood_leaves":( 42,  78,  48,  0),

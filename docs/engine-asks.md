@@ -1,5 +1,10 @@
 # Engine asks from the Spindle
 
+> **The open asks moved (2026-09-18)** to the engine's `docs/engine-asks/tiamot_default_world.md`
+> (`../Tiamot/docs/engine-asks/`), beside the other mods' (the designer's call: every mod's asks
+> in one place for the engine agent). This file is the history: new asks go
+> there, and what lands is recorded here.
+
 What the world mod has needed from the engine, found by building it. Each
 entry says what was seen, why the mod cannot fix it, and the smallest
 engine change that would. Newest first. Items are removed when they land.

@@ -370,13 +370,13 @@ tdw.build_biome(ID, function(ctx)
         scatter("birch", built.birches, n.min(grove(), n.sub(n.const(0.12), grove())), BIRCH_CELL, BIRCH_SQUARES, 163)
         scatter("log", built.logs, grove(), LOG_CELL, LOG_SQUARES, 164)
     end
-    -- The brooks: water in the deepest quarter of the gullies, at the
-    -- smooth ground's own height less most of the gully's depth. The bed
-    -- under it is the pebbles of code 4, and the banks are grass — no
-    -- channel is cut for it, which is the brief's "no shear cuts".
-    local level = n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()),
-        n.mul(shape.knoll_terms(), shape.knoll_weight())), n.const(1.0 / shape.SCALE)),
-        n.const(shape.Y0 - shape.GULLY_DEPTH * BROOK_AT / shape.SCALE))
+    -- The brooks: water in the deepest quarter of the gullies, most of the
+    -- gully's depth under the ground's own height beside it
+    -- (`shape.gully_water_level`: on the smooth ground until 2026-09-18,
+    -- and it poured out where the detail dipped). The bed under it is the
+    -- pebbles of code 4, and the banks are grass — no channel is cut for
+    -- it, which is the brief's "no shear cuts".
+    local level = shape.gully_water_level(BROOK_AT)
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.flowers.brook_level", level),

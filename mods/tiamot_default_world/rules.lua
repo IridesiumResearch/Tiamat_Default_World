@@ -3,6 +3,9 @@
 --
 -- Rules of the world that are not one biome's.
 --
+-- Water and plants: running water breaks the plants a body walks through
+-- (grass, ferns, flowers), below.
+--
 -- Leaves and water. Leaves placed into water, or against it, fall apart:
 -- the placement is refused and the player keeps them. Water that reaches
 -- a leaves block breaks it. There is no way yet to drop what it was as an
@@ -20,6 +23,46 @@ local function wet(x, y, z)
     local f = game.get_fluid{ x = x, y = y, z = z }
     return f ~= nil and not f.empty
 end
+
+-- Water washing plants away: places the fluid hook noted, a few a tick,
+-- each swept WASH_R round on its own level and the one under it. A
+-- washable plant with water in its block goes; the water stays. The queue
+-- is bounded and forgets its oldest: running water keeps reporting, so a
+-- place missed now comes round again.
+local WASH_R, WASH_PER_TICK, WASH_QUEUE = 3, 12, 256
+local pending, seen = {}, {}
+local function note_wash(pos)
+    local key = pos.x .. ":" .. pos.y .. ":" .. pos.z
+    if seen[key] then
+        return
+    end
+    if #pending >= WASH_QUEUE then
+        seen[table.remove(pending, 1).key] = nil
+    end
+    seen[key] = true
+    pending[#pending + 1] = { x = pos.x, y = pos.y, z = pos.z, key = key }
+end
+local function wash_round(c)
+    local q = { x = 0, y = 0, z = 0 }
+    for dy = 0, -1, -1 do
+        for dx = -WASH_R, WASH_R do
+            for dz = -WASH_R, WASH_R do
+                q.x, q.y, q.z = c.x + dx, c.y + dy, c.z + dz
+                local b = game.get_block(q)
+                if b and tdw.washes_away[b.material] and wet(q.x, q.y, q.z) then
+                    game.set_block({ x = q.x, y = q.y, z = q.z }, "engine:air")
+                end
+            end
+        end
+    end
+end
+tdw.on_tick(function()
+    for _ = 1, math.min(WASH_PER_TICK, #pending) do
+        local c = table.remove(pending, 1)
+        seen[c.key] = nil
+        wash_round(c)
+    end
+end)
 
 game.register_on_place(function(event)
     if event.material ~= blocks.oak_leaves then
@@ -81,6 +124,19 @@ game.register_on_fluid_flow(function(event)
     if event.block == LEAVES then
         game.set_block(event.into, "engine:air")
         return
+    end
+    -- Grass and the other plants a body walks through (2026-09-18, "Grass
+    -- should probably get broken by water"). A tuft is a few cells of its
+    -- block, so water is let INTO it and no flow into it is ever refused:
+    -- the engine has nothing to report about the plant itself. What it
+    -- does report, while water is moving, is the water's edge pressing
+    -- sideways on whatever stops it (measured: a flood over a meadow, 1,208
+    -- reports in fifteen seconds, all sideways, none from a plant's block).
+    -- And this hook cannot READ the world (every `get_block` in it is nil),
+    -- only queue writes. So the report's place is noted here and washed on
+    -- the next tick (below). Engine-asks 37 is the direct way.
+    if event.fluid ~= LAVA then
+        note_wash(event.from)
     end
     -- `meets` (engine, 2026-09-16) names the other fluid when one is in the
     -- way; an older engine never reports a meeting, and sends no `meets`.

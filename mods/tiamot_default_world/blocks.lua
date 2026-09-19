@@ -34,6 +34,8 @@ local COLD_GREEN = { strength = 0.16, scale = 192, low = { 0.86, 1.0, 0.98 }, hi
 -- The ice: cold blue, shifting between a deeper blue and a paler one.
 local COLD_BLUE = { strength = 0.18, scale = 96, low = { 0.80, 0.90, 1.0 }, high = { 1.0, 1.0, 1.0 } }
 
+-- The plants running water breaks, by numeric id (rules.lua).
+tdw.washes_away = {}
 local function block(id, name, description, extra)
     local spec = {
         id = id,
@@ -50,6 +52,11 @@ local function block(id, name, description, extra)
     -- `register_block` hands back the per-session numeric id, which is what
     -- the native fills take. Never persisted, never compared to a literal.
     M[id] = game.register_block(spec)
+    if spec.passable then
+        -- A plant a body walks through: water that runs over it breaks it
+        -- (rules.lua).
+        tdw.washes_away[M[id]] = true
+    end
     return M[id]
 end
 

@@ -162,9 +162,9 @@ biome{ id = "redwood_stands", name = "Redwood Stands", area = "surface",
 -- 2. Normal caves ----------------------------------------------------------------
 area{ id = "normal_caves", name = "Normal Caves", kind = "depth", note = "100 to 1,600 blocks down." }
 biome{ id = "mossy_limestone", name = "Mossy Limestone", area = "normal_caves",
-    note = "2.1 (2026-09-18) — vaulted domes joined by crawlspaces; mud floors, rimstone basins with still water, moss over the lower surfaces, vines from the ceiling, maidenhair at the drips. The caves' province noise between -0.12 and 0.14." }
+    note = "2.1 (2026-09-18) — vaulted domes joined by crawlspaces; mud floors, rimstone basins with still water, moss over the lower surfaces, vines from the ceiling, maidenhair at the drips. The caves' province noise between -0.30 and 0.14 (-0.12 until 2026-09-18). Crystal veins through its rock." }
 biome{ id = "crystal_seam", name = "Crystal Seam", area = "normal_caves",
-    note = "2.2 (2026-09-18) — narrow fault corridors with V-shaped ceilings; slate over basalt cut by planar crystal veins; clusters from the walls, spires at the pinch-points, geodes, shards. Province under -0.12." }
+    note = "2.2 (2026-09-18) — narrow fault corridors with V-shaped ceilings; slate over basalt laced with crystal veins that run on through every cave's rock; a few clusters, spires, geodes, shards. Province under -0.30 (-0.12 until 2026-09-18)." }
 biome{ id = "underground_river", name = "Underground River", area = "normal_caves",
     note = "2.3 (2026-09-18) — meandering tubes with an undercut bank and a sloping shelf; a flowing channel two deep over cobbles and gravel, silt on the banks, glowing algae at the waterline, moss pads in the current, roots from the ceiling, snags. Province over 0.14." }
 biome{ id = "fungal_grove_chambers", name = "Fungal Grove Chambers", area = "normal_caves" }

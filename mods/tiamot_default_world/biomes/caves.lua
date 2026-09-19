@@ -72,6 +72,51 @@ end
 function M.province()
     return n.noise("cave_province", M.PROVINCE_FREQ, 2, 1.0, M.PROVINCE_STRETCH)
 end
+-- **The crystal veins** (2026-09-18: "reduce the amount of random Crystal
+-- and Crystal seams. Rather let's have veins of it running through the
+-- rock around and also through the caves"). A vein is where two stretched
+-- noises are BOTH near zero: the line two wandering sheets cross along, a
+-- tube VEIN.W blocks either side of it, drawn out flat (VEIN.STRETCH) so a
+-- vein runs along the rock for tens of blocks rather than up through it.
+-- Only in vein fields, where a slow noise is over `zone_min`; each cave
+-- biome passes its own, and its own frequency: how many veins there are
+-- goes with the square of it (measured, at 1/48: a quarter of one per
+-- cent of the rock; the Crystal Seam's 1/30 is some three times that).
+-- Blocks: positive inside the vein.
+--
+-- Every cave biome lays the veins itself, AFTER its lining and with its
+-- own void cut out (`vein_fill`): the linings paint the last few blocks of
+-- rock round a void, and veins laid before them were painted over at the
+-- very walls where a vein should show; laid after, and not into the void,
+-- a vein runs through the rock and out across every wall, floor and
+-- ceiling a cave cuts through it.
+local VEIN = {
+    FREQ = 1 / 48, STRETCH = { x = 2.5, z = 2.5 },
+    W = 1.1, K = 30.0,                    -- blocks either side of the line; the noise's blocks per unit near zero
+    W_FREQ = 1 / 20, W_VARY = 0.5,       -- the vein's thickness wanders
+    ZONE_FREQ = 1 / 260,
+}
+M.VEIN = VEIN
+function M.vein_node(zone_min, freq)
+    freq = freq or VEIN.FREQ
+    local w = n.add(n.noise("crystal_vein_w", VEIN.W_FREQ, 1, VEIN.W_VARY), n.const(VEIN.W))
+    local a = n.sub(w, n.mul(n.abs(n.noise("crystal_vein_a", freq, 1, 1.0, VEIN.STRETCH)), n.const(VEIN.K * VEIN.FREQ / freq)))
+    local b = n.sub(n.add(n.noise("crystal_vein_w", VEIN.W_FREQ, 1, VEIN.W_VARY), n.const(VEIN.W)),
+        n.mul(n.abs(n.noise("crystal_vein_b", freq, 1, 1.0, VEIN.STRETCH)), n.const(VEIN.K * VEIN.FREQ / freq)))
+    local zone = n.mul(n.sub(n.noise("crystal_vein_zone", VEIN.ZONE_FREQ, 1, 1.0), n.const(zone_min)), n.const(40.0))
+    return n.min(n.min(a, b), zone)
+end
+-- The fill a cave biome lays its veins with: into its own province and
+-- band, not into `void` (its void field, blocks, positive in the air). The
+-- void FIRST: it is the deepest operand.
+function M.vein_fill(ctx, void, zone_min, freq)
+    return {
+        field = ctx.compile("veins", ctx.mine(n.min(n.mul(void, n.const(-1.0)), M.vein_node(zone_min, freq)))),
+        material = tdw.blocks.crystal,
+        detail = shape.SURFACE_DETAIL,
+    }
+end
+
 -- 0 to 1: how much of this place is biome `id`'s — its band of the
 -- province, and the depth band.
 function M.weight(id)
