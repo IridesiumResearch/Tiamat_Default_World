@@ -33,6 +33,16 @@ addressed by `SUMMARY_RULE = 2`; **11**, an item dropped at a position —
 answered on 2026-09-11: `game.spawn_entity{ item = stack }` is the mechanism
 and `core_gear` the worked example. It should not have been carried as open.*
 
+*Landed 2026-09-22, the last three — the world's sheet is empty: **37**,
+`washes_away = true` on `register_block` (engine e4ac3a8): water running
+into a plant clears every occupied cell of it, nothing dropped; **27**,
+`friction = 0..1` on `register_block` (b04f791, protocol 67), read per
+cell under the feet, predicted by the client; **24**, `light_falloff =
+0..15` on `register_block` (41ce033), levels a block loses, so leaves
+can shade — three blocks of canopy at two a block read 6 of 15 on the
+floor. None is used by the mod yet: rules.lua still sweeps for wet plants,
+ice still grips like stone, leaves still pass light as glass.*
+
 *Landed 2026-09-19 (engine eab4c2d, a5c83ec, a3db9fa; the sheet pruned
 in aaf619c): **30**, a density program may hold 4,096 operations and 16
 live buffers (was 1,024 and 8); **32**, a cover run over three cells
