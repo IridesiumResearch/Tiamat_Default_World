@@ -163,8 +163,8 @@ local KAPOK = {
 -- is the tick's business now.
 local function vine(x, y, z, drop, rng)
     schem.push_path(blocks.climbing_ivy, {
-        { x, y - 0.3, z, 0.3 },
-        { x + (rng:below(3) - 1) * 0.2, y - 1.8, z + (rng:below(3) - 1) * 0.2, 0.26 },
+        { x, y - 0.3, z, 0.18 },                -- a cell thick (0.3 until 2026-09-22)
+        { x + (rng:below(3) - 1) * 0.2, y - 1.8, z + (rng:below(3) - 1) * 0.2, 0.16 },
     }, BLIND)
 end
 
@@ -262,7 +262,10 @@ local function megatree(rng, sp)
         local strip = {}
         for _, p in ipairs(trunk) do
             if p[2] >= 0 and p[2] <= reach then
-                strip[#strip + 1] = { p[1] + d[1] * (p[4] + 0.15), p[2], p[3] + d[2] * (p[4] + 0.15), 0.5 }
+                -- One cell wide (0.5 until 2026-09-22, a strip of three: with
+                -- the ivy drawn as cells rather than cards that was a green
+                -- plate up the trunk).
+                strip[#strip + 1] = { p[1] + d[1] * (p[4] + 0.1), p[2], p[3] + d[2] * (p[4] + 0.1), 0.2 }
             end
         end
         if #strip >= 2 then
@@ -624,7 +627,7 @@ end
 -- comes down over a quarter of a minute.
 local VINE_MAX, VINE_TICKS = 12, 30
 local IVY = "tiamot_default_world:climbing_ivy"
-local CENTRE_COLUMN = (1 << 4) | (1 << 13) | (1 << 22)   -- the middle cell column of a block: one card the block's height
+local CENTRE_COLUMN = (1 << 4) | (1 << 13) | (1 << 22)   -- the middle cell column of a block: a rope a third of a block across
 local WOOD = { [blocks.ironwood_log] = true, [blocks.kapok_log] = true, [blocks.willow_log] = true, [blocks.oak_log] = true }
 local edits = tdw.edits
 local function has(b, material)

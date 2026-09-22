@@ -3058,6 +3058,25 @@ new plant at most, and each lays the crystal veins through its rock.
   - Any other error is raised as before.
 - The test server and bot are rebuilt from engine 8929ca1 (protocol 70).
 
+### Thin vines (2026-09-22)
+
+- **The Jungle's vines are ropes, not cards** ("the vines need to be very
+  thin. not massive like they are. The look like giant floating cards in
+  the middle of the jungle").
+  - `climbing_ivy` was a billboard. A card is drawn a block wide whatever
+    the cells under it, so a rope one cell thick hung as a sheet a block
+    wide and up to twelve tall.
+  - It is drawn as its cells now, `cutout` like the leaves, with a round
+    leaf on each cell face. A rope is a third of a block across.
+  - The hanging template is a cell thick (radius 0.3 to 0.18), and the
+    strips up the trunks one cell wide (0.5 to 0.2), since drawn as cells
+    the old strips were green plates up the bark.
+  - The Mossy Limestone's ceiling vines are the same block, and change with
+    it.
+  - Measured round a Jungle landing: 36 ivy blocks, 27 one cell column
+    wide and 9 two, where a rope slants across a cell boundary. Before the
+    template change, 60 blocks: 35 one column, 22 two, 3 wider.
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

@@ -199,7 +199,13 @@ block("black_mud", "Black mud", "Deep sucking puddles of it in the hollows and t
 block("ironwood_log", "Ironwood log", "A megatree's trunk: dark, dense, nearly as hard as stone.", { hardness = 2.2, tint = SOIL })
 block("ironwood_leaves", "Ironwood leaves", "The high canopy, dark and layered.", { hardness = 0.2, tint = EMERALD, cutout = true, sway = true, light_falloff = 5 })
 block("ironwood_planks", "Ironwood planks", "Heavy red-brown boards cut from an ironwood.", { hardness = 1.8, tint = SOIL })
-block("climbing_ivy", "Climbing ivy", "Up every trunk, and hanging in ropes from the limbs.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
+-- The ivy is CELLS, not a card (2026-09-22: "the vines need to be very
+-- thin ... They look like giant floating cards in the middle of the
+-- jungle"). A card is a block wide however thin the run of cells it stands
+-- for, so a rope one cell thick hung as a sheet a block wide and twelve
+-- tall. Drawn as its cells, `cutout` like the leaves (a round leaf on each
+-- cell's face), a rope is a third of a block across.
+block("climbing_ivy", "Climbing ivy", "Up every trunk, and hanging in ropes from the limbs.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, cutout = true })
 block("monstera", "Monstera", "Giant split leaves on the forest floor.", { hardness = 0.1, tint = EMERALD, passable = true, sway = true, billboard = "cross" })
 block("pitcher_plant", "Pitcher Plants", "Carnivorous tubes huddled in the hollows between a megatree's roots.", { hardness = 0.1, tint = EMERALD, passable = true, billboard = "cross" })
 block("kapok_log", "Kapok log", "The emergent's trunk: pale, smooth and grey.", { hardness = 1.0, tint = ROCK })
