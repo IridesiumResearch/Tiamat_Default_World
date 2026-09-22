@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: Iridesium
 -- SPDX-License-Identifier: MIT
 --
--- Type stubs for the Tiamot mod API, annotated for the Lua Language Server.
+-- Type stubs for the Tiamat mod API, annotated for the Lua Language Server.
 --
 -- MIT licensed, unlike the engine — copy this file into your mod, closed-source
 -- or otherwise. See ../README.md.
@@ -37,7 +37,7 @@
 
 ---@meta
 
----@class Tiamot.ChunkPos
+---@class Tiamat.ChunkPos
 ---@field x integer Chunk x, in chunks.
 ---@field y integer Chunk y, in chunks.
 ---@field z integer Chunk z, in chunks.
@@ -45,7 +45,7 @@
 
 ---A per-column height field. Produced and consumed natively; you cannot read
 ---the individual heights, by design.
----@class Tiamot.Heightmap
+---@class Tiamat.Heightmap
 local Heightmap = {}
 
 ---Number of columns. 256 for a chunk.
@@ -57,7 +57,7 @@ function Heightmap:len() end
 ---Every operation is whole-buffer or whole-block. Block-level calls are the
 ---cheap default; sub-node calls expand the buffer 27x and are opt-in (see the
 ---Sub-Node Contract, §5).
----@class Tiamot.ChunkBuffer
+---@class Tiamat.ChunkBuffer
 local ChunkBuffer = {}
 
 ---Fills every block with one material.
@@ -65,7 +65,7 @@ local ChunkBuffer = {}
 function ChunkBuffer:fill_all(material) end
 
 ---Fills every block below the given surface. The workhorse terrain operation.
----@param heightmap Tiamot.Heightmap
+---@param heightmap Tiamat.Heightmap
 ---@param material integer
 function ChunkBuffer:fill_below_heightmap(heightmap, material) end
 
@@ -110,7 +110,7 @@ function ChunkBuffer:fill_below_heightmap(heightmap, material) end
 ---buf:fill_density(field, stone, { detail = "smooth" })   -- no staircases
 ---buf:fill_density(field, stone, { detail = "sampled" })  -- and fine detail
 ---```
----@param density Tiamot.Density
+---@param density Tiamat.Density
 ---@param material integer
 ---@param options table? `{ detail = "smooth" | "sampled" }`
 function ChunkBuffer:fill_density(density, material, options) end
@@ -148,7 +148,7 @@ function ChunkBuffer:fill_density(density, material, options) end
 ---than as a block-thick stair under it.
 ---
 ---At most 16 bands. Thresholds must be distinct numbers; the engine sorts them.
----@param density Tiamot.Density
+---@param density Tiamat.Density
 ---@param bands { above: number, material: integer }[]
 ---@param options table? `{ detail = "smooth" | "sampled" }`
 function ChunkBuffer:fill_palette(density, bands, options) end
@@ -179,8 +179,8 @@ function ChunkBuffer:fill_palette(density, bands, options) end
 ---    { code = 2, to = 0.004, material = snow },
 ---})
 ---```
----@param depth Tiamot.Density
----@param code Tiamot.Density
+---@param depth Tiamat.Density
+---@param code Tiamat.Density
 ---@param layers { code: integer, from: number?, to: number, material: integer }[]
 function ChunkBuffer:fill_layers(depth, code, layers) end
 --- A layer whose `code` is -1 takes EVERY block, and `to` may be `math.huge`:
@@ -188,17 +188,35 @@ function ChunkBuffer:fill_layers(depth, code, layers) end
 --- no depth — and the one evaluation lays the whole chunk, so the generator
 --- need not evaluate the same terrain for its body fill and again for its
 --- stone. Three evaluations a chunk were one.
+---
+--- **The terrain is evaluated only where a code can match.** The code's
+--- bound is asked first, then the code itself, and the terrain only when
+--- some block's code is one the layers name — so painting biome by biome
+--- costs the cheap code field alone over every chunk that biome's mask
+--- misses. (A layer under code -1 matches everywhere and so always
+--- evaluates.) Nothing to design around; the cells are the same either way.
 
 ---Stands a run of cells on every surface the buffer already holds: ground
 ---cover — grass, ferns, anything that grows UP from the ground.
 ---
 ---For every cell column, wherever an empty cell sits on an occupied one, that
----cell and up to `cells - 1` empty cells above it become `material`. **Inside
----one block, always**: the run stops at the block's top, so a tuft is never
----two stacked blocks that highlight and dig apart, and where the surface is
----a block's top cell the run is that one cell. It never overwrites a cell
----that holds something, and cover this call writes is not ground for it — a
----run never stands on another run.
+---cell and up to `cells - 1` empty cells above it become `material`. It never
+---overwrites a cell that holds something — the run stops at the first thing it
+---meets — and cover this call writes is not ground for it, so a run never
+---stands on another run.
+---
+---**Up to three cells, the run stays in the block it started in.** That is
+---what keeps a tuft from being two stacked blocks that highlight and dig
+---apart, and where the surface is a block's top cell the run is that one cell.
+---Every grass in the world wants two, and two behaves exactly as it always did.
+---
+---**Over three cells, it carries into the block above** — the two-block
+---flowers an allium or a peony wants, up to nine cells. It stops where it
+---meets anything, in the block above as in its own. It is cut at the chunk's
+---ceiling: the block over the top block belongs to a chunk that does not exist
+---yet, which is the same reason a surface exactly on the chunk floor gets no
+---cover. One block row in sixteen, and only for a run tall enough to reach out
+---of it.
 ---
 ---**Why a field cannot do this.** A density has no idea which block a sample
 ---is in, and a run two cells tall in a block whose surface sits at an
@@ -214,11 +232,12 @@ function ChunkBuffer:fill_layers(depth, code, layers) end
 ---Call it AFTER the fills that make the ground — it reads what they wrote.
 ---
 ---```lua
----buf:fill_cover(grass, { cells = 2, take = tufts })   -- two cells, where tufts > 0
+---buf:fill_cover(grass, { cells = 2, take = tufts })   -- two cells, in its block
 ---buf:fill_cover(moss)                                 -- one cell, everywhere
+---buf:fill_cover(allium, { cells = 6, take = rare })   -- two blocks tall
 ---```
 ---@param material integer
----@param options table? `{ cells = 1 | 2 | 3, take = Tiamot.Density }`
+---@param options table? `{ cells = 1..9, take = Tiamat.Density }`
 function ChunkBuffer:fill_cover(material, options) end
 
 ---Fills every block below `level` with a fluid, around the terrain.
@@ -258,10 +277,24 @@ function ChunkBuffer:fill_fluid_below(level, fluid) end
 ---`fill_fluid_below` is one level for the world, which is a sea. Fluid is
 ---conserved and flows, so water laid at a SLOPE does not stay put — it runs to
 ---the lowest point of its valley as soon as the chunk loads. Here `level` is a
----density whose value is a world height; it is read once per column (at the
----column's centre, on the chunk's lowest layer, so give it a field that does
----not read `y`) and taken down to a whole block, and the column's fluid fills
----every block below that, around the terrain, as a sea does.
+---density whose value is a world height; it is read once per column and taken
+---down to a whole block, and the column's fluid fills every block below that,
+---around the terrain, as a sea does.
+---
+---# Both fields are read on the world plane `y = 0.5`
+---
+---Not on the chunk's own floor — **on `y = 0.5`, for every chunk in the
+---world**, at the column's centre. That is what makes a column's level a fact
+---about the COLUMN: read them per chunk layer and two layers of one column
+---answer a block apart, and the lower one stops short of the upper one's
+---water, leaving a sheet of it hanging over an air gap exactly on the seam.
+---
+---So **give `level` and `within` fields that do not read `y` at all.** A field
+---that reads height a little — a province cut carrying a depth band, a noise
+---stretched in y — is evaluated thirty thousand blocks from where its water
+---goes. If it reads `y` enough that `within` answers differently at the two
+---heights, the call is now an error saying so; a `level` that does it is not
+---detectable and is simply wrong.
 ---
 ---Where a neighbouring column's top is higher, this column gets a **lip**: the
 ---blocks from its own top up to the neighbour's are made `lip` wherever the
@@ -287,8 +320,9 @@ function ChunkBuffer:fill_fluid_below(level, fluid) end
 ---```
 ---
 ---Run it after the terrain, and after anything stamped into the channel: the
----fluid takes the room the blocks leave. Returns how many blocks became lips.
----@param spec { level: Tiamot.Density, within: Tiamot.Density?, fluid: string, lip: integer? }
+---fluid takes the room the blocks leave. Returns how many blocks became lips,
+---and raises an error if `within` reads height (see above).
+---@param spec { level: Tiamat.Density, within: Tiamat.Density?, fluid: string, lip: integer? }
 ---@return integer lips
 function ChunkBuffer:fill_fluid_terraced(spec) end
 
@@ -374,13 +408,13 @@ function ChunkBuffer:is_expanded() end
 ---block the smooth detail leaves; 0 stands it on top.
 ---
 ---Returns how many structures wrote at least one block into this chunk.
----@param spec { depth: Tiamot.Density, stand: Tiamot.Density?, schematics: Tiamot.Schematic[], cell: integer?, chance: number?, salt: integer?, sink: integer? }
+---@param spec { depth: Tiamat.Density, stand: Tiamat.Density?, schematics: Tiamat.Schematic[], cell: integer?, chance: number?, salt: integer?, sink: integer? }
 ---@return integer placed
 function ChunkBuffer:scatter(spec) end
 
 ---A named random stream. Reproducible for the same world seed, chunk and name;
 ---uncorrelated with streams under other names.
----@class Tiamot.Stream
+---@class Tiamat.Stream
 local Stream = {}
 
 ---A uniformly distributed integer in `0..bound-1`.
@@ -393,7 +427,7 @@ function Stream:below(bound) end
 function Stream:next_bool() end
 
 ---Options for `game.noise_heightmap`.
----@class Tiamot.NoiseOptions
+---@class Tiamat.NoiseOptions
 ---@field octaves integer? Detail levels. Each doubles the cost. Default 4, capped at 16.
 ---@field frequency number? Inverse feature size. Default 0.02.
 ---@field lacunarity number? Frequency multiplier per octave. Default 2.0.
@@ -403,7 +437,7 @@ function Stream:next_bool() end
 
 ---Fields accepted by `game.register_block`. Anything else is an error naming
 ---the field — a typo should stop you, not silently take a default.
----@class Tiamot.BlockSpec
+---@class Tiamat.BlockSpec
 ---@field id string Required. Namespaced with your mod id automatically.
 ---@field name string? Display name.
 ---@field description string? One-line description.
@@ -411,16 +445,20 @@ function Stream:next_bool() end
 ---@field dominance number? How strongly this material imposes its hardness on a block it is only part of. Default 1.0. Must be positive. See below.
 ---@field drops table<string, integer>? Overrides what breaking it yields: block id to UNITS (27 to a block). Omit for the ordinary rule — the block drops itself, 27 units whole or one per occupied sub-node. Bare ids are namespaced with your mod id.
 ---@field tags string[]? Arbitrary tags for other mods to match on.
----@field textures Tiamot.BlockTextures? Which images clients draw this block with.
+---@field textures Tiamat.BlockTextures? Which images clients draw this block with.
 ---@field sounds { step: string }? What this block sounds like underfoot. The client plays its own footsteps from its own movement, so this is the only way it can know. Unqualified ids mean your own mod's.
----@field light_emit Tiamot.LightEmit? Light this block gives off. Omit for anything that is not a lamp.
+---@field light_emit Tiamat.LightEmit? Light this block gives off. Omit for anything that is not a lamp.
 ---@field transparent boolean? Whether this block can be seen through: glass. **A flag, not an alpha value** — what it looks like is its texture's own alpha, and a second opacity number beside it would be two sources of truth for one appearance. Three things change (Sub-Node Contract §8.1): a face draws where exactly one side of it is transparent, so a wall behind a window is not a hole and two panes together do not double up; the block is drawn in a blended pass after the opaque world; and light passes through it, so a glass roof does not make a dark room. **Collision does NOT change — glass is solid** and you cannot walk through a window. Only a whole block of one transparent material passes light; a chiselled or mixed block holding glass falls back to the ordinary cell rule.
 ---@field cutout boolean? Whether this block is see-through in PLACES rather than everywhere: leaves, a fern, a grate. **Not a variant of `transparent` — the opposite culling rule**, and a block declaring both is refused rather than given whichever the engine tests first. Glass hides the face between two panes so a window does not double up; foliage KEEPS the faces between two leaf blocks, because culled, a canopy is a hollow shell whose alpha holes look straight through the world at the sky. Drawn alpha-tested with the opaque world rather than blended, so it writes depth, occludes itself correctly at every angle, and needs none of the sorting §8.1 gave up on. Light passes as it does through glass; dappled shade is not expressible. Collision does NOT change — leaves are solid. The cost is that every interior face of a mass of foliage is drawn (Sub-Node Contract §8.2), which is what makes it look like foliage rather than a painted box.
----@field passable boolean? Whether a body walks through it: grass, ferns, vines. **Collision only.** The cell is still there for everything else — it meshes, it is lit, it holds fluid out, and a ray still STOPS at it, which is what lets a player aim at a tuft and break it. Without this every plant is a lip: collision is at sub-node resolution, so a two-cell fern is two thirds of a yard to climb, and foliage has to be built around that rather than around what it should look like (Sub-Node Contract §2).
+---@field passable boolean? Whether a body walks through it: grass, ferns, vines. **Collision only.** The cell is still there for everything else — it meshes, it is lit, and a ray still STOPS at it, which is what lets a player aim at a tuft and break it. **It does not hold fluid out:** a block holding nothing but passable cells takes a whole block of water, so a plant under water is saturated rather than standing in a bubble of air, and a body swimming through it is as submerged as the water beside it. Without this every plant is a lip: collision is at sub-node resolution, so a two-cell fern is two thirds of a yard to climb, and foliage has to be built around that rather than around what it should look like (Sub-Node Contract §2).
+---@field friction number? How much of the ordinary grip a body standing on it gets, 0 to 1: ice. Default 1. **Slow to start, slow to stop, slow to turn** — it scales how much speed a tick loses and the push that replaces it together, so a body on `friction = 0.1` glides several blocks after letting go; the top speed is the gait's own, reached more slowly. `0` neither slows nor pushes: a body keeps what it arrived with. Read at SUB-NODE resolution under the centre of the feet (Sub-Node Contract §2), so a block chiselled half from ice is slick only where the ice is. Walls need nothing: a body already slides along a wall. Outside 0..1 is refused. The client predicts the slide, so a slick floor is not a rubber-banding one.
+---@field washes boolean? Whether this fluid sweeps away a block that declared `washes_away`. Default true. **Set it false for a gentle fluid** — rain, a trickle, anything whose spread is incidental: a puddle that creeps a few cells into the grass beside it would otherwise strip it. The fluid's author decides rather than the plant's, because a plant cannot name every fluid in the world (Sub-Node Contract §4.3).
+---@field light_falloff integer? How many levels of light a block of this material takes out of what passes through it, 0..15. Default 0, which is exactly what every block did before this existed. **For foliage that shades**: leaves are `cutout`, and a cutout block passes light the way glass does, so a canopy over a forest floor left it as bright as a meadow. Two levels a block gives a rainforest floor about 6 of 15 under three blocks of canopy. Daylight's free fall straight down ends at the first dimming block, so everything below the canopy costs the ordinary level a block as well — which is what makes a thick canopy dark beneath and a thin one dappled (Sub-Node Contract §8.2). Whole blocks of one material only, like `transparent`.
+---@field washes_away boolean? Whether fluid running into this block sweeps it away: grass in a flood, a reed in a river. The block's cells are cleared as a dig would clear them, and **nothing is dropped** — what a washed plant leaves behind is yours to decide, from `register_on_fluid_flow`. Only a block whose occupied cells are ALL this material is cleared, so a fern sharing a block with a wall cannot take the wall with it. Pair it with `passable`: a flood runs THROUGH a passable plant, which is the case your mod cannot otherwise see, because `on_fluid_flow` reports the flows that were blocked (Sub-Node Contract §4.3).
 ---@field sway boolean? Whether the top of it moves in a fake wind: grass, leaves, a banner. **Presentation only** — the world does not know it is moving, so collision, lighting and the server's idea of where anything is are all untouched. The mesher marks the TOP EDGE of each face and the shader bends only those, so a plant bends from base to tip rather than sliding, and its base stays planted. The motion is smooth noise over world position and time, so a field leans in gusts rather than each plant buzzing on its own (Sub-Node Contract §8.3).
 ---@field billboard boolean|"cross"? Whether its cells are drawn as SPRITES rather than as geometry: grass, ferns, flowers. `true` is one card that turns to face the camera; `"cross"` is two FIXED cards on the diagonals of the run's column — the X Minecraft and Minetest draw, which reads as a plant and holds still as the player walks round it. **This is what a sprite card is here** — the engine has no diagonal geometry, and a cell drawn as a cube shows a NINTH of its texture per face (a texture repeats once per block), so grass built from cells reads as little floating boxes. A run of cells in a column is ONE sprite as tall as the run: one cell is a third of a yard, three is a yard. It turns about the vertical axis only, so it never lies over when you look down. The cells stay where they are for collision, light, fluid and the dig ray — only the drawing changes (Sub-Node Contract §8.4). A billboard may not also declare `transparent` or `cutout` — those are rules about a cell's cube faces and a sprite has none; the pair is refused.
 ---@field tint table? How this block's colour varies across the world: `{ strength = 0.15, scale = 32, low = {0.9, 1.0, 0.85}, high = {1.0, 0.95, 1.0} }`. **This is what stops ground reading as a repeating texture.** The client multiplies the texture by a colour sampled from one smooth field of world position — the same field for every material, so neighbouring materials vary together rather than each drifting on its own. `strength` (0..1) moves the TONE and is the whole of what most mods want: brightness variation alone breaks up the repeat. `low` and `high` are optional RGB multipliers at the two ends of the same field, for a hue shift — grass greener in one place than another — and default to no shift at all. `scale` is how many blocks one period spans, tens rather than ones: a period near a block makes noise rather than ground. Presentation only — nothing in the simulation reads it, and it is not in any determinism hash.
----@field absorbs { rate: integer, becomes: string? }? Ground that drinks. **It drinks ANY fluid, not a named one**: the rate is a property of the material and nothing asks what is touching it, so ground that soaks up a puddle also soaks the river it is the bed of, and the sea through its floor. There is no way to say "absorbs rainwater but not seawater" today. `rate` is how many of the block's 27 cells it takes out of fluid touching it, per fluid tick, 1..=27. `becomes` is the block it turns into once it has taken them, qualified against your own mod — omit it for ground that drinks for ever without changing, which is a drain rather than a sponge. **Saturation is a chain of materials, not engine state** (Sub-Node Contract §4.3): `dirt` → `damp_dirt` → `saturated_dirt`, and the chain ends where a block stops naming a successor. A block of two or more materials never absorbs, because there is no way to turn one material inside a mix into its successor without per-cell saturation state.
+---@field absorbs { rate: integer, becomes: string?, fluid: string? }? Ground that drinks. `rate` is how many of the block's 27 cells it takes out of fluid touching it, per fluid tick, 1..=27. `becomes` is the block it turns into once it has taken them, qualified against your own mod — omit it for ground that drinks for ever without changing, which is a drain rather than a sponge. `fluid` names the ONE fluid it drinks (`"core_milk:milk"`, or a bare name for one of your own); omit it for ground that drinks whatever touches it. Named, it is what lets rain-wet dirt exist beside a river: the dirt that soaks rainwater does not drain the river it is the bed of. A fluid nobody registered is one nothing drinks. **Saturation is a chain of materials, not engine state** (Sub-Node Contract §4.3): `dirt` → `damp_dirt` → `saturated_dirt`, and the chain ends where a block stops naming a successor. A block of two or more materials never absorbs, because there is no way to turn one material inside a mix into its successor without per-cell saturation state.
 
 ---How `dominance` decides a mixed block's hardness.
 ---
@@ -455,7 +493,7 @@ function Stream:next_bool() end
 ---**The engine registers no light sources of its own.** A world whose mods
 ---define no emissive block is lit only by the sky — that is a mod set's
 ---decision, the same way a world with no tools is one nobody can dig in.
----@class Tiamot.LightEmit
+---@class Tiamat.LightEmit
 ---@field r integer? Red, 0..15. Default 0.
 ---@field g integer? Green, 0..15. Default 0.
 ---@field b integer? Blue, 0..15. Default 0.
@@ -468,11 +506,11 @@ function Stream:next_bool() end
 ---deliberately not reserved in advance: adding them later is additive, whereas
 ---shipping a six-key schema nothing renders yet would freeze a guess into the
 ---mod API.
----@class Tiamot.BlockTextures
+---@class Tiamat.BlockTextures
 ---@field all string Required. The image every face uses, e.g. `"textures/white.png"`.
 
 ---Fields accepted by `game.register_tool`.
----@class Tiamot.ToolSpec
+---@class Tiamat.ToolSpec
 ---@field id string Required. Namespaced with your mod id automatically.
 ---@field name string? Display name.
 ---@field brush string? What shape it removes: `"block"` (default) or `"subnode"`.
@@ -484,9 +522,9 @@ function Stream:next_bool() end
 ---**Registration window only.** The engine has no sky of its own: a world whose
 ---mods register none has no day and holds its colours fixed, which is a
 ---legitimate world rather than a missing feature.
----@class Tiamot.SkySpec
+---@class Tiamat.SkySpec
 ---@field day_length_ticks integer Required. Ticks in a full day, at 20 ticks a second. Must be at least 1.
----@field keyframes Tiamot.SkyKeyframe[]
+---@field keyframes Tiamat.SkyKeyframe[]
 ---@field start_time number? Where a fresh world's clock starts, 0..1. Defaults to mid-morning: a counter left at zero opens every world at midnight, which is the one hour with no sun in it. Required, and not empty. Need not be sorted — the engine sorts them, because an out-of-order list would make the sky walk backwards partway through the day.
 
 ---One moment in your day.
@@ -494,12 +532,12 @@ function Stream:next_bool() end
 ---The client interpolates between keyframes, so a handful describes a whole
 ---day. Make the last keyframe restate the first's colours, or the sky cuts hard
 ---at the moment the clock wraps.
----@class Tiamot.SkyKeyframe
+---@class Tiamat.SkyKeyframe
 ---@field time number Required. When in the day, 0 to 1, where 0 is midnight and 0.5 is noon.
 ---@field sky number[] Required. `{r, g, b}` for the sky itself. Distance fog fades towards this, so it is also the horizon.
 ---@field sun number[] Required. `{r, g, b}` tinting the sunlight stored in the world.
 ---@field intensity number Required, 0 to 1. Scales stored sunlight at DRAW time — which is why a day/night cycle costs nothing: the world's sunlight is always full daylight and never needs relighting.
----@field grade Tiamot.SkyGrade? Optional. How the finished picture is graded at this moment. Omit it and nothing is graded.
+---@field grade Tiamat.SkyGrade? Optional. How the finished picture is graded at this moment. Omit it and nothing is graded.
 
 ---How a moment's finished picture is graded.
 ---
@@ -517,7 +555,7 @@ function Stream:next_bool() end
 ---highlight roll-off (which is what makes it decide how much of the picture
 ---rolls off at all), then, on the finished image, `contrast` about mid grey,
 ---`saturation`, `tint` then `offset`, and `gamma` last.
----@class Tiamot.SkyGrade
+---@class Tiamat.SkyGrade
 ---@field exposure number? 0 to 4, default 1. Multiplies the scene before the tonemap.
 ---@field tint number[]? `{r, g, b}`, each 0 to 4, default `{1, 1, 1}`. Multiplies the graded image.
 ---@field offset number[]? `{r, g, b}`, each -1 to 1, default `{0, 0, 0}`. Added after `tint`.
@@ -526,7 +564,7 @@ function Stream:next_bool() end
 ---@field gamma number? 0.1 to 4, default 1. Applied last, per channel. Never 0 — a zero exponent maps the whole frame to white.
 
 ---Fields accepted by `game.register_action`.
----@class Tiamot.ActionSpec
+---@class Tiamat.ActionSpec
 ---@field id string Required. Namespaced with your mod id automatically.
 ---@field default_key string? Suggested default binding, as a key name: "KeyF", "Space", "BracketLeft". The engine owns bindings; mods never read keys, and there is deliberately no way to ask which key a player chose.
 ---@field description string? One line for the settings screen, shown beside your mod's name.
@@ -534,7 +572,7 @@ function Stream:next_bool() end
 ---The mod API.
 ---
 ---Available inside your `init.lua` and every callback you register.
----@class Tiamot.Game
+---@class Tiamat.Game
 ---@field CHUNK_BLOCKS integer Blocks along each axis of a chunk. 16.
 ---@field UNITS_PER_BLOCK integer Sub-node units in a block. 27.
 ---@field OCCUPANCY_FULL integer Every one of a block's 27 sub-nodes, as a mask. Compare `game.get_block`'s `occupancy` against it to ask "is this a whole block".
@@ -552,7 +590,7 @@ function game.log(message) end
 ---
 ---**Registration window only.** Calling this after the engine freezes the
 ---registries is an error — that is what makes numeric ids safe to persist.
----@param spec Tiamot.BlockSpec
+---@param spec Tiamat.BlockSpec
 ---@return integer id The numeric id, for use with the fill operations.
 function game.register_block(spec) end
 
@@ -563,8 +601,97 @@ function game.register_block(spec) end
 ---Everything a player would call "the sky" is yours. The engine advances a
 ---number from 0 to 1 over the period you set and interpolates between the
 ---colours you list; it has no idea what dawn is.
----@param spec Tiamot.SkySpec
+---@param spec Tiamat.SkySpec
 function game.register_sky(spec) end
+
+---Lays weather over one player's sky: a standing change to the keyframes,
+---eased on their client. Returns whether the player is here.
+---
+---**Why this exists.** `register_sky` is registration-only, and a storm that
+---arrives under a noon sky reads as a sprinkler. This multiplies and mixes the
+---keyframes rather than replacing them, so it is right at every hour: the
+---intensity is scaled, the horizon and fog colour move `sky_mix` of the way
+---to `sky`, the distance fog's reach is scaled by `fog_distance` (under 1 is
+---closer), and the grade's saturation by `saturation` (mode 3). Per player,
+---because two players in one domain can stand under different weather.
+---Presentation only — stored sunlight is scaled at draw time, no relight.
+---
+---```lua
+---game.set_sky_modifier(uuid, {
+---    intensity = 0.55,             -- multiplies the keyframe's intensity
+---    sky = { 0.55, 0.58, 0.62 },   -- or { r =, g =, b = }
+---    sky_mix = 0.7,                -- how far toward it; 1 when `sky` is given, else 0
+---    fog_distance = 0.6,
+---    grade = { saturation = 0.7 }, -- or `saturation = 0.7` at the top level
+---    ease_ticks = 400,             -- how long the client takes to get there
+---})
+---game.set_sky_modifier(uuid, nil)  -- the plain sky again, eased over the last ease_ticks
+---```
+---
+---Set it as often as you like: the server sends one message when it CHANGES.
+---A player who joins is on the plain sky until you set theirs. Wrong types
+---are errors; wrong numbers are clamped (intensity 0..2, sky channels 0..2,
+---sky_mix 0..1, fog_distance 0.05..4, saturation 0..4, ease_ticks up to 2400).
+---@param player string A player's UUID in hex, as a hook event reports one.
+---@param modifier { intensity?: number, sky?: number[]|{ r: number, g: number, b: number }, sky_mix?: number, fog_distance?: number, saturation?: number, grade?: { saturation?: number }, ease_ticks?: integer }|nil
+---@return boolean here
+function game.set_sky_modifier(player, modifier) end
+
+---Lightning, seen: a moment's light added to the sun and sky of every player
+---within `radius` of `pos` in its domain. Returns how many were told.
+---
+---**Why this and not a lamp or a burst.** A light-emitting block placed and
+---removed is two relights a strike; a white particle burst at night is lit by
+---the night and comes out grey; the sky modifier eases and a flash must not.
+---This adds `intensity` to the sun for `attack_ticks` up and `decay_ticks`
+---down, on the client, relighting nothing — with thunder delayed by distance,
+---it is the whole visible effect of lightning at a distance. (The renderer
+---caps the sun at daylight, so a flash at noon is invisible, as it is.)
+---
+---```lua
+---game.flash{ pos = { x = x, y = 120, z = z }, radius = 256,
+---            intensity = 1.0, colour = { 0.9, 0.92, 1.0 },
+---            attack_ticks = 1, decay_ticks = 6 }
+---```
+---
+---Defaults: white, `radius` 256, `intensity` 1, one tick up, six down. Wrong
+---numbers are clamped (intensity up to 4, radius up to 1024, attack up to 100
+---ticks, decay up to 400).
+---@param spec { pos: Tiamat.BlockPos, radius?: number, intensity?: number, colour?: number[]|{ r: number, g: number, b: number }, attack_ticks?: integer, decay_ticks?: integer }
+---@return integer told
+function game.flash(spec) end
+
+---Sets the rain around one player: an emitter their client runs. Returns
+---whether the player is here.
+---
+---**One message when the weather changes, not a stream of bursts.** Rain is
+---continuous and `emit_particles` is a burst; keeping rain alive from the
+---server meant hundreds of particles every few ticks per player for as long
+---as the storm lasted, and bursts are the first thing dropped under load. So
+---you send the SHAPE of the rain and the client spawns it: `rate` particles a
+---second in a box of `area` (half extents) around its own camera, lifted
+---`above` blocks, each with the burst fields `emit_particles` takes (`size`,
+---`colour`, `lifetime`, `velocity`, `spread`, `gravity`, `collide`). The
+---client eases the rate over `ease_ticks`, and `nil` fades it out over the
+---last ease. Defaults are rain: falling at 16, a 32×6×32 box 16 blocks up.
+---
+---```lua
+---game.set_precipitation(uuid, {
+---    rate = 900, size = 0.06, colour = { r = 0.7, g = 0.75, b = 0.85, a = 0.55 },
+---    velocity = { x = 3, y = -22, z = 0 }, spread = 0.3, gravity = 0,
+---    lifetime = 1.0, area = { x = 16, y = 3, z = 16 }, above = 18, ease_ticks = 200,
+---})
+---game.set_precipitation(uuid, nil)
+---```
+---
+---Set it as often as you like; it is sent when it changes. The client keeps a
+---quarter of its particle budget free of rain, so your bursts still show in a
+---storm. Wrong types are errors; wrong numbers are clamped (`rate` up to 4000,
+---`above` up to 64, the burst's own limits, `ease_ticks` up to 2400).
+---@param player string A player's UUID in hex.
+---@param precipitation { rate?: number, size?: number, colour?: { r: number, g: number, b: number, a: number }, lifetime?: number, velocity?: { x: number, y: number, z: number }, spread?: number, gravity?: number, collide?: boolean, area?: { x: number, y: number, z: number }, above?: number, ease_ticks?: integer }|nil
+---@return boolean here
+function game.set_precipitation(player, precipitation) end
 
 ---Registers a tool.
 ---
@@ -574,7 +701,7 @@ function game.register_sky(spec) end
 ---removes the whole block containing the targeted cell; `"subnode"` removes
 ---only the cell under the crosshair, which is how a chisel works. An unknown
 ---brush is an error naming it rather than a silent fallback.
----@param spec Tiamot.ToolSpec
+---@param spec Tiamat.ToolSpec
 function game.register_tool(spec) end
 
 ---Makes an inventory that belongs to the WORLD rather than to a player.
@@ -795,7 +922,7 @@ function game.register_item(spec) end
 ---Lua state kept between calls is one worker's, not the world's. Write it as the
 ---pure function of `pos` (which carries the seed) it was always meant to be. An
 ---error here disables the mod in every VM at once. See `AGENTS.md` §5.
----@param callback fun(buf: Tiamot.ChunkBuffer, pos: Tiamot.ChunkPos)
+---@param callback fun(buf: Tiamat.ChunkBuffer, pos: Tiamat.ChunkPos)
 function game.register_on_generate(callback) end
 
 ---Gives one chunk its biome colour: a multiplier every TINTED material in it
@@ -831,9 +958,11 @@ function game.register_on_generate(callback) end
 ---the ground behind the player. One call per chunk, so make it a lookup — this
 ---is not the place to run your generator again.
 ---
----One per mod, and the first to answer in load order wins: two mods with an
----opinion about what colour a place is cannot be averaged into a third opinion
----either of them meant.
+---One per mod. Every mod with one is asked, in load order; `nil` (or returning
+---nothing) is no opinion, and where more than one mod answers the LAST wins —
+---a mod that depends on the world loads after it and may colour over it where
+---it has something to say. Two opinions are never averaged into a third that
+---neither mod meant.
 ---
 ---Channels are 0..1 and are clamped. `pos` carries `x`, `y`, `z`, `seed` and
 ---`domain`.
@@ -864,17 +993,21 @@ function game.register_chunk_tint(callback) end
 ---  blocks — thick in the valley, clear on the hill, and a layer seen from
 ---  above. Leave it out for fog at every height.
 ---
----Return `nil` for no fog of your own. Answering at all speaks for the place, so
----a later mod is not asked. A table with no `visibility`, or anything that is
----not a table, is a bug and disables your mod the way an error would.
+---Return `nil` for no fog of your own — no opinion, so the next mod's answer
+---stands. Every mod with a callback is asked, in load order, and the last that
+---answers wins: a weather mod that depends on the world loads after it and lays
+---its storm over the world's mist only where the storm is. A table with no
+---`visibility`, or anything that is not a table, is a bug and disables your mod
+---the way an error would; the other mods' fogs are unaffected.
 ---
 ---**Per COLUMN, and blended.** Every chunk column's fog is filtered with its
 ---neighbours', so a foggy biome thins over a chunk's width rather than ending
 ---in a wall — and it is seen from outside as well as within: looking at a
 ---misty forest from a clear hill, the forest is misty.
 ---
----Asked every time a chunk is served, never stored, one per mod, first answer
----wins — exactly the terms `game.register_chunk_tint` has, and for its reasons.
+---Asked every time a chunk is served, never stored, one per mod, nil is no
+---opinion and the last answer wins — exactly the terms `game.register_chunk_tint`
+---has, and for its reasons.
 ---Presentation only: nothing in the simulation sees through fog any worse.
 ---
 ---**Limits, stated.** The horizon past the detail radius is drawn from summaries
@@ -1028,17 +1161,83 @@ function game.register_on_tick(callback) end
 ---    return game.AIR
 ---end
 ---```
----@param position Tiamot.BlockPos
+---@param position Tiamat.BlockPos
 ---@return { material: integer|nil, occupancy: integer, cells: integer[]|nil }|nil
 ---
 ---**Every position may name a domain.** `{ x, y, z, domain = "mod:ship/17" }`
 ---asks about that space; leaving `domain` out asks about the overworld, which
 ---is what every mod written before domains existed meant. The same field works
 ---on `game.set_block`, `game.get_light`, `game.get_fluid`, `game.set_fluid`,
----`game.line_of_sight`, `game.find_path` and `game.steer_entity` — a position
----names a place only with a space to be in, because every domain has a block at
----each coordinate.
+---`game.surface_at`, `game.line_of_sight`, `game.find_path` and
+---`game.steer_entity` — a position names a place only with a space to be in,
+---because every domain has a block at each coordinate.
 function game.get_block(position) end
+
+---The top of a column: the first occupied block at or below `from`, looking
+---down at most `depth` blocks (default 64, at most 256), in one call.
+---
+---**Why this and not a loop over `get_block`.** Snow lands on the surface, and
+---the surface is what players have built and dug since the terrain was made —
+---which `noise_heightmap` and a density's `at` cannot know. A loop scanning
+---down paid a VM crossing per block, forty-eight of them per column; this is
+---one, and the engine resolves each chunk once on the way down.
+---
+---`skip_passable = true` looks through blocks whose occupied cells are all a
+---passable material (grass, ferns), so snow lands on the ground under a tuft.
+---`skip_fluid = true` looks through a block holding fluid and nothing solid,
+---so rain reaches a pond's bed; without it a pond's surface is the answer, with
+---`fluid` (its numeric id) and `volume` (cells, 0..27) set and `material` air.
+---
+---`nil` when the column runs into a chunk that is not loaded — never GENERATED
+---to answer, as `get_block` has it — when nothing is occupied within `depth`,
+---or when you asked from `register_on_generate`. Each is "nothing to land on
+---here" to a weather mod, which is why they are one answer.
+---
+---```lua
+---local top = game.surface_at{ x = 120, z = -40, from = 200, depth = 64, skip_passable = true }
+---if top then
+---    game.set_block({ x = 120, y = top.y + 1, z = -40 }, "snow:snow")
+---end
+---```
+---@param spec { x: integer, z: integer, from: integer, depth?: integer, skip_passable?: boolean, skip_fluid?: boolean, domain?: string }
+---@return { y: integer, material: integer, occupancy: integer, fluid: integer|nil, volume: integer|nil }|nil
+function game.surface_at(spec) end
+
+---What a connected player's crosshair is on, within their reach. `nil` if there
+---is nothing.
+---
+---**The server casts the ray, not the client.** `on_dig`, `on_place` and
+---`on_use` all tell you the cell somebody pressed a control on, and those are
+---events: a mod that wants to know what a player is pointing at *now* — to show
+---a label, to decide whether X should sleep in that bed or cook at that
+---campfire three blocks away — has no event to wait for. Walking the ray
+---yourself from `game.entity(body).facing` is per-sample work in Lua, at 20 Hz,
+---per player; this is the same traversal the crosshair itself uses, in Rust.
+---
+---Cells, three to a block, as `on_use` reports them — so a mod handling both
+---reads one shape. `face` is the side the ray came in through, pointing back
+---out of the surface, so `x + face.x` is where a block placed against it would
+---go.
+---
+---Bounded by the player's own reach. You cannot use this to probe at a
+---distance, and that is the point.
+---
+---`nil` means there is nothing to act on, and it does not say which kind of
+---nothing: not connected, looking at the sky, looking into terrain that has not
+---loaded, or asked from `on_generate` where there is no world lent.
+---
+---```lua
+---game.register_on_key(function(event)
+---    if event.action ~= "mymod:interact" then return end
+---    local at = game.looking_at(event.player)
+---    if at and at.material == beds[at.material] then
+---        sleep(event.player, at)
+---    end
+---end)
+---```
+---@param player string The player's UUID, in hex.
+---@return { x: integer, y: integer, z: integer, domain: string, material: integer, face: { x: integer, y: integer, z: integer } }|nil
+function game.looking_at(player) end
 
 ---The light at a block, right now.
 ---
@@ -1113,7 +1312,7 @@ function game.line_of_sight(from, to) end
 
 ---Options for `game.find_path`. Every field is optional; the defaults describe
 ---something humanoid.
----@class Tiamot.PathOptions
+---@class Tiamat.PathOptions
 ---@field budget? integer Blocks the search may expand before giving up. Default 2000, capped at 10000, and 0 means the default. A search is unbounded work wearing the shape of a function call, and this is what bounds it. **There is also a pool of 8000 expansions shared by every search in one tick**, so what you ask for is capped by what the tick has left — measured, 2000 expansions is about 0.5 ms, or 1% of a tick, and the whole pool is about 4%. A mob that cannot find a way in two thousand blocks should do something else, not stall the server.
 ---@field height? integer Blocks of clear space the body needs above its feet. Default 2. Not read off the entity's collider on purpose: you may want a mob to route only where it would also fit crouching, or to reserve headroom it does not strictly need.
 ---@field step_up? integer How far it climbs in one move, in blocks. Default 1. Zero for something that cannot climb at all.
@@ -1265,7 +1464,7 @@ function game.give(player, spec) end
 ---reaches the server when it changes.
 ---
 ---The table is the same shape `game.inventory` reports a stack in:
----`{ material, units, blocks, nodes, count, shape }`.
+---`{ material, units, blocks, nodes, count, shape, detail }`.
 ---@param player string A player UUID in hex.
 ---@return table|nil held
 function game.held(player) end
@@ -1338,7 +1537,7 @@ function game.take(player, spec) end
 function game.register_on_chat(callback) end
 
 ---Fields accepted by `game.register_sound`.
----@class Tiamot.SoundSpec
+---@class Tiamat.SoundSpec
 ---@field id string Required. Namespaced with your mod id automatically.
 ---@field file string Required. Path inside your mod directory, e.g. "sounds/break.ogg". Ogg Vorbis or WAV — see the limits below.
 ---@field gain number? Loudness multiplier on the file's own level. Default 1.
@@ -1353,11 +1552,11 @@ function game.register_on_chat(callback) end
 ---Types: `container`, `label`, `button`, `image`, `text_input`, `checkbox`,
 ---`slider`, `dropdown`, `item_slot`, `item_grid`, `scroll`, `spacer`,
 ---`progress`, `shape_editor`.
----@class Tiamot.Widget
+---@class Tiamat.Widget
 ---@field type string Required. One of the types above.
 ---@field name string? What events from this widget carry, so you can tell two buttons apart.
----@field children Tiamot.Widget[]? Only for `container` and `scroll`.
----@field style Tiamot.WidgetStyle?
+---@field children Tiamat.Widget[]? Only for `container` and `scroll`.
+---@field style Tiamat.WidgetStyle?
 ---@field grow integer? Share of the parent's leftover space. 0 takes only what it needs.
 ---@field size integer? Fixed size along the parent's direction, in virtual pixels.
 ---@field cross_size integer? Fixed size across it.
@@ -1366,7 +1565,7 @@ function game.register_on_chat(callback) end
 ---@field padding integer? `container`: space inside its own edges.
 ---@field align string? `container`: "start", "center", "end" or "stretch".
 ---@field text string? `label`, `button`, `checkbox`.
----@field hash integer[]? `image`: 32 bytes of content hash.
+---@field hash string|integer[]? `image`: a content hash — the 64 hex characters `game.register_picture` / `game.content_hash` answer (or, the older spelling, 32 bytes in a table).
 ---@field initial string? `text_input`: what is in it to begin with.
 ---@field placeholder string? `text_input`: shown when empty.
 ---@field checked boolean? `checkbox`.
@@ -1385,19 +1584,19 @@ function game.register_on_chat(callback) end
 ---@field material integer? `shape_editor`: which material the cells are drawn as.
 
 ---What a widget may say about how it looks. Deliberately small.
----@class Tiamot.WidgetStyle
+---@class Tiamat.WidgetStyle
 ---@field background integer[]? `{r, g, b}` or `{r, g, b, a}`.
 ---@field border integer[]? Same shape. The width is the client's.
----@field nine_slice integer[]? 32 bytes of content hash, drawn as a nine-slice frame behind the widget. **The border is a THIRD of the image**, both ways: draw your frame so its corners are the outer third and they keep their size at any box size while the edges stretch. That is what a nine-slice is for, and it is why there is no border argument. Goes UNDER `background` and `border`, so a widget with both gets the flat colour inside the frame. Fetched by hash like a texture; a frame that has not arrived yet draws nothing and fills in when it lands.
+---@field nine_slice string|integer[]? A content hash — the hex `game.content_hash` answers, or 32 bytes in a table — drawn as a nine-slice frame behind the widget. **The border is a THIRD of the image**, both ways: draw your frame so its corners are the outer third and they keep their size at any box size while the edges stretch. That is what a nine-slice is for, and it is why there is no border argument. Goes UNDER `background` and `border`, so a widget with both gets the flat colour inside the frame. Fetched by hash like a texture; a frame that has not arrived yet draws nothing and fills in when it lands.
 ---@field text_colour integer[]? Same shape as `background`.
 ---@field font string? A registered font id — `game.register_font` qualified it with your mod, so `"my_mod:display"`. The client draws this widget's text in it. A font that failed to load, or a name nothing registered, falls back to the client's own face: a missing file is never a missing screen, so do not design a dialog that only makes sense in your typeface.
 ---@field text_size integer? In virtual pixels; the client keeps it legible.
 
 ---Fields accepted by `game.show_dialog` and `game.update_dialog`.
----@class Tiamot.DialogSpec
+---@class Tiamat.DialogSpec
 ---@field player string Required. The player's UUID — never their display name (charter rule 13).
 ---@field form string Required. Your name for this dialog, namespaced with your mod id automatically.
----@field tree Tiamot.Widget Required. The root widget.
+---@field tree Tiamat.Widget Required. The root widget.
 ---@field compact boolean? Draw it as a small prompt sized to its contents rather than as a full screen. Default `false`.
 
 ---Shows a dialog on a player's screen.
@@ -1421,7 +1620,7 @@ function game.register_on_chat(callback) end
 ---
 ---Returns whether the player was there to show it to, which is NOT a promise it
 ---rendered.
----@param spec Tiamot.DialogSpec
+---@param spec Tiamat.DialogSpec
 ---@return boolean shown
 function game.show_dialog(spec) end
 
@@ -1430,7 +1629,7 @@ function game.show_dialog(spec) end
 ---A whole tree, not a patch: a dialog is small, and a patch stream that ever
 ---dropped a message would leave a player looking at something you do not
 ---believe is there.
----@param spec Tiamot.DialogSpec
+---@param spec Tiamat.DialogSpec
 ---@return boolean shown
 function game.update_dialog(spec) end
 
@@ -1497,7 +1696,7 @@ function game.register_on_dialog_event(callback) end
 ---A file that is missing, oversized or malformed disables that ONE sound, with
 ---a warning naming the server. It never refuses the join and never stops the
 ---client.
----@param spec Tiamot.SoundSpec
+---@param spec Tiamat.SoundSpec
 function game.register_sound(spec) end
 
 ---Registers a font your interface can draw text in.
@@ -1528,6 +1727,46 @@ function game.register_sound(spec) end
 ---the engine has no way to check a licence.
 ---@param spec { id: string, file: string }
 function game.register_font(spec) end
+
+---Registers a picture, so every client fetches it on join, and answers its
+---content hash as 64 hex characters. **Registration window only.**
+---
+---**Why a picture needs registering at all.** A client asks for content by
+---hash, and something has to tell it which. A dialog's tree is its own
+---manifest — every `image` and `nine_slice` in it is asked for when the tree
+---arrives — but a HUD script names a picture only when it draws one, by which
+---time the frame is being painted, and nothing had ever asked for the bytes:
+---every `hud.image` drew the "not arrived" box for ever. Register the picture
+---and it is in a table the client fetches from on join, like a sound or a
+---font. `id` defaults to the file path.
+---
+---The hash it answers is computed here, from the file in your directory, and
+---is the one the server will serve — so pass it to your HUD script
+---(`game.set_hud`) or into a dialog's `image` / `nine_slice` and nothing is
+---pasted by hand or goes stale. `file` is a path inside your mod's directory,
+---validated like a block texture's: relative, no `..`. A path that is not a
+---file, or not a kind clients are sent (`.png`, `.jpg`), is an error where you
+---wrote it. At most 512 pictures per server.
+---
+---```lua
+---local slot = game.register_picture{ id = "hotbar_slot", file = "textures/hotbar-slot.png" }
+---game.register_on_player_join(function(event)
+---    game.set_hud(event.player, { slot = slot })   -- the script draws hud.image{ hash = values.slot }
+---end)
+---```
+---@param spec { file: string, id?: string }
+---@return string hash 64 hex characters.
+function game.register_picture(spec) end
+
+---The content hash of a file in your mod's directory, as 64 hex characters —
+---for a dialog's `image` or `nine_slice` without pasting a hash by hand.
+---**Registration window or later; the file is read when you ask.** The same
+---rules as `game.register_picture`'s `file`, and the same hash. A picture a
+---HUD script draws must be REGISTERED, not merely hashed, or no client fetches
+---it; a dialog's pictures are fetched from the tree, so for those this is enough.
+---@param file string
+---@return string hash 64 hex characters.
+function game.content_hash(file) end
 
 ---Binds a sound to a named event. Registration window only.
 ---
@@ -1586,25 +1825,24 @@ function game.cue(spec) end
 ---panning, full gain wherever the player stands. Without it the loop sits at
 ---`pos` and attenuates over `radius` like anything else.
 ---
----**Starting a loop that is already running replaces it**, so the natural thing
----to write — making sure the night loop is on, every tick — does not end up
----with a tick's worth of overlapping copies.
+---**Starting a loop that is already running replaces it** — and if it is
+---running the SAME sound, it is moved rather than restarted: the gain and
+---place glide to the new values over `fade_ticks` and the clip keeps going. So
+---the natural thing to write — making sure the storm is on, at today's
+---intensity, every second — neither stacks copies nor restarts the rain.
 ---
----Four limits, because designing around them is easier than discovering them:
+---* `player`: a UUID in hex, as a hook event reports one. The loop is heard by
+---  that player alone — `everywhere` for them, or within `radius` of `pos` if
+---  they are — and nobody else. It narrows, never widens. Without it an
+---  `everywhere` loop reaches every connected player in every domain: a storm
+---  you start for one valley plays inside somebody's ship.
+---* `fade_ticks`: how long the client takes to bring a fresh loop in from
+---  silence, or to move a running one; 0 is at once. Up to 1200 (a minute).
 ---
----* **`everywhere` means every connected player, in every domain.** Not the
----  domain, not a radius — everyone on the server, including somebody inside a
----  ship or in a space your mod has never heard of. There is no way to address
----  a loop to one player today.
----* **Replacing restarts the clip from its beginning.** So a loop whose `gain`
----  you change every tick is a loop that never gets past its first second. Pick
----  a gain and leave it, or accept the restart.
----* **No fades.** A loop starts at full gain and stops over a fixed quarter of
----  a second. Crossfading two ambiences is not expressible.
----* **A positioned loop is panned once, where the listener stood when it
----  started.** It does not re-pan or re-attenuate as they walk, so a loop meant
----  to sit in one place wants a `radius` wide enough that a player crossing it
----  does not notice, or a `stop`/`start` when they have moved far.
+---Two limits still: a positioned loop's TREBLE is set by distance when it
+---starts and does not move (its loudness and pan follow the listener every
+---frame), and a player who joins after a loop started is not told about it —
+---start it again for them from `register_on_player_join`.
 ---
 ---```lua
 ---game.register_on_tick(function()
@@ -1615,7 +1853,7 @@ function game.cue(spec) end
 ---    end
 ---end)
 ---```
----@param spec { id: string, sound: string, pos?: { x: number, y: number, z: number }, radius?: number, gain?: number, everywhere?: boolean }
+---@param spec { id: string, sound: string, pos?: { x: number, y: number, z: number }, radius?: number, gain?: number, everywhere?: boolean, player?: string, fade_ticks?: integer }
 ---@return integer told
 function game.play_loop(spec) end
 
@@ -1629,6 +1867,13 @@ function game.play_loop(spec) end
 ---A mob that walks into a one-block step climbs it. Call it every tick with
 ---wherever you want the mob to go — the next waypoint of a route, or the player
 ---it is following.
+---
+---**It jumps only for a rise the step cannot take.** The physics steps up one
+---sub-node — a third of a block — for nothing, so a chiselled lip is walked
+---over and only a taller rise is jumped. Before 2026-09-22 anything that was
+---not open floor counted as an obstacle, which on smoothed terrain meant a mob
+---hopped at nearly every rise; if you wrote your own steering to avoid that,
+---you can stop.
 ---
 ---```lua
 ---game.register_on_tick(function()
@@ -1665,11 +1910,39 @@ function game.steer_entity(id, target, gait) end
 ---@return number time
 function game.time_of_day() end
 
+---Winds the day. Returns whether the clock moved.
+---
+---**A bed that ends the night is what this is for.** `0.0` is midnight, `0.25`
+---dawn, `0.5` noon, `0.75` dusk. Wrapped, not clamped, so
+---`game.set_time_of_day(game.time_of_day() + 0.3)` crosses midnight instead of
+---stopping at it.
+---
+---Everybody is told at once rather than at the next scheduled update, because a
+---skipped night is exactly the case where waiting a second is visible: a player
+---who has just got out of bed would otherwise watch the sun hang at midnight.
+---
+---`false` in a world whose mods registered no sky — there is no day to set,
+---which is not an error. It is the same clock for everybody: a mod that wants
+---one player's sky to differ wants `game.set_sky_modifier`.
+---
+---```lua
+---if everyone_in_bed() then
+---    game.set_time_of_day(0.25)   -- dawn
+---end
+---```
+---@param time number 0..1, midnight to midnight.
+---@return boolean moved
+function game.set_time_of_day(time) end
+
 ---Stops a looping sound by the id you gave it. Returns how many were told.
 ---
 ---Stopping one that is not running is not an error, so tidying up on shutdown
 ---does not mean remembering what you started.
----@param id string
+---
+---The id alone stops it for everyone over the client's own short fade. A table
+---stops it over `fade_ticks` (up to 1200), and `player` — a UUID in hex —
+---stops it for that one player: `game.stop_loop{ id = "storm", fade_ticks = 100, player = uuid }`.
+---@param id string|{ id: string, fade_ticks?: integer, player?: string }
 ---@return integer told
 function game.stop_loop(id) end
 
@@ -1712,6 +1985,96 @@ function game.stop_loop(id) end
 ---@return boolean shown
 function game.set_hud(player, values) end
 
+---Whether the server already trusts this player with operator powers.
+---
+---**The server's own list, not a second one.** A mod that wants admin commands
+---of its own would otherwise keep its own roster of who may run them, and two
+---lists of trusted people disagree the first time an operator is added to one
+---of them. This is the same answer `/op` gives and the same answer the engine
+---uses to decide whether a player may fly.
+---
+---`false` for a player who is not here, so a stale UUID grants nothing.
+---
+---```lua
+---game.register_on_chat(function(event)
+---    if event.text == "!weather clear" then
+---        if not game.is_operator(event.player) then
+---            game.chat_to(event.player, "that is an operator command")
+---            return ""
+---        end
+---        set_weather("clear")
+---        return ""
+---    end
+---end)
+---```
+---@param player string The player's UUID, in hex.
+---@return boolean operator
+function game.is_operator(player) end
+
+---Sets what one player may do: fly, how fast they move, whether they may sprint.
+---
+---**Replaced whole, every call.** A field you leave out goes back to the
+---engine's default, so a mod that stops saying `speed` means "no longer
+---slowed" rather than "keep the last number". `nil` clears everything you set.
+---Compute what somebody may do from your own state and say it; calling this
+---every tick with the same values costs nothing on the wire.
+---
+---- `fly` (default `false`) — OR-ed with the operator list: an operator flies
+---  whatever you say, and a player you grant it to flies without being one.
+---  That is a Creative world whose builders are not all administrators.
+---- `speed` (default `1`) — a multiplier on every gait's top speed and the
+---  acceleration that reaches it. `0` roots the player in place; anything over
+---  16 is clamped. Negative or NaN is an error.
+---- `sprint` (default `true`) — `false` makes the sprint key walk, rather than
+---  stopping anybody.
+---- `wind_sky` (default `true`) — `false` refuses this player the engine's
+---  sky keys. They scrub the CLIENT's clock only, but the client draws stored
+---  sunlight scaled by the sky, so winding to noon lights a player's night.
+---  Turn it off in a world that means its nights; unbinding the keys does not
+---  work, because anybody can bind them again. Returning the sky to the
+---  server's hour is never refused.
+---
+---The client is told and predicts with the same numbers, so a slowed player
+---does not rubber-band. An unknown field is an error, so a typo is not a
+---setting you think you made. Forgotten when the player leaves.
+---
+---Returns `false` for a player who is not here.
+---
+---```lua
+----- Cold slows you a little; an empty stomach stops you running.
+---game.set_player_abilities(uuid, {
+---    speed = cold and 0.8 or 1,
+---    sprint = hunger > 0,
+---    fly = creative,
+---})
+---```
+---@param player string The player's UUID, in hex.
+---@param abilities { fly: boolean?, speed: number?, sprint: boolean?, wind_sky: boolean? }|nil
+---@return boolean told
+function game.set_player_abilities(player, abilities) end
+
+---Sends one line of chat to one player. Returns whether it was delivered.
+---
+---A private message from your mod: nobody else sees it, and it arrives in the
+---same chat log the player reads everything else in. Use it for the answers
+---that belong to one person — why a command was refused, what a sign said,
+---what they just picked up.
+---
+---`false` if that player is not connected. There is no queue: a line for
+---somebody who has gone is dropped rather than held, because a message that
+---arrives after a rejoin is about a situation that no longer exists. If you
+---want it to survive a logout, put it in `game.storage` and say it on join.
+---
+---At most 512 bytes, which is the same limit a player's own line has.
+---
+---```lua
+---game.chat_to(uuid, "you are carrying " .. n .. " stones")
+---```
+---@param player string The player's UUID, in hex.
+---@param text string
+---@return boolean sent
+function game.chat_to(player, text) end
+
 ---Registers a HUD script this mod wants clients to run. Registration window only.
 ---
 ---**This is the only thing your mod can send that RUNS on a player's machine**,
@@ -1733,6 +2096,9 @@ function game.set_hud(player, values) end
 ---
 ---```lua
 ---game.register_hud_script("hud.lua")
+---
+----- Or, if your HUD draws along the bottom of the screen:
+---game.register_hud_script{ file = "hud.lua", reserve = 130 }
 ---```
 ---
 ---and in `hud.lua`:
@@ -1785,11 +2151,230 @@ function game.set_hud(player, values) end
 ---engine has no health, hunger or experience of its own (charter rule 1); it
 ---carries what you computed and reads none of it.
 ---
----@param file string Path to the Lua file inside your mod directory.
+---### `reserve` — keeping the engine's screens off your HUD
+---
+---A sheet — the inventory, the pause screen, a mod's dialog — is three quarters
+---of the window's height and centred, so it leaves an eighth of the window below
+---it. **A HUD with more than a row or two along the bottom edge does not fit in
+---that eighth**, and the sheet lands on top of it: hearts, food and warmth
+---covered by an open inventory.
+---
+---The engine cannot work this out for itself. A script draws whatever it likes
+---wherever it likes, and what the engine sees is a flat list of commands with no
+---height in it. So you say, in the table form:
+---
+---```lua
+---game.register_hud_script{ file = "hud.lua", reserve = 130 }
+---```
+---
+---`reserve` is **in the same virtual pixels `hud.lua` draws in** — the canvas is
+---1080 tall on every monitor — so it protects the same share of the screen
+---everywhere, exactly as your HUD scales. Measure it as the top of your tallest
+---bottom-anchored element plus that element's own height.
+---
+---The tallest reserve any loaded mod asked for is the one that applies, since
+---two HUDs drawing along the bottom edge stack. Sheets rise to clear it, and
+---only shrink when there is not enough window left to rise into. A reserve over
+---half the canvas is clamped: past that the sheet would be smaller than the
+---thing it was making way for, and a player still has to be able to read the
+---pause menu to leave.
+---
+---A reserve you leave out is none, which is what every mod written before this
+---existed asks for.
+---
+---@param file string|Tiamat.HudScriptSpec Path to the Lua file inside your mod directory, or a table.
 function game.register_hud_script(file) end
 
+---Fields accepted by the table form of `game.register_hud_script`.
+---@class Tiamat.HudScriptSpec
+---@field file string Required. Path to the Lua file inside your mod directory.
+---@field reserve number? Virtual pixels at the bottom of the canvas to keep the engine's sheets clear of. Default 0, clamped to 540.
+
+---Registers a model entities can be drawn as. Registration window only.
+---
+---**Until this existed every mob was a white person.**
+---`game.spawn_entity{ model = ... }` takes any string, and the client draws
+---exactly one: the engine's own humanoid. Every other name draws NOTHING —
+---deliberately, because drawing a humanoid for an unknown name would put a
+---person where you meant a crate.
+---
+---```lua
+---game.register_model{ id = "cow", file = "models/cow.glb", scale = 3.0 }
+---
+---game.spawn_entity{ model = "my_mod:cow", x = 10, y = 70, z = 4 }
+---```
+---
+---An unqualified `id` is qualified against your mod, as every other id here
+---is. The file must be a self-contained `.glb` — embedded binary, no external
+---`uri` — inside your mod's directory, and it travels to clients by hash like
+---a texture, so a client that already has it downloads nothing.
+---
+---**Clips are matched to the engine's animation tags by NAME**: `idle`,
+---`walk`, `run`, `swing`, `swim`, `sneak`. A tag with no clip falls back to
+---`idle`; a model with no clips at all is drawn rigid, which is right for a
+---crate. `scale` multiplies the model's own size, for art exported at one
+---unit to the yard rather than to the engine's cell.
+---
+---A model that will not parse disables THAT model, with a warning naming your
+---mod, and entities using it draw nothing. It is hostile input like every
+---pushed asset (charter rule 14): counts are capped before anything is
+---allocated and the parse is isolated, so a bad file cannot take the client
+---with it.
+---
+---At most 64 models per server.
+---
+---@param spec Tiamat.ModelSpec
+function game.register_model(spec) end
+
+---Fields accepted by `game.register_model`.
+---@class Tiamat.ModelSpec
+---@field id string Required. Unqualified means your own mod's namespace.
+---@field file string Required. A self-contained `.glb` inside your mod directory.
+---@field scale number? Multiplies the model's size. Default 1, from 0.01 to 64.
+---@field texture string? A PNG beside the model, drawn on it using the model's own UVs — `"models/cow.png"`. Without one a model is matte white, which is what every model was. Pushed to clients by hash like a block's texture, decoded through the same caps (charter rule 14), and a skin that will not decode leaves the model white with a warning rather than painting it magenta. Your `.glb` must NOT embed the image: the reader refuses embedded images, and this is the separate file it refuses them in favour of.
+
+---Declares this world's cloud deck. Registration window only.
+---
+---**One deck per world**, and where several mods register one the lowest mod
+---id wins — the same rule `register_sky` follows, because two mods blending
+---their idea of a cloud is not a sky.
+---
+---The client draws it by marching a ray through a FIELD rather than by
+---building cubes, which is why a deck can reach the horizon and drift and
+---change shape without costing anything to rebuild. Every field below is
+---optional; the defaults are an ordinary fair-weather deck.
+---
+---```lua
+---game.register_clouds{
+---    base = 420,       -- world y of the deck's floor
+---    thickness = 96,   -- blocks from base to the tallest tower's top
+---    cell = 8,         -- blocks per cube
+---    detail = 2,       -- small cubes per cube edge on the surface; 1 is none
+---    frequency = 1 / 600, octaves = 3,
+---    towers = 0.25,    -- how much taller the highest heaps grow; 0 is flat banks
+---    drift = { x = 1.5, z = 0.4 },   -- blocks a second
+---    evolve = 1 / 2400,              -- how fast the shape changes, per second
+---    colour = { 1.0, 1.0, 1.0 },     -- lit cloud, before the sun's own colour
+---    shade = { 0.42, 0.44, 0.58 },   -- the unlit side, before the sky's
+---}
+---```
+---
+---**Presentation only.** It is outside every determinism hash, like the sky's
+---keyframes, so nothing you do here can change a world's terrain. The field is
+---seeded from the world seed all the same, so two players looking at the same
+---cloud agree about it.
+---
+---A number out of range is clamped rather than refused: a deck you got wrong
+---loses that number, not your sky. A field name you misspell IS an error,
+---because a typo that did nothing silently is a mod whose author cannot tell
+---why nothing happened.
+---
+---The player can turn clouds down or off in their own graphics settings, and
+---is never asked to tell the server.
+---
+---@param spec Tiamat.CloudSpec
+function game.register_clouds(spec) end
+
+---Fields accepted by `game.register_clouds`.
+---@class Tiamat.CloudSpec
+---@field base number? World y of the deck's floor. Default 256.
+---@field thickness number? Blocks from the base to the tallest top. Default 64, at most 1024.
+---@field cell number? Blocks per cube. Default 8, from 1 to 64.
+---@field detail integer? Small cubes per cube edge on the surface. Default 1 (none), at most 4.
+---@field frequency number? The field's horizontal scale, in cycles per block. Default 1/600.
+---@field octaves integer? Octaves of the field. Default 3, at most 6.
+---@field towers number? How much taller the highest heaps grow, 0..1. Default 0.
+---@field drift { x: number, z: number }? Blocks a second. Default none, at most 64.
+---@field evolve number? How fast the shape changes, per second. Default 0.
+---@field colour { r: number, g: number, b: number }? Lit cloud. Default white.
+---@field shade { r: number, g: number, b: number }? The unlit side. Default a blue-grey.
+
+---Sets how much cloud one player is under. Latest state, eased.
+---
+---**Per player, not per domain**, for the reason `set_sky_modifier` is: two
+---players in one domain can stand under different weather. One message when it
+---changes, so calling this every tick costs one message and nothing overflows.
+---
+---```lua
+---game.set_clouds(uuid, { cover = 0.55, darkness = 0.0, ease_ticks = 600 })
+---game.set_clouds(uuid, nil)   -- a clear sky, eased
+---```
+---
+---`cover` is 0 for clear and 1 for overcast. `darkness` is 0 for fair-weather
+---white and 1 for storm grey, and it also hangs a dark haze UNDER the deck —
+---which is what makes a storm read from outside it. Rain seen at a distance is
+---a curtain kilometres away, and `game.set_precipitation` spawns around the
+---player's own camera by construction, so the storm a player sees over the next
+---valley is this rather than particles.
+---
+---`base` overrides the registered floor for this player alone, for a world
+---whose ground height varies enough that one number will not do.
+---
+---**A storm over the next valley: `map`.** `cover` and `darkness` are one sky
+---for this player, so a front cannot be watched coming. A `map` lays a coarse
+---grid over the WORLD instead, sampled wherever each ray of the deck passes,
+---and the plain `cover` and `darkness` still answer everywhere the grid does
+---not reach. Sent when it changes, like everything else here, and compared
+---before it is sent — so recomputing the same weather every tick costs
+---nothing on the wire.
+---
+---```lua
+----- Sixteen cells of 256 blocks: four kilometres, centred on the player's own
+----- square. Row-major by z, so cover[z * size + x + 1].
+---game.set_clouds(uuid, {
+---    cover = 0.2, darkness = 0.0,
+---    map = {
+---        origin = { x = square_x - 8 * 256, z = square_z - 8 * 256 },
+---        cell = 256, size = 16,
+---        cover = cover, darkness = darkness,
+---    },
+---})
+---```
+---
+---Values are shares of one and travel as bytes, which is a 255th — finer than
+---a sky can show. A grid whose `cover` or `darkness` holds the wrong number of
+---values for its `size` is an error naming both counts, rather than a sky that
+---is quietly wrong. The engine draws the nearest cell rather than blending
+---between them: a cell is hundreds of blocks and the cloud in it has its own
+---edges, so keep the cells at the resolution of your own weather and let the
+---clouds do the rest.
+---
+---Returns whether that player was there to tell.
+---
+---@param uuid string The player's UUID.
+---@param spec Tiamat.CloudsSpec|nil
+---@return boolean told
+function game.set_clouds(uuid, spec) end
+
+---Fields accepted by `game.set_clouds`.
+---@class Tiamat.CloudsSpec
+---@field cover number? 0 is clear, 1 is overcast. Default 0.
+---@field darkness number? 0 is fair-weather white, 1 is storm grey. Default 0.
+---@field base number? Overrides the registered floor for this player.
+---@field ease_ticks integer? How long the client takes to get there. Default 0, at most 2400.
+---@field map Tiamat.CloudMapSpec? A coarse grid of weather over the world, for a storm that can be seen coming. Omit it for one sky everywhere; a call that omits it clears the last one.
+
+---A coarse grid of cloud cover over the world — one cell is hundreds of blocks.
+---@class Tiamat.CloudMapSpec
+---@field origin { x: number, z: number } The world x and z of the grid's corner, in blocks.
+---@field cell number How many blocks a cell covers.
+---@field size integer How many cells a side, 1 to 16. Sixteen 256-block cells is four kilometres, which is past any view distance the engine serves.
+---@field cover number[] `size * size` shares of one, row-major by z: `cover[z * size + x + 1]`.
+---@field darkness number[] The same, for how grey the storm is.
+
+---There is no `game.register_theme`, and there cannot be.
+---
+---A mod's look for the engine's OWN screens — the pause screen, the settings
+---pages, the start screen — is declared in `mod.toml` under `[theme]`, not here.
+---The start screen runs before any server exists, so no Lua has run on it and
+---none can; a manifest is read without a VM, which is what lets the launcher
+---wear the look of the mods it is about to load. See `api/AGENTS.md`.
+---
+---`style` on a widget in your own dialogs is the other half and is unaffected:
+---a theme is the furniture around a screen, your styles are what is in it.
+
 ---Fields accepted by `game.play_sound`.
----@class Tiamot.PlaySpec
+---@class Tiamat.PlaySpec
 ---@field sound string Required. A sound id; unqualified means your own.
 ---@field pos { x: number, y: number, z: number } Required. Where it happens, in world blocks. Ignored when `entity` is set.
 ---@field radius number? How far it carries, in blocks. Default 16, capped at 512. Players outside are not sent it at all.
@@ -1804,13 +2389,13 @@ function game.register_hud_script(file) end
 ---
 ---A careless number is clamped rather than refused: `0/0` is a quiet NaN in Lua
 ---and would otherwise reach a mixer.
----@param spec Tiamot.PlaySpec
+---@param spec Tiamat.PlaySpec
 ---@return integer told
 function game.play_sound(spec) end
 
 ---Fields accepted by `game.emit_particles`. Every number is clamped into its
 ---range rather than refused; a wrong TYPE is an error.
----@class Tiamot.ParticleSpec
+---@class Tiamat.ParticleSpec
 ---@field pos { x: number, y: number, z: number, domain: string? } Required. The burst's centre, in world blocks.
 ---@field count integer? How many particles. Default 8, at most 256.
 ---@field colour { r: number?, g: number?, b: number?, a: number? }? Colour and opacity, 0..1; an unnamed channel is 1. Lit by where the burst is, so a spray at night is dim.
@@ -1822,6 +2407,8 @@ function game.play_sound(spec) end
 ---@field gravity number? How fast they fall, blocks per second per second. Default 0 (they drift); negative rises, like steam.
 ---@field collide boolean? Whether one vanishes on reaching a solid cell — a drip stops at the floor. Default true. Passable blocks do not stop them.
 ---@field radius number? How far away a player may be and still be sent it. Default 32, at most 128.
+---@field player? string A player's UUID in hex. Sends the burst to that one player and nobody else, provided they are in the domain and within `radius` — it narrows, never widens. How a mod honours its own "particles off" setting, and how rain is emitted per player rather than per patch of ground.
+---@field texture string? A picture to draw on each particle instead of the round dot: the 64 hex characters `game.register_picture` answers. The picture's own transparency is the particle's shape, and `colour` tints it — so one white heart serves red hearts and grey ones. A hash whose bytes have not reached the client yet draws the plain dot until they do.
 
 ---Scatters a burst of short-lived sprites — sea spray, a drip, mist.
 ---
@@ -1840,6 +2427,11 @@ function game.play_sound(spec) end
 ---game.emit_particles{ pos = at, count = 6, size = 2.5, lifetime = 8,
 ---    colour = { r = 0.8, g = 0.85, b = 0.8, a = 0.15 }, area = { x = 8, y = 1, z = 8 },
 ---    spread = 0.2, collide = false }
+---
+------ A picture on each one: thirteen dots make a heart, or one picture does.
+---local heart = game.register_picture{ id = "heart", file = "textures/heart.png" }
+---game.emit_particles{ pos = above, count = 3, size = 0.5, texture = heart,
+---    colour = { r = 1, g = 0.3, b = 0.4 }, velocity = { y = 1.5 }, lifetime = 1.5 }
 ---```
 ---
 ---Returns how many players were told — not a promise anybody SAW it. Bursts are
@@ -1847,9 +2439,52 @@ function game.play_sound(spec) end
 ---connection sends, and a client draws at most 8,192 particles at once. Call it
 ---from a tick or a hook; from a generator it does nothing, since generation runs
 ---in worker VMs with nobody to show a spray to.
----@param spec Tiamot.ParticleSpec
+---@param spec Tiamat.ParticleSpec
 ---@return integer told
 function game.emit_particles(spec) end
+
+---Fields accepted by `game.show_over`.
+---@class Tiamat.BadgeSpec
+---@field picture string Required. The 64 hex characters `game.register_picture` answered. Every icon in the row draws it.
+---@field count integer? How many icons, side by side. Default 1, at most 16. **Zero takes the badge down** before its time — a mob back to full health should not wear an empty bar.
+---@field seconds number? How long it stays, before fading over its last fifth. Default 2, at most 30.
+---@field size number? How big each icon is, in blocks across. Default 0.4, at most 4.
+---@field colour { r: number?, g: number?, b: number?, a: number? }? Tints the picture, 0..1; an unnamed channel is 1. One white heart serves red hearts and grey ones.
+---@field radius number? How far away a player may be and still be sent it. Default 32, at most 128.
+---@field player string? A player's UUID in hex. Shows it to that one player and nobody else — the hitter sees the hearts, not the whole server. Narrows, never widens.
+
+---Hangs a row of pictures over an entity, following it.
+---
+---Health bars, an "!" over a startled animal, a quest marker. The row is
+---camera-facing and level, centred over the entity's head, and it MOVES WITH
+---IT — where it is comes from the entity every frame, not from the call.
+---
+---**Latest state, not an event.** A badge replaces whatever that entity had,
+---so a bar draining over a second is a call a tick and costs one message per
+---network pass however often you ask. It expires on the client, so there is
+---nothing to take down; call it again with `count = 0` to take it down early.
+---
+---Unlit, unlike particles: a health bar nobody can read at night is a health
+---bar that does not work. Still depth-tested, so a mob behind a wall does not
+---advertise itself through it.
+---
+---Returns how many players were told. An entity that has gone — or was never
+---there — tells nobody and returns 0, which is an answer rather than an error.
+---
+---```lua
+---local heart = game.register_picture{ id = "heart", file = "textures/heart.png" }
+---
+------ Hit a cow: hearts over it for a second, for the player who hit it.
+---game.show_over(cow, { picture = heart, count = health, seconds = 1,
+---    size = 0.3, player = hitter })
+---
+------ And take it down the moment it is healed again.
+---game.show_over(cow, { picture = heart, count = 0 })
+---```
+---@param entity integer The entity to hang it over.
+---@param spec Tiamat.BadgeSpec
+---@return integer told
+function game.show_over(entity, spec) end
 
 ---A walkable route between two points, or why there is not one.
 ---
@@ -1890,13 +2525,13 @@ function game.emit_particles(spec) end
 ---```
 ---@param from { x: number, y: number, z: number }
 ---@param to { x: number, y: number, z: number }
----@param options? Tiamot.PathOptions
+---@param options? Tiamat.PathOptions
 ---@return { x: number, y: number, z: number }[]|nil route
 ---@return string|nil reason `"unreachable"`, `"budget"` or `"no world"` when there is no route
 function game.find_path(from, to, options) end
 
 ---Fields accepted by `game.register_fluid`.
----@class Tiamot.FluidSpec
+---@class Tiamat.FluidSpec
 ---@field id string Unqualified id. `"milk"` from mod `core_milk` becomes `"core_milk:milk"`.
 ---@field material string The registered block a full block of it is drawn as. REQUIRED — a fluid with no material cannot be drawn, and the engine does not get to decide what your fluid looks like (charter rule 1). Qualified against your own mod, so a fluid can name its own block.
 ---@field tick_rate? integer Simulation ticks between updates. Default 1, which is every fluid tick (10 Hz). Larger is slower and more viscous, and costs proportionally less to simulate.
@@ -1904,6 +2539,7 @@ function game.find_path(from, to, options) end
 ---@field waterlogs_at? integer How full of terrain a block must be before this fluid treats it as floor, in cells of 27. Default 14 — over half. Below it the block is more air than anything and the fluid runs through; at or above it the block holds the fluid up and a mod can swap it for a waterlogged one from `register_on_fluid_flow`. Set it to 1 for the blocky rule where a single chiselled cell makes a block waterproof.
 ---@field evaporates? integer One in how many fluid ticks a block open to the air loses a cell. Default 0, which never evaporates. **This destroys matter**, which is why the engine defaults it off and leaves the decision to you — a wide shallow pool goes before a deep narrow one, because more of it is exposed.
 ---@field opacity? number How much of what is behind it a surface of this fluid hides, 0.0..=1.0. Default 0.72, which is what every fluid was drawn at before the field existed: you can make out a riverbed through it, and a deep pool still reads as deep. `1.0` is lava — a surface, not a window. `0.0` is invisible, which is legitimate and is not the same as "unsaid".
+---@field light_falloff? integer Levels of light a block of this fluid takes out of what reaches it. Default 0, which is "like air" and is what every fluid was: a block of fluid is air in the block store (Sub-Node Contract §4), so sunlight fell through a hundred blocks of sea at full strength. **1 is a level a block**, which also ends daylight's free fall straight down — an open shaft of air is lit to its floor and a shaft of water is dark fifteen blocks down. 3 is dark five blocks down, which is a murky sea. It costs nothing in a world that leaves it at zero: the lighting pass checks one bool and never looks at the fluid layer.
 
 ---Registers a fluid.
 ---
@@ -1927,14 +2563,12 @@ Fluid is BLOCK resolution, not sub-node: one volume per block, never a
 ---fluid, so whatever should happen when two of your fluids meet is your mod's
 ---to write from there.
 ---
----**`tick_rate`, `waterlogs_at` and `evaporates` are NOT per fluid yet.** The
----solver takes one set of settings for the whole world, from whichever fluid
----was registered first — and registration order is alphabetical by qualified
----id, across every loaded mod. So `core_milk:milk` sorts before
----`my_mod:water`, and its `tick_rate` governs your water too. Until this is
----fixed: expect a world's fluids to share one speed and one absorption
----threshold, and do not design a fast fluid beside a slow one, or a puddle
----that evaporates beside a sea that must not.
+---**`tick_rate`, `waterlogs_at` and `evaporates` are each fluid's own.** A
+---slow lava beside a quick river, a puddle that dries beside a sea that never
+---does: every question the solver asks about a block is asked of the fluid IN
+---that block. (For a while they were read from whichever fluid registered
+---first — alphabetically — and applied to all; if a fluid's speed ever seems to
+---be another mod's, that is what to suspect and it is fixed.)
 ---
 ---**Fluid is conserved.** Volume moves between blocks and is never created;
 ---there are no source blocks, because an infinite spring is a conservation
@@ -1956,9 +2590,111 @@ Fluid is BLOCK resolution, not sub-node: one volume per block, never a
 ----- Lava: opaque, and a light source because its block is one.
 ---game.register_block{ id = "molten", texture = "lava.png", light_emit = { r = 15, g = 8, b = 2 } }
 ---game.register_fluid{ id = "lava", material = "molten", opacity = 1.0, tick_rate = 4 }
+---game.register_fluid{ id = "brine", material = "water", light_falloff = 1 }  -- a dark deep sea
 ---```
----@param spec Tiamot.FluidSpec
+---@param spec Tiamat.FluidSpec
 function game.register_fluid(spec) end
+
+---What this world chose for one of its mods' WORLD options, or `nil`.
+---
+---A world option is declared in `mod.toml`, not here, because the start screen
+---has to show it before any mod has run:
+---
+---```toml
+---[[world_option]]
+---id = "biome"
+---name = "Biome"
+---description = "One biome everywhere, or the whole spindle."
+---options = ["spindle", "savanna", "taiga"]
+---default = 1
+---
+---[[world_option]]
+---id = "rivers"
+---name = "Rivers"
+---default = 1        -- no `options` is a checkbox; default 0 or 1
+---```
+---
+---The player picks when they make the world, beside the seed box; the answer
+---is stored in the world file and **never changes for that world**, exactly as
+---the seed does not — terrain generated later has to agree with terrain
+---generated before. Every VM that runs the world answers the same: the tick's
+---and every generation worker's, from the first line of `init.lua` onward, so
+---you may register differently for one world than for another.
+---
+---Answers the option's TEXT for a choice (never its index, so inserting an
+---option above it keeps your comparisons working), a boolean for a toggle, the
+---declared default for a world that chose nothing or chose something you no
+---longer offer, and `nil` for an id no loaded mod declares.
+---
+---```lua
+---local biome = game.world_option("tiamat_default_world:biome")
+---game.register_on_generate(function(buf, pos)
+---    if biome == "spindle" then
+---        return generate_spindle(buf, pos)
+---    end
+---    return generate_one_biome(buf, pos, biome)
+---end)
+---```
+---
+---Do not confuse it with `game.register_setting`, which is a PLAYER's choice,
+---arrives after the world exists, and cannot shape terrain.
+---@param id string The qualified id, `"your_mod:option"`.
+---@return string|boolean|nil
+function game.world_option(id) end
+
+---Publishes a table for the mods that depend on you to read.
+---
+---**The one channel between sandboxes.** Each mod runs sealed: your globals are
+---yours alone, and until this existed a mod that wanted another mod's climate
+---field, biome table or "add a button" function could only copy its constants
+---and hope. Export once, in the registration window, and every mod that names
+---you in its `depends` or `optional_depends` can read it with `game.exports`.
+---
+---Anything may go in: numbers, strings, tables, functions, and the opaque
+---handles — a compiled density, a map, a schematic — pass through as they are.
+---What a reader gets is READ-ONLY: writing into it is an error, and functions
+---run in YOUR environment with your `game` table, so a registration or a
+---storage write inside one is yours and is attributed to you.
+---
+---**An error inside a function you exported disables YOU, not the caller.**
+---The call answers `nil` to them and they carry on (charter rule 10). The same
+---the other way round: a callback they pass into your function is theirs, and
+---if it errors when you call it, they are disabled and you get `nil` back.
+---Write exported functions to be called by code you did not write.
+---
+---A value handed BACK to its owner — returned, or passed to their callback —
+---is the owner's own table again, not a view of a view; a third mod that
+---receives it gets a read-only view of the original. And a function taken from
+---`exports` answers `nil` and runs nothing once its owner has been disabled.
+---
+---```lua
+---game.export{
+---    version = 1,
+---    humidity = HUMIDITY,                          -- a density handle
+---    biome_under = function(x, z) return biome_at(x, z) end,
+---    add_button = function(label, on_click) table.insert(buttons, { label, on_click }) end,
+---}
+---```
+---@param exports table
+function game.export(exports) end
+
+---Another mod's exports, or `nil`.
+---
+---`nil` when the mod is not installed, when it is not in YOUR `depends` or
+---`optional_depends`, when it exported nothing, or when it has been disabled by
+---a fault — one answer for all four, so you handle the one case. Load order
+---guarantees a dependency exported before you read, so this works from the
+---first line of `init.lua`.
+---
+---```lua
+---local life = game.exports("tiamat_default_life")
+---if life then
+---    life.add_button("Wardrobe", function(player) open_wardrobe(player) end)
+---end
+---```
+---@param mod_id string
+---@return table|nil
+function game.exports(mod_id) end
 
 ---Registers a simulation space, or a template for making them.
 ---**Registration window only.**
@@ -2127,7 +2863,7 @@ function game.set_fluid(position, spec) end
 function game.set_block(position, block, occupancy, options) end
 
 ---A dig about to happen.
----@class Tiamot.DigEvent
+---@class Tiamat.DigEvent
 ---@field player string Who is digging, as 64 hex characters. This is the canonical player UUID — key any per-player state on it, never on the display name, which a player can change and which is not unique across servers.
 ---@field x integer Sub-node cell being dug. These are CELL coordinates, three per block on each axis, so the block is `x // 3`.
 ---@field y integer
@@ -2136,7 +2872,7 @@ function game.set_block(position, block, occupancy, options) end
 ---@field brush string `"block"` for the whole block, `"subnode"` for the single cell.
 
 ---A placement about to happen.
----@class Tiamot.PlaceEvent
+---@class Tiamat.PlaceEvent
 ---@field player string Who is placing, as 64 hex characters.
 ---@field x integer The BLOCK being written — block coordinates, not cells.
 ---@field y integer
@@ -2146,7 +2882,7 @@ function game.set_block(position, block, occupancy, options) end
 ---@field units integer How many units it would cost, which is the number of set bits in `occupancy`.
 
 ---The place control landing on a block with nothing to place.
----@class Tiamot.UseEvent
+---@class Tiamat.UseEvent
 ---@field player string Who is using, as 64 hex characters.
 ---@field x integer The CELL under the crosshair — cell coordinates, three to a block, as a dig's are. `x // 3` is the block.
 ---@field y integer
@@ -2183,7 +2919,7 @@ function game.set_block(position, block, occupancy, options) end
 ---dug answers what it holds before anything is removed, so a hook can decide by
 ---the whole block rather than by the one material the event names. Writes from
 ---a veto are still refused.
----@param callback fun(event: Tiamot.DigEvent): boolean|string|nil
+---@param callback fun(event: Tiamat.DigEvent): boolean|string|nil
 function game.register_on_dig_complete(callback) end
 
 ---Registers a veto on placements.
@@ -2212,7 +2948,7 @@ function game.register_on_dig_complete(callback) end
 ---The same rules as `game.register_on_dig_complete` otherwise: the first
 ---cancellation stops the rest, and an error disables your mod while letting the
 ---placement through — and `game.get_block` answers inside it.
----@param callback fun(event: Tiamot.PlaceEvent): boolean|string|nil
+---@param callback fun(event: Tiamat.PlaceEvent): boolean|string|nil
 function game.register_on_place(callback) end
 
 ---Registers a handler for USING a block: the place control with nothing to place.
@@ -2251,11 +2987,11 @@ function game.register_on_place(callback) end
 ---    return ""                                          -- handled, silently
 ---end)
 ---```
----@param callback fun(event: Tiamot.UseEvent): boolean|string|nil
+---@param callback fun(event: Tiamat.UseEvent): boolean|string|nil
 function game.register_on_use(callback) end
 
 ---Somebody hitting something.
----@class Tiamot.PunchEvent
+---@class Tiamat.PunchEvent
 ---@field attacker string Who threw the punch, as 64 hex characters.
 ---@field target integer The entity that took it, as `game.entity` names one. Everything in the world is an entity, including the other players.
 ---@field owner string|nil The player that entity belongs to, if it belongs to one — so "did somebody hit a person" is one field rather than a lookup.
@@ -2280,7 +3016,7 @@ function game.register_on_use(callback) end
 ---    end
 ---end)
 ---```
----@param callback fun(event: Tiamot.PunchEvent): boolean?
+---@param callback fun(event: Tiamat.PunchEvent): boolean?
 function game.register_on_punch(callback) end
 
 ---Fluid pressing against something it cannot get into.
@@ -2288,7 +3024,7 @@ function game.register_on_punch(callback) end
 ---Coordinates are BLOCKS on both ends, and they are named rather than being bare
 ---`x`/`y`/`z` — a dig event's `x`/`y`/`z` are CELLS, and the two have been
 ---confused before.
----@class Tiamot.FluidFlowEvent
+---@class Tiamat.FluidFlowEvent
 ---@field from { x: integer, y: integer, z: integer } The block the fluid is in.
 ---@field into { x: integer, y: integer, z: integer } The block it could not enter.
 ---@field fluid string The fluid's registered id, e.g. `"core:milk"`.
@@ -2318,6 +3054,14 @@ function game.register_on_punch(callback) end
 ---return value is ignored. Act on the world instead, with `game.set_block` or
 ---`game.set_fluid`. An error still disables your mod, as everywhere else.
 ---
+---# It can read the world
+---
+---`game.get_block`, `game.get_fluid` and `game.surface_at` all answer inside
+---this callback, so you can look at what is around the block the flow stopped
+---at rather than guessing from where the fluid is. They did not until
+---2026-09-19: the tick held the world while it called you, and every read came
+---back nil.
+---
 ---# It is budgeted, and it is not exhaustive
 ---
 ---At most 64 blocked flows are reported per fluid tick, and the surplus is
@@ -2337,7 +3081,7 @@ function game.register_on_punch(callback) end
 ---Nothing fires for a settled world at all. The solver only examines blocks an
 ---edit woke or a flow is moving through, so a pond nobody has touched costs
 ---nothing here either.
----@param callback fun(event: Tiamot.FluidFlowEvent)
+---@param callback fun(event: Tiamat.FluidFlowEvent)
 function game.register_on_fluid_flow(callback) end
 
 ---Registers a named input action.
@@ -2346,7 +3090,7 @@ function game.register_on_fluid_flow(callback) end
 ---Stored now, inert until Task 13.
 ---
 ---**Registration window only.**
----@param spec Tiamot.ActionSpec
+---@param spec Tiamat.ActionSpec
 function game.register_action(spec) end
 
 ---Offers the player an option, shown in the in-game settings screen.
@@ -2431,15 +3175,15 @@ function game.block_of(material) end
 ---
 ---One call fills all 256 columns natively. There is no per-sample entry point,
 ---and that is the point — see the rule at the top of this file.
----@param pos Tiamot.ChunkPos
----@param options Tiamot.NoiseOptions
----@return Tiamot.Heightmap
+---@param pos Tiamat.ChunkPos
+---@param options Tiamat.NoiseOptions
+---@return Tiamat.Heightmap
 function game.noise_heightmap(pos, options) end
 
----A compiled density field. Opaque, like `Tiamot.Heightmap`, and for the same
+---A compiled density field. Opaque, like `Tiamat.Heightmap`, and for the same
 ---reason: a script that could read it back would be one sample away from
 ---looping over it.
----@class Tiamot.Density
+---@class Tiamat.Density
 local Density = {}
 
 ---How many operations it compiled to. For checking your table became what you
@@ -2595,7 +3339,7 @@ function Density:at(x, y, z, seed) end
 ---  features four times as tall here, as if sampled at `y / 4` — for rock that
 ---  flutes vertically or strata that run level; an axis left out is 1. Every
 ---  value must be above zero. Bounds follow it, so pruning still works.
----- `{ op = "map", map = <a Tiamot.Map> }` — the map's value under this
+---- `{ op = "map", map = <a Tiamat.Map> }` — the map's value under this
 ---  sample, ignoring y. **The way an eroded field becomes terrain.** A map is
 ---  a surface, so subtract `y` to get a density from it. The node takes a COPY
 ---  of the map as it is when `game.density` is called: a program that read a
@@ -2610,7 +3354,7 @@ function Density:at(x, y, z, seed) end
 ---deep, needs more than 8 buffers at once, or compiles to more than 512
 ---operations. A field a person writes is a dozen.
 ---@param spec table
----@return Tiamot.Density
+---@return Tiamat.Density
 function game.density(spec) end
 
 ---A `contour` node: `{ op = "contour", stream = "cracks", frequency = 1/80 }`
@@ -2640,7 +3384,7 @@ function game.density(spec) end
 ---Opaque, like a density: a mod that could read it back would be one loop
 ---away from writing it by hand, which is the cost this exists to remove.
 ---@param blocks integer[][]
----@return Tiamot.Schematic
+---@return Tiamat.Schematic
 function game.schematic(blocks) end
 
 ---A structure CUT from shapes, for `buf:scatter` to stamp: paths with a
@@ -2680,11 +3424,11 @@ function game.schematic(blocks) end
 ---}
 ---```
 ---@param shapes table[]
----@return Tiamot.Schematic
+---@return Tiamat.Schematic
 function game.schematic_shapes(shapes) end
 
 ---A structure for `buf:scatter`. See `game.schematic`.
----@class Tiamot.Schematic
+---@class Tiamat.Schematic
 local Schematic = {}
 
 ---How many blocks it holds.
@@ -2695,7 +3439,7 @@ function Schematic:len() end
 ---
 ---Fetched by name, not created: the first run builds it, every run after gets
 ---the one stored with the world. See `game.map`.
----@class Tiamot.Map
+---@class Tiamat.Map
 local Map = {}
 
 ---Samples along one side.
@@ -2740,7 +3484,7 @@ function Map:blur(radius) end
 ---`how` is `"add"`, `"mul"`, `"min"` or `"max"`. The two maps must be the same
 ---shape, and a map cannot be combined with itself — `scale_by` says "twice
 ---this" without the aliasing.
----@param other Tiamot.Map
+---@param other Tiamat.Map
 ---@param how string
 function Map:combine(other, how) end
 
@@ -2767,7 +3511,7 @@ function Map:combine(other, how) end
 ---
 ---One evaluation per cell at the map's own resolution, in world coordinates,
 ---so two maps of the same region with the same field and seed agree.
----@param density Tiamot.Density
+---@param density Tiamat.Density
 ---@param options { y: number?, seed: integer? }?
 function Map:fill(density, options) end
 
@@ -2777,8 +3521,8 @@ function Map:fill(density, options) end
 ---table of numbers: it produces all 256 columns natively, in the order
 ---`buf:fill_below_heightmap` consumes. Reading samples one at a time from Lua
 ---is the per-sample loop charter rule 4 forbids.
----@param pos Tiamot.ChunkPos
----@return Tiamot.Heightmap
+---@param pos Tiamat.ChunkPos
+---@return Tiamat.Heightmap
 function Map:heightmap(pos) end
 
 ---Fetches this mod's map by name, building an empty one the first time.
@@ -2810,7 +3554,7 @@ function Map:heightmap(pos) end
 ---end)
 ---```
 ---@param spec { name: string, side: integer?, scale: integer?, origin_x: integer?, origin_z: integer? }
----@return Tiamot.Map
+---@return Tiamat.Map
 function game.map(spec) end
 
 ---Runs ONCE in a world's life, before the first chunk is generated.
@@ -2829,7 +3573,7 @@ function game.register_on_world_init(callback) end
 
 ---A heightmap with the same height in every column.
 ---@param height integer World block height.
----@return Tiamot.Heightmap
+---@return Tiamat.Heightmap
 function game.flat_heightmap(height) end
 
 ---Opens a named random stream for a chunk.
@@ -2838,9 +3582,9 @@ function game.flat_heightmap(height) end
 ---uncorrelated, so drawing more numbers for one cannot shift another — which
 ---means you can change one generator without moving everything else in the
 ---world.
----@param pos Tiamot.ChunkPos
+---@param pos Tiamat.ChunkPos
 ---@param name string
----@return Tiamot.Stream
+---@return Tiamat.Stream
 function game.rng_stream(pos, name) end
 
 --- ENTITIES ----------------------------------------------------------------
@@ -2890,7 +3634,7 @@ function game.rng_stream(pos, name) end
 ---    collider = { width = 0.6, height = 0.6 },
 ---}
 ---```
----@param spec { pos: { x: number, y: number, z: number }, model?: string, item?: table, health?: integer, nametag?: string, collider?: { width: number, height: number } }
+---@param spec { pos: { x: number, y: number, z: number }, model?: string, item?: table, health?: integer, speed?: number, nametag?: string, collider?: { width: number, height: number } }
 ---@return integer|nil id
 function game.spawn_entity(spec) end
 
@@ -2956,9 +3700,25 @@ function game.transfer_entity(id, domain, position) end
 ---
 ---`item` is the stack an entity IS, for something lying on the ground, in the
 ---same shape `game.inventory` reports one — `{ material, units, blocks, nodes,
----count, shape }` — so reading an item off the floor and handing it to a player
----moves one table between two calls.
----@return { pos: { x: number, y: number, z: number }, yaw: number, pitch: number, facing: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number }, on_ground: boolean, source: string, model: string|nil, item: table|nil, anim: integer, health: integer|nil, max_health: integer|nil, owner: string|nil, nametag: string|nil, nametag_player: string|nil }|nil
+---count, shape, detail }` — so reading an item off the floor and handing it to
+---a player moves one table between two calls. `detail` survives the drop: an
+---item your mod named keeps its name on the ground and gets it back when
+---somebody picks it up.
+---
+---`submerged` is how much of the body is in fluid, 0 for dry and 1 for under —
+---the very number the physics scaled this tick's buoyancy, drag and swim speed
+---by. **Read it rather than probing blocks yourself:** a body's box is not a
+---block, so your answer and the engine's would disagree, and the engine's is
+---the one that moved it.
+---
+---`fell` is how far the body fell, in BLOCKS, on the one tick it lands, and
+---zero on every other tick — so a fall rule is `if e.fell > 3 then` in a tick
+---hook, with nothing to remember. **Falling speed cannot tell you this.**
+---Vertical speed is clamped at terminal velocity, so a fall of forty blocks and
+---a fall of four hundred land at exactly the same number, and a body dropping
+---through water is slowed by the water before it touches down. Walking down a
+---step raises nothing: a body that never left the ground never fell.
+---@return { pos: { x: number, y: number, z: number }, yaw: number, pitch: number, facing: { x: number, y: number, z: number }, velocity: { x: number, y: number, z: number }, on_ground: boolean, submerged: number, fell: number, source: string, model: string|nil, item: table|nil, anim: integer, health: integer|nil, max_health: integer|nil, owner: string|nil, nametag: string|nil, nametag_player: string|nil }|nil
 function game.entity(id) end
 
 ---Changes an entity. Returns whether anything changed.
@@ -2976,12 +3736,18 @@ function game.entity(id) end
 ---```lua
 ---game.set_entity(id, {
 ---    drive = { walk = { x = 1, z = 0 }, gait = "walk" },
+---    -- And how fast, as a multiple of the ordinary pace: a grazing animal is
+---    -- not a sprinting player. 1 is unchanged, 0 is rooted, 16 is the cap.
+---    -- The drive's direction is normalised, so a shorter one is NOT a slower
+---    -- one — this is the number that makes a cow amble. It is kept with the
+---    -- entity, so it survives a save, and may be set at `spawn_entity` too.
+---    speed = 0.5,
 ---    yaw = 1.57,
 ---    anim = 1,  -- WALK
 ---})
 ---```
 ---@param id integer
----@param spec { pos?: { x: number, y: number, z: number }, velocity?: { x: number, y: number, z: number }, yaw?: number, pitch?: number, health?: integer, anim?: integer, drive?: { walk?: { x: number, z: number }, jump?: boolean, gait?: "walk"|"sprint"|"sneak" } }
+---@param spec { pos?: { x: number, y: number, z: number }, velocity?: { x: number, y: number, z: number }, yaw?: number, pitch?: number, health?: integer, speed?: number, anim?: integer, drive?: { walk?: { x: number, z: number }, jump?: boolean, gait?: "walk"|"sprint"|"sneak" } }
 ---@return boolean changed
 function game.set_entity(id, spec) end
 

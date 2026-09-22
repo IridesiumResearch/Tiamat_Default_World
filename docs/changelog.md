@@ -2455,7 +2455,7 @@ keep 21 blocks off a river (its bar), not its 150-block valley.
 Asked: "lets do a performance pass. just check and see if we can speed any
 of the stuff we already have up."
 
-**Measured** headless with generation on the tick (`TIAMOT_GEN_THREADS=0`),
+**Measured** headless with generation on the tick (`TIAMAT_GEN_THREADS=0`),
 touring fixed coordinates, timing the generator's own 1,024-chunk counters:
 about 120 ms per surface chunk (114.6, 123.4 and 124.0 over three runs of
 the old code). A surface chunk ran, on average, 3.85 biomes' layered fills
@@ -2935,7 +2935,7 @@ can stumble across one."
   variants), so all moss changed colour: the Jungle's floors, the Taiga's
   hummocks, the mossed logs and stones.
 - **Engine asks moved** to the engine repo, `docs/engine-asks/
-  tiamot_default_world.md` (engine ae7d45b), beside the other mods' asks,
+  tiamat_default_world.md` (engine ae7d45b), beside the other mods' asks,
   where the engine agent reads them. `docs/engine-asks.md` is the history
   now. Ask 35 is marked half landed: the level is solved at its own
   height, but `within` is still read at y = 0.5.
@@ -3076,6 +3076,28 @@ new plant at most, and each lays the crystal veins through its rock.
   - Measured round a Jungle landing: 36 ivy blocks, 27 one cell column
     wide and 9 two, where a rope slants across a cell boundary. Before the
     template change, 60 blocks: 35 one column, 22 two, 3 wider.
+
+### Tiamot is Tiamat (2026-09-22)
+
+The engine is renaming, and the mod follows.
+
+- The mod is `tiamat_default_world`, in `mods/tiamat_default_world`. **Every
+  block, fluid and item is namespaced by the mod id**, so `stone` is
+  `tiamat_default_world:stone` now: a world generated before this reads its
+  old ids as unknown, and is not worth keeping.
+- Every mention in the Lua, the docs and the tools is renamed, including
+  the fully-qualified strings the mod writes itself (`"…:water"`, the
+  lava rules, the caves' fluids).
+- `stubs/game.lua` and `AGENTS.md` are re-vendored from the engine, which
+  has renamed them already.
+- The engine's `game/` link is `tiamat_default_world` now; a stale link
+  under the old name is a mod that fails to load.
+- Checked: `--check-mods` lists the mod and ends OK, its blocks register as
+  `tiamat_default_world:*`, and a headless world generates and serves with
+  no error.
+- Still to do, and not the mod's to do: the repository folder and its
+  GitHub name, and the sibling mods that name our blocks (Weather's
+  climate, Life's creatures — 26 references between them).
 
 ### Housekeeping
 

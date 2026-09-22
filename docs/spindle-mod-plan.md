@@ -11,7 +11,7 @@ engine needs next** — the full map pre-pass, or something much smaller.
 
 ## Part A — Engine readiness
 
-Audited from the `Tiamot-Voxel-Game-main` tree (read, not built). The build
+Audited from the `Tiamat-Voxel-Game-main` tree (read, not built). The build
 plan runs through Task 16 and the tree carries work from every task,
 including 15a domains and 15b LOD, so the engine is at or past its release
 milestone.
@@ -566,7 +566,7 @@ pass over every constant.
 ## Part E — Mod layout
 
 ```toml
-id = "tiamot_default_world"
+id = "tiamat_default_world"
 name = "Spindle"
 version = "0.1.0"
 depends = ["core >=0.1", "core_sky >=0.1"]

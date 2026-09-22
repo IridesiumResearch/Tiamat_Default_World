@@ -1,0 +1,1313 @@
+-- SPDX-FileCopyrightText: Iridesium
+-- SPDX-License-Identifier: GPL-3.0-only
+--
+-- 1.1 Temperate Woodlands.
+--
+-- Where: the temperate ring (t = 0.18 .. 0.35 from the axis), on the wetter
+-- side of the humidity noise.
+--
+-- The brief (2026-09-09): low rolling hills with soft crests and gentle
+-- gradient changes, broken by shallow gullies and seasonal creek beds. Deep
+-- dark loam and rich grass turf, irregular patches of brown leaf litter,
+-- exposed woody root nodes, and weathered limestone or granite boulders
+-- half-buried in the soil. Oaks, with aspens here and there, and dead
+-- wood — standing snags and fallen trunks — rarer still. The trees follow
+-- the Better Trees idiom: rounded trunks, a fork now and then, branches
+-- that each carry a clump of leaves, a canopy that is lumps and gaps.
+--
+-- The hills and the gullies are the terrain field's (shape.lua). What this
+-- file owns is the FLOOR and what stands on it, by two mechanisms:
+--
+--   * The ground is native fills, run sub-node smooth for every chunk that
+--     can touch this ring, each adding cells to the surface the soil fill
+--     shaped: grass in the top blocks, leaf litter where a mid-scale noise
+--     says so, wet gravel along the creek floors. The soil under all of it
+--     is loam — the generator asks the biome what to paint the body as.
+--
+--   * Everything that stands on the ground GROWS, by random tick on grass.
+--     A generator cannot read the terrain it just wrote, so nothing at
+--     generation time knows where the surface is — but `register_random_tick`
+--     hands a mod its blocks one at a time once the world exists. Trees,
+--     rocks and root nodes are SCHEMATICS: shapes the code decides, rounded
+--     to the cell with `game.set_block`'s 27-cell mask, with the random
+--     stream picking sizes and offsets. Every structure is one batch on the
+--     paced queue (edits.lua), since each chunk it touches is a relight on
+--     the server and a remesh on every client.
+--
+-- The random tick offers a block only if it is one material, which on a
+-- smooth surface the top block is: grass cells and air.
+--
+-- **Counted, and never silent.** The handler runs under pcall and logs an
+-- error rather than letting the engine disable the mod without a word, and
+-- every STATS_EVERY ticks it logs how many turns became what. If nothing
+-- grows, that block of the log says why.
+
+
+local LITTER_FREQ = 1 / 6      -- patches five or six blocks across, ragged (a dozen until 2026-09-15: "the mud spots quite a bit smaller and more broken up")
+local LITTER_MIN = 0.21        -- the noise (+/-0.42) must exceed this: a tenth of the ground
+
+-- Ground cover, as fills in the shell of air just over the surface: ferns
+-- two cells tall in carpets (a slow noise says where a carpet is, a fast
+-- one breaks it into clumps with gaps to walk through), tufts of grass one
+-- cell tall, sparser, everywhere the ferns are not.
+local FERN_PATCH_FREQ = 1 / 36
+local FERN_PATCH_MIN = 0.0     -- half the ground is fern country
+local FERN_FREQ = 1 / 4
+local FERN_MIN = 0.02          -- within it, a little under half the cells
+local TUFT_FREQ = 1.5          -- features under a block, so neighbouring cells decide on their own
+local TUFT_MIN = 0.12          -- over the median: was 0.20 (30% of the 0.10 cut, 2026-09-11), lowered for "more grass" (2026-09-14)
+
+local TREE_CHANCE = 5          -- one grass block in this many is a candidate
+local TREE_SPACING = 3         -- no other trunk within this many blocks (twice the trees of 4)
+local BIRCH_ONE_IN = 7         -- of the trees, one in this many is a birch
+local DEAD_ONE_IN = 42         -- of the trees, one in this many is dead wood (half standing, half fallen)
+local ROOT_DEPTH = 3           -- how far down a trunk may go looking for whole ground
+
+-- Species, in the Better Trees idiom: a trunk that may fork, a few main
+-- branches leaving it at an angle and rising as they go out, and a clump of
+-- leaves at the end of every branch and on the top — so the canopy is a
+-- lumpy union of clumps with gaps between them, not one blob. Numbers are
+-- { least, extra } ranges the stream picks from.
+local OAK = {
+    log = "tiamat_default_world:oak_log", leaves = "tiamat_default_world:oak_leaves",
+    trunk = { 6, 4 },              -- blocks of trunk before the crown
+    fork_one_in = 4,               -- one oak in this many splits into two leaders
+    branches = { 2, 3 },           -- main branches off the upper trunk
+    branch_out = { 2, 3 },         -- how far a branch reaches sideways
+    branch_up = { 1, 3 },          -- and how far it rises doing so
+    clump = { 2.2, 1.2 },          -- half-width of a branch-tip clump
+    crown = { 2.6, 1.2 },          -- half-width of the clump on the trunk top
+    flat = 0.7,                    -- clump height as a share of its width
+    flares = { 2, 3 },
+    hollow_one_in = HOLLOW_ONE_IN,  -- a den under the roots, now and then
+    -- The path tree (2026-09-14): the trunk's radius at the foot and at the
+    -- top, in blocks; how far it leans each step of four; a twig and a
+    -- smaller clump off some branches; and how many shapes to cut.
+    name = "oak",
+    trunk_r = { 0.7, 0.42 },
+    lean = 0.18,
+    twigs = true,
+    templates = 12,
+}
+-- Aspen: tall and narrow, and leafy the way a column is leafy — three to
+-- five short branches stacked up the top half of the trunk, each with a
+-- small clump hugging it, and a crown taller than it is wide.
+local ASPEN = {
+    log = "tiamat_default_world:birch_log", leaves = "tiamat_default_world:oak_leaves",
+    trunk = { 14, 7 },             -- a third taller than the oak's tallest
+    fork_one_in = 10,
+    branches = { 3, 2 },
+    branch_out = { 1, 0 },
+    branch_up = { 0, 1 },
+    clump = { 1.5, 0.6 },
+    crown = { 1.5, 0.6 },
+    flat = 1.25,
+    flares = { 0, 2 },
+    name = "aspen",
+    trunk_r = { 0.46, 0.24 },
+    lean = 0.06,
+    twigs = false,
+    templates = 6,
+}
+local BIRCH = ASPEN                -- the block is still called birch_log
+
+local ROCK_CHANCE = 900        -- one grass block in this many, inside a patch, starts a cluster
+local ROCK_PATCH = 32          -- patches are this many blocks square...
+local ROCK_PATCH_ONE_IN = 4    -- ...and one in this many has rocks and roots
+local ROCK_APART = 14          -- no other stone within this many blocks of a new cluster
+local LONE_ONE_IN = 4          -- one cluster candidate in this many is a single boulder
+local ROOT_SHARE = 5           -- one candidate in this many is a root node, not rocks
+
+local MANTLE_CHANCE = 600      -- one grass block in this many, inside a mantle patch, starts a patch
+local MANTLE_PATCH = 24        -- patches this many blocks square, one in MANTLE_PATCH_ONE_IN
+local MANTLE_PATCH_ONE_IN = 3
+local MANTLE_BY_DEAD_ONE_IN = 2 -- dead wood gets a patch round it this often — not every time
+local MANTLE_R = { 2, 2 }      -- patch radius, blocks
+local MANTLE_BLOOM_ONE_IN = 3  -- columns of the patch that carry a bloom
+
+local BRAMBLE_CHANCE = 700     -- one grass block in this many, inside a bramble patch
+local BRAMBLE_PATCH = 24       -- patches this many blocks square, one in BRAMBLE_PATCH_ONE_IN
+local BRAMBLE_PATCH_ONE_IN = 3
+local HOLLOW_ONE_IN = 3        -- one oak in this many has a hollow under its roots
+
+-- Trees are tried so often they keep the edit queue full; anything rarer
+-- may queue this many batches past its cap, or it would never be placed.
+local RESERVE = 6
+
+local POOL_CHANCE = 1200       -- one grass block in this many: a vernal pool, tiny
+local POOL_R = 3               -- radius of the bank, blocks; water is one block down
+local POOL_APART = 18          -- no other water within this many blocks
+
+local STATS_EVERY = 200        -- ticks between log lines: ten seconds
+
+local blocks = tdw.blocks
+local layers = tdw.layers
+local shape = tdw.shape
+local edits = tdw.edits
+local schem = tdw.schem
+
+-- Lazy like the rest: a biome's fills carry the terrain INSIDE them, and
+-- the river valleys are a term of that terrain (shape.river_valley) defined
+-- by a file that loads after this one. Built at load, this biome's grass
+-- band was the shape of the ground BEFORE the rivers were cut out of it —
+-- which hung a roof of turf over every valley.
+tdw.biomes.temperate_woodlands.lazy = true
+tdw.build_biome("temperate_woodlands", function(ctx)
+    local n = ctx.node
+    -- Where the biome is — the temperate ring's wet half — unless it is
+    -- everywhere.
+    local function masked(field)
+        local mask = tdw.biome_mask(n, "temperate_woodlands", true)
+        return mask and n.min(field, mask) or field
+    end
+    -- **The surface from ONE evaluation of the terrain** (engine
+    -- `fill_layers`, as the newer biomes have it): a code field with no
+    -- terrain in it names, per block, which set of depth bands the block
+    -- gets — turf, litter over it in patches, gravel along the creek floors
+    -- — and the depth is the terrain, once. Until 2026-09-15 this was five
+    -- fills, each the whole terrain and the mask: five evaluations a chunk,
+    -- and a program of the terrain plus a mask, which in the "verdant" mode
+    -- (983 operations of terrain) was past the engine's 1,024 — every chunk
+    -- of the Verdant Belt and its edges failed to generate.
+    local function step(field)
+        return n.clamp(n.mul(field, n.const(1e4)), 0.0, 1.0)
+    end
+    local conditions = {
+        n.const(1.0),                                                                          -- 1: turf
+        n.sub(n.noise("litter", LITTER_FREQ, 2, 1.0), n.const(LITTER_MIN)),                  -- 2: leaf litter
+        shape.gully_floor(),                                                                   -- 3: a creek's bed
+    }
+    local code = n.const(0.0)
+    for k, condition in ipairs(conditions) do
+        code = n.max(code, n.mul(step(condition), n.const(k)))
+    end
+    local mask = tdw.biome_mask(n, "temperate_woodlands", true)
+    if mask then
+        code = n.mul(code, step(mask))
+    end
+    if shape.sea_exclude then
+        -- Not on a seabed: the shore is the coast's and the reef's, and
+        -- without this the turf was painted under the water (2026-09-16).
+        code = n.mul(code, step(shape.sea_exclude(n.const(1.0), 20.0)))
+    end
+    local depth = shape.compile("biome.woodlands.depth", shape.terrain(false))
+    local codes = shape.compile("biome.woodlands.codes", code)
+    -- Its own soil under its own top, so a chunk another biome shares
+    -- still has loam under the woodland's turf (a chunk of woodland alone
+    -- has loam for its base already).
+    local entries = {
+        { code = 1, to = shape.SKIN_TOP, material = blocks.grass },
+        { code = 1, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+        { code = 2, to = shape.SKIN_TOP, material = blocks.mulch },
+        { code = 2, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+        { code = 3, to = shape.SKIN_TOP, material = blocks.gravel },
+        { code = 3, from = shape.SKIN_TOP, to = shape.SKIN_DIRT, material = blocks.dirt },
+    }
+    -- The cover, stood on that surface by the engine's cover fill. Ferns
+    -- first, then tufts where ferns are not (the tuft field is cut by the
+    -- fern patch). No terrain in these fields: a cover is only asked in
+    -- blocks that hold a surface, and the first caves are a hundred blocks
+    -- down — the near-ground guard that kept them off cave floors was a
+    -- full terrain per cell for nothing.
+    local fern_patch = n.sub(n.noise("fern_patch", FERN_PATCH_FREQ, 1, 1.0), n.const(FERN_PATCH_MIN))
+    -- Neither ferns nor tufts in a river valley: they stood on the river's
+    -- bed, and in strips across its channel. The ferns keep the valley's
+    -- slopes; the grass there is the river's own.
+    local function off_river(field, blocks_out)
+        field = shape.river_exclude and shape.river_exclude(field, blocks_out) or field
+        -- And out of the sea, and off the shore's own ground (2026-09-15).
+        return shape.sea_exclude and shape.sea_exclude(field, 20.0) or field
+    end
+    local ferns = shape.compile("biome.woodlands.ferns",
+        masked(off_river(n.min(fern_patch, n.sub(n.noise("fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))),
+            shape.RIVER_BAR or 0)))
+    -- Tufts: the engine's cover fill stands them on the surface the fills
+    -- above made — two cells tall, one where the surface is a block's top
+    -- cell, always inside ONE block (never two stacked blocks, which
+    -- highlight and dig apart) and never on another tuft. This field only
+    -- says WHERE: one or two of a block's nine cell columns, each deciding
+    -- nearly on its own (the noise's features are under a block); off the
+    -- fern patches; and within a sixth of a block of the ground, which
+    -- keeps it off cave floors. T is depth below the surface in km, and
+    -- the base cell is sampled at its bottom face, which can sit up to a
+    -- sixth of a block under the surface the smooth fill drew — hence the
+    -- allowance rather than T < 0. The engine draws a run of billboard
+    -- cells as ONE square card as tall as the run, the whole tile across
+    -- it — five thin blades — so a two-cell run is a card two thirds of a
+    -- block each way. The card turns to face the camera until the engine's
+    -- fixed cards land (engine-asks, item 9).
+    local tufts = shape.compile("biome.woodlands.tufts",
+        masked(off_river(n.min(n.mul(fern_patch, n.const(-1.0)),
+            n.sub(n.noise("tuft", TUFT_FREQ, 1, 1.0), n.const(TUFT_MIN))), shape.RIVER_RIM or 0)))
+    -- The flowers, in the columns the grass leaves: off the ferns and the
+    -- river valleys, as the grass is.
+    local lunaria, chamomile = tdw.flower_covers("biome.woodlands", "tuft", TUFT_FREQ, function(field)
+        return masked(off_river(n.min(field, n.mul(fern_patch, n.const(-1.0))), shape.RIVER_RIM or 0))
+    end)
+    -- The surface, then the cover over all of it. Ferns are a cover two
+    -- cells tall, as the tufts are (they were a band of air over the ground,
+    -- which is the same thing at the price of a terrain).
+    return {
+        { layers = true, depth = depth, code = codes, entries = entries, body = true },
+        { cover = blocks.fern, cells = 2, take = ferns },
+        { cover = blocks.tall_grass, cells = 2, take = tufts },
+        lunaria,
+        chamomile,
+    }
+end)
+tdw.biomes.temperate_woodlands.soil = blocks.dirt
+
+-- Reading the world ---------------------------------------------------------
+
+local FULL = game.OCCUPANCY_FULL
+
+-- `occupancy` is 0 for empty air and `material` is nil for a mixed block, so
+-- these are the questions worth asking of a block on a smooth surface.
+local function at(x, y, z)
+    return game.get_block{ x = x, y = y, z = z }
+end
+local function is_empty(b)
+    return b ~= nil and b.occupancy == 0
+end
+local function is_whole(b)
+    return b ~= nil and b.occupancy == FULL
+end
+local function is_wood(b)
+    return b ~= nil and b.occupancy ~= 0
+        and (b.material == blocks.oak_log or b.material == blocks.birch_log or b.material == blocks.dead_log)
+end
+-- Nothing there but ground cover, which a pool or a plant may take over.
+local function is_open(b)
+    return b ~= nil and (b.occupancy == 0
+        or b.material == blocks.tall_grass or b.material == blocks.fern
+        or b.material == blocks.ladys_mantle or b.material == blocks.ladys_mantle_bloom)
+end
+
+-- Whether a grass block at (x, z) is in this biome's ring. Integer
+-- arithmetic on block coordinates; exact.
+local function in_ring(x, z)
+    if tdw.config.everywhere == "temperate_woodlands" then
+        return true
+    end
+    local ring = layers.ring_by_id.temperate
+    local r2 = x * x + z * z
+    local R2 = shape.R_DISC * shape.R_DISC * 1e6
+    return r2 >= ring.u[1] * R2 and r2 < ring.u[2] * R2
+end
+
+-- Which grass blocks are candidates is decided by an integer hash of the
+-- position and the world seed, before anything is read or any stream opened:
+-- a busy world hands this handler thousands of blocks a tick and almost all
+-- of them must cost nothing. Plain integer arithmetic; exact. `seed_int` is
+-- the generator's integer form of the seed — the seed itself can be a float.
+local function hash(x, y, z)
+    local h = (x * 73856093) ~ (y * 19349663) ~ (z * 83492791) ~ ((tdw.seed_int or 0) * 2654435761)
+    return h ~ (h >> 17)
+end
+local function candidate(x, y, z, one_in)
+    return hash(x, y, z) % one_in == 0
+end
+
+-- Counts, for the log.
+local stats = { turns = 0, candidates = 0, attempts = 0, grown = 0, cut = 0, rocks = 0, pools = 0, pool_tries = 0, pool_slope = 0, brambles = 0, mantle = 0,
+    no_room = 0, headroom = 0, spacing = 0, unloaded = 0, errors = 0, head_by = {} }
+local last_error = nil
+
+-- Declared here and defined with the lady's mantle below, because dead wood
+-- (defined first) sows a patch of it round itself.
+local push_mantle
+
+-- Cell masks -----------------------------------------------------------------
+
+-- Bit for cell (cx, cy, cz), each 0..2, indexed x + 3*y + 9*z.
+local function bit(cx, cy, cz)
+    return 1 << (cx + 3 * cy + 9 * cz)
+end
+
+-- A thin bar of three cells through the middle of a block along one axis.
+local BAR = {
+    x = bit(0, 1, 1) | bit(1, 1, 1) | bit(2, 1, 1),
+    y = bit(1, 0, 1) | bit(1, 1, 1) | bit(1, 2, 1),
+    z = bit(1, 1, 0) | bit(1, 1, 1) | bit(1, 1, 2),
+}
+-- The bottom two layers of cells: a low hump.
+local LOW = 0
+-- A log lying along x or z: two cells wide, two tall, through the block.
+local LYING = { x = 0, z = 0 }
+for c = 0, 2 do
+    for d = 0, 2 do
+        LOW = LOW | bit(c, 0, d) | bit(c, 1, d)
+    end
+    for cy = 0, 1 do
+        for cw = 0, 1 do
+            LYING.x = LYING.x | bit(c, cy, cw)
+            LYING.z = LYING.z | bit(cw, cy, c)
+        end
+    end
+end
+
+-- The mask of the cells of block (bx, by, bz) whose centres lie inside an
+-- ellipsoid centred at (cx, cy, cz) with half-widths (rx, ry, rz). Plain
+-- + - * / on doubles and comparisons: nothing here is a library call.
+-- `rough`, if given, nudges the edge per cell by up to that much either
+-- way, from the integer hash of the cell — so a clump of leaves is ragged
+-- at the cell rather than a clean sphere. Nothing here is a library call.
+local function ellipsoid_mask(bx, by, bz, cx, cy, cz, rx, ry, rz, rough)
+    local mask = 0
+    for iz = 0, 2 do
+        local dz = (bz + (iz + 0.5) / 3 - cz) / rz
+        for iy = 0, 2 do
+            local dy = (by + (iy + 0.5) / 3 - cy) / ry
+            for ix = 0, 2 do
+                local dx = (bx + (ix + 0.5) / 3 - cx) / rx
+                local edge = 1.0
+                if rough then
+                    edge = 1.0 + rough * ((hash(bx * 3 + ix, by * 3 + iy, bz * 3 + iz) % 9) - 4) / 4
+                end
+                if dx * dx + dy * dy + dz * dz <= edge then
+                    mask = mask | bit(ix, iy, iz)
+                end
+            end
+        end
+    end
+    return mask
+end
+
+-- Writes an ellipsoid of `material` into the world as part of the current
+-- batch, MERGED: its cells become the material and every other cell of each
+-- block keeps what it held, so a rock is in the turf rather than standing in
+-- a footprint of its own bounding block. Whole blocks are left alone —
+-- nothing of a buried thing shows there, and merging into one is an edit
+-- per cell.
+local function push_ellipsoid(material, cx, cy, cz, rx, ry, rz)
+    for bz = math.floor(cz - rz), math.floor(cz + rz) do
+        for by = math.floor(cy - ry), math.floor(cy + ry) do
+            for bx = math.floor(cx - rx), math.floor(cx + rx) do
+                local mask = ellipsoid_mask(bx, by, bz, cx, cy, cz, rx, ry, rz)
+                if mask ~= 0 then
+                    local b = at(bx, by, bz)
+                    if b ~= nil and b.occupancy ~= FULL then
+                        edits.push({ x = bx, y = by, z = bz }, material, mask, true)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Between two bounds, inclusive, from the stream.
+local function pick(rng, range)
+    return range[1] + rng:below(range[2] + 1)
+end
+
+-- Trees ----------------------------------------------------------------------
+
+-- The foot of a trunk: down through the grass block and any partial ground
+-- under it until it stands on a whole block, so on a slope it is planted
+-- rather than perched. Nil if the ground there is not loaded.
+local function footing(x, y, z)
+    local base = y
+    for dy = 0, ROOT_DEPTH do
+        local b = at(x, y - dy, z)
+        if b == nil then
+            return nil
+        end
+        base = y - dy
+        if is_whole(b) then
+            break
+        end
+    end
+    return base
+end
+
+-- Room for a trunk: nothing but ground cover over it (a tuft or a fern is
+-- overwritten, not an obstacle), and no other trunk within TREE_SPACING,
+-- checked on a ring of points at chest height.
+local function clear_for(x, y, z, height)
+    for dy = 1, height + 6 do
+        local hb = at(x, y + dy, z)
+        if not is_open(hb) then
+            stats.headroom = stats.headroom + 1
+            -- What blocked, by numeric material and height: "15@1" is grass
+            -- a block up, which is a tick on turf under the surface (the turf
+            -- is three thick) — most of the count, and no loss.
+            local k = hb == nil and "nil" or (hb.material == nil and "mixed" or tostring(hb.material)) .. "@" .. dy
+            stats.head_by[k] = (stats.head_by[k] or 0) + 1
+            return false
+        end
+    end
+    for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 } }) do
+        for r = 2, TREE_SPACING do
+            if is_wood(at(x + d[1] * r, y + 2, z + d[2] * r)) then
+                stats.spacing = stats.spacing + 1
+                return false
+            end
+        end
+    end
+    return true
+end
+
+-- Whether every chunk a box touches is loaded. `at` is nil in one that is
+-- not, and an edit into one is DROPPED — which is how a tree came to stand
+-- cut in half at a chunk border: grown at the edge of the loaded world,
+-- its far half written into a chunk that was not there and generated
+-- fresh later. Sampled every eight blocks, finer than a chunk.
+local function loaded_box(x0, y0, z0, x1, y1, z1)
+    local function steps(a, b)
+        local out = {}
+        for v = a, b, 8 do out[#out + 1] = v end
+        out[#out + 1] = b
+        return out
+    end
+    for _, sx in ipairs(steps(x0, x1)) do
+        for _, sy in ipairs(steps(y0, y1)) do
+            for _, sz in ipairs(steps(z0, z1)) do
+                if at(sx, sy, sz) == nil then
+                    return false
+                end
+            end
+        end
+    end
+    return true
+end
+
+-- The top layer of cells: an arch of root over a hollow.
+local ARCH = bit(0, 2, 0) | bit(1, 2, 0) | bit(2, 2, 0) | bit(0, 2, 1) | bit(1, 2, 1) | bit(2, 2, 1)
+    | bit(0, 2, 2) | bit(1, 2, 2) | bit(2, 2, 2)
+
+-- A root flare: low humps of wood on the ground beside the foot. With
+-- `hollow`, the first of them is instead a natural hollow: the ground
+-- under it is carved out a block or so deep and the root arches over the
+-- opening — a den, the kind of place a fox would take.
+local function push_flares(x, y, z, base, log, count, rng, hollow)
+    local dirs = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+    local first = rng:below(4)
+    for i = 0, count - 1 do
+        local d = dirs[(first + i) % 4 + 1]
+        local fx, fz = x + d[1], z + d[2]
+        for fy = y, base, -1 do
+            local b = at(fx, fy, fz)
+            if b ~= nil and b.occupancy ~= FULL then
+                if hollow and i == 0 then
+                    -- Carve: an ellipsoid of air, centred a block and a
+                    -- half out and a little below the surface, merged so
+                    -- only its own cells go.
+                    local cx, cy, cz = fx + 0.5 + d[1] * 0.8, fy + 0.2, fz + 0.5 + d[2] * 0.8
+                    for bz = math.floor(cz - 1.3), math.floor(cz + 1.3) do
+                        for by = math.floor(cy - 0.9), math.floor(cy + 0.9) do
+                            for bx = math.floor(cx - 1.3), math.floor(cx + 1.3) do
+                                local mask = ellipsoid_mask(bx, by, bz, cx, cy, cz, 1.3, 0.9, 1.3)
+                                if mask ~= 0 and not (bx == x and bz == z) then
+                                    local g = at(bx, by, bz)
+                                    if g ~= nil and g.occupancy ~= 0 then
+                                        edits.push({ x = bx, y = by, z = bz }, "engine:air", mask & g.occupancy, true)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    edits.push({ x = fx, y = fy, z = fz }, log, ARCH, true)
+                else
+                    edits.push({ x = fx, y = fy, z = fz }, log, LOW, true)
+                end
+                break
+            end
+        end
+    end
+end
+
+-- The four corner columns of a block, and the mask with each of them gone.
+local CORNER = {
+    bit(0, 0, 0) | bit(0, 1, 0) | bit(0, 2, 0),
+    bit(2, 0, 0) | bit(2, 1, 0) | bit(2, 2, 0),
+    bit(0, 0, 2) | bit(0, 1, 2) | bit(0, 2, 2),
+    bit(2, 0, 2) | bit(2, 1, 2) | bit(2, 2, 2),
+}
+local ROUND = FULL & ~(CORNER[1] | CORNER[2] | CORNER[3] | CORNER[4])
+
+-- A trunk block: whole, minus most of its corner columns — each corner is
+-- gone four times in five, so the trunk is round in most places and keeps
+-- a knob or a flat here and there.
+local function trunk_mask(rng)
+    local mask = FULL
+    for _, corner in ipairs(CORNER) do
+        if rng:below(5) ~= 0 then
+            mask = mask & ~corner
+        end
+    end
+    return mask
+end
+
+-- A branch: from (x, y, z) out `out` blocks along the direction (sx, sz),
+-- rising `up` as it goes, one block per step. Thick where it leaves the
+-- trunk (the rounded trunk mask), a two-cell bar along the middle, and a
+-- thin bar at the tip, where it turns upward to meet its clump. Writes into
+-- `wood` (key -> {mask, y}) and returns the tip.
+local function branch(wood, x, y, z, sx, sz, out, up, rng)
+    local bx, by, bz = x, y, z
+    local rises = {}
+    for i = 1, up do
+        rises[1 + rng:below(out)] = (rises[1 + rng:below(out)] or 0) + 1
+    end
+    local along_x = sx ~= 0 and sz == 0
+    for step = 1, out do
+        bx, bz = bx + sx, bz + sz
+        if rises[step] then
+            by = by + rises[step]
+        end
+        local key = bx .. ":" .. by .. ":" .. bz
+        local mask
+        if step == 1 then
+            mask = trunk_mask(rng)
+        elseif step == out then
+            mask = (along_x and BAR.x or BAR.z) | BAR.y
+        else
+            mask = along_x and (LYING.x | (LYING.x << 3)) or (LYING.z | (LYING.z << 3))
+            mask = mask & FULL
+        end
+        wood[key] = { mask = (wood[key] and wood[key].mask or 0) | mask, y = by }
+    end
+    return bx, by, bz
+end
+
+-- A clump of leaves: an ellipsoid, each block of it scaled a little up or
+-- down at random so the surface is ragged rather than smooth.
+local function clump(leaf_masks, cx, cy, cz, r, flat, rng)
+    local rx, rz, ry = r, r, r * flat
+    for bz = math.floor(cz - rz), math.floor(cz + rz) do
+        for by = math.floor(cy - ry), math.floor(cy + ry) do
+            for bx = math.floor(cx - rx), math.floor(cx + rx) do
+                local scale = 0.7 + rng:below(11) / 20                -- 0.7 .. 1.2, per block
+                local mask = ellipsoid_mask(bx, by, bz, cx, cy, cz, rx * scale, ry * scale, rz * scale, 0.35)
+                if mask ~= 0 then
+                    local key = bx .. ":" .. by .. ":" .. bz
+                    leaf_masks[key] = (leaf_masks[key] or 0) | mask
+                end
+            end
+        end
+    end
+end
+
+-- **Every trunk, branch and root is a PATH with a thickness**
+-- (`schem.push_path`), as the river's willows and palms are — "switch the
+-- regular oak trees over to that technique" (2026-09-14). The blocky tree
+-- was a column of rounded blocks with bars for branches; this one tapers
+-- from a flared foot, leans and wanders as it climbs, and its branches
+-- leave the trunk at whatever angle and height they do, each with a clump
+-- of leaves on the end and now and then a twig with a smaller clump off
+-- its middle. Root flares run down and out into the turf round the foot.
+--
+-- A tree is CUT once into a template — `{dx, dy, dz, material, mask, wood}`
+-- from a root at the grass block, wood first (`schem.merged`) — and a tree
+-- that grows is a template STAMPED where it stands, read against the world
+-- as the blocky tree was: its trunk always, its other wood where the block
+-- is open, its leaves where the column is clear at its lowest leaf. The
+-- templates are cut as the trees are first asked for, one a call and up to
+-- `species.templates` of each, so no one tick pays for the lot; after that
+-- a tree costs its reads and nothing to cut.
+local TEMPLATES = {}
+local WOODY = { [blocks.oak_log] = true, [blocks.birch_log] = true }
+local BLIND = { blind = true }
+
+local function cut_tree(rng, species)
+    local height = pick(rng, species.trunk)
+    local r0, r1 = species.trunk_r[1], species.trunk_r[2]
+    edits.begin()
+    -- The trunk: flared into the ground, climbing with a lean of its own
+    -- and a little wander, thinner at the top.
+    local lean = schem.DIR16[rng:below(16) + 1]
+    local tx, tz = 0.5, 0.5
+    local trunk = { { tx, -1.5, tz, r0 * 1.2 }, { tx, 0.3, tz, r0 } }
+    for i = 1, 4 do
+        local t = i / 4
+        tx = tx + lean[1] * species.lean + (rng:below(3) - 1) * 0.12
+        tz = tz + lean[2] * species.lean + (rng:below(3) - 1) * 0.12
+        trunk[#trunk + 1] = { tx, 0.3 + t * (height - 0.3), tz, r0 + (r1 - r0) * t }
+    end
+    schem.push_path(species.log, trunk, BLIND)
+    -- The root flares, down and out into the turf.
+    local flares = pick(rng, species.flares)
+    local first = rng:below(16)
+    for i = 0, flares - 1 do
+        local d = schem.DIR16[(first + i * 16 // flares + rng:below(2)) % 16 + 1]
+        local reach = 1.6 + rng:below(3) * 0.3
+        schem.push_path(species.log, {
+            { 0.5, 0.7, 0.5, r0 * 0.55 },
+            { 0.5 + d[1] * reach * 0.6, -0.05, 0.5 + d[2] * reach * 0.6, 0.3 },
+            { 0.5 + d[1] * reach, -0.7, 0.5 + d[2] * reach, 0.16 },
+        }, BLIND)
+    end
+    local function clump(cx, cy, cz, r)
+        schem.push_ellipsoid(species.leaves, cx, cy, cz, r, r * species.flat, r, { rough = 0.35, jitter = rng, blind = true })
+    end
+    -- A fork: a second leader leaving at about half height, with a crown
+    -- of its own.
+    if rng:below(species.fork_one_in) == 0 then
+        local d = schem.DIR16[rng:below(16) + 1]
+        local fx, fy, fz, fr = schem.path_point(trunk, math.max(2, height // 2))
+        local rise = 3 + rng:below(2)
+        local tip = { fx + d[1] * 2.0, fy + rise, fz + d[2] * 2.0, math.max(0.2, fr * 0.45) }
+        schem.push_path(species.log, {
+            { fx, fy, fz, fr * 0.8 },
+            { fx + d[1] * 1.1, fy + rise * 0.55, fz + d[2] * 1.1, math.max(0.22, fr * 0.6) },
+            tip,
+        }, BLIND)
+        clump(tip[1], tip[2] + 0.5, tip[3], pick(rng, species.clump))
+    end
+    -- The main branches off the upper trunk, round the compass, each rising
+    -- as it goes out and carrying a clump at its end.
+    local count = pick(rng, species.branches)
+    local start = rng:below(16)
+    for i = 0, count - 1 do
+        local heading = start + i * 16 // count
+        local d = schem.DIR16[(heading + rng:below(3) - 1) % 16 + 1]
+        local h = math.min(height - 0.5, math.max(2, height * 0.55) + rng:below(math.max(1, height * 2 // 5)))
+        local bx, by, bz, br = schem.path_point(trunk, h)
+        local out = pick(rng, species.branch_out) + 0.5
+        local up = pick(rng, species.branch_up)
+        local mid = { bx + d[1] * out * 0.55, by + up * 0.3 + 0.2, bz + d[2] * out * 0.55, math.max(0.2, br * 0.5) }
+        local tip = { bx + d[1] * out, by + up, bz + d[2] * out, 0.2 }
+        schem.push_path(species.log, { { bx, by, bz, math.max(0.25, br * 0.75) }, mid, tip }, BLIND)
+        clump(tip[1], tip[2] + 0.7, tip[3], pick(rng, species.clump))
+        if species.twigs and rng:below(2) == 0 then
+            local side = schem.DIR16[(heading + (rng:below(2) == 0 and 3 or 13)) % 16 + 1]
+            local twig = { mid[1] + side[1] * 1.4, mid[2] + 1.3, mid[3] + side[2] * 1.4, 0.15 }
+            schem.push_path(species.log, { mid, twig }, BLIND)
+            clump(twig[1], twig[2] + 0.4, twig[3], pick(rng, species.clump) * 0.7)
+        end
+    end
+    -- The crown on the trunk's top.
+    local top = trunk[#trunk]
+    clump(top[1], top[2] + 0.6, top[3], pick(rng, species.crown))
+
+    -- By name: a runtime edit takes a block's name, not its id.
+    local names = { [game.get_block_id(species.log)] = species.log, [game.get_block_id(species.leaves)] = species.leaves }
+    local list = schem.merged(schem.capture(), WOODY)
+    local reach, tallest = 0, 0
+    for _, e in ipairs(list) do
+        e[4] = names[e[4]] or e[4]
+        reach = math.max(reach, math.abs(e[1]), math.abs(e[3]))
+        tallest = math.max(tallest, e[2])
+    end
+    return { blocks = list, trunk = height, reach = reach, top = tallest }
+end
+
+-- A template of `species`: a new one while there are fewer than it keeps,
+-- one of those after. At most ONE is cut a tick, whatever the species: the
+-- random tick calls this for many blocks a tick, and a world's first
+-- seconds cut eighteen shapes in one of them, a sixty-millisecond tick.
+-- Nil when this tick has cut one already and the species has none yet.
+local now, cut_at = 0, -1
+local function template_for(species, rng)
+    local list = TEMPLATES[species.name]
+    if list == nil then
+        list = {}
+        TEMPLATES[species.name] = list
+    end
+    if #list < species.templates and cut_at ~= now then
+        cut_at = now
+        local shape_rng = game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 },
+            "woodland_template:" .. species.name .. ":" .. (#list + 1))
+        list[#list + 1] = cut_tree(shape_rng, species)
+        stats.cut = stats.cut + 1
+        return list[#list]
+    end
+    if #list == 0 then
+        return nil
+    end
+    return list[rng:below(#list) + 1]
+end
+
+local function grow_tree(x, y, z, rng, species)
+    -- No room on the queue is the cheapest refusal, so it comes first.
+    if not edits.room() then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    local tree = template_for(species, rng)
+    if tree == nil then
+        return false
+    end
+    if not clear_for(x, y, z, tree.trunk) then
+        return false
+    end
+    local base = footing(x, y, z)
+    local r = tree.reach + 1
+    if base == nil or not loaded_box(x - r, base - 2, z - r, x + r, y + tree.top + 1, z + r) then
+        stats.unloaded = stats.unloaded + 1
+        return false
+    end
+    -- Leaves go only where there is air, and one read per COLUMN, at its
+    -- lowest leaf, decides the column: terrain does not overhang a canopy.
+    local lowest = {}
+    for _, e in ipairs(tree.blocks) do
+        if not e[6] then
+            local key = e[1] * 4096 + e[3]
+            local col = lowest[key]
+            if col == nil then
+                lowest[key] = { e[1], e[3], e[2] }
+            elseif e[2] < col[3] then
+                col[3] = e[2]
+            end
+        end
+    end
+    local clear = {}
+    for key, col in pairs(lowest) do
+        clear[key] = is_open(at(x + col[1], y + col[3], z + col[2]))
+    end
+
+    edits.begin()
+    -- The root: whole log from a block under the footing up to the grass
+    -- block, so on a slope the trunk is planted rather than perched.
+    for by = base - 1, y - 1 do
+        edits.push({ x = x, y = by, z = z }, species.log)
+    end
+    for _, e in ipairs(tree.blocks) do
+        local dx, dy, dz = e[1], e[2], e[3]
+        local pos = { x = x + dx, y = y + dy, z = z + dz }
+        if not e[6] then
+            if clear[dx * 4096 + dz] then
+                edits.push(pos, e[4], e[5], true)
+            end
+        elseif dx == 0 and dz == 0 then
+            -- The trunk's own column: always, from the grass block up.
+            if dy >= 0 then
+                edits.push(pos, e[4], e[5], true)
+            end
+        else
+            -- Other wood: into open air, and at or under the grass block
+            -- into anything that is not whole ground (the root flares).
+            local b = at(pos.x, pos.y, pos.z)
+            if b ~= nil and (is_open(b) or (dy <= 0 and b.occupancy ~= FULL)) then
+                edits.push(pos, e[4], e[5], true)
+            end
+        end
+    end
+    local hollow = species.hollow_one_in ~= nil and rng:below(species.hollow_one_in) == 0
+    if hollow then
+        push_flares(x, y, z, base, species.log, 1, rng, true)
+    end
+    return edits.commit()
+end
+
+-- Dead wood -------------------------------------------------------------------
+
+-- A snag: a bare trunk, shorter than a living tree, with a stub or two of
+-- branch and a broken top — the top block holds only some of its cells.
+local function grow_snag(x, y, z, rng)
+    if not loaded_box(x - 8, y - 4, z - 8, x + 8, y + 16, z + 8) then
+        stats.unloaded = stats.unloaded + 1
+        return false
+    end
+    local height = 4 + rng:below(5)
+    if not clear_for(x, y, z, height) then
+        return false
+    end
+    local base = footing(x, y, z)
+    if base == nil then
+        stats.unloaded = stats.unloaded + 1
+        return false
+    end
+    if not edits.room() then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    local top = y + height
+    edits.begin()
+    for by = base - 1, top - 1 do                        -- from a block under the footing: the root
+        edits.push({ x = x, y = by, z = z }, "tiamat_default_world:dead_log")
+    end
+    -- The broken top: the bottom layer and a few cells above it.
+    local jag = 0
+    for c = 0, 2 do
+        for d = 0, 2 do
+            jag = jag | bit(c, 0, d)
+        end
+    end
+    for _ = 1, 2 + rng:below(4) do
+        jag = jag | bit(rng:below(3), 1, rng:below(3))
+    end
+    jag = jag | bit(rng:below(3), 2, rng:below(3))
+    edits.push({ x = x, y = top, z = z }, "tiamat_default_world:dead_log", jag)
+    -- Stubs: one or two bars out from the upper trunk.
+    for _ = 1, 1 + rng:below(2) do
+        local dirs = { { 1, 0, "x" }, { -1, 0, "x" }, { 0, 1, "z" }, { 0, -1, "z" } }
+        local d = dirs[rng:below(4) + 1]
+        local sy = top - 1 - rng:below(math.max(1, height - 2))
+        local sx, sz = x + d[1], z + d[2]
+        if is_open(at(sx, sy, sz)) then
+            edits.push({ x = sx, y = sy, z = sz }, "tiamat_default_world:dead_log", BAR[d[3]])
+        end
+    end
+    push_flares(x, y, z, base, "tiamat_default_world:dead_log", rng:below(3), rng)
+    if rng:below(MANTLE_BY_DEAD_ONE_IN) == 0 then
+        push_mantle(x, y, z, rng)
+    end
+    return edits.commit()
+end
+
+-- A fallen trunk: a log two cells thick lying along x or z, four to seven
+-- blocks long, merged into the surface blocks it lies in so it reads as
+-- half sunk in the turf. Its far end drops with the ground if the ground
+-- drops.
+local function lay_log(x, y, z, rng)
+    if not loaded_box(x - 12, y - 4, z - 12, x + 12, y + 6, z + 12) then
+        stats.unloaded = stats.unloaded + 1
+        return false
+    end
+    if not edits.room() then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    local along_x = rng:next_bool()
+    local dir = rng:next_bool() and 1 or -1
+    local length = 4 + rng:below(4)
+    local lying = along_x and LYING.x or LYING.z
+    local placed = 0
+    edits.begin()
+    for i = 0, length - 1 do
+        local lx = along_x and x + i * dir or x
+        local lz = along_x and z or z + i * dir
+        -- The block whose cells this stretch of log shares: the surface block
+        -- at this column, found from the start height downwards, then up.
+        local ly = nil
+        for dy = 0, -2, -1 do
+            local b = at(lx, y + dy, lz)
+            if b ~= nil and b.occupancy ~= 0 and b.occupancy ~= FULL then
+                ly = y + dy
+                break
+            end
+        end
+        if ly == nil and is_open(at(lx, y, lz)) and is_whole(at(lx, y - 1, lz)) then
+            ly = y
+        end
+        if ly ~= nil then
+            local b = at(lx, ly, lz)
+            local mask = lying
+            if i == length - 1 and rng:next_bool() then
+                mask = mask & ~(along_x and (bit(2, 0, 0) | bit(2, 1, 0) | bit(2, 0, 1) | bit(2, 1, 1))
+                    or (bit(0, 0, 2) | bit(1, 0, 2) | bit(0, 1, 2) | bit(1, 1, 2)))
+            end
+            edits.push({ x = lx, y = ly, z = lz }, "tiamat_default_world:dead_log", mask, true)
+            placed = placed + 1
+        end
+    end
+    if placed < 3 then
+        edits.commit()          -- an empty-enough batch; commit clears it
+        return false
+    end
+    if rng:below(MANTLE_BY_DEAD_ONE_IN) == 0 then
+        push_mantle(x, y, z, rng)
+    end
+    return edits.commit()
+end
+
+-- Rocks and root nodes ------------------------------------------------------
+
+-- Rocks come from the shared module (rocks.lua): a cluster of weathered
+-- limestone or granite — one big boulder, smaller ones leaning in on one
+-- side, pebbles about — or now and then a single boulder. A root node is a
+-- small flat lump of wood, the exposed knuckle of a root. Both come in
+-- patches: a coarse grid of the world, one square in a few, is where they
+-- may grow at all, and never within ROCK_APART of stone already placed.
+local function stone_near(x, y, z)
+    for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 } }) do
+        for _, r in ipairs({ 4, 9, ROCK_APART }) do
+            for dy = -1, 1 do
+                local b = at(x + d[1] * r, y + dy, z + d[2] * r)
+                if b ~= nil and b.occupancy ~= 0
+                    and (b.material == blocks.stone or b.material == blocks.granite) then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function place_rocks(x, y, z, rng, root)
+    if not edits.room(RESERVE) then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    if root then
+        local r = 0.7 + rng:below(7) / 10
+        edits.begin()
+        push_ellipsoid("tiamat_default_world:oak_log", x + 0.5, y + 0.6 - r * 0.25, z + 0.5, r, r * 0.5, r * (0.8 + rng:below(5) / 10))
+        return edits.commit(RESERVE)
+    end
+    if stone_near(x, y, z) then
+        stats.spacing = stats.spacing + 1
+        return false
+    end
+    local material = rng:next_bool() and "tiamat_default_world:stone" or "tiamat_default_world:granite"
+    edits.begin()
+    local placed
+    if rng:below(LONE_ONE_IN) == 0 then
+        placed = tdw.rocks.place_cluster(material, x, y, z, rng, { satellites = 0, pebbles = 2 })
+    else
+        placed = tdw.rocks.place_cluster(material, x, y, z, rng)
+    end
+    if placed == 0 then
+        edits.commit(RESERVE)
+        return false
+    end
+    return edits.commit(RESERVE)
+end
+
+-- Brambles ---------------------------------------------------------------------
+
+-- A tangle: over a disc of one to two blocks, each block gets about half
+-- its lower two cell layers and a few cells of the top one, lifted to sit
+-- on the surface within its block. Merged, so the turf's cells stay.
+local function place_bramble(x, y, z, rng)
+    if not edits.room(RESERVE) then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    local radius = 1 + rng:below(2)
+    edits.begin()
+    local placed = 0
+    for dz = -radius, radius do
+        for dx = -radius, radius do
+            if dx * dx + dz * dz <= radius * radius + 1 and rng:below(4) ~= 0 then
+                local gy, gb = tdw.rocks.surface_at(x + dx, z + dz, y)
+                if gy ~= nil then
+                    local ground = gy + (gb.occupancy == FULL and 1.0 or 0.6)
+                    local mask = 0
+                    for cz = 0, 2 do
+                        for cx = 0, 2 do
+                            if rng:below(2) == 0 then mask = mask | bit(cx, 0, cz) end
+                            if rng:below(3) == 0 then mask = mask | bit(cx, 1, cz) end
+                            if rng:below(8) == 0 then mask = mask | bit(cx, 2, cz) end
+                        end
+                    end
+                    -- Lift the tangle to the cell layer above the surface,
+                    -- splitting it across two blocks where it has to.
+                    local by = math.floor(ground)
+                    local layer = math.floor((ground - by) * 3) + 1
+                    if layer > 2 then by, layer = by + 1, 0 end
+                    local low = (mask << (9 * layer)) & FULL
+                    local high = mask >> (9 * (3 - layer))
+                    if low ~= 0 then
+                        edits.push({ x = x + dx, y = by, z = z + dz }, "tiamat_default_world:bramble", low, true)
+                        placed = placed + 1
+                    end
+                    if high ~= 0 and is_open(at(x + dx, by + 1, z + dz)) then
+                        edits.push({ x = x + dx, y = by + 1, z = z + dz }, "tiamat_default_world:bramble", high, true)
+                    end
+                end
+            end
+        end
+    end
+    if placed == 0 then
+        edits.commit(RESERVE)
+        return false
+    end
+    return edits.commit(RESERVE)
+end
+
+-- Lady's mantle ------------------------------------------------------------------
+
+-- A cell or two of plant lifted to sit on the surface within its column's
+-- block, merged, split across two blocks where it has to be. Returns
+-- whether anything was placed.
+local function place_column(material, x, ground, z, layers)
+    local by = math.floor(ground)
+    local layer = math.floor((ground - by) * 3) + 1
+    if layer > 2 then by, layer = by + 1, 0 end
+    local mask = 0
+    for l = 0, layers - 1 do
+        mask = mask | (bit(1, l, 1) | bit(0, l, 1) | bit(1, l, 0))
+    end
+    local low = (mask << (9 * layer)) & FULL
+    local high = mask >> (9 * (3 - layer))
+    local placed = false
+    if low ~= 0 then
+        local b = at(x, by, z)
+        if b ~= nil and b.occupancy ~= FULL then
+            edits.push({ x = x, y = by, z = z }, material, low, true)
+            placed = true
+        end
+    end
+    if high ~= 0 and is_open(at(x, by + 1, z)) then
+        edits.push({ x = x, y = by + 1, z = z }, material, high, true)
+        placed = true
+    end
+    return placed
+end
+
+-- A patch of lady's mantle round (x, z): rosettes on most columns of a
+-- small disc, two cells tall so each is a card two thirds of a block; a
+-- bloom the same height rising from the top of a rosette over one column
+-- in a few (a different billboard material starts its own sprite, so the
+-- spray stands over the leaves). Pushes into the current batch.
+function push_mantle(x, y, z, rng)
+    local radius = pick(rng, MANTLE_R)
+    local placed = 0
+    for dz = -radius, radius do
+        for dx = -radius, radius do
+            if dx * dx + dz * dz <= radius * radius + 1 and rng:below(5) ~= 0 then
+                local gy, gb = tdw.rocks.surface_at(x + dx, z + dz, y)
+                if gy ~= nil and is_open(at(x + dx, gy + 1, z + dz)) then
+                    local ground = gy + (gb.occupancy == FULL and 1.0 or 0.6)
+                    if place_column("tiamat_default_world:ladys_mantle", x + dx, ground, z + dz, 2) then
+                        placed = placed + 1
+                        if rng:below(MANTLE_BLOOM_ONE_IN) == 0 and is_open(at(x + dx, gy + 2, z + dz)) then
+                            place_column("tiamat_default_world:ladys_mantle_bloom", x + dx, ground + 2.0 / 3, z + dz, 2)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return placed
+end
+
+local function place_mantle(x, y, z, rng)
+    if not edits.room(RESERVE) then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    edits.begin()
+    if push_mantle(x, y, z, rng) == 0 then
+        edits.commit(RESERVE)
+        return false
+    end
+    return edits.commit(RESERVE)
+end
+
+-- Pools ----------------------------------------------------------------------
+
+-- A vernal pool is dug, not found: a flat patch of grass gets a bank one
+-- block deep and a shallow bowl of water under it. The bank is what keeps
+-- it in — the water sits a block below the grass, walled by whole blocks —
+-- so a smooth slope cannot drain it. The turf is three blocks thick, so
+-- the bowl's sides are grass and its floor the soil: lined with grass and
+-- mud, without a block being placed for either.
+--
+-- The tick may land on a grass block a block or two under the surface
+-- (the turf is three thick), so a try climbs to the top of the turf
+-- first. "Flat" allows a column of the rim to be one block HIGHER — the
+-- bank is dug a block deeper there, so a pool sits in a gentle slope
+-- rather than only on the rare dead-level patch.
+--
+-- The bowl is lined on purpose: the blocks under the water become mud and
+-- the ring of blocks round it grass, all WHOLE, and a whole block has no
+-- capacity for fluid (Sub-Node Contract §4), so the pool cannot seep away
+-- whatever the turf was made of there.
+--
+-- Fluid here is a volume per block, drawn at volume/27, so the surface
+-- need not sit on a block boundary the way Minecraft's does: each pool is
+-- filled to its own level, fifteen to twenty-seven cells, so the water
+-- stands a cell or a few below the bank's lip. The bank ring is dug at the
+-- cell too — its blocks keep their bottom layer — so the dip is a gentle
+-- one, and the middle block goes a block deeper, so the pool has a deep
+-- point rather than a flat floor.
+local TOP_LAYERS = FULL
+for cx = 0, 2 do
+    for cz = 0, 2 do
+        TOP_LAYERS = TOP_LAYERS & ~bit(cx, 0, cz)
+    end
+end
+local function dig_pool(x, y, z)
+    for _ = 1, 3 do
+        local up = at(x, y + 1, z)
+        if up == nil or up.occupancy == 0 or up.material ~= blocks.grass then break end
+        y = y + 1
+    end
+    local extra = {}
+    for dz = -POOL_R, POOL_R do
+        for dx = -POOL_R, POOL_R do
+            local d2 = dx * dx + dz * dz
+            if d2 <= POOL_R * POOL_R then
+                local ground, above = at(x + dx, y, z + dz), at(x + dx, y + 1, z + dz)
+                local level = ground ~= nil and ground.occupancy ~= 0 and is_open(above)
+                local high = not level and d2 > (POOL_R - 1) * (POOL_R - 1)
+                    and is_whole(ground) and above ~= nil and above.occupancy ~= 0
+                    and is_open(at(x + dx, y + 2, z + dz))
+                if not level and not high then
+                    stats.pool_slope = stats.pool_slope + 1
+                    return false
+                end
+                if high then
+                    extra[#extra + 1] = { x = x + dx, y = y + 1, z = z + dz }
+                end
+                if d2 <= (POOL_R - 1) * (POOL_R - 1) and not is_whole(at(x + dx, y - 1, z + dz)) then
+                    stats.pool_slope = stats.pool_slope + 1
+                    return false
+                end
+            end
+        end
+    end
+    for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+        for _, r in ipairs({ 6, 12, POOL_APART }) do
+            for dy = -2, 1 do
+                local fluid = game.get_fluid{ x = x + d[1] * r, y = y + dy, z = z + d[2] * r }
+                if fluid and not fluid.empty then
+                    return false
+                end
+            end
+        end
+    end
+    if not edits.room(RESERVE) then
+        stats.no_room = stats.no_room + 1
+        return false
+    end
+    local water = {}
+    local level = 15 + hash(x, y + 2, z) % 13             -- cells of 27: this pool's own
+    edits.begin()
+    for _, p in ipairs(extra) do
+        edits.push(p, "engine:air")
+    end
+    for dz = -POOL_R, POOL_R do
+        for dx = -POOL_R, POOL_R do
+            local d2 = dx * dx + dz * dz
+            if d2 <= (POOL_R - 1) * (POOL_R - 1) then
+                edits.push({ x = x + dx, y = y, z = z + dz }, "engine:air")
+                edits.push({ x = x + dx, y = y - 1, z = z + dz }, "engine:air")
+                edits.push({ x = x + dx, y = y - 2, z = z + dz }, "tiamat_default_world:mud")
+                water[#water + 1] = { x = x + dx, y = y - 1, z = z + dz, volume = level }
+            elseif d2 <= POOL_R * POOL_R then
+                -- The bank: the top two cell layers off, the bottom one kept,
+                -- and the wall of the bowl under it whole grass.
+                edits.push({ x = x + dx, y = y, z = z + dz }, "engine:air", TOP_LAYERS, true)
+                edits.push({ x = x + dx, y = y - 1, z = z + dz }, "tiamat_default_world:grass")
+            end
+        end
+    end
+    if is_whole(at(x, y - 2, z)) and is_whole(at(x, y - 3, z)) then
+        edits.push({ x = x, y = y - 2, z = z }, "engine:air")
+        edits.push({ x = x, y = y - 3, z = z }, "tiamat_default_world:mud")
+        water[#water + 1] = { x = x, y = y - 2, z = z, volume = 27 }
+    end
+    if not edits.commit(RESERVE) then
+        return false
+    end
+    -- The batch lands within MAX_WAITING * BATCH_EVERY ticks; wait past that.
+    edits.later(90, function()
+        for _, p in ipairs(water) do
+            game.set_fluid({ x = p.x, y = p.y, z = p.z }, { fluid = "tiamat_default_world:water", volume = p.volume })
+        end
+    end)
+    return true
+end
+
+-- The random tick -------------------------------------------------------------
+
+local function on_grass(x, y, z)
+    stats.turns = stats.turns + 1
+    if not in_ring(x, z) then
+        return
+    end
+    if candidate(x, y, z, POOL_CHANCE) then
+        stats.pool_tries = stats.pool_tries + 1
+        if dig_pool(x, y, z) then stats.pools = stats.pools + 1 end
+        return
+    end
+    local rock = candidate(x, y, z, ROCK_CHANCE)
+        and candidate(x // ROCK_PATCH, 7, z // ROCK_PATCH, ROCK_PATCH_ONE_IN)
+    local bramble = not rock and candidate(x, y, z, BRAMBLE_CHANCE)
+        and candidate(x // BRAMBLE_PATCH, 11, z // BRAMBLE_PATCH, BRAMBLE_PATCH_ONE_IN)
+    local mantle = not rock and not bramble and candidate(x, y, z, MANTLE_CHANCE)
+        and candidate(x // MANTLE_PATCH, 13, z // MANTLE_PATCH, MANTLE_PATCH_ONE_IN)
+    if not rock and not bramble and not mantle and not candidate(x, y, z, TREE_CHANCE) then
+        return
+    end
+    stats.candidates = stats.candidates + 1
+    if not edits.room((rock or bramble or mantle) and RESERVE or 0) then
+        stats.no_room = stats.no_room + 1
+        return
+    end
+    -- One stream per block, so two grass blocks in one chunk do not grow the
+    -- same thing. The world seed is captured by the generator.
+    local rng = game.rng_stream(
+        { x = x // 16, y = y // 16, z = z // 16, seed = tdw.seed or 0 },
+        "grow:" .. x .. ":" .. y .. ":" .. z)
+    if rock then
+        if place_rocks(x, y, z, rng, candidate(x, y, z, ROOT_SHARE)) then
+            stats.rocks = stats.rocks + 1
+        end
+        return
+    end
+    if bramble then
+        if place_bramble(x, y, z, rng) then
+            stats.brambles = stats.brambles + 1
+        end
+        return
+    end
+    if mantle then
+        if place_mantle(x, y, z, rng) then
+            stats.mantle = stats.mantle + 1
+        end
+        return
+    end
+    stats.attempts = stats.attempts + 1
+    -- Which tree: the hash again, on a different axis so it is independent
+    -- of being a candidate at all.
+    local kind = hash(x, y + 1, z)
+    local grown
+    if kind % DEAD_ONE_IN == 0 then
+        grown = (kind // DEAD_ONE_IN) % 2 == 0 and grow_snag(x, y, z, rng) or lay_log(x, y, z, rng)
+    elseif kind % BIRCH_ONE_IN == 0 then
+        grown = grow_tree(x, y, z, rng, BIRCH)
+    else
+        grown = grow_tree(x, y, z, rng, OAK)
+    end
+    if grown then
+        stats.grown = stats.grown + 1
+    end
+end
+
+-- The grass block is shared with the grasslands: a tick is this biome's
+-- when the biome is everywhere, or when loam is under the turf.
+tdw.on_random_tick(blocks.grass, function(x, y, z)
+    local only = tdw.config.everywhere
+    local mine = only == "temperate_woodlands" or (only == nil and tdw.soil_under(x, y, z) == blocks.dirt)
+    if not mine then
+        return false
+    end
+    local ok, err = pcall(on_grass, x, y, z)
+    if not ok then
+        stats.errors = stats.errors + 1
+        if last_error ~= tostring(err) then
+            last_error = tostring(err)
+            game.log("tiamat_default_world woodlands: grass tick failed: " .. last_error)
+        end
+    end
+    return true
+end)
+
+local function report()
+    game.log(string.format(
+        "tiamat_default_world woodlands: %d grass turns, %d candidates, %d tree attempts, %d grown (%d shapes cut), %d rocks, %d brambles, %d mantle, %d pools of %d tried (%d not flat); refused: room %d, headroom %d, spacing %d, unloaded %d; errors %d (%s); batches waiting %d",
+        stats.turns, stats.candidates, stats.attempts, stats.grown, stats.cut, stats.rocks, stats.brambles, stats.mantle, stats.pools, stats.pool_tries, stats.pool_slope,
+        stats.no_room, stats.headroom, stats.spacing, stats.unloaded, stats.errors, last_error or "none",
+        edits.waiting()))
+    local parts = {}
+    for k, v in pairs(stats.head_by) do parts[#parts + 1] = k .. "=" .. v end
+    table.sort(parts)
+    game.log("tiamat_default_world woodlands: headroom by material@height: " .. table.concat(parts, " "))
+    for key in pairs(stats) do
+        stats[key] = 0
+    end
+    stats.head_by = {}
+end
+
+local ticks = 0
+tdw.on_tick(function(dt_ticks)
+    now = now + dt_ticks
+    ticks = ticks + dt_ticks
+    if ticks >= STATS_EVERY then
+        ticks = 0
+        report()
+    end
+end)
+
+-- `/stats`: the counts now, without waiting for the timer.
+tdw.on_command("stats", "/stats — write the woodland's growth figures to the server log", function()
+    report()
+    return "the woodland's figures are in the server log"
+end)
+
+game.log("tiamat_default_world: woodlands grow oaks, birches, dead wood, rocks, root nodes and pools by random tick")

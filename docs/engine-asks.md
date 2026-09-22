@@ -1,7 +1,7 @@
 # Engine asks from the Spindle
 
-> **The open asks moved (2026-09-18)** to the engine's `docs/engine-asks/tiamot_default_world.md`
-> (`../Tiamot/docs/engine-asks/`), beside the other mods' (the designer's call: every mod's asks
+> **The open asks moved (2026-09-18)** to the engine's `docs/engine-asks/tiamat_default_world.md`
+> (`../Tiamat/docs/engine-asks/`), beside the other mods' (the designer's call: every mod's asks
 > in one place for the engine agent). This file is the history: new asks go
 > there, and what lands is recorded here.
 
@@ -415,7 +415,7 @@ BLOCK under their ice instead of the fluid: it looks right through the
 ice and digs as water, but it does not flow.
 
 **Ask.** `buf:fill_fluid_below(heightmap, fluid)` accepting a
-`Tiamot.Heightmap` as well as a number: every column filled up to its own
+`Tiamat.Heightmap` as well as a number: every column filled up to its own
 height, the counterpart of `fill_below_heightmap`. `Map:heightmap(pos)`
 already produces the argument. With it the lake water is one line and
 real.
@@ -451,7 +451,7 @@ with an empty hand the client sends nothing, and `register_on_place`
 never fires. `register_on_punch` is entities; `register_on_action` has
 no target. The mod picks on a DIG for now — a completed dig on a bush
 with blooms is cancelled with `""` and handled — which is the same idiom
-`tiamot_default_life` forages berries with, but it is not the verb asked
+`tiamat_default_life` forages berries with, but it is not the verb asked
 for, and a pick that takes a dig's countdown is slow.
 
 **Ask.** `game.register_on_use(callback)`: fired when the place control

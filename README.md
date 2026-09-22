@@ -1,6 +1,6 @@
-# Tiamot Default World — *Spindle*
+# Tiamat Default World — *Spindle*
 
-The default worldgen mod for the Tiamot voxel engine: a spindle-shaped flat
+The default worldgen mod for the Tiamat voxel engine: a spindle-shaped flat
 earth with a fire-cored hollow. A dome on top, a body that narrows to a needle
 beneath, and a stack of shells around a void in the middle.
 
@@ -13,7 +13,7 @@ shape it, and [`stubs/game.lua`](stubs/game.lua) for the API itself.
 ## Layout
 
 ```
-mods/tiamot_default_world/  the mod (this is what the engine loads)
+mods/tiamat_default_world/  the mod (this is what the engine loads)
   mod.toml               manifest
   init.lua               load order only
   blocks.lua             one placeholder block per layer
@@ -35,7 +35,7 @@ The engine reads one mods directory (`mods_path`, default `game/`). Point the
 engine at this mod with a directory junction so edits here are live:
 
 ```
-mklink /J <engine>\game\tiamot_default_world <this repo>\mods\tiamot_default_world
+mklink /J <engine>\game\tiamat_default_world <this repo>\mods\tiamat_default_world
 ```
 
 Then, in the launcher, create a world with **Spindle** enabled and
@@ -49,7 +49,7 @@ and every density program the engine refuses:
 cargo run -p server -- --check-mods game
 ```
 
-The check logs the op count of every density program under `tiamot_default_world density`,
+The check logs the op count of every density program under `tiamat_default_world density`,
 and names any biome that is registered but not yet built.
 
 > The engine's own test suite lists `game/` exhaustively, so leave the junction
