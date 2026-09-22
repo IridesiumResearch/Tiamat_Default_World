@@ -12,6 +12,38 @@
 
 local M = {}
 local ticks = {}
+
+-- **Every terraced fluid fill goes through here** (2026-09-22). The engine
+-- reads a fill's `within` on the one plane y = 0.5 for the whole world, and
+-- a chunk where that plane says "no water" while the chunk's own heights
+-- might say "some" used to be skipped in silence; since engine ask 35 was
+-- answered it is an ERROR, and an error in generation disables the mod
+-- everywhere. The plane is still the answer for every column either way (it
+-- is what keeps two layers of one column agreeing), so the mod takes the
+-- error as the "no water here" it replaced, counts it, and says so now and
+-- then. Most of the mod's regions carry a noise or a biome mask stretched
+-- tall rather than truly flat, and their edges are where this happens.
+-- Any other error is raised as before.
+local terraced_skips, terraced_logged = {}, 0
+function tdw.fill_terraced(buf, spec, name)
+    local ok, err = pcall(buf.fill_fluid_terraced, buf, spec)
+    if ok then
+        return err
+    end
+    if not tostring(err):find("reads `within`", 1, true) then
+        error(err, 0)
+    end
+    name = name or "?"
+    terraced_skips[name] = (terraced_skips[name] or 0) + 1
+    terraced_logged = terraced_logged + 1
+    if terraced_logged == 1 or terraced_logged % 256 == 0 then
+        local parts = {}
+        for k, v in pairs(terraced_skips) do parts[#parts + 1] = k .. " " .. v end
+        table.sort(parts)
+        game.log("tiamot_default_world: terraced fills skipped where `within` reads height: " .. table.concat(parts, ", "))
+    end
+    return 0
+end
 local commands, command_order = {}, {}
 
 -- Runs `fn(dt_ticks)` every tick, after everything subscribed before it.

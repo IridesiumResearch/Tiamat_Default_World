@@ -33,6 +33,10 @@ addressed by `SUMMARY_RULE = 2`; **11**, an item dropped at a position —
 answered on 2026-09-11: `game.spawn_entity{ item = stack }` is the mechanism
 and `core_gear` the worked example. It should not have been carried as open.*
 
+*Filed 2026-09-22 on the engine's sheet: **38**, a fluid that does not wash
+plants away (the Weather mod's rainwater sweeps tufts once `washes_away`
+is on every passable plant).*
+
 *Landed 2026-09-22, the last three — the world's sheet is empty: **37**,
 `washes_away = true` on `register_block` (engine e4ac3a8): water running
 into a plant clears every occupied cell of it, nothing dropped; **27**,

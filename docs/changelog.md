@@ -3014,6 +3014,50 @@ new plant at most, and each lays the crystal veins through its rock.
   - `/tp` into a cave searched only 0.12 inside a band, which is no ground
     at all in a band 0.18 wide. It now searches a third of the band in.
 
+### The engine's last three asks put to use, and a guard on every water fill (2026-09-22)
+
+- **Water sweeps plants away, by the engine** (`washes_away`, engine
+  e4ac3a8). `blocks.lua` sets it on every `passable` block (grass, ferns,
+  flowers, reeds and the rest), and `rules.lua`'s sweep is gone: it had
+  searched 7 × 7 blocks round every blocked flow for wet plants.
+  - Measured with a flood on a Flower Forest meadow: water over 112
+    columns, 17 plants swept away, none left standing in water.
+  - One thing it cannot tell apart: the Weather mod's rainwater sweeps
+    plants too. Its puddles are laid only on bare blocks, but a storm's
+    6 to 12 cells can run into the tufts beside them. My sweep skipped
+    rainwater; the engine rule cannot be told to. Filed as ask 38 on the
+    engine's sheet: a switch on a fluid saying it doesn't wash.
+- **Ice is slick** (`friction`, engine b04f791): glacier `ice` 0.15, a
+  lake's `clear_ice` 0.08, so it is slow to start, stop and turn on. Not
+  measured headless; the test bot has no physics.
+- **Leaves shade** (`light_falloff`, engine 41ce033). Ironwood and kapok
+  leaves take 5 levels a block; the conifers' needles and the mangrove's
+  roof 2; the broadleaves and blossom 1.
+  - Measured under the Jungle canopy: the floor under leaves averages sun
+    9.4 of 15 (open ground 14.7), and 21% of it is at 2 or below. The brief
+    asks for 85 to 90% of the sun blocked.
+  - At 3 a block it was 9.7. The rest is daylight coming in sideways
+    through the canopy's gaps, which no per-leaf value stops. Reaching the
+    brief means a denser canopy, not a stronger leaf.
+  - The Redwood Stands' floor reads as open ground (13.9), because their
+    crowns are high and narrow.
+- **Every terraced water fill is guarded** (`tdw.fill_terraced`,
+  `hooks.lua`).
+  - The engine's answer to ask 35 turned a silent skip into an error. A
+    fill whose `within` reads empty on the y = 0.5 plane, while the chunk's
+    own heights might not, now fails generation, and a generation error
+    disables the mod everywhere.
+  - It fired at once in the Flower Forest (the brooks' gully noise is 3D).
+    It can fire at the edge of any region built from a noise or biome mask
+    stretched tall rather than truly flat: the geyser, salt and lava pools,
+    the deep ocean's brine, the sea's fine detail, the cave pools.
+  - Every call (the surface biomes', the sea's, the caves') now goes
+    through one guard. It takes that one error as the "no water here" it
+    replaced, which is what the plane decides for every column either way,
+    counts it by fill, and logs the counts now and then.
+  - Any other error is raised as before.
+- The test server and bot are rebuilt from engine 8929ca1 (protocol 70).
+
 ### Housekeeping
 
 - `stubs/game.lua` and `AGENTS.md` re-vendored from the engine's `api/`.

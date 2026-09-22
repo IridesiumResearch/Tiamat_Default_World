@@ -263,7 +263,7 @@ function M.into(buf, pos, dmin, dmax)
                 stats.stamped = stats.stamped + buf:scatter({ depth = fill.depth, stand = fill.stand,
                     schematics = fill.schematics, cell = fill.cell, chance = fill.chance, salt = fill.salt, sink = fill.sink })
             elseif fill.fluid and buf.fill_fluid_terraced then
-                buf:fill_fluid_terraced({ level = fill.level, within = fill.within, fluid = fill.fluid, lip = fill.lip })
+                tdw.fill_terraced(buf, { level = fill.level, within = fill.within, fluid = fill.fluid, lip = fill.lip }, id)
             end
         end
     end

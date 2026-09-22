@@ -199,7 +199,7 @@ local function waters_into(buf, found, mode)
     for _, biome in ipairs(found) do
         for _, fill in ipairs(tdw.fills_for(biome, mode)) do
             if fill.fluid then
-                buf:fill_fluid_terraced({ level = fill.level, within = fill.within, fluid = fill.fluid, lip = fill.lip })
+                tdw.fill_terraced(buf, { level = fill.level, within = fill.within, fluid = fill.fluid, lip = fill.lip }, biome.id)
             end
         end
     end

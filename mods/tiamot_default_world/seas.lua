@@ -408,7 +408,7 @@ function M.fill(buf, pos)
     if tdw.pack_ice_into then
         tdw.pack_ice_into(buf, pos)
     end
-    buf:fill_fluid_terraced({ level = FLUID.level, within = FLUID.within, fluid = WATER })
+    tdw.fill_terraced(buf, { level = FLUID.level, within = FLUID.within, fluid = WATER }, "sea")
 end
 
 -- Which sea biome a place is, for the HUD: the coast within the shore
