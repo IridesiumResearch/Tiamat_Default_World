@@ -41,6 +41,13 @@ mklink /J <engine>\game\tiamat_default_world <this repo>\mods\tiamat_default_wor
 Then, in the launcher, create a world with **Spindle** enabled and
 **Core Worldgen** and **Relief** disabled. (Spindle starts every chunk from air,
 so the order does not matter if they are left on, but they are wasted work.)
+Run **Tiamat Default UI** in place of **Core UI** — they both draw the
+inventory, the crafter and the hotbar, so it is one or the other, and the
+default world means the default UI. This mod needs nothing from it (the
+biome name is its own top-of-screen HUD channel, and channels are per mod),
+so a world without either UI mod still generates; it is the screens that
+differ. **Tiamat Default Life** and **Tiamat Weather** complete the default
+set where they are installed.
 
 Validate without launching the game — this catches every registration error
 and every density program the engine refuses:
