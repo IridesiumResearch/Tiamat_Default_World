@@ -160,6 +160,53 @@ function M.mine_flat(id, field)
     return n.min(field, n.mul(n.sub(w, n.const(0.5)), n.const(20.0)))
 end
 
+-- ------------------------------------------------------------ the variants
+--
+-- **Decoration variants** (2026-09-23, "one decoration variant of each of
+-- the cave biomes", and no new blocks). One slow noise, flat in y for the
+-- province's reason, splits every cave biome's ground in half: below
+-- VARIANT.MIN the biome dresses as itself, above it as its variant —
+-- Dewdrop Grotto in the Mossy Limestone, Ghost-Cap Thicket in the Fungal
+-- Grove. The CARVE is shared: a variant is the same rooms redecorated,
+-- which is why one costs a fraction of what a biome did. A biome cuts each
+-- decoration field to a side with `ctx.base` / `ctx.variant` (or mins
+-- `ctx.side(sign)` into a lining condition); the sides overlap by
+-- VARIANT.OVERLAP field-units, so the line between two dressings is a few
+-- blocks where both mingle, never a bare strip.
+local VARIANT = {
+    FREQ = 1 / 640,        -- a dressing holds for a few hundred blocks, as the province does
+    MIN = 0.0,             -- the split: half and half
+    K = 20.0,              -- field-blocks per unit of noise at the cut, `mine`'s own steepness
+    OVERLAP = 0.5,         -- both sides positive this deep into the line
+}
+M.VARIANT = VARIANT
+M.variant_names = {}       -- id -> the variant's display name ("Dewdrop Grotto")
+function M.variant_node()
+    return n.noise("cave_variant", VARIANT.FREQ, 2, 1.0, M.PROVINCE_STRETCH)
+end
+-- The side's cut term, positive on that side: sign +1 is the variant's
+-- ground, -1 the base dressing's. Min it into a lining condition.
+function M.side_node(sign)
+    return n.add(n.mul(n.sub(M.variant_node(), n.const(VARIANT.MIN)), n.const(sign * VARIANT.K)), n.const(VARIANT.OVERLAP))
+end
+-- The variant's display name where (x, y, z) is variant ground, else nil.
+local VARIANT_AT = nil
+function M.variant_name_at(id, x, y, z, seed)
+    local name = M.variant_names[id]
+    if name == nil then
+        return nil
+    end
+    VARIANT_AT = VARIANT_AT or shape.compile("cave.variant", M.variant_node())
+    if VARIANT_AT:at(x + 0.5, y + 0.5, z + 0.5, seed) > VARIANT.MIN then
+        return name
+    end
+    return nil
+end
+-- A biome file names its variant beside its build.
+function tdw.cave_variant(id, name)
+    M.variant_names[id] = name
+end
+
 -- ------------------------------------------------------------ registration
 
 local built = {}       -- id -> { fills = {...}, cavity = Density (positive in the void) }
@@ -180,12 +227,32 @@ function tdw.cave_biome(id, band, build)
         node = n, shape = shape, blocks = tdw.blocks, schem = tdw.schem, caves = M,
         mine = function(field) return M.mine(id, field) end,
         mine_flat = function(field) return M.mine_flat(id, field) end,
+        -- The variant's side-cuts (see "the variants" above): a decoration
+        -- field cut to the base dressing's ground, or to the variant's, and
+        -- the flat forms for a fluid's `within`.
+        side = M.side_node,
+        base = function(field) return M.mine(id, n.min(field, M.side_node(-1))) end,
+        variant = function(field) return M.mine(id, n.min(field, M.side_node(1))) end,
+        base_flat = function(field) return M.mine_flat(id, n.min(field, M.side_node(-1))) end,
+        variant_flat = function(field) return M.mine_flat(id, n.min(field, M.side_node(1))) end,
         compile = function(name, spec) return shape.compile("cave." .. id .. "." .. name, spec) end,
     }
     -- Built on the first chunk that needs it: the fields read nothing the
     -- pre-pass makes, but the schematics need `game.schematic_shapes`, which
     -- is the same either way, and a cave nobody visits costs nothing.
     built[id] = { build = build, ctx = ctx }
+end
+
+-- Compile every registered cave biome's fills NOW. `--check-mods` never
+-- reaches the lazy path above — no chunk is ever asked for — so the cave
+-- builds were the one part of the mod the fast loop did not exercise
+-- (2026-09-23, found validating the decoration variants). init.lua calls
+-- this when `tdw.config.compile_caves` is set; it costs a second at load
+-- and nothing after, and a world leaves it off.
+function M.compile_all()
+    for _, id in ipairs(order) do
+        M.fills_of(id)
+    end
 end
 
 local function fills_of(id)
@@ -373,9 +440,12 @@ end
 
 -- A place in the void of cave biome `id` near (px, pz): the nearest column
 -- whose province is the biome's, and the highest void in its band. x, y, z
--- or nil. Coarse steps out to eight kilometres, then the column.
-function M.locate(id, px, pz, seed)
+-- or nil. Coarse steps out to eight kilometres, then the column. `side`
+-- narrows the search to one dressing's ground: "variant" for /tp by the
+-- variant's name, "base" for the biome dressed as itself.
+function M.locate(id, px, pz, seed, side)
     PROVINCE = PROVINCE or shape.compile("cave.province", M.province())
+    VARIANT_AT = VARIANT_AT or shape.compile("cave.variant", M.variant_node())
     local cavity = M.cavity_of(id)
     if cavity == nil then
         return nil
@@ -399,8 +469,15 @@ function M.locate(id, px, pz, seed)
                 local y_mid = math.floor(dome_y - 1000 * (M.TOP + M.BOTTOM) / 2)
                 local p = PROVINCE:at(x + 0.5, y_mid + 0.5, z + 0.5, seed)
                 -- Well inside the band, or the first void found is the
-                -- wall on the province line.
-                if p > band[1] + inset and p < band[2] - inset then
+                -- wall on the province line — and well inside the asked-for
+                -- dressing's ground, where a side is asked for.
+                local ok = p > band[1] + inset and p < band[2] - inset
+                if ok and side then
+                    local v = VARIANT_AT:at(x + 0.5, y_mid + 0.5, z + 0.5, seed)
+                    ok = side == "variant" and v > VARIANT.MIN + 0.05
+                        or side == "base" and v < VARIANT.MIN - 0.05
+                end
+                if ok then
                     for y = math.floor(dome_y - 1000 * M.TOP - 60), math.floor(dome_y - 1000 * M.BOTTOM), -2 do
                         if cavity:at(x + 0.5, y + 0.5, z + 0.5, seed) > 1.0 then
                             return x, y, z

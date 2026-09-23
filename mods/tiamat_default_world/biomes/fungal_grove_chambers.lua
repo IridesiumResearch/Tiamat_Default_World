@@ -25,6 +25,25 @@
 -- material, `mycelium`** (the mats, and the stalks); **one new plant,
 -- `mushroom_cap`** (the parasols' caps, the brackets, the little caps; it
 -- glows a low amber, the puffballs cyan).
+--
+-- **The Ghost-Cap Thicket** (2026-09-23, "one decoration variant of each
+-- of the cave biomes", and no new blocks): the same chambers on the far
+-- side of the `cave_variant` line (caves.lua), redecorated and nothing
+-- else — the carve, the walls, the veins, the cap-clusters, the stalks,
+-- the heaps and the puffballs are shared. The wide parasols keep to the
+-- base side; over the line stand "tall, slender weeping-bell mushrooms
+-- with translucent, milky white hoods that pulse with a faint cyan glow"
+-- — a thin stalk under a hood of `clear_ice`, a heart of `glow_polyp`
+-- hung inside it for the light (steady: the pulse is a tick's work,
+-- deferred). The floor is laced whole with mycelium and threaded with a
+-- one-cell film of `glow_algae`, the "fibrous lattice of luminescent
+-- mycelium" — that it should brighten underfoot is runtime too, and
+-- waits with the pulse. The brackets stay, and weep strands of glowing
+-- sap (`glow_algae`, a droplet at each tip) over pools of the same slime
+-- sunk into the loam; the slow drip is a particle for another round.
+-- Every part is played by a block the world already has: the hood is the
+-- Wastes' clear ice, the light the Trench's polyp, the sap the River's
+-- algae.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -52,6 +71,14 @@ local PARASOL_CELL, PARASOL_SQUARES = 11, 0.40
 local CLUSTER_CELL, CLUSTER_SQUARES = 4, 0.30
 local STALK_CELL, STALK_SQUARES = 48, 0.30              -- the hollow dead stalks
 local HEAP_CELL, HEAP_SQUARES = 22, 0.30
+-- The Ghost-Cap Thicket's own numbers. New streams are prefixed `gct_`;
+-- where a Thicket field reads an `fg_` stream instead, that is on purpose
+-- — the groves and the bracket patches are the CHAMBERS' features, and
+-- they do not move when the dressing does.
+local BELL_CELL, BELL_SQUARES = 8, 0.40                 -- the weeping bells, in the parasols' own groves
+local STRAND_CELL, STRAND_SQUARES = 3, 0.45             -- the sap strands under the bracket patches
+local WEB_FREQ, WEB_W = 1 / 4, 0.10                     -- the floor's glow film: |noise| under W is a thread
+local SLIME_FREQ, SLIME_MIN = 1 / 7, 0.24               -- the slime pools sunk into the lattice
 -- The spore haze: how far one sees into it, and its colour.
 local FOG = { r = 0.66, g = 0.60, b = 0.44 }
 local FOG_VISIBILITY = 56
@@ -122,15 +149,53 @@ local function heap(rng)
     schem.push_ellipsoid(blocks.mycelium, 0.5, 1.5, 0.5, r * 0.5, 0.35, r * 0.45, { rough = 0.6, blind = true })
     return schem.record_schematic({ [blocks.mycelium] = 2, [blocks.black_mud] = 1 })
 end
+-- A weeping bell (the Thicket's parasol): a stalk seven to eleven tall
+-- and thin as a wrist under a hood taller than it is wide — `clear_ice`
+-- for the milky translucent shell, a heart of `glow_polyp` in it for the
+-- cyan light, the mouth hollowed from below so the heart hangs into it
+-- like a clapper. A drip or two of ice weeps off the rim: the bell
+-- mid-weep. The stalk over everything, then the heart, then the air,
+-- then the shell, so the hollowing spares the light and the stem.
+local PRIORITY_BELL = { [blocks.mycelium] = 4, [blocks.glow_polyp] = 3, [AIR] = 2, [blocks.clear_ice] = 1 }
+local function bell(rng)
+    schem.record_begin()
+    local tall = 7 + rng:below(5)
+    local r = 1.0 + rng:below(3) * 0.3                  -- hood: 2 to 3 across, half a parasol's
+    local lean = schem.DIR16[rng:below(16) + 1]
+    local lx, lz = lean[1] * 0.4, lean[2] * 0.4
+    schem.push_path(blocks.mycelium, { { 0.5, -0.5, 0.5, 0.6 }, { 0.5, 1.0, 0.5, 0.4 }, { 0.5 + lx, tall, 0.5 + lz, 0.3 } }, BLIND)
+    schem.push_ellipsoid(blocks.clear_ice, 0.5 + lx, tall + 0.6, 0.5 + lz, r, 1.8, r, { rough = 0.15, blind = true })
+    schem.push_ellipsoid(blocks.glow_polyp, 0.5 + lx, tall + 0.6, 0.5 + lz, r * 0.55, 1.0, r * 0.55, BLIND)
+    schem.push_ellipsoid(AIR, 0.5 + lx, tall - 0.9, 0.5 + lz, r * 0.7, 1.2, r * 0.7, BLIND)
+    for _ = 1, 1 + rng:below(2) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local wx, wz = 0.5 + lx + d[1] * r * 0.8, 0.5 + lz + d[2] * r * 0.8
+        schem.push_path(blocks.clear_ice, { { wx, tall + 0.2, wz, 0.22 }, { wx, tall - 1.4 - rng:below(3) * 0.5, wz, 0.16 } }, BLIND)
+    end
+    return schem.record_schematic(PRIORITY_BELL)
+end
+-- A sap strand: two to five blocks of `glow_algae` down from the root,
+-- barely thicker than a finger, a swollen droplet at the tip — the drip
+-- held mid-fall, as the Grotto holds its condensation.
+local function strand(rng)
+    schem.record_begin()
+    local drop = 2 + rng:below(4)
+    local tx, tz = 0.5 + (rng:below(3) - 1) * 0.2, 0.5 + (rng:below(3) - 1) * 0.2
+    schem.push_path(blocks.glow_algae, { { 0.5, 0.2, 0.5, 0.24 }, { tx, -drop, tz, 0.17 } }, BLIND)
+    schem.push_ellipsoid(blocks.glow_algae, tx, -drop - 0.3, tz, 0.38, 0.5, 0.38, BLIND)
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { parasols = {}, clusters = {}, stalks = {}, heaps = {} }
+    BUILT = { parasols = {}, clusters = {}, stalks = {}, heaps = {}, bells = {}, strands = {} }
     if game.schematic_shapes then
         for i = 1, 6 do BUILT.parasols[i] = parasol(rng_for("parasol:" .. i)) end
         for i = 1, 5 do BUILT.clusters[i] = cluster(rng_for("cluster:" .. i)) end
         for i = 1, 4 do BUILT.stalks[i] = stalk(rng_for("stalk:" .. i)) end
         for i = 1, 3 do BUILT.heaps[i] = heap(rng_for("heap:" .. i)) end
+        for i = 1, 5 do BUILT.bells[i] = bell(rng_for("bell:" .. i)) end
+        for i = 1, 4 do BUILT.strands[i] = strand(rng_for("strand:" .. i)) end
     end
     return BUILT
 end
@@ -184,6 +249,16 @@ tdw.cave_biome(ID, { 0.15, 0.33 }, function(ctx)
         n.min(floorish, n.sub(n.noise("fg_peat", PEAT_FREQ, 1, 1.0), n.const(PEAT_MIN))),        -- 3 bare peat
         n.min(floorish, n.sub(n.noise("fg_mat", MAT_FREQ, 2, 1.0), n.const(MAT_MIN))),           -- 4 mycelium mats
     }
+    -- The Thicket's floors (2026-09-23): a higher code wins, so on the
+    -- variant side of the line (`ctx.side(1)` positive) the lattice takes
+    -- the whole floor from the loam, the peat and the mats — the brief
+    -- coats it entire — and the slime pools sink into the lattice where a
+    -- blob noise and the brackets' own `fg_shelf_patch` agree (on
+    -- purpose: the slime lies under the shelves that weep into it).
+    local latticed = n.min(floorish, ctx.side(1))
+    conditions[5] = latticed                                                                      -- 5 the lattice floor
+    conditions[6] = n.min(latticed, n.min(n.sub(n.noise("gct_slime", SLIME_FREQ, 1, 1.0), n.const(SLIME_MIN)),
+        n.sub(n.noise("fg_shelf_patch", SHELF_PATCH_FREQ, 1, 1.0), n.const(SHELF_PATCH_MIN))))    -- 6 slime pools
     local code = n.const(0.0)
     for k, c in ipairs(conditions) do
         code = n.max(code, n.mul(step(c), n.const(k)))
@@ -199,6 +274,11 @@ tdw.cave_biome(ID, { 0.15, 0.33 }, function(ctx)
         { code = 4, to = 0.7, material = blocks.mycelium },
         { code = 4, from = 0.7, to = 1.6, material = blocks.mulch },
         { code = 4, from = 1.6, to = 3.5, material = blocks.black_mud },
+        { code = 5, to = 0.9, material = blocks.mycelium },
+        { code = 5, from = 0.9, to = 2.0, material = blocks.mulch },
+        { code = 5, from = 2.0, to = 3.5, material = blocks.black_mud },
+        { code = 6, to = 0.8, material = blocks.glow_algae },
+        { code = 6, from = 0.8, to = 3.5, material = blocks.black_mud },
     }
     -- The brackets: thin flat sheets of cap in the air within SHELF_REACH of
     -- a wall, where a noise drawn out flat is near zero (so they come in
@@ -222,26 +302,51 @@ tdw.cave_biome(ID, { 0.15, 0.33 }, function(ctx)
     local function on_floor(f) return ctx.mine(f) end
     local puffs = ctx.compile("puffs", on_floor(n.min(n.sub(n.noise("fg_puff", PUFF_FREQ, 1, 1.0), n.const(PUFF_MIN)),
         n.sub(n.noise("fg_puff_patch", PUFF_PATCH_FREQ, 1, 1.0), n.const(PUFF_PATCH_MIN)))))
+    -- The lattice's own light: a one-cell film of `glow_algae` laid in
+    -- threads over the Thicket's floors, where a fine noise is near zero
+    -- — lines, the way the veins are lines — so the web reads as fibres
+    -- rather than as patches. Steady; the footstep flare is a tick's job,
+    -- deferred with the bells' pulse.
+    local web = ctx.compile("web", ctx.variant(n.sub(n.const(WEB_W), n.abs(n.noise("gct_web", WEB_FREQ, 1, 1.0)))))
     local fills = {
         { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
         caves.vein_fill(ctx, void, 0.0),              -- the crystal veins through the rock (caves.lua)
         { field = brackets, material = blocks.mushroom_cap, detail = { detail = "sampled" } },
         { cover = blocks.glow_cap, cells = 2, take = puffs },
+        { cover = blocks.glow_algae, cells = 1, take = web },
     }
     if game.schematic_shapes then
         local built = structures()
-        local function scatter(list, cell, chance, salt, stand)
+        -- Since the Ghost-Cap Thicket (2026-09-23) a scatter names the
+        -- dressing whose ground it keeps to: `ctx.base` for what the
+        -- brief replaces, `ctx.variant` for what replaces it, and the
+        -- default `ctx.mine` for what both dressings share.
+        local function scatter(list, cell, chance, salt, stand, cut)
             fills[#fills + 1] = { scatter = true, depth = depth, schematics = list, cell = cell, chance = chance, salt = salt, sink = 1,
-                stand = ctx.compile("stand_" .. salt, ctx.mine(stand)) }
+                stand = ctx.compile("stand_" .. salt, (cut or ctx.mine)(stand)) }
         end
-        scatter(built.parasols, PARASOL_CELL, PARASOL_SQUARES, 431, n.sub(n.noise("fg_grove", 1 / 30, 1, 1.0), n.const(-0.15)))
+        -- The parasols keep to the base side; the bells take the
+        -- variant's, and read the SAME `fg_grove` noise on purpose, so
+        -- the Thicket's bells stand in the very groves the parasols
+        -- would have.
+        scatter(built.parasols, PARASOL_CELL, PARASOL_SQUARES, 431, n.sub(n.noise("fg_grove", 1 / 30, 1, 1.0), n.const(-0.15)), ctx.base)
+        scatter(built.bells, BELL_CELL, BELL_SQUARES, 531, n.sub(n.noise("fg_grove", 1 / 30, 1, 1.0), n.const(-0.15)), ctx.variant)
         scatter(built.clusters, CLUSTER_CELL, CLUSTER_SQUARES, 432, n.sub(n.noise("fg_puff_patch", PUFF_PATCH_FREQ, 1, 1.0), n.const(0.0)))
         scatter(built.stalks, STALK_CELL, STALK_SQUARES, 433, n.const(1.0))
         scatter(built.heaps, HEAP_CELL, HEAP_SQUARES, 434, n.sub(n.noise("fg_heap", 1 / 25, 1, 1.0), n.const(0.0)))
+        -- The sap strands hang under the brackets: the depth positive in
+        -- the VOID (as the Limestone hangs its vines), rooted in the
+        -- walls' band where the bracket patches are — `fg_shelf_patch`
+        -- again, on purpose, so a strand weeps from a shelf and not from
+        -- bare rock.
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.strands, cell = STRAND_CELL, chance = STRAND_SQUARES, salt = 532, sink = 0,
+            stand = ctx.compile("stand_strand", ctx.variant(n.min(walls,
+                n.sub(n.noise("fg_shelf_patch", SHELF_PATCH_FREQ, 1, 1.0), n.const(SHELF_PATCH_MIN))))) }
     end
     return fills
 end)
+tdw.cave_variant(ID, "Ghost-Cap Thicket")
 
 -- ------------------------------------------------------------ the spore haze
 

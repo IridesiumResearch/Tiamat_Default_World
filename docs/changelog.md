@@ -3112,3 +3112,92 @@ The engine is renaming, and the mod follows.
   scripted bots generating chunks, picking a rose bush, and landing on the
   alpine plateaus. Nothing was looked at in a window after the first grass
   screenshot of the morning.
+
+## 2026-09-23
+
+### A second dressing for every cave (2.1.1 – 2.6.1)
+
+The designer: "redecorating a biome is pretty cheap so i want one decoration
+variant of each of the cave biomes", with a brief per variant, and "do not
+add any blocks for this round". Six variants, every material already in
+blocks.lua.
+
+**The mechanism** (`biomes/caves.lua`, "the variants"): one slow noise,
+`cave_variant`, flat in y for the province's reason, splits every cave
+biome's ground in half. The CARVE is shared — a variant is the same rooms
+redecorated — which is what makes one cost a fraction of a biome. A biome
+cuts each decoration field to a side with `ctx.base` / `ctx.variant`
+(wrapping `mine`), or mins `ctx.side(sign)` into a lining condition; the
+sides overlap by half a field-unit, so the line between two dressings is a
+few blocks where both mingle, never a bare strip. Fluid `within` fields get
+`base_flat` / `variant_flat`. The HUD names the dressing you stand in
+(walking from the Mossy Limestone into a Dewdrop Grotto announces it), and
+`/tp dewdrop grotto` finds the variant's ground by name — `/tp list` names
+all six.
+
+**The six**, each the brief's features read through the existing palette:
+
+- **2.1.1 Dewdrop Grotto** (Mossy Limestone): the moss cushions, ivy ropes
+  and maidenhair stop at the line; bead vines of ivy strung with glow-algae
+  swellings hang from the crevices, each ending in a crystal drop held
+  mid-fall; lady's-mantle sprays play the pale cave orchids at the wall
+  pockets' feet, ringed by monstera (one stream, two bars — the leaves take
+  the 0.22..0.28 annulus, the hearts stay the orchids'); the rimstone pools
+  fill with water-iris spore pads and rare glow-polyp lilies.
+- **2.2.1 Fractured Amethyst Seam** (Crystal Seam): the spires, clusters
+  and pillars stop; geode pockets — dark-basalt rinds lined with crystal
+  druse and obsidian flecks round a carved air bowl — sink into the floors;
+  crystal glint patches mix into the gravel scree; needle-thin crystal
+  chandeliers hang from the clefts.
+- **2.3.1 Petrified Driftwood Rapids** (Underground River): the roots and
+  snags stop; granite teeth with ragged calcite waterline collars stand
+  mid-channel in stretches; ironwood trunks cased in rough calcite lodge
+  bank to bank with one end lifted, backs above the water; calcite root-
+  cages off the ceiling trap crystal or clear-ice hearts (the river glass),
+  barnacle knots and a bone shard each; the bed scours to slate, the banks
+  calcify where the base side lays silt.
+- **2.4.1 Ghost-Cap Thicket** (Fungal Grove Chambers): the parasols,
+  brackets and cap-clusters stop; weeping-bells — mycelium stalks under
+  translucent clear-ice hoods with a glow-polyp heart — stand tall and
+  slender; the floor is a mycelium lattice threaded with a glow-algae film;
+  glow-algae sap strands hang off the walls with a swollen droplet at each
+  tip, over flush glowing slime pools sunk into the floor.
+- **2.5.1 Oxidized Copper Chasm** (Mineral Vein Tunnels): the ore knuckles
+  and pyrite-galena cubes stop; native-copper antler dendrites grow up off
+  the floors and down off the ceilings; a copper-ore verdigris crust and
+  rust and ochre streaks weather the walls (the base rust stream, its
+  threshold let down to a third); sulfur vent craters rimmed with pyrite
+  cubes gleam along the floors on the block's own faint emit.
+- **2.6.1 Weeping Drapery Chamber** (Stalactite Forests): the knobby
+  columns and thick cones stop, and the soda straws run denser instead;
+  wavy flowstone drapery sheets four to seven columns broad hang from the
+  ceiling ridges, a thin crystal drip off about one hem in seven; stepped
+  terraced rimstone pools take the floors, calcite cave pearls (pyrite for
+  the odd lustrous one) beaded over their beds.
+
+Where a brief asked for RUNTIME — pulsing hoods, footstep-lit mycelium,
+drips falling, heat shimmer — the visual is folded into the steady glow the
+palette already carries, and each file's comments say so; particles and
+tick hooks are another round's. Fluids: no variant moves a pool or the
+river; the Drapery Chamber adds terraced pools through the same guarded
+fill every water fill uses.
+
+**Found on the way: `--check-mods` never compiled the caves.** Their fills
+compile lazily on the first cave chunk, which the fast loop never asks
+for — so none of the cave code was exercised by the check everyone is told
+to trust. `tdw.config.compile_caves` (init.lua, validation only — fills
+compiled before a VM holds its schematic tables would cache without their
+structures) forces every build at load: all six compile, 71 fills, the
+biggest program 870 ops of the 4,096.
+
+Each variant was reviewed adversarially against the stubs before the
+check: three real defects found and fixed — the Grotto's nested cover
+takes stacking monstera on every orchid run (covers never overwrite, an
+earlier run is ground to a later call — bands must be disjoint), the
+Seam's floor-bed lining unbounded below the datum re-lining level-2
+corridors' walls with gravel, and the Rapids' bank calcite outranking the
+bed codes inside the channel wherever the base side hid it by precedence.
+
+Checked: `--check-mods` with the caves forced — the mod loads, every cave
+compiles, no warnings. The weather mod fails the same run from its own
+uncommitted work in its own repository; not this mod's.

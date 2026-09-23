@@ -29,6 +29,21 @@
 -- `crystal` (the quartz: the caves' own veins, closer here), `lead_ore` (the
 -- galena cubes). **One new material, `pyrite`; no plant** — the brief is
 -- inorganics only.
+--
+-- THE VARIANT (2026-09-23): **Oxidized Copper Chasm** — the same corridors
+-- on the far side of the `cave_variant` noise (caves.lua), further gone in
+-- weathering. The iron knuckles and the pyrite-galena cube clusters keep to
+-- the base dressing; in their place, "exposed, branching native copper
+-- dendrites shaped like antlers" grow off the floors and hang from the
+-- ceilings — thin trunks of `copper_ore` with two to four tines, in the
+-- knuckles' own patches. The walls are "heavily weathered": crusts of
+-- verdigris and malachite (both `copper_ore`, the one green-crusted rock),
+-- powdery ochre (`ochre_sandstone`), and the base's own rust streaks let
+-- run three times as far. On the floors, low sulfur vents — craters of
+-- `sulfur` rimmed with `pyrite`, whose "faint heat shimmer" is the
+-- sulfur's own steady glow. No new blocks; the carve, the strata, the
+-- ribbons, the frostings, the slab-collapses and the quartz seams are
+-- shared with the base.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -58,6 +73,17 @@ local KNOB_PATCH_FREQ, KNOB_PATCH_MIN = 1 / 14, 0.05
 local CUBE_CELL, CUBE_SQUARES = 3, 0.35               -- (5, 0.28 in the first cut: three blocks of pyrite in a tunnel)
 local SLAB_CELL, SLAB_SQUARES = 16, 0.30
 local QUARTZ_ZONE, QUARTZ_FREQ = -0.10, 1 / 40          -- the crystal veins: most of this rock, and close
+-- The Oxidized Copper Chasm's own numbers. New streams are prefixed
+-- `occ_`; a Chasm field reading an `mv_` stream is on purpose and says so
+-- where it does. The weathering spends ONE new noise between its crusts —
+-- verdigris where it runs high, ochre in a disjoint band of the same
+-- stream — and the rust is the base's `mv_rust` with its threshold let
+-- down, so the Chasm's streaks are the base's streaks, further run.
+local VERD_FREQ, VERD_MIN = 1 / 7, 0.24                 -- verdigris/malachite: crusts a few blocks across
+local OCHRE_BAND = { -0.36, -0.18 }                     -- powdery ochre: the same noise, low
+local OCC_RUST_MIN = 0.10                               -- the rust let run (RUST_MIN is 0.30)
+local DEND_CELL, DEND_SQUARES = 4, 0.45                 -- copper dendrites, in the knuckles' patches
+local VENT_CELL, VENT_SQUARES = 12, 0.40                -- sulfur vents: low, and not rare
 
 -- ------------------------------------------------------------ the structures
 
@@ -107,14 +133,62 @@ local function slabs(rng)
     end
     return schem.record_schematic({})
 end
+-- The Chasm's copper dendrite: a native-copper antler grown out of the
+-- rock. A leaning trunk two to four blocks long, and two to four tines
+-- forking off its upper knuckles, every branch a thin tapering path of
+-- `copper_ore`. `sign` +1 grows off a floor; -1 hangs from a ceiling,
+-- which is the same antler with its y run the other way.
+local function dendrite(rng, sign)
+    schem.record_begin()
+    local d = schem.DIR16[rng:below(16) + 1]
+    local h = (2 + rng:below(3)) * sign
+    local lean = 0.4 + rng:below(3) * 0.25
+    local y0 = sign > 0 and 0.1 or 0.3      -- the ivy's own root height, hanging (mossy_limestone.lua)
+    local knuckles = {
+        { 0.5, y0, 0.5, 0.42 },
+        { 0.5 + d[1] * lean, y0 + h * 0.55, 0.5 + d[2] * lean, 0.30 },
+        { 0.5 + d[1] * lean * 1.8, y0 + h, 0.5 + d[2] * lean * 1.8, 0.22 },
+    }
+    schem.push_path(blocks.copper_ore, knuckles, BLIND)
+    for _ = 1, 2 + rng:below(3) do
+        local from = knuckles[2 + rng:below(2)]
+        local fd = schem.DIR16[rng:below(16) + 1]
+        local fl = 0.9 + rng:below(4) * 0.4
+        schem.push_path(blocks.copper_ore, {
+            { from[1], from[2], from[3], 0.26 },
+            { from[1] + fd[1] * fl, from[2] + (1 + rng:below(2)) * sign, from[3] + fd[2] * fl, 0.16 },
+        }, BLIND)
+    end
+    return schem.record_schematic({})
+end
+-- A sulfur vent: a low crusted crater. A thin apron of sulfur over the
+-- floor, a raised rim of lumps round the throat, and two or three small
+-- pyrite cubes bright on the rim — pushed last, so they win their cells.
+local function vent(rng)
+    schem.record_begin()
+    local r = 1.2 + rng:below(3) * 0.4
+    schem.push_ellipsoid(blocks.sulfur, 0.5, 0.9, 0.5, r + 0.9, 0.45, r + 0.9, { rough = 0.35, blind = true })
+    for k = 0, 7 do
+        local d = schem.DIR16[(k * 2 + rng:below(2)) % 16 + 1]
+        schem.push_ellipsoid(blocks.sulfur, 0.5 + d[1] * r, 1.1 + rng:below(3) * 0.15, 0.5 + d[2] * r, 0.7, 0.55, 0.7, { rough = 0.4, blind = true })
+    end
+    for _ = 1, 2 + rng:below(2) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        schem.push_cells(blocks.pyrite, math.floor(0.5 + d[1] * r), 1, math.floor(0.5 + d[2] * r), cube_mask(2, rng:below(2), 0, rng:below(2)))
+    end
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { cubes = {}, slabs = {} }
+    BUILT = { cubes = {}, slabs = {}, dendrites_up = {}, dendrites_down = {}, vents = {} }
     if game.schematic_shapes then
         for i = 1, 4 do BUILT.cubes[#BUILT.cubes + 1] = cubes(rng_for("pyrite:" .. i), blocks.pyrite) end
         for i = 1, 2 do BUILT.cubes[#BUILT.cubes + 1] = cubes(rng_for("galena:" .. i), blocks.lead_ore) end
         for i = 1, 4 do BUILT.slabs[i] = slabs(rng_for("slab:" .. i)) end
+        for i = 1, 4 do BUILT.dendrites_up[i] = dendrite(rng_for("dendrite_up:" .. i), 1) end
+        for i = 1, 3 do BUILT.dendrites_down[i] = dendrite(rng_for("dendrite_down:" .. i), -1) end
+        for i = 1, 3 do BUILT.vents[i] = vent(rng_for("vent:" .. i)) end
     end
     return BUILT
 end
@@ -170,6 +244,15 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
         local jag = n.noise(stream .. "_jag", 1 / 2, 1, RIBBON_JAG)
         return n.sub(n.const(RIBBON_W), n.abs(n.add(n.noise(stream, RIBBON_FREQ, 1, 1.0, STRATA_STRETCH), jag)))
     end
+    -- The Chasm's weathering (codes 8..10): crusts on the variant side of
+    -- the `cave_variant` line, `ctx.side(1)` minned in. One new noise
+    -- between the verdigris and the ochre; the ninth condition reads the
+    -- base's own `mv_rust` on purpose, so where the base shows a streak the
+    -- Chasm shows the same streak grown wide. Scree stays the highest code:
+    -- a weathered wall is the brief, a weathered floor is still scree.
+    local function weather()
+        return n.noise("occ_weather", VERD_FREQ, 1, 1.0)
+    end
     local conditions = {
         n.const(1.0),                                                                               -- 1 slate
         n.sub(n.const(GRANITE_UNDER), strata),                                                      -- 2 granite
@@ -178,7 +261,12 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
         ribbon("mv_ribbon_cu"),                                                                     -- 5 a copper ribbon
         ribbon("mv_ribbon_pb"),                                                                     -- 6 a galena ribbon
         n.sub(n.noise("mv_rust", RUST_FREQ, 1, 1.0, { y = 8 }), n.const(RUST_MIN)),                -- 7 a rust streak
-        floorish,                                                                                   -- 8 scree
+        n.min(n.min(n.sub(weather(), n.const(OCHRE_BAND[1])), n.sub(n.const(OCHRE_BAND[2]), weather())),
+            ctx.side(1)),                                                                           -- 8 powdery ochre
+        n.min(n.sub(n.noise("mv_rust", RUST_FREQ, 1, 1.0, { y = 8 }), n.const(OCC_RUST_MIN)),
+            ctx.side(1)),                                                                           -- 9 the rust let run
+        n.min(n.sub(weather(), n.const(VERD_MIN)), ctx.side(1)),                                    -- 10 verdigris and malachite
+        floorish,                                                                                   -- 11 scree
     }
     local code = n.const(0.0)
     for k, c in ipairs(conditions) do
@@ -195,8 +283,14 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
         { code = 6, to = 2.5, material = blocks.lead_ore },
         { code = 7, to = 0.4, material = blocks.rust_red_sandstone },
         { code = 7, from = 0.4, to = 2.5, material = blocks.slate },
-        { code = 8, to = 1.0, material = blocks.gravel },
-        { code = 8, from = 1.0, to = 2.5, material = blocks.slate },
+        { code = 8, to = 0.4, material = blocks.ochre_sandstone },
+        { code = 8, from = 0.4, to = 2.5, material = blocks.slate },
+        { code = 9, to = 0.4, material = blocks.rust_red_sandstone },
+        { code = 9, from = 0.4, to = 2.5, material = blocks.slate },
+        { code = 10, to = 0.5, material = blocks.copper_ore },
+        { code = 10, from = 0.5, to = 2.5, material = blocks.slate },
+        { code = 11, to = 1.0, material = blocks.gravel },
+        { code = 11, from = 1.0, to = 2.5, material = blocks.slate },
     }
     -- The frostings: in the last 0.6 of rock before the air, `0.3 - |void +
     -- 0.3|` (the void read once), where a fine noise is near zero — its
@@ -205,9 +299,11 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
     local frost = ctx.compile("frost", ctx.mine(n.min(n.min(skin, n.mul(n.sub(n.const(FROST_W), n.abs(n.noise("mv_frost", FROST_FREQ, 2, 1.0))), n.const(20.0))),
         n.sub(n.noise("mv_frost_patch", FROST_PATCH_FREQ, 1, 1.0), n.const(FROST_PATCH_MIN)))))
     -- The ore nodes: knuckles of iron ore in the first 0.9 of AIR off the
-    -- rock, where a blob noise is high, in patches.
+    -- rock, where a blob noise is high, in patches. Base side only
+    -- (`ctx.base`): in the Chasm the knuckles' place is taken by the
+    -- copper dendrites below.
     local film = n.add(n.mul(n.abs(n.sub(void, n.const(0.45))), n.const(-1.0)), n.const(0.45))
-    local knobs = ctx.compile("knobs", ctx.mine(n.min(n.min(film, n.mul(n.sub(n.noise("mv_knob", KNOB_FREQ, 1, 1.0), n.const(KNOB_MIN)), n.const(6.0))),
+    local knobs = ctx.compile("knobs", ctx.base(n.min(n.min(film, n.mul(n.sub(n.noise("mv_knob", KNOB_FREQ, 1, 1.0), n.const(KNOB_MIN)), n.const(6.0))),
         n.sub(n.noise("mv_knob_patch", KNOB_PATCH_FREQ, 1, 1.0), n.const(KNOB_PATCH_MIN)))))
     local fills = {
         { carve = carve },
@@ -218,10 +314,28 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
     }
     if game.schematic_shapes then
         local built = structures()
+        -- The cube clusters keep to the base side (`ctx.base`); the slabs
+        -- fall on both — a roof lets go whatever colour the walls are.
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cubes, cell = CUBE_CELL, chance = CUBE_SQUARES, salt = 441, sink = 1,
-            stand = ctx.compile("stand_cubes", ctx.mine(n.sub(n.noise("mv_cubes", 1 / 11, 1, 1.0), n.const(-0.15)))) }
+            stand = ctx.compile("stand_cubes", ctx.base(n.sub(n.noise("mv_cubes", 1 / 11, 1, 1.0), n.const(-0.15)))) }
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.slabs, cell = SLAB_CELL, chance = SLAB_SQUARES, salt = 442, sink = 1,
             stand = ctx.compile("stand_slabs", ctx.mine(n.const(1.0))) }
+        -- The Chasm's dendrites take the knuckles' own patches
+        -- (`mv_knob_patch`, reused on purpose): where the base grows iron
+        -- knuckles the variant grows copper antlers — the same lodes,
+        -- further oxidized. Off the floors rooted in the rock, and off the
+        -- ceilings the vines' way: the depth positive in the VOID, the
+        -- crossing stamped at rock over air.
+        local antlers = ctx.compile("stand_dendrites", ctx.variant(n.sub(n.noise("mv_knob_patch", KNOB_PATCH_FREQ, 1, 1.0), n.const(KNOB_PATCH_MIN))))
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.dendrites_up, cell = DEND_CELL, chance = DEND_SQUARES, salt = 443, sink = 1,
+            stand = antlers }
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.dendrites_down, cell = DEND_CELL, chance = DEND_SQUARES, salt = 444, sink = 0,
+            stand = antlers }
+        -- The sulfur vents want no patch noise: the chance and the cell
+        -- are the spacing, anywhere the Chasm has a floor.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.vents, cell = VENT_CELL, chance = VENT_SQUARES, salt = 445, sink = 1,
+            stand = ctx.compile("stand_vents", ctx.variant(n.const(1.0))) }
     end
     return fills
 end)
+tdw.cave_variant(ID, "Oxidized Copper Chasm")

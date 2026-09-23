@@ -35,6 +35,12 @@ tdw.config = {
     -- azimuth of that biome's ring, reads the ground, and goes round again
     -- if the humidity put something else there (whereami.lua).
     spawn_biome = nil,
+    -- VALIDATION ONLY: compile every cave biome's fills at load, so
+    -- `--check-mods` exercises them (they compile lazily on the first cave
+    -- chunk, which the fast loop never asks for). A WORLD leaves this off:
+    -- fills compiled before the engine hands a VM its schematic tables
+    -- would cache without their structures, silently.
+    compile_caves = false,
 }
 
 -- The host reports a failed load as "errored in init.lua" and nothing more,
@@ -105,6 +111,9 @@ load("biomes.underground_river")    -- 2.3
 load("biomes.fungal_grove_chambers")  -- 2.4
 load("biomes.mineral_vein_tunnels")  -- 2.5
 load("biomes.stalactite_forests")    -- 2.6
+if tdw.config.compile_caves then
+    tdw.caves.compile_all()          -- validation: see the config flag above
+end
 load("player")
 load("rules")             -- leaves and water, and other rules of the whole world
 load("exports")           -- what the other mods may read: climate, biomes, the two unlocks

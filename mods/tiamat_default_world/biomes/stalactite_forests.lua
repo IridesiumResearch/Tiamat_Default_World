@@ -27,6 +27,20 @@
 --
 -- Materials: `calcite` (the pavement, the dams, the straws), the water the
 -- world's. **One new material, `flowstone`; no plant.**
+--
+-- 2.6.1 WEEPING DRAPERY CHAMBER (2026-09-23), the decoration variant: the
+-- same halls past the cave_variant line (caves.lua, "the variants"),
+-- redecorated and nothing recarved. The knobby columns and the thick-coned
+-- stalactites fade out across the seam; in their place, sheets of
+-- flowstone a block thick and four to eight long hang like frozen fabric
+-- along the same ridge lines the base's thin draperies follow, hems
+-- wavering column to column, the odd crystal drip off a fold for the glint
+-- the brief's "translucent" asks of a palette with no see-through stone.
+-- The soda straws stay and crowd until they own the ceiling. The floor
+-- trades its shattered debris for terraced rimstone: the dam threshold all
+-- but drops away, pools stand stepped over most of it in calcite-lined
+-- basins, and tiny cave pearls — a cell of calcite, the odd one pyrite —
+-- lie strewn in the beds. **No new block and no plant; the round's rule.**
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -49,6 +63,15 @@ local DRAPE_PATCH_FREQ, DRAPE_PATCH_MIN, DRAPE_MAX = 1 / 20, 0.10, 6.0
 local DAM_FREQ, DAM_MIN = 1 / 8, 0.18                   -- the rimstone pools
 local STRAW_CELL, STRAW_SQUARES = 3, 0.25
 local DEBRIS_CELL, DEBRIS_SQUARES = 7, 0.30
+-- The variant's numbers (2.6.1). The dams' threshold all but gone: pools
+-- over most of the variant's floor rather than a sixth of it. The straws'
+-- second helping reads the SAME sf_straws noise past a looser threshold,
+-- so the crowds thicken around the base's clumps rather than beside them.
+local WDC_DAM_MIN = 0.02                                -- 0.18 on the base side
+local WDC_STRAW_MIN, WDC_STRAW_SQUARES = -0.12, 0.85    -- 0.05 and 0.25 on the base side
+local WDC_RIDGE_W = 0.22                                -- |sf_drape| under this: the corridor round a ceiling ridge the fabric hangs in
+local WDC_SHEET_CELL, WDC_SHEET_SQUARES = 4, 0.55
+local WDC_PEARL_CELL, WDC_PEARL_SQUARES = 3, 0.45
 
 -- ------------------------------------------------------------ the structures
 
@@ -80,13 +103,63 @@ local function debris(rng)
     end
     return schem.record_schematic({})
 end
+-- A drapery (2.6.1): a sheet of flowstone hanging from the ceiling — four
+-- to seven columns of path a block apart along one of the sixteen
+-- headings, each half a block round, fused at the top and parting into
+-- fingers lower down. The hem wanders column to column and swings a
+-- little off the sheet's plane (the template's own rng, at load), which
+-- is the frozen-fabric wave. The brief's "translucent" has nothing to
+-- play it — the one see-through block is `crystal` and a whole sheet of
+-- it would read as a crystal seam, not fabric — so the sheet is flowstone
+-- and every seventh column or so hangs a thin crystal drip off its hem
+-- for the glassy glint, sparingly.
+local function drapery(rng)
+    schem.record_begin()
+    local d = schem.DIR16[rng:below(16) + 1]
+    local len = 4 + rng:below(4)
+    local drop = 5 + rng:below(3)
+    local wave = 0.0
+    for i = 0, len - 1 do
+        local x = 0.5 + d[1] * (i - (len - 1) * 0.5)
+        local z = 0.5 + d[2] * (i - (len - 1) * 0.5)
+        wave = wave + (rng:below(5) - 2) * 0.6
+        local fall = drop + wave
+        if fall < 4.0 then fall = 4.0 elseif fall > 8.0 then fall = 8.0 end
+        local sway = (rng:below(5) - 2) * 0.25
+        schem.push_path(blocks.flowstone,
+            { { x, 0.9, z, 0.5 }, { x + d[2] * sway, 0.9 - fall, z - d[1] * sway, 0.28 } }, BLIND)
+        if rng:below(7) == 0 then
+            schem.push_path(blocks.crystal,
+                { { x, 0.9 - fall, z, 0.15 }, { x, 0.9 - fall - 1.4, z, 0.1 } }, BLIND)
+        end
+    end
+    return schem.record_schematic({})
+end
+-- Cave pearls (2.6.1): four to eight beads of calcite — the odd first one
+-- pyrite, for the lustre — strewn a block or two round the root, each
+-- centred on a cell of the block over the floor (y = 7/6 is that block's
+-- bottom cell row), so a bead is one cell, two at most. They lie in the
+-- pool beds; the water is laid after and fills the room they leave.
+local function pearls(rng)
+    schem.record_begin()
+    for i = 1, 4 + rng:below(5) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local off = rng:below(5) * 0.45
+        local r = 0.24 + rng:below(3) * 0.02
+        local bead = (i == 1 and rng:below(3) == 0) and blocks.pyrite or blocks.calcite
+        schem.push_ellipsoid(bead, 0.5 + d[1] * off, 7 / 6, 0.5 + d[2] * off, r, 0.2, r, BLIND)
+    end
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { straws = {}, debris = {} }
+    BUILT = { straws = {}, debris = {}, draperies = {}, pearls = {} }
     if game.schematic_shapes then
         for i = 1, 5 do BUILT.straws[i] = straws(rng_for("straws:" .. i)) end
         for i = 1, 4 do BUILT.debris[i] = debris(rng_for("debris:" .. i)) end
+        for i = 1, 5 do BUILT.draperies[i] = drapery(rng_for("drapery:" .. i)) end
+        for i = 1, 4 do BUILT.pearls[i] = pearls(rng_for("pearls:" .. i)) end
     end
     return BUILT
 end
@@ -129,20 +202,37 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
     local function hall(k)
         local on_line = n.clamp(n.mul(n.sub(n.const(DRAPE_W), n.abs(n.noise("sf_drape", DRAPE_FREQ, 1, 1.0, FLAT))), n.const(DRAPE_K)), 0.0, 1.0)
         local drape = n.mul(n.clamp(n.mul(n.sub(n.noise("sf_drape_patch", DRAPE_PATCH_FREQ, 1, 1.0, FLAT), n.const(DRAPE_PATCH_MIN)), n.const(40.0)), 0.0, DRAPE_MAX), on_line)
-        local hangs = n.max(hanging("sf_tite", TITE_FREQ, TITE_MIN, TITE_K, TITE_MAX), drape)
+        -- The cones' length is scaled by a 0..1 gate on the BASE side of
+        -- the cave_variant noise (caves.lua, "the variants"): on the
+        -- Weeping Drapery Chamber's ground the ceiling belongs to the
+        -- straws and the fabric, and a gated LENGTH thins a cone to
+        -- nothing over the seam's few tens of blocks instead of shearing
+        -- it flat at the line.
+        local cones = n.mul(hanging("sf_tite", TITE_FREQ, TITE_MIN, TITE_K, TITE_MAX), n.clamp(ctx.side(-1), 0.0, 1.0))
+        local hangs = n.max(cones, drape)
         local v = n.min(n.sub(ceil_dist(k), hangs), n.sub(floor_dist(k), hanging("sf_mite", MITE_FREQ, MITE_MIN, MITE_K, MITE_MAX)))
-        v = n.min(v, n.add(footprint(k), n.noise("sf_scoop", SCOOP_FREQ, 1, SCOOP)))
-        return n.min(v, n.mul(n.sub(n.const(COLUMN_MIN), n.noise("sf_column", COLUMN_FREQ, 1, 1.0, FLAT)), n.const(20.0)))
+        return n.min(v, n.add(footprint(k), n.noise("sf_scoop", SCOOP_FREQ, 1, SCOOP)))
     end
     local function crawl(k)
         return n.min(n.sub(n.const(CRAWL_H), n.abs(n.sub(floor_dist(k), n.const(CRAWL_H)))),
             n.sub(n.const(CRAWL_W), n.contour("sf_crawl" .. k, CRAWL_FREQ, 2)))
     end
-    local void = nil
+    -- The columns, cut out of the halls ONCE over both storeys — min
+    -- distributes over the storeys' max, the term is storey-blind, and it
+    -- never applied to the crawls, so hoisting it halves its sf_column
+    -- reads and changes no base terrain — and lifted clear on the
+    -- variant's ground: the max opens the term wherever the base's
+    -- side-cut goes negative, so the same rooms stand there with fabric
+    -- where the columns were. -side(-1) rather than side(1), so the last
+    -- columns reach INTO the seam's overlap and mingle with the first
+    -- sheets rather than stopping short of them.
+    local columns = n.mul(n.sub(n.const(COLUMN_MIN), n.noise("sf_column", COLUMN_FREQ, 1, 1.0, FLAT)), n.const(20.0))
+    local halls, crawls = nil, nil
     for k = 1, #STOREYS do
-        local storey = n.max(hall(k), crawl(k))
-        void = void and n.max(void, storey) or storey
+        halls = halls and n.max(halls, hall(k)) or hall(k)
+        crawls = crawls and n.max(crawls, crawl(k)) or crawl(k)
     end
+    local void = n.max(n.min(halls, n.max(columns, n.mul(ctx.side(-1), n.const(-1.0)))), crawls)
     void = ctx.mine(void)
     local carve = ctx.compile("carve", void)
     local function step(f) return n.clamp(n.mul(f, n.const(1e4)), 0.0, 1.0) end
@@ -155,6 +245,10 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
     local conditions = {
         n.const(1.0),                                                                          -- 1 flowstone over everything
         floorish,                                                                              -- 2 calcite pavement
+        -- 3 the variant's pool beds: calcite right down — a rimstone basin
+        -- rather than pavement over flowstone — where the variant's denser
+        -- dam field will stand water (ctx.side raw, the lining idiom).
+        n.min(floorish, n.min(n.sub(n.noise("sf_dam", DAM_FREQ, 2, 1.0, FLAT), n.const(WDC_DAM_MIN)), ctx.side(1))),
     }
     local code = n.const(0.0)
     for k, c in ipairs(conditions) do
@@ -166,6 +260,7 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
         { code = 1, to = 2.0, material = blocks.flowstone },
         { code = 2, to = 1.2, material = blocks.calcite },
         { code = 2, from = 1.2, to = 2.5, material = blocks.flowstone },
+        { code = 3, to = 3.0, material = blocks.calcite },
     }
     local fills = {
         { carve = carve },
@@ -175,26 +270,59 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
     if game.schematic_shapes then
         local built = structures()
         -- The straws hang from ceilings: the depth positive in the VOID.
+        -- Both dressings keep them — the brief replaces no straw.
         fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.straws, cell = STRAW_CELL, chance = STRAW_SQUARES, salt = 451, sink = 0,
             stand = ctx.compile("stand_straws", ctx.mine(n.sub(n.noise("sf_straws", 1 / 10, 1, 1.0), n.const(0.05)))) }
+        -- The debris only on the base's floors (ctx.base, not ctx.mine):
+        -- the variant trades its drop-zones for pools.
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.debris, cell = DEBRIS_CELL, chance = DEBRIS_SQUARES, salt = 452, sink = 1,
-            stand = ctx.compile("stand_debris", ctx.mine(n.const(1.0))) }
+            stand = ctx.compile("stand_debris", ctx.base(n.const(1.0))) }
+        -- The variant's second helping of straws, on the SAME sf_straws
+        -- noise on purpose: a looser threshold and a fatter chance thicken
+        -- the crowds AROUND the base's clumps rather than beside them, and
+        -- with the cones gated off this is what "dominated by soda straws"
+        -- comes out as. A fresh salt, so the passes' squares differ.
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.straws, cell = STRAW_CELL, chance = WDC_STRAW_SQUARES, salt = 453, sink = 0,
+            stand = ctx.compile("wdc_stand_straws", ctx.variant(n.sub(n.noise("sf_straws", 1 / 10, 1, 1.0), n.const(WDC_STRAW_MIN)))) }
+        -- The fabric: sheets on the ceilings, in a corridor round the SAME
+        -- sf_drape zero line on purpose — that line is the ceiling's
+        -- ridges, the ones the base's thin carve draperies follow, so the
+        -- variant hangs its fabric along the ridges rather than anywhere
+        -- the roof happens to be flat.
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.draperies, cell = WDC_SHEET_CELL, chance = WDC_SHEET_SQUARES, salt = 454, sink = 0,
+            stand = ctx.compile("wdc_stand_sheets", ctx.variant(n.sub(n.const(WDC_RIDGE_W), n.abs(n.noise("sf_drape", DRAPE_FREQ, 1, 1.0, FLAT))))) }
+        -- The pearls, on the SAME sf_dam noise on purpose: they lie where
+        -- the variant's water will stand, and the water is laid after and
+        -- fills the room the beads leave, so they read as a pool bed's
+        -- scatter of pearls rather than beads on dry rock.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.pearls, cell = WDC_PEARL_CELL, chance = WDC_PEARL_SQUARES, salt = 455, sink = 1,
+            stand = ctx.compile("wdc_stand_pearls", ctx.variant(n.sub(n.noise("sf_dam", DAM_FREQ, 2, 1.0, FLAT), n.const(WDC_DAM_MIN)))) }
     end
     -- The rimstone pools: a block of water over each hall's floor where the
     -- dam noise says, held in by calcite lips — the dams. The floor is flat
     -- (HH under the centre), so the level is the floor's height and a block.
+    -- Split by dressing (the *_flat cuts: a fluid's level and within are
+    -- read on y = 0.5): the base keeps its own threshold, and the variant
+    -- drops its to nearly nothing — the SAME sf_dam noise, so every pool
+    -- the base would have had is still a pool there and most of the floor
+    -- between them is too, terraced over the scoops by the lips. One level
+    -- for both, so the seam's overlap lays the same water twice rather
+    -- than two levels.
     for k = 1, #STOREYS do
         local floor_y = n.sub(n.add(n.mul(n.sub(shape.dome_node(), centre(k)), n.const(1000.0)), n.const(shape.Y0)), hh(k))
-        fills[#fills + 1] = {
-            fluid = "tiamat_default_world:water",
-            lip = blocks.calcite,
-            level = ctx.compile("pool_level" .. k, n.add(floor_y, n.const(1.3))),
-            within = ctx.compile("pool_within" .. k, ctx.mine_flat(n.min(n.sub(footprint(k), n.const(3.0)),
-                n.sub(n.noise("sf_dam", DAM_FREQ, 2, 1.0, FLAT), n.const(DAM_MIN))))),
-        }
+        local level = ctx.compile("pool_level" .. k, n.add(floor_y, n.const(1.3)))
+        local function pooled(dam_min)
+            return n.min(n.sub(footprint(k), n.const(3.0)),
+                n.sub(n.noise("sf_dam", DAM_FREQ, 2, 1.0, FLAT), n.const(dam_min)))
+        end
+        fills[#fills + 1] = { fluid = "tiamat_default_world:water", lip = blocks.calcite, level = level,
+            within = ctx.compile("pool_within" .. k, ctx.base_flat(pooled(DAM_MIN))) }
+        fills[#fills + 1] = { fluid = "tiamat_default_world:water", lip = blocks.calcite, level = level,
+            within = ctx.compile("wdc_pool_within" .. k, ctx.variant_flat(pooled(WDC_DAM_MIN))) }
     end
     return fills
 end)
+tdw.cave_variant(ID, "Weeping Drapery Chamber")
 
 -- ------------------------------------------------------------ the drips
 

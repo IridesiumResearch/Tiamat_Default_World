@@ -327,7 +327,8 @@ tdw.on_tick(function(dt)
         local body = game.player_entity(uuid)
         local entity = body and game.entity(body)
         if entity then
-            local here = tdw.biome_under(math.floor(entity.pos.x), math.floor(entity.pos.y), math.floor(entity.pos.z))
+            local px, py, pz = math.floor(entity.pos.x), math.floor(entity.pos.y), math.floor(entity.pos.z)
+            local here = tdw.biome_under(px, py, pz)
             local state = shown[uuid]
             if state == nil then
                 state = { biome = nil }
@@ -336,10 +337,21 @@ tdw.on_tick(function(dt)
             -- Only a CHANGE speaks, and unloaded ground says nothing rather
             -- than saying "nowhere": walking over a chunk that has not
             -- arrived must not blank the name and put it back again.
-            if here and here ~= state.biome then
-                state.biome = here
+            if here then
                 local biome = tdw.biomes[here] or tdw.areas[here]
-                say(uuid, biome and biome.name or here)
+                local name = biome and biome.name or here
+                -- A cave dressed as its variant names the variant
+                -- (2026-09-23), so the change-detection keys on the NAME:
+                -- walking from the Mossy Limestone into a Dewdrop Grotto is
+                -- one biome twice, and a change worth announcing.
+                local seed = game.world_seed or tdw.seed   -- `world_seed()` is declared below this closure
+                if biome and biome.cave and seed then
+                    name = tdw.caves.variant_name_at(here, px, py, pz, seed) or name
+                end
+                if name ~= state.biome then
+                    state.biome = name
+                    say(uuid, name)
+                end
             end
         end
     end
@@ -672,8 +684,12 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         end
         local rings = {}
         for _, ring in ipairs(tdw.layers.RINGS) do rings[#rings + 1] = ring.id end
+        local variants = {}
+        for _, name in pairs(tdw.caves.variant_names) do variants[#variants + 1] = string.lower(name) end
+        table.sort(variants)
+        local caves = #variants > 0 and (" — cave variants: " .. table.concat(variants, ", ")) or ""
         return "biomes: " .. table.concat(placed, ", ") .. " — built, not placed: " .. table.concat(unplaced, ", ")
-            .. " — rings: " .. table.concat(rings, ", ") .. " — or spawn, or coordinates"
+            .. " — rings: " .. table.concat(rings, ", ") .. caves .. " — or spawn, or coordinates"
     end
     if word == "spawn" then
         drop(player, rec, shape.SPAWN_X, shape.SPAWN_Z)
@@ -689,20 +705,29 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         return string.format("to %s, at %d, %d (%s)", ring.name, x, z, distance_text(p.x, p.z, x, z))
     end
     -- A cave biome: straight into the nearest of its voids, no landing
-    -- (the landing aims at the ground, which is the surface above).
+    -- (the landing aims at the ground, which is the surface above). A cave's
+    -- VARIANT by its own name (2026-09-23): `/tp dewdrop grotto` finds the
+    -- Mossy Limestone dressed as the Dewdrop Grotto, and `/tp mossy
+    -- limestone` its base dressing.
     for _, candidate in ipairs(tdw.biome_list) do
-        if candidate.cave and spoken(candidate.id) == word then
-            if world_seed() == nil then
-                return candidate.name .. " is found from the world's seed, and this engine has not told the mod it"
+        if candidate.cave then
+            local vname = tdw.caves.variant_names[candidate.id]
+            local as_variant = vname ~= nil and string.lower(vname) == word
+            if spoken(candidate.id) == word or as_variant then
+                local shown_name = as_variant and vname or candidate.name
+                if world_seed() == nil then
+                    return shown_name .. " is found from the world's seed, and this engine has not told the mod it"
+                end
+                local side = vname and (as_variant and "variant" or "base") or nil
+                local x, y, z = tdw.caves.locate(candidate.id, p.x, p.z, world_seed(), side)
+                if x == nil then
+                    return "found nowhere that is " .. shown_name .. " within eight kilometres"
+                end
+                rec.seeking, rec.landing = nil, nil
+                rec.pending = { x = x + 0.5, y = y + 0.5, z = z + 0.5 }
+                game.log(string.format("tiamat_default_world: %s teleported into %s at %d, %d, %d", player, shown_name, x, y, z))
+                return string.format("into %s, at %d, %d, %d (%s)", shown_name, x, y, z, distance_text(p.x, p.z, x, z))
             end
-            local x, y, z = tdw.caves.locate(candidate.id, p.x, p.z, world_seed())
-            if x == nil then
-                return "found nowhere that is " .. candidate.name .. " within eight kilometres"
-            end
-            rec.seeking, rec.landing = nil, nil
-            rec.pending = { x = x + 0.5, y = y + 0.5, z = z + 0.5 }
-            game.log(string.format("tiamat_default_world: %s teleported into %s at %d, %d, %d", player, candidate.name, x, y, z))
-            return string.format("into %s, at %d, %d, %d (%s)", candidate.name, x, y, z, distance_text(p.x, p.z, x, z))
         end
     end
     -- A biome.

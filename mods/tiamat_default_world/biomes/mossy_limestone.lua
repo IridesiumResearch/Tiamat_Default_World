@@ -22,6 +22,21 @@
 -- keeps `stone` the world's rock and calcite its pale one), the floor `mud`,
 -- the beds `gravel`, the moss `moss`, the vines `climbing_ivy`, the water
 -- the world's. **One new plant, `maidenhair`; no new material.**
+--
+-- **The Dewdrop Grotto** (2026-09-23, "one decoration variant of each of
+-- the cave biomes", and no new blocks): the same rooms on the far side of
+-- the `cave_variant` line (caves.lua), redecorated and nothing else — the
+-- carve, the linings, the boulders, the veins and the pools are shared.
+-- The moss cushions, the ivy and the maidenhair keep to the base side;
+-- over the line the ceiling crevices hang "bead-like succulent vines ...
+-- that drip slow, glowing condensation droplets" — thin ivy ropes swelling
+-- into glow-algae beads, a crystal drop held at each tip — the scooped
+-- walls sprout "clusters of pale, pale-yellow cave orchids and broad-leaf
+-- micro-ferns" (lady's mantle bloom ringed with monstera, at the foot of
+-- the pockets: a cover stands on floors, not on walls), and the rimstone
+-- pools carry "floating spore pads and faint bioluminescent waterlilies"
+-- (water iris runs to the waterline, glow polyp rare among them). Every
+-- part is played by a block the world already has.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -45,6 +60,15 @@ local FERN_FREQ, FERN_MIN = 1.3, 0.34                   -- maidenhair: sparse
 local GRAVEL_FREQ, GRAVEL_MIN = 1 / 12, 0.36
 local VINE_CELL, VINE_SQUARES = 4, 0.35
 local BOULDER_CELL, BOULDER_SQUARES = 10, 0.30
+-- The Dewdrop Grotto's own numbers. New streams are prefixed `dg_`; where
+-- a Grotto field reads an `ml_` stream instead, that is on purpose — the
+-- crevices, scoops and basins are the ROOMS' features, and the rooms do
+-- not move when the dressing does.
+local DG_VINE_CELL, DG_VINE_SQUARES = 4, 0.45           -- a shade denser than the ivy: the beads are the room's light
+local DG_POCKET_FREQ = 1 / 4                            -- the pocket clusters: a couple of blocks wide
+local DG_ORCHID_MIN, DG_LEAF_MIN = 0.28, 0.22           -- one stream, two bars: the broad leaves ring the orchid hearts
+local DG_LILY_FREQ = 1 / 3
+local DG_PAD_MIN, DG_LILY_MIN = 0.06, 0.30              -- pads between the bars; the glow over the high one, rare
 
 -- ------------------------------------------------------------ the structures
 
@@ -82,14 +106,38 @@ local function cushion(rng)
     end
     return schem.record_schematic({})
 end
+-- A bead vine (the Dewdrop Grotto): the ivy's drop of three to six blocks,
+-- thinner, swelling into glow-algae beads along its length — the brief's
+-- "hanging bead-like succulent vines" — and a crystal drop at the tip, the
+-- glowing condensation droplet held mid-fall. The drip itself would be a
+-- particle burst from a tick hook, which is out of this round's scope; the
+-- crystal's own light, and the beads', is what stands in for it.
+local function bead_vine(rng)
+    schem.record_begin()
+    local drop = 3 + rng:below(4)
+    local dx = (rng:below(3) - 1) * 0.25
+    local dz = (rng:below(3) - 1) * 0.25
+    schem.push_path(blocks.climbing_ivy, { { 0.5, 0.2, 0.5, 0.22 }, { 0.5 + dx, -drop, 0.5 + dz, 0.2 } }, BLIND)
+    -- A bead per block of the drop, nudged up to a sixth of a block along
+    -- it, each a little taller than round: a string of drips, no two alike.
+    for b = 1, drop - 1 do
+        local t = (b + rng:below(3) * 0.17) / drop
+        local r = 0.3 + rng:below(3) * 0.06
+        schem.push_ellipsoid(blocks.glow_algae, 0.5 + dx * t, 0.2 - drop * t, 0.5 + dz * t, r, r * 1.3, r, { blind = true })
+    end
+    schem.push_ellipsoid(blocks.crystal, 0.5 + dx, 0.2 - drop - 0.35, 0.5 + dz, 0.28, 0.38, 0.28, { blind = true })
+    -- The beads take their cells from the rope, and the drop from either.
+    return schem.record_schematic({ [blocks.glow_algae] = 1, [blocks.crystal] = 2 })
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { vines = {}, boulders = {}, cushions = {} }
+    BUILT = { vines = {}, boulders = {}, cushions = {}, bead_vines = {} }
     if game.schematic_shapes then
         for i = 1, 4 do BUILT.vines[i] = vine(rng_for("vine:" .. i)) end
         for i = 1, 4 do BUILT.boulders[i] = boulder(rng_for("boulder:" .. i)) end
         for i = 1, 6 do BUILT.cushions[i] = cushion(rng_for("cushion:" .. i)) end
+        for i = 1, 4 do BUILT.bead_vines[i] = bead_vine(rng_for("bead_vine:" .. i)) end
     end
     return BUILT
 end
@@ -168,29 +216,77 @@ tdw.cave_biome(ID, { 0.0, 0.15 }, function(ctx)       -- -0.12..0.14 at first; a
     }
     -- The covers stand where air sits on rock, which in a chunk that is
     -- rock throughout is a cave floor: the take needs the province and the
-    -- noise, not the void again (five hundred operations a cell).
-    local function on_floor(f)
-        return ctx.mine(f)
+    -- noise, not the void again (five hundred operations a cell). Since the
+    -- Dewdrop Grotto (2026-09-23) a REPLACED decoration is also cut to a
+    -- dressing's side of the variant line — `ctx.base` and `ctx.variant`
+    -- where plain `ctx.mine` was — and what the brief does not replace (the
+    -- boulders, the veins, the pools) stays on `ctx.mine`, both sides'.
+    local moss = ctx.compile("moss", ctx.base(n.min(n.sub(n.noise("ml_moss", MOSS_FREQ, 2, 1.0), n.const(MOSS_MIN)), n.sub(n.const(0.5), n.noise("ml_basin", BASIN_FREQ, 2, 1.0)))))
+    local fern = ctx.compile("fern", ctx.base(n.sub(n.noise("ml_fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))))
+    -- The Grotto's wall pockets: clusters where a slow-ish cluster noise
+    -- peaks AND the wall is scooped deepest (`ml_scoop` reused on purpose:
+    -- a pocket is a scooped-out hollow, whichever dressing wears it). The
+    -- orchid is `ladys_mantle_bloom` — the palette's one pale-yellow spray,
+    -- and no new blocks this round — the broad leaf `monstera`; one cluster
+    -- stream, two DISJOINT bands of it: the hearts over the high bar, the
+    -- leaves the annulus between the bars, so the leaves ring the hearts.
+    -- Disjoint because an earlier cover's runs are ordinary occupied cells
+    -- to a later call (stubs: only cover THIS call writes is not ground for
+    -- it) — takes that share a column stack the second cover on the first.
+    local dg_pocket = n.noise("dg_pocket", DG_POCKET_FREQ, 1, 1.0)
+    local function pocket(band)
+        return ctx.variant(n.min(band,
+            n.sub(n.noise("ml_scoop", SCOOP_FREQ, 1, SCOOP), n.const(0.15))))
     end
-    local moss = ctx.compile("moss", on_floor(n.min(n.sub(n.noise("ml_moss", MOSS_FREQ, 2, 1.0), n.const(MOSS_MIN)), n.sub(n.const(0.5), n.noise("ml_basin", BASIN_FREQ, 2, 1.0)))))
-    local fern = ctx.compile("fern", on_floor(n.sub(n.noise("ml_fern", FERN_FREQ, 1, 1.0), n.const(FERN_MIN))))
+    local orchid = ctx.compile("orchid", pocket(n.sub(dg_pocket, n.const(DG_ORCHID_MIN))))
+    local broadleaf = ctx.compile("broadleaf", pocket(n.min(n.sub(dg_pocket, n.const(DG_LEAF_MIN)),
+        n.sub(n.const(DG_ORCHID_MIN), dg_pocket))))
+    -- The Grotto's pool flora, in the rimstone basins the pools are laid in
+    -- (`ml_basin` reused on purpose: a pad outside a basin stands on dry
+    -- mud). Iris runs reach the waterline and read as the "floating spore
+    -- pads"; the glow polyp is the faint cold-blue lily, rare among them —
+    -- rare BESIDE them: one stream, `dg_lily`, split at DG_LILY_MIN, pads
+    -- on the low side and polyps on the high, disjoint by construction, so
+    -- a polyp never finds an iris run for a floor and stands on it (the
+    -- pockets' rule above). The gravel noise (`ml_gravel`, the beds') is a
+    -- bonus on the pads' side, not a bar: the pads favour the gravel the
+    -- brief anchors them to without being confined to its patches.
+    local in_basin = n.sub(n.noise("ml_basin", BASIN_FREQ, 2, 1.0), n.const(BASIN_MIN))
+    local dg_lily = n.noise("dg_lily", DG_LILY_FREQ, 1, 1.0)
+    local pad = ctx.compile("pad", ctx.variant(n.min(n.min(in_basin,
+        n.sub(n.const(DG_LILY_MIN), dg_lily)),
+        n.add(n.sub(dg_lily, n.const(DG_PAD_MIN)),
+            n.mul(n.noise("ml_gravel", GRAVEL_FREQ, 1, 1.0), n.const(0.4))))))
+    local lily = ctx.compile("lily", ctx.variant(n.min(in_basin,
+        n.sub(dg_lily, n.const(DG_LILY_MIN)))))
     local fills = {
         { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
         ctx.caves.vein_fill(ctx, void, 0.0),          -- the crystal veins through the rock (caves.lua)
         { cover = blocks.maidenhair, cells = 3, take = fern },
+        { cover = blocks.ladys_mantle_bloom, cells = 2, take = orchid },
+        { cover = blocks.monstera, cells = 2, take = broadleaf },
+        { cover = blocks.water_iris, cells = 3, take = pad },
+        { cover = blocks.glow_polyp, cells = 2, take = lily },
     }
     if game.schematic_shapes then
         local built = structures()
         -- The vines hang from the ceiling: the depth positive in the VOID,
-        -- so the crossing the engine stamps at is rock over air.
+        -- so the crossing the engine stamps at is rock over air. Base side:
+        -- the Grotto hangs its own.
         fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.vines, cell = VINE_CELL, chance = VINE_SQUARES, salt = 401, sink = 0,
-            stand = ctx.compile("stand_vine", ctx.mine(n.sub(n.noise("ml_crevice", 1 / 6, 1, 1.0), n.const(0.15)))) }
+            stand = ctx.compile("stand_vine", ctx.base(n.sub(n.noise("ml_crevice", 1 / 6, 1, 1.0), n.const(0.15)))) }
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.boulders, cell = BOULDER_CELL, chance = BOULDER_SQUARES, salt = 402, sink = 1,
             stand = ctx.compile("stand_boulder", ctx.mine(n.sub(n.noise("ml_boulder", 1 / 15, 1, 1.0), n.const(0.1)))) }
-        -- The moss: cushions where the flat cover was (the same field).
+        -- The moss: cushions where the flat cover was (the same field, now
+        -- the base dressing's — the Grotto's brief replaces the moss).
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cushions, cell = CUSHION_CELL, chance = CUSHION_SQUARES, salt = 403, sink = 1,
             stand = moss }
+        -- The Grotto's bead vines hang where the ivy did (`ml_crevice`
+        -- reused on purpose: the ceiling's crevices do not move when the
+        -- dressing does), a shade denser — the beads are the room's light.
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.bead_vines, cell = DG_VINE_CELL, chance = DG_VINE_SQUARES, salt = 461, sink = 0,
+            stand = ctx.compile("stand_bead_vine", ctx.variant(n.sub(n.noise("ml_crevice", 1 / 6, 1, 1.0), n.const(0.15)))) }
     end
     -- The basins' water: a block deep over the floor, where the basin noise
     -- says, in a room. The level is the storey floor in world y, per storey.
@@ -209,3 +305,4 @@ tdw.cave_biome(ID, { 0.0, 0.15 }, function(ctx)       -- -0.12..0.14 at first; a
     end
     return fills
 end)
+tdw.cave_variant(ID, "Dewdrop Grotto")
