@@ -3201,3 +3201,20 @@ bed codes inside the channel wherever the base side hid it by precedence.
 Checked: `--check-mods` with the caves forced — the mod loads, every cave
 compiles, no warnings. The weather mod fails the same run from its own
 uncommitted work in its own repository; not this mod's.
+
+### Lava's glow is a contract (2026-09-23)
+
+The Weather mod's fire (its b1e1008) starts blazes off lava, and STILL
+lava is the case with nothing to read: a settled pool reports no flows,
+`surface_at` gives a numeric fluid id and `get_fluid` a volume, so the
+sampler tells lava from water by its LIGHT — a glowing fluid surface with
+r >= 14 and b <= 3 counts as hot. A mod's lava that does not glow is water
+to it, documented as a limit on the Weather side ("Still lava by light").
+
+Nothing changed here but comments: our `lava` emits { 15, 8, 1 } and
+`magma` { 15, 7, 0 }, both past the bar with margin, and no water of ours
+glows. But the emits are load-bearing for another mod now, so blocks.lua
+says so beside the numbers — dim the lava under r 14, or push its blue
+past 3, and it quietly stops setting anything alight. Weather also names
+`lava` and `magma` by id in its hot solids (climate_spindle), so those two
+ids are spoken for.

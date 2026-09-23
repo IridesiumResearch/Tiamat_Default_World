@@ -272,6 +272,14 @@ block("sulfur", "Sulfur", "Bright orange-yellow crust round a thermal fissure; i
 -- (2026-09-16, engine-asks 31) a fluid gives off its block's `light_emit`,
 -- so a pit lights its bowl and a roofed channel its tunnel; and it is drawn
 -- OPAQUE, a surface rather than a window onto the pit's floor.
+--
+-- **The glow is a contract, not a look** (2026-09-23). The Weather mod
+-- finds STILL lava by its light — a settled pool reports no flows and has
+-- no name a sampler can read, so a fluid surface with r >= 14 and b <= 3
+-- counts as hot and starts its fires, and a lava that does not glow is
+-- water to it (documented as a limit on its side). Retune this emit below
+-- r 14, or past b 3, and lava quietly stops setting anything alight.
+-- Weather also names `lava` and `magma` by id in its hot solids.
 block("lava", "Lava", "Drawn wherever lava is. Not something you place.", { hardness = 4.0, light_emit = { r = 15, g = 8, b = 1 } })
 -- An engine older than b6935c3 refuses `opacity` as an unknown field, and a
 -- mod failing here is disabled whole: register without it there.
@@ -415,6 +423,8 @@ block("morphic_rock", "Morphic rock", "Pressure-crushed rock, below 4 km.", { ha
 
 -- The magma shell: a thin lava layer with a crust on each side ----------
 block("magma_crust", "Magma crust", "Cooked rock, fifty blocks either side of the fire.", { hardness = 2.5 })
+-- Weather names `magma` by id as a hot solid (its climate_spindle), and its
+-- emit passes the same r >= 14, b <= 3 bar the lava's glow contract keeps.
 block("magma", "Magma", "Still lava. A look-alike solid until fluid can be generated.",
     { hardness = 4.0, light_emit = { r = 15, g = 7, b = 0 } })
 
