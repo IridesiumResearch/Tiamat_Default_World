@@ -19,7 +19,6 @@
 
 local M = {}
 
--- Footsteps come from the core reference set: a qualified id is used as-is.
 -- **Footsteps are the world's own now** (2026-09-24, the designer's
 -- recordings): two steps, a hard and a soft, in place of core's fixture —
 -- the client plays them itself from `sounds.step`, so this is the one
@@ -117,7 +116,7 @@ block("fir_needles", "Fir needles", "Tiers of them, dark.", { hardness = 0.2, ti
 -- be walked round, so they are not. Grass and the flowers are `billboard =
 -- "cross"`: a run of cells in a column is drawn as TWO fixed cards on the
 -- diagonals of its column, each as tall as the run and the whole tile
--- across — the X Minecraft and Minetest draw, which holds still as the
+-- across — the crossed X the classic voxel games draw, which holds still as the
 -- player walks round it (a turning card read as a sticker following you:
 -- engine-asks item 9, landed 2026-09-11). The cells are kept for
 -- everything else. **A billboard is NOT

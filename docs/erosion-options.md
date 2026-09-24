@@ -100,7 +100,7 @@ Beyer's method: drop a particle, let it flow downhill carrying sediment,
 erode where it speeds up, deposit where it slows. Tens of thousands of
 droplets carve a heightmap into something that looks like real ground —
 channels, alluvial fans, incised valleys. The standard choice for
-"Minecraft-but-better" terrain.
+"the familiar blocky terrain, but better".
 
 **Needs a native op** (`Map:droplets{ seed, count, ... }`). Cost: 200k
 droplets × ~30 steps ≈ 6·10⁶ steps of gradient-and-bilinear work — a few

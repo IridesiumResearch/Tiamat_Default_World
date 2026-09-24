@@ -1098,7 +1098,7 @@ end
 -- whatever the turf was made of there.
 --
 -- Fluid here is a volume per block, drawn at volume/27, so the surface
--- need not sit on a block boundary the way Minecraft's does: each pool is
+-- need not sit on a block boundary the way an older voxel game's must: each pool is
 -- filled to its own level, fifteen to twenty-seven cells, so the water
 -- stands a cell or a few below the bank's lip. The bank ring is dug at the
 -- cell too — its blocks keep their bottom layer — so the dip is a gentle

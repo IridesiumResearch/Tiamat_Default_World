@@ -14,8 +14,8 @@ engine commit they landed in, because the mod is written against them.
 
 - **Grass, brambles, lady's mantle and its bloom, rose bushes and their
   blooms are drawn as crossed cards** (`billboard = "cross"` in
-  `blocks.lua`): two fixed cards on the diagonals of a run's column, the X
-  Minecraft and Minetest draw. A card that turned to face the camera read
+  `blocks.lua`): two fixed cards on the diagonals of a run's column, the
+  crossed X the classic voxel games draw. A card that turned to face the camera read
   as a sticker following the player. Engine: the sprite path gained a fixed
   heading per instance and emits two per crossed run; the block parser now
   refuses a `billboard` that is not `true`, `false` or `"cross"` instead of

@@ -577,8 +577,8 @@ smooth sixteen-block blend rather than a seam. Three bytes a chunk.
 
 ## 9. Fixed cards (2026-09-11) — LANDED as `billboard = "cross"`, engine tree, uncommitted
 
-*Landed as the crossed form after all: the designer asked for the X of
-Minecraft and Minetest by name (2026-09-11, later), two fixed cards on the
+*Landed as the crossed form after all: the designer asked for the classic
+crossed X by name (2026-09-11, later), two fixed cards on the
 diagonals of the run's column, drawn as two instances at fixed headings
 in the same sprite path. The parser now refuses a `billboard` that is not
 true, false or "cross" instead of reading it as false. The hashed
@@ -615,7 +615,7 @@ of the existing instance; the material's mode is one more byte on
 
 ## 8. Sprite cards for grass, placed by the cell (2026-09-10) — LANDED as `billboard` and `sway`; grass, flowers and leaves use them
 
-**Wanted.** Grass the way Minecraft and Minetest draw it — two crossed
+**Wanted.** Grass the way the classic voxel games draw it — two crossed
 alpha-tested quads — but standing on the sub-node surface rather than on
 the block grid, so it never floats over a smooth slope, and with heights
 that vary blade to blade.
