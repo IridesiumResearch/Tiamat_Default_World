@@ -523,7 +523,8 @@ function Stream:next_bool() end
 ---mods register none has no day and holds its colours fixed, which is a
 ---legitimate world rather than a missing feature.
 ---@class Tiamat.SkySpec
----@field day_length_ticks integer Required. Ticks in a full day, at 20 ticks a second. Must be at least 1.
+---@field day_length_ticks integer Required. Ticks in a full day, at 20 ticks a second. Must be at least 1. **One clock**: the world's day is the one the sky for every domain not named declares, and a domain sky's own figure is ignored — the client keeps one clock, not one per space.
+---@field domain string? Which domain this sky is for — a domain id, or a template's, which every instance made from it inherits. Omit it and this is the sky for every domain not named, which is every domain a mod written before this existed has. A space between worlds has no dawn, and a body a player lands on has a sky of its own; the client is sent the right one when a player arrives.
 ---@field keyframes Tiamat.SkyKeyframe[]
 ---@field start_time number? Where a fresh world's clock starts, 0..1. Defaults to mid-morning: a counter left at zero opens every world at midnight, which is the one hour with no sun in it. Required, and not empty. Need not be sorted — the engine sorts them, because an out-of-order list would make the sky walk backwards partway through the day.
 
@@ -538,6 +539,7 @@ function Stream:next_bool() end
 ---@field sun number[] Required. `{r, g, b}` tinting the sunlight stored in the world.
 ---@field intensity number Required, 0 to 1. Scales stored sunlight at DRAW time — which is why a day/night cycle costs nothing: the world's sunlight is always full daylight and never needs relighting.
 ---@field grade Tiamat.SkyGrade? Optional. How the finished picture is graded at this moment. Omit it and nothing is graded.
+---@field stars number? Optional, 0 to 1. How much of the star catalog shows at this moment. Omit it and none do: whether a world has stars is yours to say, and the engine never decides that night means stars. The catalog is `game.stars()`, drawn from wherever the player's domain sits and wheeling with the day the way the sun does, behind cloud and behind the ground.
 
 ---How a moment's finished picture is graded.
 ---
@@ -1238,6 +1240,54 @@ function game.surface_at(spec) end
 ---@param player string The player's UUID, in hex.
 ---@return { x: integer, y: integer, z: integer, domain: string, material: integer, face: { x: integer, y: integer, z: integer } }|nil
 function game.looking_at(player) end
+
+---Which way a player is looking, as a unit vector, and from which domain.
+---
+---Unlike `game.looking_at` this is not bounded by reach and needs no block
+---under the crosshair — it is the direction itself. `nil` for a player who is
+---not connected.
+---@param player string The player's UUID, in hex.
+---@return { x: number, y: number, z: number, domain: string }|nil
+function game.look_direction(player) end
+
+---The star catalog: every star in this universe, in a fixed order.
+---
+---**The same catalog the sky is drawn from**, derived from the world's seed on
+---both ends of the wire, so the star a player sees is the star this names. Two
+---thousand and forty-eight of them, ids from 16 upward (0 and 1 are held back
+---for a sun and a moon a mod may place), each with its `x`, `y`, `z` in
+---universal blocks — the frame `register_domain`'s `position` speaks — its
+---intrinsic `magnitude`, 0 to 1, and its `warmth`, 0 coolest to 1 warmest. Read
+---it once and keep it: the list is built for every call.
+---
+---`nil` during registration, on the same terms as `game.world_seed`.
+---@return { id: integer, x: number, y: number, z: number, magnitude: number, warmth: number }[]|nil
+function game.stars() end
+
+---Where the overworld sits in the universe, in the frame the catalog speaks.
+---
+---Derived from the seed, never the centre — the centre is somewhere to go. A
+---domain registered without a `position` is here too. `nil` during
+---registration.
+---@return { x: number, y: number, z: number }|nil
+function game.world_position() end
+
+---The star a player is looking at, and how squarely.
+---
+---The catalog star whose direction — from where the player's domain sits, at
+---this hour, wheeled as the sky wheels — lies closest along their gaze, with
+---`alignment` the cosine of the angle between the two: 1 is dead centre, and
+---about 0.9998 is a degree off. Always the nearest star, however far off, so
+---the threshold is yours; a player is not a telescope. `nil` for a player who
+---is not connected, or before the world is open.
+---
+---```lua
+---local seen = game.star_in_view(event.player)
+---if seen and seen.alignment > 0.9998 then travel_to(seen.id) end
+---```
+---@param player string The player's UUID, in hex.
+---@return { id: integer, alignment: number }|nil
+function game.star_in_view(player) end
 
 ---The light at a block, right now.
 ---
@@ -2242,7 +2292,9 @@ function game.register_model(spec) end
 ---The client draws it by marching a ray through a FIELD rather than by
 ---building cubes, which is why a deck can reach the horizon and drift and
 ---change shape without costing anything to rebuild. Every field below is
----optional; the defaults are an ordinary fair-weather deck.
+---optional; the defaults are an ordinary fair-weather deck. In the Classic
+---and Beautiful lighting modes the deck also shades the ground under it
+---along the sun, drift included, so a moving sky reads as moving from below.
 ---
 ---```lua
 ---game.register_clouds{
@@ -2339,6 +2391,33 @@ function game.register_clouds(spec) end
 ---edges, so keep the cells at the resolution of your own weather and let the
 ---clouds do the rest.
 ---
+---**Four genera, a share of the sky each.** `cover` is cumulus, the heaps, and
+---the three beside it are shapes the heaps cannot make: `stratocumulus` is a
+---low sheet of rounded cells drawn out into rolls with grooves of sky between,
+---`altocumulus` a mid-level mackerel sky of small cloudlets in wave bands well
+---above the floor, and `cumulonimbus` towers under spreading anvils — at 1,
+---supercells. Numbers rather than a kind, so a front arriving blends one sky
+---into the next with the same `ease_ticks`. A genus left out is none of it.
+---
+---```lua
+---game.set_clouds(uuid, {
+---    cover = 0.2,            -- a few cumulus
+---    stratocumulus = 0.85,   -- under a sheet
+---    cumulonimbus = 0.6,     -- with towers coming
+---    darkness = 0.7,
+---    ease_ticks = 600,
+---})
+---```
+---
+---Storm light is darkest at a cloud's base and keeps the sun on its tops, so
+---an anvil catches the light a sheet under it has lost.
+---
+---The `map` carries the genera per cell too — `stratocumulus`, `altocumulus`
+---and `cumulonimbus` arrays beside `cover`, each optional — so a storm over the
+---next valley has its sheet and its anvil from the clear valley beside it.
+---Inside the grid a cell's five shares replace this player's own; outside it
+---the player's answer, as before.
+---
 ---Returns whether that player was there to tell.
 ---
 ---@param uuid string The player's UUID.
@@ -2353,6 +2432,9 @@ function game.set_clouds(uuid, spec) end
 ---@field base number? Overrides the registered floor for this player.
 ---@field ease_ticks integer? How long the client takes to get there. Default 0, at most 2400.
 ---@field map Tiamat.CloudMapSpec? A coarse grid of weather over the world, for a storm that can be seen coming. Omit it for one sky everywhere; a call that omits it clears the last one.
+---@field stratocumulus number? A low sheet of rounded cells with grooves of sky between, 0 to 1. Default 0.
+---@field altocumulus number? A mid-level mackerel sky of small cloudlets in bands, 0 to 1. Default 0.
+---@field cumulonimbus number? Towers under anvils, 0 to 1; at 1, supercells. Default 0.
 
 ---A coarse grid of cloud cover over the world — one cell is hundreds of blocks.
 ---@class Tiamat.CloudMapSpec
@@ -2361,6 +2443,9 @@ function game.set_clouds(uuid, spec) end
 ---@field size integer How many cells a side, 1 to 16. Sixteen 256-block cells is four kilometres, which is past any view distance the engine serves.
 ---@field cover number[] `size * size` shares of one, row-major by z: `cover[z * size + x + 1]`.
 ---@field darkness number[] The same, for how grey the storm is.
+---@field stratocumulus number[]? The same, for the low sheet; leave it out for none anywhere.
+---@field altocumulus number[]? The same, for the mid-level cloudlets; leave it out for none anywhere.
+---@field cumulonimbus number[]? The same, for towers under anvils; leave it out for none anywhere.
 
 ---There is no `game.register_theme`, and there cannot be.
 ---
@@ -2724,7 +2809,14 @@ function game.exports(mod_id) end
 ---  generator is inherited by every instance made from it, so fifty ships are
 ---  one piece of worldgen. Refused on a `sparse` domain, which has no chunks
 ---  for it to fill.
----@param spec { id: string, kind: string?, scale: number?, instanced: boolean?, generator: fun(buf: any, pos: { x: integer, y: integer, z: integer })? }
+---* `position` — where this domain sits in the universe, `{ x, y, z }` in
+---  blocks, the frame `game.stars()` and `game.world_position()` speak. The
+---  sky is drawn from it: a domain placed at a star's position sees that
+---  star's sky, and that star is the one not in it. Omit it and the domain is
+---  wherever the overworld is, which is right for a cellar and a ship's hold.
+---  A template's position is what its instances get unless
+---  `game.create_domain` was given one of their own.
+---@param spec { id: string, kind: string?, scale: number?, instanced: boolean?, generator: fun(buf: any, pos: { x: integer, y: integer, z: integer })?, position: { x: number, y: number, z: number }? }
 function game.register_domain(spec) end
 
 ---Makes an instance of a template, or hands back the one already there.
@@ -2737,10 +2829,22 @@ function game.register_domain(spec) end
 ---re-entering a ship it already made calls this every time, and a "create" that
 ---wiped would be a ship that emptied on its second visit. So this is how you
 ---both make one and find one again.
+---
+---`options.position` puts the instance somewhere of its own in the universe —
+---`{ x, y, z }` in the blocks `game.stars()` speaks — so a body made for a
+---star is made AT the star and the sky drawn from it is that star's. Set when
+---the instance is new and kept with it across restarts; making it again moves
+---nothing, for the reason above.
+---
+---```lua
+---local domain = game.create_domain("my_mod:body", tostring(star.id),
+---    { position = { x = star.x, y = star.y, z = star.z } })
+---```
 ---@param template string
 ---@param key string
+---@param options { position: { x: number, y: number, z: number }? }?
 ---@return string? id
-function game.create_domain(template, key) end
+function game.create_domain(template, key, options) end
 
 ---Removes an instance and everything stored in it. Permanent.
 ---
