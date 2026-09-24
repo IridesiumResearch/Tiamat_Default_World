@@ -3306,3 +3306,42 @@ Checked: `--check-mods` with the caves force-compiled — 13 mods, all six
 cave builds, zero errors or warnings. What only a live flight can check:
 rivers, brooks and pools wet again; foothills ridges back; slabs
 shrinking as generation cheapens (their full cure is engine 40/41).
+
+### The world has a sound (2026-09-24)
+
+The designer's recordings (`Tiamat Sounds`, beside the repos) go into the
+game. This mod's share — the places and the world's own events; the
+creatures' voices are the Life mod's, the storm the Weather mod's, the
+screens' clicks the UI mod's, each filed to its repo.
+
+- **A bed per place, a layer over it at night, per PLAYER** (sounds.lua):
+  the soft treetop wind under leaves, the slow wind on open ground, the
+  fire's rumble on the Ember Ridge, the cave's hush in the normal caves,
+  the underworld's drone below the surface band, and the sea closing over
+  ears more than three-quarters under (`submerged` is a number, compared
+  — not tested, which would have been true even bone dry). Crickets at
+  night in the grass and the broadleaves, frogs where the ground is wet.
+  One loop per channel per player, replaced on a change with an 80-tick
+  cross-fade, state dropped on leave so a rejoin re-tells what the engine
+  never re-tells. In a cave's bed, a far dark echo once per few minutes,
+  offset to a side so it has a direction.
+- **Footsteps are the world's own** (blocks.lua): a hard and a soft step
+  from the designer's candidates replace core's fixture on every block —
+  soils, sands, snows, leaves and mosses soft, rock and wood hard.
+- **The rose pick peels** at the bush; **an asked-for `/tp` chimes** where
+  the player arrives — at the destination for a direct jump, on the found
+  ground for a sky drop, and never on a login's own placement or a trial
+  seek's hops (the flag rides only the command's paths).
+- Files normalized to a common loudness (~-26 dB beds, hotter one-shots),
+  ogg, largest 338 KB against the engine's 4 MiB cap.
+- Left alone, deliberately: core_tools' dig noises (a second noise here
+  would double every strike; replacing them means a tools mod of our own)
+  and core_sky's quiet day/night fixtures (a dependency cannot be
+  `conflicts`-retired; a Spindle sky of its own is the designer's call).
+  The music tracks are over the engine's one-minute cap and wait on
+  streaming.
+
+Checked: `--check-mods` — 13 mods, all sounds registered, no warnings.
+What only ears can check: the mix. Every gain is one constant
+(sounds.lua GAIN, the per-file gains in blocks.lua), tuned for a first
+listen, expecting the designer's second.

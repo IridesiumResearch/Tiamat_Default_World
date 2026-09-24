@@ -524,7 +524,7 @@ end
 -- Drops a player over (x, z) and lets the landing find the ground. The
 -- drop is over the highest thing that could be there: the alpine peaks in
 -- the cold core, SEEK_ABOVE over the dome elsewhere.
-local function drop(uuid, rec, x, z)
+local function drop(uuid, rec, x, z, portal)
     local u = u_at(x, z)
     local above = SEEK_ABOVE
     if u < shape.ALPINE_EDGE_U + shape.ALPINE_BLEND_U then
@@ -533,6 +533,11 @@ local function drop(uuid, rec, x, z)
     rec.seeking = nil
     rec.pending = { x = x + 0.5, y = shape.Y0 + 1000.0 * shape.dome_at(u) + above, z = z + 0.5 }
     rec.landing = { ticks = 0, target = rec.pending }
+    -- An ASKED-FOR jump chimes when the landing completes (player.lua);
+    -- a login's placement and a trial seek's hops stay silent, so only
+    -- the /tp command's own calls pass `portal`, and a stale flag from
+    -- an earlier jump is cleared rather than inherited.
+    rec.portal = portal or nil
 end
 
 -- **By trial, when the seed is not here.** An engine older than
@@ -667,10 +672,11 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
     if #args == 3 and numbers[1] and numbers[2] and numbers[3] then
         rec.seeking, rec.landing = nil, nil
         rec.pending = { x = numbers[1], y = numbers[2], z = numbers[3] }
+        rec.portal = true
         return string.format("to %.0f, %.0f, %.0f", numbers[1], numbers[2], numbers[3])
     end
     if #args == 2 and numbers[1] and numbers[2] then
-        drop(player, rec, math.floor(numbers[1]), math.floor(numbers[2]))
+        drop(player, rec, math.floor(numbers[1]), math.floor(numbers[2]), true)
         return string.format("to %d, %d — landing on the ground there", math.floor(numbers[1]), math.floor(numbers[2]))
     end
     local word = heard(args)
@@ -692,7 +698,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
             .. " — rings: " .. table.concat(rings, ", ") .. caves .. " — or spawn, or coordinates"
     end
     if word == "spawn" then
-        drop(player, rec, shape.SPAWN_X, shape.SPAWN_Z)
+        drop(player, rec, shape.SPAWN_X, shape.SPAWN_Z, true)
         return "to the spawn"
     end
     -- A ring: its middle, on your own heading.
@@ -701,7 +707,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
         local d = headings_from(p.x, p.z)[1]
         local r = math.sqrt((ring.u[1] + ring.u[2]) / 2) * R_BLOCKS
         local x, z = math.floor(d[1] * r), math.floor(d[2] * r)
-        drop(player, rec, x, z)
+        drop(player, rec, x, z, true)
         return string.format("to %s, at %d, %d (%s)", ring.name, x, z, distance_text(p.x, p.z, x, z))
     end
     -- A cave biome: straight into the nearest of its voids, no landing
@@ -725,6 +731,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
                 end
                 rec.seeking, rec.landing = nil, nil
                 rec.pending = { x = x + 0.5, y = y + 0.5, z = z + 0.5 }
+                rec.portal = true
                 game.log(string.format("tiamat_default_world: %s teleported into %s at %d, %d, %d", player, shown_name, x, y, z))
                 return string.format("into %s, at %d, %d, %d (%s)", shown_name, x, y, z, distance_text(p.x, p.z, x, z))
             end
@@ -769,7 +776,7 @@ tdw.on_command("tp", TP_USAGE, function(player, args)
     if x == nil then
         return "found nowhere that is " .. biome.name
     end
-    drop(player, rec, x, z)
+    drop(player, rec, x, z, true)
     game.log(string.format("tiamat_default_world: %s teleported to %s at %d, %d", player, biome.name, x, z))
     return string.format("to %s, at %d, %d (%s)", biome.name, x, z, distance_text(p.x, p.z, x, z))
 end)

@@ -699,6 +699,9 @@ local function pick(player, cx, cy, cz)
     picks[key] = (picks[key] or 0) + 1
     local count = 1 + (hash(cx, cy + picks[key], cz) % 2)
     game.give(player, { material = blocks.rose, count = count })
+    -- The pick has a sound of its own (2026-09-24): a soft peel-and-cut at
+    -- the bush, so a neighbour hears it from the right side.
+    game.play_sound{ sound = "peel", pos = { x = cx + 0.5, y = cy + 0.5, z = cz + 0.5 }, radius = 14 }
     stats.picked = stats.picked + 1
     for _, o in ipairs(order) do
         bare[o[4]] = now + ROSE_GRACE

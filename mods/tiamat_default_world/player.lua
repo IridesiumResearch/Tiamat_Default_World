@@ -176,6 +176,12 @@ local function land(uuid, rec)
                 end
                 rec.landing = nil
                 rec.pos = landed
+                -- A /tp sky drop chimes HERE, on the ground it found, so a
+                -- neighbour hears the arrival rather than a point in the sky.
+                if rec.portal then
+                    rec.portal = nil
+                    game.play_sound{ sound = "portal", pos = landed, radius = 24, gain = 0.8 }
+                end
                 game.log(string.format("tiamat_default_world: %s landed at %d, %d, %d", uuid, x, y + 1, z))
             end
             return
@@ -221,6 +227,14 @@ tdw.on_tick(function(dt_ticks)
     for uuid, rec in pairs(online) do
         -- A move asked for during the join lands once the body exists.
         if rec.pending and game.move_player(uuid, rec.pending) then
+            -- A DIRECT jump the player asked for chimes where they arrive
+            -- (whereami sets the flag on its /tp paths). A sky drop keeps
+            -- its flag through the fall and chimes when the landing
+            -- completes below; a login's own placement never carries one.
+            if rec.portal and rec.landing == nil then
+                rec.portal = nil
+                game.play_sound{ sound = "portal", pos = rec.pending, radius = 24, gain = 0.8 }
+            end
             rec.pending = nil
         end
         if rec.landing then

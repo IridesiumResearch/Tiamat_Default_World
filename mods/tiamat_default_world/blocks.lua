@@ -20,7 +20,28 @@
 local M = {}
 
 -- Footsteps come from the core reference set: a qualified id is used as-is.
-local STEP = { step = "core:step" }
+-- **Footsteps are the world's own now** (2026-09-24, the designer's
+-- recordings): two steps, a hard and a soft, in place of core's fixture —
+-- the client plays them itself from `sounds.step`, so this is the one
+-- place a block says what it feels like underfoot. Soft ground is listed;
+-- everything else — rock, ore, wood, ice, crystal — steps hard.
+game.register_sound{ id = "step_hard", file = "sounds/step_hard.ogg", gain = 0.5, pitch_variance = 0.15 }
+game.register_sound{ id = "step_soft", file = "sounds/step_soft.ogg", gain = 0.6, pitch_variance = 0.15 }
+local STEP_HARD = { step = "step_hard" }
+local STEP_SOFT = { step = "step_soft" }
+local SOFT = {}
+for _, id in ipairs({
+    "dirt", "packed_dirt", "grass", "mud", "black_mud", "mulch", "moss",
+    "sand", "white_sand", "dark_sand", "snow", "volcanic_ash", "dried_mud",
+    "dry_clay", "wet_clay", "mycelium", "permafrost", "gravel",
+    "oak_leaves", "fir_needles", "willow_leaves", "ironwood_leaves",
+    "kapok_leaves", "juniper_needles", "apple_leaves", "apple_blossom",
+    "cherry_blossom", "cherry_leaves",
+    "birch_leaves", "mangrove_leaves", "acacia_leaves", "redwood_needles",
+    "ocean_moss", "lichen", "heather", "salt",
+}) do
+    SOFT[id] = true
+end
 
 -- Tone-only variation for rock; a hue shift for anything that grows.
 -- Doubled in both period and strength on 2026-09-10, from the window: at
@@ -40,7 +61,7 @@ local function block(id, name, description, extra)
         name = name,
         description = description,
         textures = { all = "textures/" .. id .. ".png" },
-        sounds = STEP,
+        sounds = SOFT[id] and STEP_SOFT or STEP_HARD,
     }
     if extra then
         for key, value in pairs(extra) do
