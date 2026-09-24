@@ -157,12 +157,45 @@ local function block(id, name, description, extra)
     return M[id]
 end
 
+-- Soil drinks the rain (2026-09-24; Weather ask W7, engine 2026-09-17).
+-- `absorbs` here names the ONE fluid a block takes — Weather's rainwater —
+-- which is the whole point of W7: the soil that soaks a shower must not
+-- drain the river or the sea it is the bed of, and on a world without the
+-- Weather mod the named fluid is one nobody registered, which the engine
+-- treats as one nothing drinks. Costs nothing, breaks nothing, needs no
+-- dependency: the name resolves at freeze.
+--
+-- Every entry is a DRAIN — no `becomes` — and that is not the contract's
+-- suggestion (`becomes = "tiamat_weather:damp_dirt"`): the engine refuses
+-- a `becomes` in another mod's namespace at registration (`qualify_id`;
+-- the `fluid` beside it crosses namespaces, `becomes` does not), so the
+-- contract's line would disable this whole mod at load. Filed as engine
+-- ask 43. Until it lands, the damp LOOK stays Weather's own material
+-- swap, and this is the other half the sheet asked for: a puddle on dry
+-- soil soaks in instead of standing its ninety evaporation seconds —
+-- and once Weather has swapped the surface damp, its damp block (which
+-- declares nothing) holds the puddle, so rain wets the ground first and
+-- gathers on it after, in that order, by mechanism rather than by tuning.
+--
+-- The rate is cells per fluid tick, so against a three-cell puddle every
+-- rate below reads as "gone at a touch"; the grading shows against real
+-- water — a flood, a broken bank: sand swallows it fastest, a packed
+-- trail slowest, which is why trails puddle first. Mud and black mud
+-- drink for ever ("deep sucking puddles"): they are their own saturated
+-- end state, and the standing water of a fen is the placed pools, not
+-- the rain. Dried mud is left out on purpose — hardpan sheds, and the
+-- badlands' rain reward is water standing on the plates — and so are
+-- gravel and every rock: puddles are for the ground that holds them.
+local function drinks(rate)
+    return { rate = rate, fluid = "tiamat_weather:rainwater" }
+end
+
 -- Surface ---------------------------------------------------------------
 block("stone", "Stone", "The body of the world.", { hardness = 1.5, tint = ROCK })
-block("dirt", "Dirt", "Ground with no biome claim on it yet.", { hardness = 0.5, tint = SOIL })
-block("packed_dirt", "Packed dry dirt", "A game trail; a bared crest.", { hardness = 0.7, tint = SOIL })
+block("dirt", "Dirt", "Ground with no biome claim on it yet.", { hardness = 0.5, tint = SOIL, absorbs = drinks(3) })
+block("packed_dirt", "Packed dry dirt", "A game trail; a bared crest.", { hardness = 0.7, tint = SOIL, absorbs = drinks(1) })
 block("grass", "Grass", "Temperate turf.", { hardness = 0.5, tint = GREEN })
-block("mud", "Mud", "The floor of a pool.", { hardness = 0.4, tint = SOIL })
+block("mud", "Mud", "The floor of a pool.", { hardness = 0.4, tint = SOIL, absorbs = drinks(3) })
 block("gravel", "Gravel", "Loose gravel: creek beds, moraine, shingle, frost-sorted troughs.", { hardness = 0.6, tint = ROCK })
 block("granite", "Granite", "Weathered, grey, speckled.", { hardness = 2.0, tint = ROCK })
 block("oak_log", "Oak log", "Trunk of a temperate oak.", { hardness = 1.0, tint = SOIL })
@@ -272,7 +305,7 @@ local YELLOW_GREEN = { strength = 0.22, scale = 160, low = { 0.92, 1.0, 0.62 }, 
 -- on block by the scatter; a card block holds three cells of its
 -- twenty-seven, so the sea fill puts water round it and it sways in the
 -- sea rather than in a bubble.
-block("sand", "Sand", "The shelf's floor, and the drifts along the beaches.", { hardness = 0.4, tint = SOIL })
+block("sand", "Sand", "The shelf's floor, and the drifts along the beaches.", { hardness = 0.4, tint = SOIL, absorbs = drinks(6) })
 block("ocean_moss", "Ocean moss", "A thin dark coat on the wave-scoured rock flats.", { hardness = 0.3, tint = COLD_GREEN })
 block("barnacles", "Barnacles", "A pale crust on the rock flats and the wave-rounded boulders.", { hardness = 0.6, tint = ROCK })
 block("seagrass", "Seagrass", "Two to four blocks of it, swaying with the current.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
@@ -298,7 +331,7 @@ block("wild_mint", "Wild mint", "Low, soft, and everywhere the bank is damp.", {
 -- `oak_log` and `fern`, and the hanging vines `climbing_ivy`.
 local EMERALD = { strength = 0.24, scale = 160, low = { 0.78, 1.0, 0.82 }, high = { 0.90, 1.0, 0.88 } }
 block("moss", "Moss", "A thick wet coat over the rainforest floor, and over nearly every stone in it.", { hardness = 0.3, tint = EMERALD })
-block("black_mud", "Black mud", "Deep sucking puddles of it in the hollows and the sinkholes.", { hardness = 0.4, tint = SOIL })
+block("black_mud", "Black mud", "Deep sucking puddles of it in the hollows and the sinkholes.", { hardness = 0.4, tint = SOIL, absorbs = drinks(3) })
 block("ironwood_log", "Ironwood log", "A megatree's trunk: dark, dense, nearly as hard as stone.", { hardness = 2.2, tint = SOIL })
 block("ironwood_leaves", "Ironwood leaves", "The high canopy, dark and layered.", { hardness = 0.2, tint = EMERALD, cutout = true, sway = true, light_falloff = 5 })
 block("ironwood_planks", "Ironwood planks", "Heavy red-brown boards cut from an ironwood.", { hardness = 1.8, tint = SOIL })
@@ -406,7 +439,7 @@ block("glow_cap", "Glow caps", "Small pale mushrooms that glow blue-green after 
 -- and the anemones are what the brief's flats and drop-off walls are made
 -- of and nothing already registered stands in for them. The gravel is the
 -- coast's `gravel`, the pumice the Ember Ridge's.
-block("white_sand", "White sand", "Fine coral sand, almost white; the lagoon's flats and its sandspits.", { hardness = 0.4, tint = SOIL })
+block("white_sand", "White sand", "Fine coral sand, almost white; the lagoon's flats and its sandspits.", { hardness = 0.4, tint = SOIL, absorbs = drinks(6) })
 block("calcite", "Calcite", "The reef's own rock: pale, hard, full of old coral.", { hardness = 1.1, tint = ROCK })
 block("pink_algae", "Pink algae", "Vibrant coralline crust over the reef rock.", { hardness = 0.4, tint = { strength = 0.14, scale = 96 } })
 block("coral_magenta", "Magenta coral", "Elkhorn branches in vivid magenta.", { hardness = 0.6, tint = { strength = 0.14, scale = 96 } })
@@ -457,7 +490,7 @@ block("acacia_leaves", "Acacia leaves", "Small olive leaves in flat spreading pa
 block("reeds", "Reeds", "Tall reeds with brown plumes, standing in the shallows.", { hardness = 0.1, tint = { strength = 0.12, scale = 64 }, passable = true, sway = true, billboard = "cross" })
 block("redwood_log", "Redwood log", "Thick, soft, deeply furrowed red bark.", { hardness = 2.0, tint = { strength = 0.08, scale = 96 } })
 block("redwood_needles", "Redwood needles", "Flat sprays of dark needles, high overhead.", { hardness = 0.2, tint = { strength = 0.12, scale = 64 }, cutout = true, sway = true, light_falloff = 2 })
-block("dark_sand", "Dark sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 } })
+block("dark_sand", "Dark sand", "Basalt ground to sand by the surf, glittering with glass.", { hardness = 0.5, tint = { strength = 0.08, scale = 96 }, absorbs = drinks(6) })
 
 -- Water: the block a full block of the fluid is drawn as, and the fluid.
 block("water", "Water", "Drawn wherever water is. Not something you place.",

@@ -33,6 +33,17 @@ addressed by `SUMMARY_RULE = 2`; **11**, an item dropped at a position —
 answered on 2026-09-11: `game.spawn_entity{ item = stack }` is the mechanism
 and `core_gear` the worked example. It should not have been carried as open.*
 
+*Filed 2026-09-24 on the engine's sheet: **43**, `absorbs.becomes` may not
+name another mod's block — `qualify_id` refuses a foreign namespace at
+registration, so the exports contract's suggested `becomes =
+"tiamat_weather:damp_dirt"` would have disabled this mod at load; the
+`fluid` beside it already crosses namespaces, resolved at freeze.
+Meanwhile the mod takes up Weather ask W7 the way that IS expressible
+(blocks.lua, this date): seven soils drink `tiamat_weather:rainwater` and
+nothing else, as drains — dirt, packed dirt, the sands and the muds — so
+a puddle soaks into dry ground, no river or sea is drunk by its own bed,
+and the damp look stays Weather's material swap until 43 lands.*
+
 *Filed 2026-09-22 on the engine's sheet: **38**, a fluid that does not wash
 plants away (the Weather mod's rainwater sweeps tufts once `washes_away`
 is on every passable plant).*

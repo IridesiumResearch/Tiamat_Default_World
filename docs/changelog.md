@@ -3857,3 +3857,42 @@ Checked: `--check-mods` — 13 mods, all sounds registered, no warnings.
 What only ears can check: the mix. Every gain is one constant
 (sounds.lua GAIN, the per-file gains in blocks.lua), tuned for a first
 listen, expecting the designer's second.
+
+## 2026-09-24
+
+### Soil drinks the rain (Weather ask W7 taken up)
+
+The weather sheet's W7 row has said since 2026-09-17 that "the block that
+would drink rainwater is the Spindle's dirt, so it is the Spindle's to
+declare" — and nothing here declared it, so Weather's rain puddles only
+ever evaporated. Now (blocks.lua) seven soils declare `absorbs` with
+`fluid = "tiamat_weather:rainwater"`: **dirt** at rate 3, **packed_dirt**
+at 1, **sand**, **white_sand** and **dark_sand** at 6, **mud** and
+**black_mud** at 3. Naming the fluid is the whole of W7 — the soil that
+soaks a shower does not drain the river or sea it is the bed of, and on a
+world without Weather the name resolves to nothing and nothing drinks, so
+there is no dependency and no cost. Rock, gravel and dried mud stay dry
+by choice: puddles standing on hardpan and shingle is the reading.
+
+What a player sees, in order and by mechanism: rain soaks into dry soil
+at a touch (any rate empties a 3-cell puddle inside a fluid tick, against
+one cell per 30 s of evaporation); Weather's own sampler swaps the wetted
+surface to its damp block; the damp block declares no `absorbs`, so from
+then on puddles stand and outlast the shower. The rate grading (sand 6,
+dirt 3, trail 1) only shows against real water — a flood drains through a
+beach and lingers on a trail.
+
+**Every entry is a drain — no `becomes` — and not by preference.** The
+exports contract's suggested `becomes = "tiamat_weather:damp_dirt"` is
+refused by the engine at registration: `qualify_id` allows no foreign
+namespace on `becomes` (the `fluid` beside it crosses namespaces,
+resolved at freeze; `becomes` does not), and the refusal is an error that
+would have disabled this whole mod at load. Filed as engine ask **43**,
+with a warning for whoever lands it: the engine's soak swap keeps a
+partial block's shape, and Weather's drying (sampler and random tick
+both) skips partial blocks, so a cross-mod `becomes` today would strand
+permanent damp on every smooth slope. Drains change no material, so they
+dodge that entirely.
+
+Checked: `--check-mods` over the engine's `game/` with this tree overlaid
+— 13 mods, no errors, no warnings.
