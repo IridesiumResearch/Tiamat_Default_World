@@ -493,5 +493,17 @@ built one at a time in its own file. Built so far:
 
 ## Licence
 
-GPL-3.0-only, © Iridesium. Everything under `stubs/` and `AGENTS.md` is MIT,
-vendored from the engine's `api/`.
+GPL-3.0-only, © Iridesium, with an Additional Permission under GPLv3 §7 in
+`LICENSE.EXCEPTION` (version 1.0, 24 September 2026): a mod that interacts
+with Tiamat Default World only through its exports, the engine's scripting API
+or the network protocol is an independent work and may be licensed however
+its author likes. Copying or adapting this mod's code or assets is not
+covered by that permission and stays under the GPL. `docs/exports.md`
+lists the exports; the engine's `MOD-LICENSING.md` has the plain-language
+version and a matrix of what needs which permission. This repository contains
+no third-party assets: every texture and sound is Iridesium's own work and is
+GPL-3.0-only like the code. Contributions are taken under the Developer
+Certificate of Origin with authors retaining copyright; see `CONTRIBUTING.md`.
+
+Everything under `stubs/` and `AGENTS.md` is MIT, vendored from the engine's
+`api/`.
