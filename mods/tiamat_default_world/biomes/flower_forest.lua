@@ -376,11 +376,87 @@ tdw.build_biome(ID, function(ctx)
     -- and it poured out where the detail dipped). The bed under it is the
     -- pebbles of code 4, and the banks are grass — no channel is cut for
     -- it, which is the brief's "no shear cuts".
+    --
+    -- **`within` reads no height** (2026-09-23), the river's treatment
+    -- (river_valleys.lua). The engine reads a terraced fill's fields on the
+    -- one plane y = 0.5 for the whole world, and since engine ask 35 a
+    -- `within` whose bounds disagree between that plane and the chunk's
+    -- slab is an ERROR — the guard (hooks.lua) takes it as "no water
+    -- here", and a brook chunk skipped dry. The gully term was the worst
+    -- reader of the lot: the gully noise is 3D and unstretched, so tens of
+    -- thousands of blocks down on that plane it draws a DIFFERENT set of lines
+    -- than the ground carries, and a brook held water only where the two
+    -- patterns happened to cross. It is dropped, and exactly: the level is
+    -- the ground plus GULLY_DEPTH * (gully - BROOK_AT), so there is room
+    -- under it precisely where the gully the TERRAIN carries is deeper
+    -- than BROOK_AT — the channel bounds its own water by construction,
+    -- and the within's copy of that test only ever said it again, at the
+    -- wrong altitude.
+    --
+    -- "The terrain carries the gully" is that proof's whole load, and
+    -- two grounds do NOT carry it, so the within takes a flat term for
+    -- each. In a river valley the terrain is min'd with the trough — the
+    -- smooth height less the valley's depth, no gully term — yet the
+    -- level still restores the full cut, so along every gully line
+    -- crossing a valley slope the brook stood up to GULLY_DEPTH * (1 -
+    -- BROOK_AT), 0.65 blocks, proud of ground that has no channel:
+    -- partial blocks, spills by the fluid contract, woken on load and
+    -- running downhill — the exact fault `gully_water_level` was built
+    -- to end. The course is kept out to the rim (its contour reads x and
+    -- z alone), as the cover and the stands already keep off it. And
+    -- within the coast's reach the shore programs lift low ground to the
+    -- water's plane (`seas.floor`), erasing channels the level then
+    -- re-cuts, so in a "_shore" program the brooks stop over the floor
+    -- clamp's whole reach (PLAIN_W + FADE) rather than the 20-block hem
+    -- — the sea map reads x and z alone too.
+    --
+    -- What stays reads x and z alone, or the flat-stretched hair the
+    -- volcanic lava keeps (volcanic_foothills.lua): bands on the TRUE
+    -- radius for the catalogue's two spans, the smooth humidity, the
+    -- province noise and the sea map. Each band takes the wobble's whole
+    -- reach (u_biome = u * (1 ± SHARE)) on the side whose programs carry
+    -- the temperate pair at full strength — the ember side of the
+    -- temperate ring, the verdant side of the Long Shore — since a brook
+    -- past the line there still runs in a real channel; and stops where
+    -- the ring surely begins on the side the pair fades out — under the
+    -- cold terms at the frost edge, under the tundra's across the Hem's
+    -- blend — where a channel the terrain no longer cuts would stand its
+    -- water proud. The humidity is the smooth field at the bare split, in
+    -- place of `humidity_mask`, whose dither is an UNSTRETCHED noise — at
+    -- the slice it was speckle from nowhere. A brook proud of its banks
+    -- needs the pair under 0.26 of full strength (gully * (1 - pair) >
+    -- BROOK_AT), and at the bare split the pair still stands at half:
+    -- nothing perches.
     local level = shape.gully_water_level(BROOK_AT)
+    local within
+    if tdw.config.everywhere then
+        within = n.const(1.0)
+    else
+        local SHARE = shape.RING_WOBBLE_SHARE
+        local function flat_band(lo, hi)
+            local mid, half = (lo + hi) / 2, (hi - lo) / 2
+            return n.sub(n.const(half), n.abs(n.sub(shape.sub.u(), n.const(mid))))
+        end
+        local t, sh = tdw.layers.ring_by_id.temperate, tdw.layers.ring_by_id.shore
+        within = n.max(flat_band(t.u[1] / (1.0 - SHARE), t.u[2] / (1.0 - SHARE)),
+            flat_band(sh.u[1] / (1.0 + SHARE), sh.u[2] / (1.0 + SHARE)))
+        within = n.min(within, n.sub(shape.humidity(), n.const(shape.HUMIDITY_SPLIT)))
+        within = n.min(within, shape.province_mask("b", 0.383))
+    end
+    if shape.river_exclude then
+        within = shape.river_exclude(within, (shape.RIVER_RIM or 150) + 4)
+    end
+    if shape.sea_exclude then
+        local inset = 20.0
+        if tdw.seas and tdw.seas.on() and shape.terrain_mode and shape.terrain_mode:find("_shore", 1, true) then
+            inset = (tdw.seas.PLAIN_W or 130.0) + (tdw.seas.FADE or 900.0)
+        end
+        within = shape.sea_exclude(within, inset)
+    end
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.flowers.brook_level", level),
-        within = shape.compile("biome.flowers.brook_within", masked(n.sub(gully(), n.const(BROOK_AT + 0.02)))),
+        within = shape.compile("biome.flowers.brook_within", within),
     }
     return fills
 end)

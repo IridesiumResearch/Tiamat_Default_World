@@ -86,10 +86,12 @@ end
 local function gate(stream, freq, min, edge)
     return n.clamp(n.mul(n.sub(n.noise(stream, freq, 1, 1.0), n.const(min)), n.const(edge)), 0.0, 1.0)
 end
--- Two noises both over `min`: rare, round-ish, steep-sided.
-local function both(stream, freq, min, edge)
-    return n.clamp(n.mul(n.min(n.sub(n.noise(stream, freq, 2, 1.0), n.const(min)),
-        n.sub(n.noise(stream .. "_b", freq, 2, 1.0), n.const(min))), n.const(edge)), 0.0, 1.0)
+-- Two noises both over `min`: rare, round-ish, steep-sided. `stretch` is
+-- for the one weight the brine's `within` reads (the pools, below);
+-- everything else leaves it out and stays 3D.
+local function both(stream, freq, min, edge, stretch)
+    return n.clamp(n.mul(n.min(n.sub(n.noise(stream, freq, 2, 1.0, stretch), n.const(min)),
+        n.sub(n.noise(stream .. "_b", freq, 2, 1.0, stretch), n.const(min))), n.const(edge)), 0.0, 1.0)
 end
 local function guyot_w()
     return n.clamp(n.mul(n.sub(n.noise("oc_guyot", GUYOT_FREQ, 2, 1.0), n.const(GUYOT_MIN)), n.const(GUYOT_EDGE)), 0.0, 1.0)
@@ -97,15 +99,43 @@ end
 local function ridge_w()
     return n.clamp(n.mul(n.add(n.contour("oc_ridge", RIDGE_FREQ, 2), n.const(-RIDGE_W)), n.const(-1.4 / RIDGE_W)), 0.0, 1.0)
 end
+-- The trench's line on its own, split out (2026-09-23) for the brine's
+-- `within`: a contour reads x and z alone, where the segment gate is an
+-- unstretched noise the world plane must not read.
+local function trench_line()
+    return n.clamp(n.mul(n.add(n.contour("oc_trench", TRENCH_FREQ, 2), n.const(-TRENCH_W)), n.const(-1.0 / TRENCH_WALL)), 0.0, 1.0)
+end
 local function trench_w()
-    local line = n.clamp(n.mul(n.add(n.contour("oc_trench", TRENCH_FREQ, 2), n.const(-TRENCH_W)), n.const(-1.0 / TRENCH_WALL)), 0.0, 1.0)
-    return n.mul(line, gate("oc_trench_seg", TRENCH_SEG_FREQ, TRENCH_SEG_MIN, 6.0))
+    return n.mul(trench_line(), gate("oc_trench_seg", TRENCH_SEG_FREQ, TRENCH_SEG_MIN, 6.0))
 end
 local function pillar_w()
     return both("oc_pillar", PILLAR_FREQ, PILLAR_MIN, PILLAR_EDGE)
 end
+-- The brine pools' weight, and **FLAT in y since 2026-09-23**: the
+-- brine's `within` mins this in, and a terraced fill's `within` is read
+-- on the one plane y = 0.5 for the whole world (engine ask 35; the
+-- write-up is at the fill below) — an unstretched noise is a DIFFERENT
+-- field down there, and the brine found its pools only by coincidence.
+-- Flat, the floor's hollow, the salt crust of code 7 and the brine all
+-- read ONE set of pools at every height. A world generated before this
+-- has its pools elsewhere on the same seed; their size, depth and count
+-- do not move.
+--
+-- The stretch is the POOL gates' OWN, not HUMIDITY_STRETCH: x1000 retires
+-- height against fields of the humidity's scale (1/9000), and a sea
+-- floor still stands well over ten thousand blocks above the slice (Y0
+-- alone is 11,000), so after the division this 1/110 pair still read the
+-- slice a quarter of a feature from where the floor and the crust read
+-- it — half a feature at the second octave. One set of pools, read from
+-- two places: the ask-35 fault reduced rather than fixed. At x1e6 the
+-- offset is under a thousandth of a feature at any height the world has.
+-- Shared with the Geyser Basin's and the Salt Pan's gates — the `or`
+-- keeps the three declarations one table. Pools move once more on
+-- existing seeds, the trade the x1000 change already accepted.
+shape.POOL_GATE_STRETCH = shape.POOL_GATE_STRETCH or { y = 1e6 }
+local FLAT = shape.POOL_GATE_STRETCH
 local function pool_w()
-    return both("oc_pool", POOL_FREQ, POOL_MIN, POOL_EDGE)
+    return both("oc_pool", POOL_FREQ, POOL_MIN, POOL_EDGE, FLAT)
 end
 -- The distance to a crack's line, blocks, and whether this stretch of it is live.
 local function crack_d()
@@ -390,11 +420,28 @@ tdw.build_biome(ID, function(ctx)
     -- The brine pools: a second fluid, laid per column a block and a bit
     -- under the plain's surface, inside the pool and nowhere a trench runs.
     -- After the sea, whose water it takes the place of.
+    --
+    -- **`within` reads no height** (2026-09-23; engine ask 35 — the guard
+    -- in hooks.lua took the error as "no brine here", a chunk at a time).
+    -- The zone was always flat: the sea's distance is a map and the
+    -- Trench's province a flat-stretched noise, the hair the volcanic lava
+    -- keeps. The two readers were this fill's own: the pool weight, an
+    -- unstretched pair of noises, is flat now (`pool_w`, above) so the
+    -- gate opens over the hollows the floor actually holds; and the trench
+    -- term's SEGMENT gate is out — the exclusion is the whole line
+    -- (`trench_line`), live stretches and dead, because at y = 0.5 the
+    -- gate answered for the wrong stretches anyway. The cost is named: a
+    -- pool the line crosses on a DEAD stretch loses its brine in that
+    -- band, where the live stretches always took it — the dry side of the
+    -- old coin. The crack cuts need nothing here: they run five blocks
+    -- deep, under the level, but only inside a gate-open pool spot is
+    -- there a `within` to admit them, which is what the 0.05 threshold
+    -- always meant.
     fills[#fills + 1] = {
         fluid = "tiamat_default_world:brine",
         level = shape.compile("biome.ocean.brine_level", n.add(n.mul(n.add(n.add(plain(), n.noise("oc_undulate", UNDULATE_FREQ, 2, UNDULATE_AMP)),
             seas.level()), n.const(1000.0)), n.const(shape.Y0 - 1.2))),
-        within = shape.compile("biome.ocean.brine_within", masked(n.min(n.sub(pool_w(), n.const(0.05)), n.sub(n.const(0.05), trench_w())))),
+        within = shape.compile("biome.ocean.brine_within", masked(n.min(n.sub(pool_w(), n.const(0.05)), n.sub(n.const(0.05), trench_line())))),
     }
     return fills
 end)

@@ -218,11 +218,52 @@ tdw.build_biome(ID, function(ctx)
     end
     -- Dark water in the gullies' deepest reaches, as the Flower Forest's
     -- brooks: most of the gully's depth under the ground beside it.
+    --
+    -- **`within` reads no height** (2026-09-23): the Flower Forest's
+    -- write-up (flower_forest.lua) is this fill's too, term for term —
+    -- same spans, same wet half, and the gully term dropped for the same
+    -- exact reason: the level is the ground plus GULLY_DEPTH * (gully -
+    -- BROOK_AT), so the room under it IS the test the term restated on
+    -- the plane y = 0.5, where an unstretched noise is a different set of
+    -- lines (engine ask 35; the guard is in hooks.lua). Only the province
+    -- differs: the moor is side "b" from the line to 0.383, the forest
+    -- past it, so the two brooks meet at smooth lines a flat-stretched
+    -- hair wide and their levels differ by a twentieth of a block. The
+    -- river and coast terms are the forest's too: a river trough and the
+    -- coast's lifted floor carry no gully for the level to restore (up
+    -- to GULLY_DEPTH * (1 - BROOK_AT), 0.6 blocks, stood proud there),
+    -- so the course is kept out to the rim and a "_shore" program stops
+    -- the brooks over the floor clamp's whole reach (PLAIN_W + FADE).
     local level = shape.gully_water_level(BROOK_AT)
+    local within
+    if tdw.config.everywhere then
+        within = n.const(1.0)
+    else
+        local SHARE = shape.RING_WOBBLE_SHARE
+        local function flat_band(lo, hi)
+            local mid, half = (lo + hi) / 2, (hi - lo) / 2
+            return n.sub(n.const(half), n.abs(n.sub(shape.sub.u(), n.const(mid))))
+        end
+        local t, sh = tdw.layers.ring_by_id.temperate, tdw.layers.ring_by_id.shore
+        within = n.max(flat_band(t.u[1] / (1.0 - SHARE), t.u[2] / (1.0 - SHARE)),
+            flat_band(sh.u[1] / (1.0 + SHARE), sh.u[2] / (1.0 + SHARE)))
+        within = n.min(within, n.sub(shape.humidity(), n.const(shape.HUMIDITY_SPLIT)))
+        within = n.min(within, n.min(shape.province_mask("b"), shape.province_mask("a", 0.383)))
+    end
+    if shape.river_exclude then
+        within = shape.river_exclude(within, (shape.RIVER_RIM or 150) + 4)
+    end
+    if shape.sea_exclude then
+        local inset = 20.0
+        if tdw.seas and tdw.seas.on() and shape.terrain_mode and shape.terrain_mode:find("_shore", 1, true) then
+            inset = (tdw.seas.PLAIN_W or 130.0) + (tdw.seas.FADE or 900.0)
+        end
+        within = shape.sea_exclude(within, inset)
+    end
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.heather.brook_level", level),
-        within = shape.compile("biome.heather.brook_within", masked(n.sub(gully(), n.const(BROOK_AT + 0.02)))),
+        within = shape.compile("biome.heather.brook_within", within),
     }
     return fills
 end)

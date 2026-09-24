@@ -399,9 +399,25 @@ function M.fill(buf, pos)
     -- and the sea stood against it as a wall of water, up to sixteen blocks
     -- tall. Water goes only where there is room under the level, so past
     -- the line it fills that and nothing on dry land.
+    --
+    -- **The MAP's distance, not `M.d()`** (2026-09-23). The engine reads a
+    -- terraced fill's `within` on the one plane y = 0.5 for the whole
+    -- world, and since engine ask 35 a field that answers differently over
+    -- a chunk than on that plane is an ERROR — which the guard (hooks.lua)
+    -- takes as "no water here", a whole chunk at a time: the patchy dry
+    -- squares in the sea. `M.d()` was the reader: its two fine noises are
+    -- unstretched and three-dimensional, ±14.5 blocks of height in a field
+    -- that must not read any. The map reads none. Nothing moves at the
+    -- shoreline, because the fine detail never decided it: the water takes
+    -- the room the terrain leaves under the level, and the face and the
+    -- shelf still read `M.d()`, so the bites and crenellations stay in the
+    -- ground the water fills. The noises only wobbled where `within` runs
+    -- out, WATER_INLAND blocks behind the line — that cut-off is the map's
+    -- smooth line now, so a sea cave within ±14 blocks of it may hold
+    -- water where it was dry, or stand dry where it held some.
     FLUID = FLUID or {
         level = shape.compile("sea.level", M.fluid_level()),
-        within = shape.compile("sea.within", n.add(M.d(), n.const(M.WATER_INLAND))),
+        within = shape.compile("sea.within", n.add(M.d_map(), n.const(M.WATER_INLAND))),
     }
     -- The pack's ice first (biomes/pack_ice.lua): the water takes the room
     -- it leaves.

@@ -44,8 +44,34 @@ end
 local function basin_w()
     return n.clamp(n.mul(n.add(n.noise("gb_basin", BASIN_FREQ, 2, 1.0), n.const(0.1)), n.const(4.0)), 0.0, 1.0)
 end
+-- The pools' weight, and **FLAT in y since 2026-09-23**: the water's
+-- `within` mins this in, and a terraced fill's `within` is read on the
+-- one plane y = 0.5 for the whole world (engine ask 35; the write-up is
+-- at the fill below) — an unstretched noise is a DIFFERENT field down
+-- there, and the water found its pools only by coincidence. Flat, the
+-- sinter floor, the mats' halo, the cones' stand and the water all read
+-- ONE set of pools at every height. A world generated before this has its
+-- pools elsewhere on the same seed; their size, depth and count do not
+-- move. The basin, dam, mound and undulation noises stay 3D: nothing but
+-- the terrain reads them, and the terrain may read height.
+--
+-- The stretch is the POOL gates' OWN, not HUMIDITY_STRETCH: x1000 retires
+-- height against fields of the humidity's scale (1/9000), and the ground
+-- here stands ~28,000 blocks over the slice (Y0 is 11,000 and the dome
+-- carries the rest), so after the division this 1/45 gate still read the
+-- slice ~0.64 of a feature from where the terrain, the codes and the
+-- stands read it — one set of pools, read from two places, and the
+-- ask-35 fault reduced rather than fixed. At x1e6 the offset is under a
+-- thousandth of a feature at any height the world has: flat where it
+-- counts, and still comfortable in f32 (coordinates stay under 0.03
+-- after the division). Shared with the Salt Pan's and the Deep Ocean's
+-- gates — the `or` keeps the three declarations one table. Pools move
+-- once more on existing seeds, the trade the x1000 change already
+-- accepted.
+shape.POOL_GATE_STRETCH = shape.POOL_GATE_STRETCH or { y = 1e6 }
+local FLAT = shape.POOL_GATE_STRETCH
 local function pool_w()
-    return clamp01(n.noise("gb_pool", POOL_FREQ, 1, 1.0), POOL_MIN, POOL_EDGE)
+    return clamp01(n.noise("gb_pool", POOL_FREQ, 1, 1.0, FLAT), POOL_MIN, POOL_EDGE)
 end
 local function dam_w()
     return n.clamp(n.add(n.mul(n.contour("gb_dam", DAM_FREQ, 1), n.const(-1.0 / DAM_W)), n.const(1.0)), 0.0, 1.0)
@@ -187,12 +213,62 @@ tdw.build_biome(ID, function(ctx)
     -- fluid fill. The level follows the basin's own terms at the ridge's
     -- weight; the ring's small gullies are not in it, so a pool is a block
     -- deeper or shallower than its neighbour.
+    --
+    -- **`within` rides no wobbled radius** (2026-09-23), the lava's
+    -- treatment (volcanic_foothills.lua). The engine reads a terraced
+    -- fill's fields on the one plane y = 0.5, and since engine ask 35 a
+    -- `within` whose bounds disagree between that plane and the chunk's
+    -- slab is an ERROR — the guard (hooks.lua) takes it as "no water
+    -- here", and a pool chunk skipped dry. `masked()` carried the readers:
+    -- the band on the WOBBLED radius and `humidity_mask`'s unstretched
+    -- dither — and the pool gate itself was a 3D noise, now flat
+    -- (`pool_w`, above). The band here is on the TRUE radius, and it is
+    -- the WEIGHT'S support, not the catalogue ring: the ring's outer
+    -- edge (u 0.1764) runs 0.012 past where the fade dies (EMBER_OUT_U),
+    -- and "past the edges the weight is spent" bounds nothing there —
+    -- with the weight spent the level is relief + dome less a block, but
+    -- the GROUND is not relief + dome: it carries the world's ±3 blocks
+    -- of detail, the temperate pair's 2.5-block gullies and the river
+    -- troughs, none of which are in the level, so the weight-zero
+    -- annulus ponded one to three blocks deep in every dip a flat pool
+    -- spot crossed. A pool proper needs pool_w * weight > 0.4 (its cut,
+    -- POOL_D * pool_w * weight, against the level's POOL_D - POOL_FILL
+    -- stand-off), so nothing legitimate lies outside the fade's support
+    -- [EMBER_U[1] - EMBER_BLEND_U / 2, EMBER_OUT_U] and the tighter edge
+    -- costs nothing dry; each end still takes the wobble's whole reach
+    -- (u_biome = u * (1 ± SHARE)). The river troughs are the one cut
+    -- inside the band the level does not know: cut from the SMOOTH
+    -- height, no detail and no geyser terms, so the course is kept out
+    -- to the rim besides, on its own flat contour. The humidity is the
+    -- smooth field at the bare split, slack for the same reason as ever:
+    -- the Basin's terms fade to the Barrens' across it (shape.lua), and
+    -- a half-weight cut barely reaches the level. Residue, the lava's
+    -- own trade: in the wobble's fringe, or a hair past the split, a
+    -- flat-pool centre crossing a hollow of the temperate pair or a cut
+    -- of the Waste's can keep a film under a cell deep — the opposite
+    -- fault to a dry basin.
     local terms = n.mul(n.sub(undulate(), n.mul(basin_w(), n.const(BASIN_D))), shape.ember_weight())
+    local within = n.sub(pool_w(), n.const(0.75))
+    if not tdw.config.everywhere then
+        local SHARE = shape.RING_WOBBLE_SHARE
+        local band_lo = (shape.EMBER_U[1] - shape.EMBER_BLEND_U / 2) / (1.0 + SHARE)
+        local band_hi = shape.EMBER_OUT_U / (1.0 - SHARE)
+        local band_mid, band_half = (band_lo + band_hi) / 2, (band_hi - band_lo) / 2
+        within = n.min(within, n.sub(n.const(band_half), n.abs(n.sub(shape.sub.u(), n.const(band_mid)))))
+        within = n.min(within, n.sub(shape.humidity(), n.const(shape.HUMIDITY_SPLIT)))
+        within = n.min(within, shape.province_mask("b"))
+    end
+    if shape.river_exclude then
+        within = shape.river_exclude(within, (shape.RIVER_RIM or 150) + 4)
+    end
+    if shape.sea_exclude then
+        within = shape.sea_exclude(within, 20.0)
+    end
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.geyser.pool_level", n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()), terms),
             n.const(1.0 / shape.SCALE)), n.const(shape.Y0 + (POOL_FILL - POOL_D) / shape.SCALE))),
-        within = shape.compile("biome.geyser.pool_within", masked(n.sub(pool_w(), n.const(0.75)))),
+        within = shape.compile("biome.geyser.pool_within", within),
     }
     return fills
 end)

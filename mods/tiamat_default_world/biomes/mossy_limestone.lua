@@ -259,33 +259,40 @@ tdw.cave_biome(ID, { 0.0, 0.15 }, function(ctx)       -- -0.12..0.14 at first; a
             n.mul(n.noise("ml_gravel", GRAVEL_FREQ, 1, 1.0), n.const(0.4))))))
     local lily = ctx.compile("lily", ctx.variant(n.min(in_basin,
         n.sub(dg_lily, n.const(DG_LILY_MIN)))))
+    -- The carve AFTER the lining and the veins (2026-09-23): the vein
+    -- field no longer cuts the void out of itself, so the carve's air —
+    -- which evaluates anyway — clears every vein cell inside it
+    -- (caves.lua, `vein_fill`). The lining paints only into rock, and the
+    -- covers below stand on the floors the carve opens. Each replaced or
+    -- replacing cover carries its dressing's `side` tag too, so a chunk
+    -- clear of the variant line skips the far side's fills whole.
     local fills = {
-        { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        ctx.caves.vein_fill(ctx, void, 0.0),          -- the crystal veins through the rock (caves.lua)
-        { cover = blocks.maidenhair, cells = 3, take = fern },
-        { cover = blocks.ladys_mantle_bloom, cells = 2, take = orchid },
-        { cover = blocks.monstera, cells = 2, take = broadleaf },
-        { cover = blocks.water_iris, cells = 3, take = pad },
-        { cover = blocks.glow_polyp, cells = 2, take = lily },
+        ctx.caves.vein_fill(ctx, 0.0),                -- the crystal veins through the rock (caves.lua)
+        { carve = carve },
+        { cover = blocks.maidenhair, cells = 3, take = fern, side = "base" },
+        { cover = blocks.ladys_mantle_bloom, cells = 2, take = orchid, side = "variant" },
+        { cover = blocks.monstera, cells = 2, take = broadleaf, side = "variant" },
+        { cover = blocks.water_iris, cells = 3, take = pad, side = "variant" },
+        { cover = blocks.glow_polyp, cells = 2, take = lily, side = "variant" },
     }
     if game.schematic_shapes then
         local built = structures()
         -- The vines hang from the ceiling: the depth positive in the VOID,
         -- so the crossing the engine stamps at is rock over air. Base side:
         -- the Grotto hangs its own.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.vines, cell = VINE_CELL, chance = VINE_SQUARES, salt = 401, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.vines, cell = VINE_CELL, chance = VINE_SQUARES, salt = 401, sink = 0, side = "base",
             stand = ctx.compile("stand_vine", ctx.base(n.sub(n.noise("ml_crevice", 1 / 6, 1, 1.0), n.const(0.15)))) }
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.boulders, cell = BOULDER_CELL, chance = BOULDER_SQUARES, salt = 402, sink = 1,
             stand = ctx.compile("stand_boulder", ctx.mine(n.sub(n.noise("ml_boulder", 1 / 15, 1, 1.0), n.const(0.1)))) }
         -- The moss: cushions where the flat cover was (the same field, now
         -- the base dressing's — the Grotto's brief replaces the moss).
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cushions, cell = CUSHION_CELL, chance = CUSHION_SQUARES, salt = 403, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cushions, cell = CUSHION_CELL, chance = CUSHION_SQUARES, salt = 403, sink = 1, side = "base",
             stand = moss }
         -- The Grotto's bead vines hang where the ivy did (`ml_crevice`
         -- reused on purpose: the ceiling's crevices do not move when the
         -- dressing does), a shade denser — the beads are the room's light.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.bead_vines, cell = DG_VINE_CELL, chance = DG_VINE_SQUARES, salt = 461, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.bead_vines, cell = DG_VINE_CELL, chance = DG_VINE_SQUARES, salt = 461, sink = 0, side = "variant",
             stand = ctx.compile("stand_bead_vine", ctx.variant(n.sub(n.noise("ml_crevice", 1 / 6, 1, 1.0), n.const(0.15)))) }
     end
     -- The basins' water: a block deep over the floor, where the basin noise

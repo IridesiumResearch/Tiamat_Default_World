@@ -262,10 +262,15 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
         { code = 2, from = 1.2, to = 2.5, material = blocks.flowstone },
         { code = 3, to = 3.0, material = blocks.calcite },
     }
+    -- The carve AFTER the lining and the veins (2026-09-23): the vein
+    -- field no longer cuts the void out of itself, so the carve's air —
+    -- which evaluates anyway — clears every vein cell inside it
+    -- (caves.lua, `vein_fill`). The lining paints only into rock; the
+    -- straws and the pools below want the void already open.
     local fills = {
-        { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        caves.vein_fill(ctx, void, 0.0),              -- the crystal veins through the rock (caves.lua)
+        caves.vein_fill(ctx, 0.0),                    -- the crystal veins through the rock (caves.lua)
+        { carve = carve },
     }
     if game.schematic_shapes then
         local built = structures()
@@ -273,36 +278,40 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
         -- Both dressings keep them — the brief replaces no straw.
         fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.straws, cell = STRAW_CELL, chance = STRAW_SQUARES, salt = 451, sink = 0,
             stand = ctx.compile("stand_straws", ctx.mine(n.sub(n.noise("sf_straws", 1 / 10, 1, 1.0), n.const(0.05)))) }
-        -- The debris only on the base's floors (ctx.base, not ctx.mine):
-        -- the variant trades its drop-zones for pools.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.debris, cell = DEBRIS_CELL, chance = DEBRIS_SQUARES, salt = 452, sink = 1,
+        -- The debris only on the base's floors (ctx.base, not ctx.mine,
+        -- and the `side` tag so a chunk clear of the line skips it —
+        -- caves.lua, "the variants"): the variant trades its drop-zones
+        -- for pools.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.debris, cell = DEBRIS_CELL, chance = DEBRIS_SQUARES, salt = 452, sink = 1, side = "base",
             stand = ctx.compile("stand_debris", ctx.base(n.const(1.0))) }
         -- The variant's second helping of straws, on the SAME sf_straws
         -- noise on purpose: a looser threshold and a fatter chance thicken
         -- the crowds AROUND the base's clumps rather than beside them, and
         -- with the cones gated off this is what "dominated by soda straws"
         -- comes out as. A fresh salt, so the passes' squares differ.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.straws, cell = STRAW_CELL, chance = WDC_STRAW_SQUARES, salt = 453, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.straws, cell = STRAW_CELL, chance = WDC_STRAW_SQUARES, salt = 453, sink = 0, side = "variant",
             stand = ctx.compile("wdc_stand_straws", ctx.variant(n.sub(n.noise("sf_straws", 1 / 10, 1, 1.0), n.const(WDC_STRAW_MIN)))) }
         -- The fabric: sheets on the ceilings, in a corridor round the SAME
         -- sf_drape zero line on purpose — that line is the ceiling's
         -- ridges, the ones the base's thin carve draperies follow, so the
         -- variant hangs its fabric along the ridges rather than anywhere
         -- the roof happens to be flat.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.draperies, cell = WDC_SHEET_CELL, chance = WDC_SHEET_SQUARES, salt = 454, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.draperies, cell = WDC_SHEET_CELL, chance = WDC_SHEET_SQUARES, salt = 454, sink = 0, side = "variant",
             stand = ctx.compile("wdc_stand_sheets", ctx.variant(n.sub(n.const(WDC_RIDGE_W), n.abs(n.noise("sf_drape", DRAPE_FREQ, 1, 1.0, FLAT))))) }
         -- The pearls, on the SAME sf_dam noise on purpose: they lie where
         -- the variant's water will stand, and the water is laid after and
         -- fills the room the beads leave, so they read as a pool bed's
         -- scatter of pearls rather than beads on dry rock.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.pearls, cell = WDC_PEARL_CELL, chance = WDC_PEARL_SQUARES, salt = 455, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.pearls, cell = WDC_PEARL_CELL, chance = WDC_PEARL_SQUARES, salt = 455, sink = 1, side = "variant",
             stand = ctx.compile("wdc_stand_pearls", ctx.variant(n.sub(n.noise("sf_dam", DAM_FREQ, 2, 1.0, FLAT), n.const(WDC_DAM_MIN)))) }
     end
     -- The rimstone pools: a block of water over each hall's floor where the
     -- dam noise says, held in by calcite lips — the dams. The floor is flat
     -- (HH under the centre), so the level is the floor's height and a block.
     -- Split by dressing (the *_flat cuts: a fluid's level and within are
-    -- read on y = 0.5): the base keeps its own threshold, and the variant
+    -- read on y = 0.5, and the `side` tags let a chunk clear of the line
+    -- lay only its own — caves.lua, "the variants"): the base keeps its
+    -- own threshold, and the variant
     -- drops its to nearly nothing — the SAME sf_dam noise, so every pool
     -- the base would have had is still a pool there and most of the floor
     -- between them is too, terraced over the scoops by the lips. One level
@@ -315,9 +324,9 @@ tdw.cave_biome(ID, { -0.15, 0.0 }, function(ctx)
             return n.min(n.sub(footprint(k), n.const(3.0)),
                 n.sub(n.noise("sf_dam", DAM_FREQ, 2, 1.0, FLAT), n.const(dam_min)))
         end
-        fills[#fills + 1] = { fluid = "tiamat_default_world:water", lip = blocks.calcite, level = level,
+        fills[#fills + 1] = { fluid = "tiamat_default_world:water", lip = blocks.calcite, level = level, side = "base",
             within = ctx.compile("pool_within" .. k, ctx.base_flat(pooled(DAM_MIN))) }
-        fills[#fills + 1] = { fluid = "tiamat_default_world:water", lip = blocks.calcite, level = level,
+        fills[#fills + 1] = { fluid = "tiamat_default_world:water", lip = blocks.calcite, level = level, side = "variant",
             within = ctx.compile("wdc_pool_within" .. k, ctx.variant_flat(pooled(WDC_DAM_MIN))) }
     end
     return fills

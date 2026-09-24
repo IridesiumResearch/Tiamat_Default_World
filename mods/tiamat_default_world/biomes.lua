@@ -237,18 +237,75 @@ function tdw.biome_spans(id)
     return { { ring, ring } }
 end
 
+-- **The wet/dry line, without its speckle** (2026-09-23). The humidity
+-- mask a fill carries has a ±HUMIDITY_DITHER dither at ten blocks, and a
+-- fine noise's bound over a chunk is its whole amplitude — so along every
+-- wet/dry split there was a strip of chunks where neither half's fills
+-- could be proved empty, and both biomes paid a full terrain to paint half
+-- a chunk each (12-18 ms on 5-15% of surface chunks, the jungle/savanna
+-- edge among them). Presence is decided here instead, before any of a
+-- biome's fills are touched, from the SAME spans with the dither left out
+-- (`shape.humidity_presence`): the smooth humidity against the split moved
+-- HUMIDITY_DITHER + HUMIDITY_PRESENCE_SLACK outside it. That may be smooth
+-- where the mask may not: within the strip it keeps, both biomes' fills
+-- still run and their in-field masks still decide per block — the speckle
+-- is theirs, untouched — and at its edge the dither is provably
+-- one-sided, since a dithered block needs humidity past SPLIT minus the
+-- dither's bound, which is inside the widened test by the whole slack. (The
+-- one half-placed biome that masks itself without `tdw.biome_mask`, the
+-- Mangrove Coast, draws its line at the bare split — further inside
+-- still.) Only which chunk evaluates which biome tightens; no block moves.
+-- Compiled once per biome, on first ask, as the lazy fills are; false
+-- where no span names a half, and the gate stands down.
+local function presence_field(biome)
+    local field = biome.presence_field
+    if field == nil then
+        field = false
+        local halved = false
+        for _, span in ipairs(tdw.biome_spans(biome.id)) do
+            if span[3] then halved = true end
+        end
+        if halved and not tdw.config.everywhere then
+            local n, shape = tdw.shape.node, tdw.shape
+            local acc = nil
+            for _, span in ipairs(tdw.biome_spans(biome.id)) do
+                local first, last = tdw.layers.ring_by_id[span[1]], tdw.layers.ring_by_id[span[2]]
+                local inner = first.u[1] <= 0 and -last.u[2] or first.u[1]
+                local band = shape.ring(inner, last.u[2])
+                if span[3] then
+                    band = n.min(band, shape.humidity_presence(span[3] == "wet"))
+                end
+                if span[4] then
+                    band = n.min(band, shape.province_mask(span[4], span[5]))
+                    if span[6] then
+                        band = n.min(band, shape.province_mask(span[4] == "b" and "a" or "b", span[6]))
+                    end
+                end
+                acc = acc and n.max(acc, band) or band
+            end
+            field = shape.compile("presence." .. biome.id, acc)
+        end
+        biome.presence_field = field
+    end
+    return field
+end
+
 -- The biomes of a chunk: those whose rings reach it, less any that says it
 -- is not in THIS chunk. A biome that covers its rings only here and there —
 -- a river, which is a line across them — answers `present(pos)` with one
 -- sample of its own course, and a chunk it is not near does not evaluate
 -- its fills at all. Without it a river's terrain and code fields would be
--- evaluated in every chunk of six rings to paint nothing.
+-- evaluated in every chunk of six rings to paint nothing. A biome on half
+-- a ring is asked its presence field's bound the same way (above).
 function tdw.present_biomes_in(u_lo, u_hi, pos)
     local found = tdw.surface_biomes_in(u_lo, u_hi)
     local kept = {}
     for _, biome in ipairs(found) do
         if biome.present == nil or biome.present(pos) then
-            kept[#kept + 1] = biome
+            local field = presence_field(biome)
+            if not field or field:bounds(pos).high > 0 then
+                kept[#kept + 1] = biome
+            end
         end
     end
     return kept

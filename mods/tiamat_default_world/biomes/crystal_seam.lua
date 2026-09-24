@@ -260,10 +260,16 @@ tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)      -- -0.12 until 2026-09-18 (
     -- rock throughout is a cave floor: the take needs the province and the
     -- noise, not the void again.
     local shards = ctx.compile("shards", ctx.mine(n.sub(n.noise("cs_shard", SHARD_FREQ, 1, 1.0), n.const(SHARD_MIN))))
+    -- The carve AFTER the lining and the veins (2026-09-23): the vein
+    -- field no longer cuts the void out of itself, so the carve's air —
+    -- which evaluates anyway — clears every vein cell inside it
+    -- (caves.lua, `vein_fill`). The lining paints only into rock, and the
+    -- knobs and the covers below want the void already open, so the carve
+    -- sits between.
     local fills = {
-        { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        caves.vein_fill(ctx, void, VEIN_ZONE, VEIN_FREQ),
+        caves.vein_fill(ctx, VEIN_ZONE, VEIN_FREQ),
+        { carve = carve },
         { field = knobs, material = blocks.crystal, detail = { detail = "sampled" } },
         { cover = blocks.crystal, cells = 1, take = shards },
     }
@@ -271,22 +277,24 @@ tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)      -- -0.12 until 2026-09-18 (
         local built = structures()
         -- Spires where the corridor pinches: the width noise low. The
         -- spires, the clusters and the hangers are what the variant's brief
-        -- replaces, so all three keep to the base side (`ctx.base`); the
-        -- knobs and the shards it only mixes into, so those stay shared.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.spires, cell = SPIRE_CELL, chance = SPIRE_SQUARES, salt = 411, sink = 1,
+        -- replaces, so all three keep to the base side (`ctx.base`, and the
+        -- `side` tag so a chunk clear of the line skips them — caves.lua,
+        -- "the variants"); the knobs and the shards it only mixes into, so
+        -- those stay shared.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.spires, cell = SPIRE_CELL, chance = SPIRE_SQUARES, salt = 411, sink = 1, side = "base",
             stand = ctx.compile("stand_spire", ctx.base(n.sub(n.const(WIDTH - 0.3), width()))) }
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.clusters, cell = CLUSTER_CELL, chance = CLUSTER_SQUARES, salt = 412, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.clusters, cell = CLUSTER_CELL, chance = CLUSTER_SQUARES, salt = 412, sink = 1, side = "base",
             stand = ctx.compile("stand_cluster", ctx.base(n.sub(n.noise("cs_where", 1 / 9, 1, 1.0), n.const(0.05)))) }
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.hanging, cell = CLUSTER_CELL, chance = CLUSTER_SQUARES, salt = 413, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.hanging, cell = CLUSTER_CELL, chance = CLUSTER_SQUARES, salt = 413, sink = 0, side = "base",
             stand = ctx.compile("stand_hanging", ctx.base(n.sub(n.noise("cs_where", 1 / 9, 1, 1.0), n.const(0.05)))) }
         -- The variant's pockets sink into the floors, rim just proud, bowl
         -- open upward: the root a block under the surface block.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.pockets, cell = FA_POCKET_CELL, chance = FA_POCKET_SQUARES, salt = 414, sink = 2,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.pockets, cell = FA_POCKET_CELL, chance = FA_POCKET_SQUARES, salt = 414, sink = 2, side = "variant",
             stand = ctx.compile("stand_pocket", ctx.variant(n.sub(n.noise("fa_pocket", FA_POCKET_FREQ, 1, 1.0), n.const(FA_POCKET_MIN)))) }
         -- Its chandeliers hang where the base's hangers would: the same
         -- `cs_where` stream on purpose, so the ceilings' crowded spots are
         -- crowded in both dressings, and a lower bar makes them denser.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.chandeliers, cell = FA_CHAND_CELL, chance = FA_CHAND_SQUARES, salt = 415, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.chandeliers, cell = FA_CHAND_CELL, chance = FA_CHAND_SQUARES, salt = 415, sink = 0, side = "variant",
             stand = ctx.compile("stand_chandelier", ctx.variant(n.sub(n.noise("cs_where", 1 / 9, 1, 1.0), n.const(0.0)))) }
     end
     return fills

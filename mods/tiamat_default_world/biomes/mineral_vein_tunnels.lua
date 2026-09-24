@@ -305,18 +305,28 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
     local film = n.add(n.mul(n.abs(n.sub(void, n.const(0.45))), n.const(-1.0)), n.const(0.45))
     local knobs = ctx.compile("knobs", ctx.base(n.min(n.min(film, n.mul(n.sub(n.noise("mv_knob", KNOB_FREQ, 1, 1.0), n.const(KNOB_MIN)), n.const(6.0))),
         n.sub(n.noise("mv_knob_patch", KNOB_PATCH_FREQ, 1, 1.0), n.const(KNOB_PATCH_MIN)))))
+    -- The carve AFTER the lining and the quartz (2026-09-23): the vein
+    -- field no longer cuts the void out of itself, so the carve's air —
+    -- which evaluates anyway — clears every vein cell inside it
+    -- (caves.lua, `vein_fill`). The frostings and the knuckles want the
+    -- void already open, so the carve sits between.
     local fills = {
-        { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        caves.vein_fill(ctx, void, QUARTZ_ZONE, QUARTZ_FREQ),   -- the quartz seams
+        caves.vein_fill(ctx, QUARTZ_ZONE, QUARTZ_FREQ),   -- the quartz seams
+        { carve = carve },
         { field = frost, material = blocks.calcite, detail = { detail = "sampled" } },
-        { field = knobs, material = blocks.iron_ore, detail = { detail = "sampled" } },
+        -- Smooth since 2026-09-23: the sampled speckle traded for most of
+        -- the fill's cost — the field re-emits the carve — and the smooth
+        -- edge keeps the knuckle's lump.
+        { field = knobs, material = blocks.iron_ore, detail = { detail = "smooth" }, side = "base" },
     }
     if game.schematic_shapes then
         local built = structures()
-        -- The cube clusters keep to the base side (`ctx.base`); the slabs
-        -- fall on both — a roof lets go whatever colour the walls are.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cubes, cell = CUBE_CELL, chance = CUBE_SQUARES, salt = 441, sink = 1,
+        -- The cube clusters keep to the base side (`ctx.base`, and the
+        -- `side` tag so a chunk clear of the line skips them — caves.lua,
+        -- "the variants"); the slabs fall on both — a roof lets go
+        -- whatever colour the walls are.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.cubes, cell = CUBE_CELL, chance = CUBE_SQUARES, salt = 441, sink = 1, side = "base",
             stand = ctx.compile("stand_cubes", ctx.base(n.sub(n.noise("mv_cubes", 1 / 11, 1, 1.0), n.const(-0.15)))) }
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.slabs, cell = SLAB_CELL, chance = SLAB_SQUARES, salt = 442, sink = 1,
             stand = ctx.compile("stand_slabs", ctx.mine(n.const(1.0))) }
@@ -327,13 +337,13 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
         -- ceilings the vines' way: the depth positive in the VOID, the
         -- crossing stamped at rock over air.
         local antlers = ctx.compile("stand_dendrites", ctx.variant(n.sub(n.noise("mv_knob_patch", KNOB_PATCH_FREQ, 1, 1.0), n.const(KNOB_PATCH_MIN))))
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.dendrites_up, cell = DEND_CELL, chance = DEND_SQUARES, salt = 443, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.dendrites_up, cell = DEND_CELL, chance = DEND_SQUARES, salt = 443, sink = 1, side = "variant",
             stand = antlers }
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.dendrites_down, cell = DEND_CELL, chance = DEND_SQUARES, salt = 444, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.dendrites_down, cell = DEND_CELL, chance = DEND_SQUARES, salt = 444, sink = 0, side = "variant",
             stand = antlers }
         -- The sulfur vents want no patch noise: the chance and the cell
         -- are the spacing, anywhere the Chasm has a floor.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.vents, cell = VENT_CELL, chance = VENT_SQUARES, salt = 445, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.vents, cell = VENT_CELL, chance = VENT_SQUARES, salt = 445, sink = 1, side = "variant",
             stand = ctx.compile("stand_vents", ctx.variant(n.const(1.0))) }
     end
     return fills

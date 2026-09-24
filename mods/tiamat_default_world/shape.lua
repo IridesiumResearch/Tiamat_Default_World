@@ -17,8 +17,11 @@
 --
 -- Spindle frame: Y = y - Y0, so the disc's summit is at Y = +19 km.
 --
--- Two limits of the density compiler shape the code below: 256 ops per
--- program, and 8 live buffers. A subtree is walked once per place it appears
+-- Two limits of the density compiler shape the code below: 4,096 ops per
+-- program, and 16 live buffers (256 and 8 until engine eab4c2d,
+-- 2026-09-19 — the code's habits date from the tight days and are still
+-- worth keeping, because what a program COSTS is its noise reads, not its
+-- length). A subtree is walked once per place it appears
 -- (no sharing), and evaluation is left to right, so a big subtree goes FIRST
 -- in a `min`/`add` and the small one second.
 --
@@ -137,6 +140,16 @@ M.HUMIDITY_SPLIT = -0.05  -- the noise runs +/-0.5 after the clamp: the dry half
 M.HUMIDITY_BLEND = 0.04   -- in the noise's units: a few hundred blocks of cross-fade
 M.HUMIDITY_DITHER = 0.03  -- +/-, at DITHER_FREQ: the speckle of the material edge
 M.HUMIDITY_DITHER_FREQ = 1 / 10
+-- The presence test's allowance past the dither (humidity_mask, below), in
+-- the noise's units: a structure roots outside the chunk that asks, so the
+-- test must keep a chunk any tree within reach of it could lean into. The
+-- humidity's steepest stacked slope is under 0.00045 a block (half-range
+-- 0.5 over a quarter of 9,000 blocks is 0.00022, and the second octave the
+-- same again), so 0.008 covers roots sixteen blocks out — the widest
+-- canopy off-chunk. Too small, the symptom is visible and shaped like the
+-- lode gate's would be: a canopy clipped flat on a chunk face, only ever
+-- along the wet/dry line.
+M.HUMIDITY_PRESENCE_SLACK = 0.008
 -- Rolling grasslands (1.2): broad swells and long ridges. A ridge follows
 -- the zero contour of a noise — a long continuous meandering line — as
 -- RIDGE_AMP * (1 - |n| / RIDGE_WIDTH), clamped: a crest with gentle sides.
@@ -493,6 +506,27 @@ function M.humidity_mask(wet)
         return sub(h, const(M.HUMIDITY_SPLIT))
     end
     return mul(sub(h, const(M.HUMIDITY_SPLIT)), const(-1.0))
+end
+
+-- The same half as a PRESENCE test: the smooth humidity alone, its
+-- threshold moved past the split by the dither's whole reach and the
+-- structure slack (biomes.lua asks it per chunk, before a biome's fills
+-- are run at all). A sibling of `humidity_mask` rather than a flag on it,
+-- because the two answer different questions: the mask says which BLOCK
+-- is this side's, the presence test which CHUNK could hold one. It may be
+-- smooth where the mask may not, and the arithmetic is short: the dither
+-- is a noise bounded by ±HUMIDITY_DITHER, so a block of the wet mask needs
+-- humidity + dither > SPLIT, hence humidity > SPLIT - HUMIDITY_DITHER —
+-- with the threshold HUMIDITY_DITHER (and the slack) outside the split, no
+-- dithered block can land on the side this test rules out, and inside the
+-- strip it keeps, both halves' fills still run and their own masks still
+-- decide per block, speckle and all.
+function M.humidity_presence(wet)
+    local out = M.HUMIDITY_DITHER + M.HUMIDITY_PRESENCE_SLACK
+    if wet then
+        return sub(M.humidity(), const(M.HUMIDITY_SPLIT - out))
+    end
+    return sub(const(M.HUMIDITY_SPLIT + out), M.humidity())
 end
 
 -- Which side of a province a place is, as a mask positive on its side:

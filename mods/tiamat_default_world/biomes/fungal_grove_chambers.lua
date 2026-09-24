@@ -308,22 +308,34 @@ tdw.cave_biome(ID, { 0.15, 0.33 }, function(ctx)
     -- rather than as patches. Steady; the footstep flare is a tick's job,
     -- deferred with the bells' pulse.
     local web = ctx.compile("web", ctx.variant(n.sub(n.const(WEB_W), n.abs(n.noise("gct_web", WEB_FREQ, 1, 1.0)))))
+    -- The carve AFTER the lining and the veins (2026-09-23): the vein
+    -- field no longer cuts the void out of itself, so the carve's air —
+    -- which evaluates anyway — clears every vein cell inside it
+    -- (caves.lua, `vein_fill`). The brackets and the covers below want
+    -- the void already open, so the carve sits between.
     local fills = {
-        { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        caves.vein_fill(ctx, void, 0.0),              -- the crystal veins through the rock (caves.lua)
-        { field = brackets, material = blocks.mushroom_cap, detail = { detail = "sampled" } },
+        caves.vein_fill(ctx, 0.0),                    -- the crystal veins through the rock (caves.lua)
+        { carve = carve },
+        -- Smooth since 2026-09-23: the sampled speckle traded for most of
+        -- the fill's cost — the field re-emits the carve — and the smooth
+        -- edge keeps the sheet.
+        { field = brackets, material = blocks.mushroom_cap, detail = { detail = "smooth" } },
         { cover = blocks.glow_cap, cells = 2, take = puffs },
-        { cover = blocks.glow_algae, cells = 1, take = web },
+        { cover = blocks.glow_algae, cells = 1, take = web, side = "variant" },
     }
     if game.schematic_shapes then
         local built = structures()
         -- Since the Ghost-Cap Thicket (2026-09-23) a scatter names the
         -- dressing whose ground it keeps to: `ctx.base` for what the
         -- brief replaces, `ctx.variant` for what replaces it, and the
-        -- default `ctx.mine` for what both dressings share.
+        -- default `ctx.mine` for what both dressings share. The cut also
+        -- names the fill's `side` tag, so a chunk clear of the variant
+        -- line skips the far dressing's scatters whole (caves.lua, "the
+        -- variants").
         local function scatter(list, cell, chance, salt, stand, cut)
-            fills[#fills + 1] = { scatter = true, depth = depth, schematics = list, cell = cell, chance = chance, salt = salt, sink = 1,
+            local side = cut == ctx.base and "base" or cut == ctx.variant and "variant" or nil
+            fills[#fills + 1] = { scatter = true, depth = depth, schematics = list, cell = cell, chance = chance, salt = salt, sink = 1, side = side,
                 stand = ctx.compile("stand_" .. salt, (cut or ctx.mine)(stand)) }
         end
         -- The parasols keep to the base side; the bells take the
@@ -340,7 +352,7 @@ tdw.cave_biome(ID, { 0.15, 0.33 }, function(ctx)
         -- walls' band where the bracket patches are — `fg_shelf_patch`
         -- again, on purpose, so a strand weeps from a shelf and not from
         -- bare rock.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.strands, cell = STRAND_CELL, chance = STRAND_SQUARES, salt = 532, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.strands, cell = STRAND_CELL, chance = STRAND_SQUARES, salt = 532, sink = 0, side = "variant",
             stand = ctx.compile("stand_strand", ctx.variant(n.min(walls,
                 n.sub(n.noise("fg_shelf_patch", SHELF_PATCH_FREQ, 1, 1.0), n.const(SHELF_PATCH_MIN))))) }
     end

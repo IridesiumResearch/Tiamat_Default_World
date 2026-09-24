@@ -445,11 +445,42 @@ tdw.build_biome("river_valleys", function(ctx)
     -- leave. Within the channel and a block past the bank top.
     -- No `lip`: the designer's call (2026-09-14), the engine's fluid is to
     -- keep a river where it is laid.
+    --
+    -- **`within` reads no height** (2026-09-23). The engine reads a
+    -- terraced fill's fields on the one plane y = 0.5 for the whole world,
+    -- and since engine ask 35 a `within` that answers differently over a
+    -- chunk than on that plane is an ERROR — which the guard (hooks.lua)
+    -- takes as "no water here", so every such chunk was a dressed bed with
+    -- nothing in it. `masked()` was the reader: the biome mask's band rides
+    -- the WOBBLED radius, a noise stretched a thousand times in y — tall,
+    -- not flat — and a hair of disagreement is all the error needs. The
+    -- water does not need that band per column. Everywhere it would trim,
+    -- the trough is already lifted out of the terrain (`alpine_weight` in
+    -- the "all" and "rim" programs, `hem_w` in the "hem" ones, and the
+    -- alpine, coast, ocean and edge modes carry no trough at all —
+    -- shape.lua, `M.terrain`), so the ground stands VALLEY_DEPTH over the
+    -- level and a fill that only takes the room under its level takes
+    -- nothing. What stays reads x and z alone: the course's contour, the
+    -- TRUE radius, the sea's distance map and constants. The band on the
+    -- true radius is widened to the wobble's whole reach — u_biome =
+    -- u * (1 ± SHARE), so a column the wobbled span can hold has u in
+    -- [lo / (1 + SHARE), hi / (1 - SHARE)] — and past that no column is
+    -- the river's in any world.
+    local ring_lo = tdw.layers.ring_by_id.temperate.u[1] / (1.0 + shape.RING_WOBBLE_SHARE)
+    local ring_hi = tdw.layers.ring_by_id.shore.u[2] / (1.0 - shape.RING_WOBBLE_SHARE)
+    local ring_mid, ring_half = (ring_lo + ring_hi) / 2, (ring_hi - ring_lo) / 2
+    local within = n.min(n.sub(n.const(ring_half), n.abs(n.sub(shape.sub.u(), n.const(ring_mid)))),
+        n.add(n.mul(course(), n.const(-1.0)), n.const(CHANNEL + BANK_W + 1.0)))
+    if shape.sea_exclude then
+        within = shape.sea_exclude(within, 20.0)
+    end
+    if tdw.seas and tdw.seas.on() and shape.RIVER_LIFT_KM and shape.terrain_mode and shape.terrain_mode:find("_shore", 1, true) then
+        within = n.min(within, n.sub(n.const(VALLEY_DEPTH / shape.RIVER_LIFT_KM - 0.05), tdw.seas.near()))
+    end
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.river.level", level_y()),
-        within = shape.compile("biome.river.within",
-            masked(n.add(n.mul(course(), n.const(-1.0)), n.const(CHANNEL + BANK_W + 1.0)))),
+        within = shape.compile("biome.river.within", within),
     }
     return fills
 end)

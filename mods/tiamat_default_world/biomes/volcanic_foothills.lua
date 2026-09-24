@@ -65,6 +65,7 @@ local GRAIN_FREQ, GRAIN_AMP = 1 / 7, 0.0015                -- fine grain over ev
 local PIT_FREQ, PIT_MIN, PIT_EDGE, PIT_D = 1 / 380, 0.32, 10.0, 0.008
 local CHANNEL_FREQ, CHANNEL_W, CHANNEL_SEG_FREQ, CHANNEL_SEG_MIN = 1 / 520, 3.0, 1 / 700, 0.28
 local PIT_RAMP = 0.02                                      -- km: the cap's slope in from the pit's edge — twenty blocks over p, so the rim is a bowl's
+local PIT_STANDOFF = 0.10                                  -- km: the cap clear of the ground where the pit weight is nothing — the Salt Pan's yardstick (shape.SALT_RAMP, sized over its tallest benches)
 local LAVA_FILL = 0.004
 local PIT_INLAND = { 380.0, 460.0 }                      -- blocks inland of any sea a pit fades in over
 local LAVA = "tiamat_default_world:lava"
@@ -122,11 +123,14 @@ local function fissure_d()
 end
 -- Where the lava is: a pit or a channel, and only where the ridge's terms
 -- stand at full weight, so the floor they flatten is the whole ground.
-local function pit_w()
+-- Split in three since 2026-09-23: the lava's `within` needs the noises
+-- and the coast gate WITHOUT the core, which rides the wobbled radius.
+local function pit_bare()
     local pit = both("vf_pit", PIT_FREQ, PIT_MIN, PIT_EDGE)
     local channel = n.mul(tent("vf_lava_ch", CHANNEL_FREQ, CHANNEL_W), seg("vf_lava_seg", CHANNEL_SEG_FREQ, CHANNEL_SEG_MIN, 8.0))
-    local core = n.clamp(n.mul(n.sub(shape.ember_weight(), n.const(0.9)), n.const(10.0)), 0.0, 1.0)
-    local w = n.mul(n.max(pit, channel), core)
+    return n.max(pit, channel)
+end
+local function pit_inland(w)
     local seas = tdw.seas
     if seas and seas.on() then
         -- Not near a sea (2026-09-16): within a few hundred blocks of a
@@ -139,6 +143,10 @@ local function pit_w()
         w = n.mul(w, inland)
     end
     return w
+end
+local function pit_w()
+    local core = n.clamp(n.mul(n.sub(shape.ember_weight(), n.const(0.9)), n.const(10.0)), 0.0, 1.0)
+    return pit_inland(n.mul(pit_bare(), core))
 end
 -- The ridges' height, terraced: the tent's height climbed in TERRACE_STEP
 -- steps, each a hard clamp, so the flanks are stepped basalt.
@@ -172,11 +180,27 @@ function shape.volcanic_terms()
 end
 -- The lava pits and channels: a CAP on the whole terrain (the ridge's terms
 -- and the temperate pair's, shape.lua), a floor PIT_D under the foothills
--- where p is 1, rising PIT_RAMP per unit of (1 - p) so it is out of reach
--- off a pit and a bowl's slope at the rim. One evaluation of p, where a
--- blend of the terms cost three.
+-- where p is 1, rising PIT_RAMP per unit of (1 - p) — the bowl's slope at
+-- the rim.
+--
+-- **The ramp alone was no standoff** (2026-09-23): off a pit it tops out
+-- at PIT_RAMP - PIT_D, twelve blocks over the undulation, and the cap
+-- sheared everything taller wherever a pit was NOT — the ridges (34), the
+-- cones (45), the aprons — which is the "awkward smooth slope" the
+-- designer found on the Obsidian Barrens' edge: a whole province cut to a
+-- lid. So the cap now stands off wherever the pit weight is nothing: a
+-- hard gate, 1 - clamp(20 p, 0, 1), lifts it PIT_STANDOFF — the Salt Pan's
+-- yardstick (shape.SALT_RAMP stands its clamps 0.10 km off ground whose
+-- benches are 64 blocks at most; here the ridges, cones, aprons and levees
+-- stack to ~0.095 at their tallest). Off a pit the ground can only RISE
+-- back to what its terms always said; from p = 0.05 inward the gate is
+-- spent and the bowl — rim ramp and floor — is exactly what it was. Two
+-- evaluations of p now, the gate being the second: nothing remembers a
+-- subtree already emitted, and the room is there since the op ceiling
+-- moved to 4,096.
 function shape.volcanic_cap()
-    return n.add(n.sub(undulate(), n.const(PIT_D)), n.mul(n.add(n.mul(pit_w(), n.const(-1.0)), n.const(1.0)), n.const(PIT_RAMP)))
+    local stand = n.mul(n.sub(n.const(1.0), n.clamp(n.mul(pit_w(), n.const(20.0)), 0.0, 1.0)), n.const(PIT_STANDOFF))
+    return n.add(n.add(n.sub(undulate(), n.const(PIT_D)), n.mul(n.add(n.mul(pit_w(), n.const(-1.0)), n.const(1.0)), n.const(PIT_RAMP))), stand)
 end
 
 tdw.biomes[ID].ring_mode = "ember"
@@ -427,11 +451,54 @@ tdw.build_biome(ID, function(ctx)
     -- The lava, last: the terraced fluid (as the rivers' water) LAVA_FILL
     -- over a pit's floor, inside the pit, wherever the flattened ground is
     -- under that level.
+    --
+    -- **`within` rides no wobbled radius** (2026-09-23), the river's
+    -- treatment (river_valleys.lua). The engine reads a terraced fill's
+    -- fields on the one plane y = 0.5, and since engine ask 35 a `within`
+    -- whose bounds disagree between that plane and the chunk's slab is an
+    -- ERROR — the guard (hooks.lua) takes it as "no lava here", and a pit
+    -- chunk skips dry. `masked()` carried the exact reader that dried the
+    -- river: the biome band on the WOBBLED radius, the ring_wobble noise
+    -- stretched a thousand times in y — tall, not flat — and `pit_w`'s
+    -- core (`ember_weight`) rode the same radius again. Both are out of
+    -- this fill. The band here is on the TRUE radius, widened to the
+    -- wobble's whole reach — u_biome = u * (1 ± SHARE), so a column the
+    -- wobbled ring can hold has u in [lo / (1 + SHARE), hi / (1 - SHARE)]
+    -- — and the core is not missed, because the terrain enforces it: the
+    -- cap's bowl only sinks under the lava's level where the pit weight p
+    -- passes 0.8 (level - floor = LAVA_FILL - PIT_RAMP * (1 - p)), the
+    -- standoff holds the cap 0.112 km over the undulation off a pit, and
+    -- `ember_weight` thins the ridge's own hollows out at the ring's
+    -- edges — so a column the band admits and the old core refused has no
+    -- room, bar a few blocks where a strong pit noise crosses a hollow in
+    -- the wobble's fringe, which is the trade the river made and the
+    -- opposite fault to a dry pit.
+    --
+    -- What stays that is NOT pure x/z geometry is said out loud: the pit
+    -- and channel-stretch noises and the province noise are FLAT-stretched
+    -- (y x1000, the file's own gates' class) — a hair of height, not none —
+    -- so a rim chunk whose bounds disagree by that hair can still skip,
+    -- and the guard now names it. The province gate stays because dropping
+    -- it buys no flatness the pit noises do not already forfeit, and would
+    -- let a strong pit noise lava a hollow in the other province, whose
+    -- cap never makes a floor.
+    local within = n.sub(pit_inland(pit_bare()), n.const(0.8))
+    if not tdw.config.everywhere then
+        local SHARE = shape.RING_WOBBLE_SHARE
+        local ring = tdw.layers.ring_by_id.ember
+        local ring_lo, ring_hi = ring.u[1] / (1.0 + SHARE), ring.u[2] / (1.0 - SHARE)
+        local ring_mid, ring_half = (ring_lo + ring_hi) / 2, (ring_hi - ring_lo) / 2
+        within = n.min(within, n.sub(n.const(ring_half), n.abs(n.sub(shape.sub.u(), n.const(ring_mid)))))
+        within = n.min(within, shape.province_mask("a"))
+    end
+    if shape.sea_exclude then
+        within = shape.sea_exclude(within, 20.0)
+    end
     fills[#fills + 1] = {
         fluid = LAVA,
         level = shape.compile("biome.volcanic.lava_level", n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()), undulate()),
             n.const(1.0 / shape.SCALE)), n.const(shape.Y0 + (LAVA_FILL - PIT_D) / shape.SCALE))),
-        within = shape.compile("biome.volcanic.lava_within", masked(n.sub(pit_w(), n.const(0.8)))),
+        within = shape.compile("biome.volcanic.lava_within", within),
     }
     return fills
 end)

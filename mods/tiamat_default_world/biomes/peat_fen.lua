@@ -137,11 +137,87 @@ tdw.build_biome(ID, function(ctx)
     end
     -- The pools: dark water over the gullies' floors, wider than a brook,
     -- on the ground beside them as the brooks are (shape.lua).
+    --
+    -- **`within` reads no height** (2026-09-23), the river's treatment
+    -- (river_valleys.lua). The engine reads a terraced fill's fields on the
+    -- one plane y = 0.5 for the whole world, and since engine ask 35 a
+    -- `within` whose bounds disagree between that plane and the chunk's
+    -- slab is an ERROR — the guard (hooks.lua) takes it as "no water
+    -- here", and a fen chunk skipped dry. The gully term was the worst
+    -- kind of reader: the gully noise is 3D and unstretched, so tens of
+    -- thousands of blocks down on that plane it draws a DIFFERENT set of lines
+    -- than the ground carries, and a pool held water only where the two
+    -- patterns happened to cross. It is dropped, and exactly: the level is
+    -- the ground plus GULLY_DEPTH * (gully - POOL_AT)
+    -- (`shape.gully_water_level`), so there is room under it precisely
+    -- where the gully the TERRAIN carries is deeper than POOL_AT — the
+    -- trough bounds its own water by construction, and the within's copy
+    -- of that test only ever said it again, at the wrong altitude. (The
+    -- 0.02 slack goes with it: a fiftieth of a 2.5-block groove, under a
+    -- cell.)
+    --
+    -- "The terrain carries the gully" is that proof's whole load, and
+    -- two grounds do NOT carry it, so the within takes a flat term for
+    -- each. In a river valley the terrain is min'd with the trough — the
+    -- smooth height less the valley's depth, no gully term — yet the
+    -- level still restores the full cut, so along every gully line
+    -- crossing a valley slope the water stood up to GULLY_DEPTH * (1 -
+    -- POOL_AT), 1.45 blocks, proud of ground that has no channel: mostly
+    -- PARTIAL blocks, spills by the fluid contract, woken on load and
+    -- running downhill — the exact fault `gully_water_level` was built
+    -- to end. The course is kept out to the rim (its contour reads x and
+    -- z alone), as the reeds and the cotton already keep off it. And
+    -- within the coast's reach the shore programs lift low ground to the
+    -- water's plane (`seas.floor`), erasing channels the level then
+    -- re-cuts, so in a "_shore" program the pools stop over the floor
+    -- clamp's whole reach (PLAIN_W + FADE) rather than the 20-block hem
+    -- — the sea map reads x and z alone too.
+    --
+    -- What stays reads x and z alone, or the flat-stretched hair the
+    -- volcanic lava keeps (volcanic_foothills.lua): the band on the TRUE
+    -- radius, the smooth humidity, the province noise and the sea map. The
+    -- band is the temperate ring's (the catalogue's span), wide of the
+    -- ember side by the wobble's whole reach — u_biome = u * (1 ± SHARE),
+    -- and the ember programs carry the temperate pair at full strength
+    -- under the ridge's terms, so a pool past the line still sits in a
+    -- real channel — and sure of the frost side, where the pair fades
+    -- under the cold terms (shape.lua, "all") and a channel the terrain no
+    -- longer cuts would stand its water proud on the tundra. The humidity
+    -- is the smooth field at the bare split, in place of `humidity_mask`,
+    -- whose dither is an UNSTRETCHED noise — at the slice it was speckle
+    -- from nowhere. At the split the wet terms still stand at half
+    -- strength, so a full-depth pool is at most 0.2 blocks proud there:
+    -- under a cell. The residue, named as the lava names its own: where
+    -- the split, the frost fade and a deep gully all meet, a film up to
+    -- most of a block can perch — the river's trade, and the opposite
+    -- fault to a dry fen.
     local level = shape.gully_water_level(POOL_AT)
+    local within
+    if tdw.config.everywhere then
+        within = n.const(1.0)
+    else
+        local SHARE = shape.RING_WOBBLE_SHARE
+        local ring = tdw.layers.ring_by_id.temperate
+        local ring_lo, ring_hi = ring.u[1] / (1.0 - SHARE), ring.u[2] / (1.0 - SHARE)
+        local ring_mid, ring_half = (ring_lo + ring_hi) / 2, (ring_hi - ring_lo) / 2
+        within = n.sub(n.const(ring_half), n.abs(n.sub(shape.sub.u(), n.const(ring_mid))))
+        within = n.min(within, n.sub(shape.humidity(), n.const(shape.HUMIDITY_SPLIT)))
+        within = n.min(within, shape.province_mask("a", -0.383))
+    end
+    if shape.river_exclude then
+        within = shape.river_exclude(within, (shape.RIVER_RIM or 150) + 4)
+    end
+    if shape.sea_exclude then
+        local inset = 20.0
+        if tdw.seas and tdw.seas.on() and shape.terrain_mode and shape.terrain_mode:find("_shore", 1, true) then
+            inset = (tdw.seas.PLAIN_W or 130.0) + (tdw.seas.FADE or 900.0)
+        end
+        within = shape.sea_exclude(within, inset)
+    end
     fills[#fills + 1] = {
         fluid = WATER,
         level = shape.compile("biome.fen.pool_level", level),
-        within = shape.compile("biome.fen.pool_within", masked(n.sub(gully(), n.const(POOL_AT + 0.02)))),
+        within = shape.compile("biome.fen.pool_within", within),
     }
     return fills
 end)

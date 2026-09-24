@@ -26,8 +26,10 @@
 -- not generated at all: they are grown afterwards, by random tick, where the
 -- surface can be read (biomes/temperate_woodlands.lua).
 --
--- Nothing here samples a field. Everything in Lua is a BOUND on a chunk,
--- computed with + - * / on doubles, which is IEEE-exact everywhere.
+-- Nothing here samples a field — except the ore gate's one point per lode
+-- (2026-09-23, below), the sanctioned few-per-chunk kind. Everything else
+-- in Lua is a BOUND on a chunk, computed with + - * / on doubles, which is
+-- IEEE-exact everywhere.
 
 local shape = tdw.shape
 local layers = tdw.layers
@@ -75,7 +77,27 @@ local BODY_CODE = shape.compile("body.code", shape.node.const(0.0))
 --          noise is over this; between them the rock is bare. Measured
 --          without it, every ore was three to seven per cent of the rock
 --          — a third of the underground would have been ore.
+-- The lodes also GATE the fills (2026-09-23). At these thresholds 70 to 80
+-- per cent of chunks are outside a given ore's lodes and paid the whole
+-- field's noise to write nothing — `bounds` cannot prune them, because a
+-- 16-block box cannot bound a feature forty blocks across. So `ores_into`
+-- samples each ore's bare lode noise ONCE, at the chunk's centre (the
+-- `biomes_in` idiom, biomes/caves.lua), and skips the fill outright where
+-- the sample sits more than LODE_MARGIN under the ore's threshold.
 local LODE_FREQ = 1 / 40
+-- The gate's safety margin. The lode noise is one octave, amplitude 1.0
+-- (so clamped to +/-0.5), frequency 1/40: a 16-block chunk spans about 0.4
+-- of a feature wavelength, so the value can move a few tenths between the
+-- chunk's centre and its corners. 0.45 — nine tenths of the noise's whole
+-- half-range — is chosen so a skipped chunk cannot plausibly hold
+-- lode-positive ground (not a proof: a quarter-wavelength swing can
+-- exceed it in principle, and the visible symptom below is the check on
+-- that choice): the gate is a skip with a wide margin, and the
+-- in-field lode term still decides the exact edge wherever the fill runs,
+-- so it can only save time, never change the world. The one risk is a
+-- margin too tight, and its symptom would be visible: ore veins clipped
+-- flat at chunk faces, where a skipped chunk abuts a generated one.
+local LODE_MARGIN = 0.45
 local ORES = {
     { "copper_ore",   level = 0.00, freq = 1 / 5,   min = 0.42, n = 2, lode = 0.15, stretch = { x = 3 } },
     { "iron_ore",     level = 0.00, freq = 1 / 5,   min = 0.43, n = 2, lode = 0.15, stretch = { z = 3 } },
@@ -100,22 +122,31 @@ local function ore_fields()
     for i, ore in ipairs(ORES) do
         -- The depth FIRST (the deepest operand: the dome's polynomial), then
         -- the noises, each a fresh buffer released as it is min'd in.
+        local lode_node = n.noise("lode_" .. ore[1], LODE_FREQ, 1, 1.0)
         local field = n.sub(shape.depth(), n.const(ore.level))
-        field = n.min(field, n.sub(n.noise("lode_" .. ore[1], LODE_FREQ, 1, 1.0), n.const(ore.lode)))
+        field = n.min(field, n.sub(lode_node, n.const(ore.lode)))
         for k = 1, ore.n do
             field = n.min(field, n.sub(n.noise("ore_" .. ore[1] .. "_" .. k, ore.freq, 1, 1.0, ore.stretch), n.const(ore.min)))
         end
-        ORE_FIELDS[i] = { field = shape.compile("ore." .. ore[1], field), material = blocks[ore[1]], level = ore.level }
+        ORE_FIELDS[i] = { field = shape.compile("ore." .. ore[1], field), material = blocks[ore[1]], level = ore.level,
+            -- The SAME lode node compiled bare, for the gate's one point
+            -- sample per chunk, and the threshold it is measured against.
+            gate = shape.compile("ore." .. ore[1] .. ".lode", lode_node), lode = ore.lode }
     end
     return ORE_FIELDS
 end
 tdw.ORES = ORES
 tdw.ore_fields = ore_fields
 -- `dmax` is the chunk's greatest smooth depth: an ore whose level is under
--- it cannot reach the chunk, and costs it nothing.
-local function ores_into(buf, dmax)
+-- it cannot reach the chunk, and costs it nothing. Then the lode gate: one
+-- point sample of the bare lode noise at the chunk's centre skips the fill
+-- where the ore's lodes provably cannot reach (LODE_MARGIN, above). Up to
+-- one sample per ore a solid chunk — microseconds, against the
+-- milliseconds each skipped fill's noise over the whole chunk volume cost.
+local function ores_into(buf, pos, dmax)
+    local cx, cy, cz = pos.x * 16 + 8.5, pos.y * 16 + 8.5, pos.z * 16 + 8.5
     for _, ore in ipairs(ore_fields()) do
-        if dmax > ore.level then
+        if dmax > ore.level and ore.gate:at(cx, cy, cz, pos.seed) >= ore.lode - LODE_MARGIN then
             buf:fill_density(ore.field, ore.material, DETAIL)
         end
     end
@@ -415,7 +446,7 @@ local function generate(buf, pos)
         -- The ores, into rock that is solid throughout, under the bands
         -- they sit in and before the core stack, which overwrites them.
         if painted and tmin > 0 and not WHITE then
-            ores_into(buf, dmax)
+            ores_into(buf, pos, dmax)
         end
         if skin and painted and tmin < shape.SKIN_TOP then
             -- The biome's own top.

@@ -20,11 +20,28 @@ local ticks = {}
 -- answered it is an ERROR, and an error in generation disables the mod
 -- everywhere. The plane is still the answer for every column either way (it
 -- is what keeps two layers of one column agreeing), so the mod takes the
--- error as the "no water here" it replaced, counts it, and says so now and
--- then. Most of the mod's regions carry a noise or a biome mask stretched
--- tall rather than truly flat, and their edges are where this happens.
--- Any other error is raised as before.
-local terraced_skips, terraced_logged = {}, 0
+-- error as the "no water here" it replaced, counts it, and says so.
+--
+-- **By NAME, and from the first chunk** (2026-09-23). The first cut pooled
+-- every skip into one counter and spoke once in 256, so a river dry from
+-- its very first chunk was one line, minutes late, naming nothing — the
+-- designer found the bone-dry bed before the log did. Each fill's name now
+-- counts alone and logs on its FIRST skip and every 64th after, so a live
+-- server names the dry fill while the first player is still looking at it.
+--
+-- **The guard is a working net, NOT a dead man's switch** (2026-09-23).
+-- Every terraced fill's `within` is flat now: the river's and the sea's
+-- from geometry and maps (river_valleys.lua, seas.lua), the lava's off
+-- the wobbled radius (volcanic_foothills.lua), and the brooks, pools and
+-- brine swept the same day (flower_forest, heather_moor, peat_fen,
+-- geyser_basin, salt_pan, deep_ocean). What remains is the "hair" class:
+-- a few gates keep flat-STRETCHED noises (pit, province, pool gates at
+-- y x1e6), which retire height rather than abolish it, so a rim chunk
+-- whose slice and slab bounds disagree by that hair can still skip dry —
+-- and the per-name count above names it from its first chunk. A field
+-- that grows a real height term again shows up the same way. Any other
+-- error is raised as before.
+local terraced_skips = {}
 function tdw.fill_terraced(buf, spec, name)
     local ok, err = pcall(buf.fill_fluid_terraced, buf, spec)
     if ok then
@@ -34,13 +51,12 @@ function tdw.fill_terraced(buf, spec, name)
         error(err, 0)
     end
     name = name or "?"
-    terraced_skips[name] = (terraced_skips[name] or 0) + 1
-    terraced_logged = terraced_logged + 1
-    if terraced_logged == 1 or terraced_logged % 256 == 0 then
-        local parts = {}
-        for k, v in pairs(terraced_skips) do parts[#parts + 1] = k .. " " .. v end
-        table.sort(parts)
-        game.log("tiamat_default_world: terraced fills skipped where `within` reads height: " .. table.concat(parts, ", "))
+    local count = (terraced_skips[name] or 0) + 1
+    terraced_skips[name] = count
+    if count == 1 or count % 64 == 0 then
+        game.log(string.format(
+            "tiamat_default_world: terraced fill %s SKIPPED, %d chunk(s) dry — its `within` reads height (engine ask 35)",
+            name, count))
     end
     return 0
 end

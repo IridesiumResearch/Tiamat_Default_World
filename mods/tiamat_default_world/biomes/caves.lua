@@ -26,6 +26,9 @@
 --                                     ceilings (engine `scatter` stamps at any
 --                                     rock-over-air crossing, whichever way up)
 --   { fluid, level, within, lip }     pools and rivers
+-- A fill may carry `side = "base" | "variant"` — which dressing's ground
+-- it decorates (nil is both dressings') — so `M.into` can skip the far
+-- side's fills in a chunk well clear of the variant line.
 -- Every field a biome builds is already cut to its province by
 -- `ctx.mine(field)`; a biome need not think about its neighbours.
 --
@@ -88,12 +91,15 @@ end
 -- cent of the rock; the Crystal Seam's 1/30 is some three times that).
 -- Blocks: positive inside the vein.
 --
--- Every cave biome lays the veins itself, AFTER its lining and with its
--- own void cut out (`vein_fill`): the linings paint the last few blocks of
--- rock round a void, and veins laid before them were painted over at the
--- very walls where a vein should show; laid after, and not into the void,
--- a vein runs through the rock and out across every wall, floor and
--- ceiling a cave cuts through it.
+-- Every cave biome lays the veins itself, AFTER its lining and BEFORE its
+-- carve (`vein_fill`): the linings paint the last few blocks of rock round
+-- a void, and veins laid before them were painted over at the very walls
+-- where a vein should show; laid after, a vein runs through the rock and
+-- out across every wall, floor and ceiling a cave cuts through it. The
+-- void is NOT cut out of the vein field (it was, until 2026-09-23): that
+-- min re-evaluated the whole carve subtree — twenty-odd noise reads —
+-- once more per chunk, and the carve's own AIR fill, which runs after
+-- and evaluates anyway, clears every vein cell inside the void for free.
 local VEIN = {
     FREQ = 1 / 48, STRETCH = { x = 2.5, z = 2.5 },
     W = 1.1, K = 30.0,                    -- blocks either side of the line; the noise's blocks per unit near zero
@@ -111,11 +117,12 @@ function M.vein_node(zone_min, freq)
     return n.min(n.min(a, b), zone)
 end
 -- The fill a cave biome lays its veins with: into its own province and
--- band, not into `void` (its void field, blocks, positive in the air). The
--- void FIRST: it is the deepest operand.
-function M.vein_fill(ctx, void, zone_min, freq)
+-- band. The biome's void is left IN the field on purpose (the comment
+-- above): the fill runs before the carve in every biome's list, and the
+-- carve's air clears whatever a vein laid inside the void.
+function M.vein_fill(ctx, zone_min, freq)
     return {
-        field = ctx.compile("veins", ctx.mine(n.min(n.mul(void, n.const(-1.0)), M.vein_node(zone_min, freq)))),
+        field = ctx.compile("veins", ctx.mine(M.vein_node(zone_min, freq))),
         material = tdw.blocks.crystal,
         detail = shape.SURFACE_DETAIL,
     }
@@ -178,6 +185,19 @@ local VARIANT = {
     MIN = 0.0,             -- the split: half and half
     K = 20.0,              -- field-blocks per unit of noise at the cut, `mine`'s own steepness
     OVERLAP = 0.5,         -- both sides positive this deep into the line
+    -- The point-gate's blend margin (M.into), in the noise's own units: a
+    -- chunk whose centre reads further than this from MIN runs one
+    -- dressing's tagged fills alone; nearer the line BOTH sides' run, and
+    -- the side cuts every field keeps resolve the seam exactly as they
+    -- always did. The noise is 2 octaves at 1/640 and flat in y, so across
+    -- one 16-block chunk it moves a few hundredths at most, and a side's
+    -- field is positive only OVERLAP / K (0.025) past the line — 0.12
+    -- covers the reach, the drift, and a scatter rooted a structure's span
+    -- outside the chunk, about twice over. The gate is a SKIP, not a
+    -- replacement — it never decides what a fill writes, only whether a
+    -- fill that could not have written here runs — so a margin wrong on
+    -- the wide side only wastes time, never changes output.
+    MARGIN = 0.12,
 }
 M.VARIANT = VARIANT
 M.variant_names = {}       -- id -> the variant's display name ("Dewdrop Grotto")
@@ -315,9 +335,23 @@ function M.into(buf, pos, dmin, dmax)
         return
     end
     stats.chunks = stats.chunks + 1
+    -- Which dressing the chunk is: the province's own idiom (`biomes_in`),
+    -- on the variant noise — one point read of the compiled program at the
+    -- chunk's centre, a pure function of `pos` and the seed it carries, so
+    -- every worker answers the same. A fill tagged for the far side is
+    -- skipped; within MARGIN of the line both sides' run, and the side
+    -- cuts inside the fields resolve the seam exactly as they always did
+    -- (VARIANT.MARGIN above has the arithmetic).
+    VARIANT_AT = VARIANT_AT or shape.compile("cave.variant", M.variant_node())
+    local v = VARIANT_AT:at(pos.x * 16 + 8.5, pos.y * 16 + 8.5, pos.z * 16 + 8.5, pos.seed)
+    local skip_base = v > VARIANT.MIN + VARIANT.MARGIN
+    local skip_variant = v < VARIANT.MIN - VARIANT.MARGIN
     for _, id in ipairs(found) do
         for _, fill in ipairs(fills_of(id)) do
-            if fill.carve then
+            local skip = (fill.side == "base" and skip_base) or (fill.side == "variant" and skip_variant)
+            if skip then
+                -- the far dressing's decoration: its field cannot be positive here
+            elseif fill.carve then
                 buf:fill_density(fill.carve, AIR, DETAIL)
                 stats.carved = stats.carved + 1
             elseif fill.layers then

@@ -292,36 +292,43 @@ tdw.cave_biome(ID, { 0.33, 1 }, function(ctx)         -- from 0.14 at first; a s
     local algae = ctx.compile("algae", on_floor(n.min(n.min(n.sub(across(), n.mul(half(), n.const(CHANNEL - 0.05))), n.sub(n.mul(half(), n.const(0.8)), across())),
         n.sub(n.noise("ur_algae", ALGAE_FREQ, 1, 1.0), n.const(ALGAE_MIN)))))
     local pads = ctx.compile("pads", ctx.base(n.min(in_channel, n.sub(n.noise("ur_pad", PAD_FREQ, 1, 1.0), n.const(PAD_MIN)))))
+    -- The carve AFTER the lining and the veins (2026-09-23): the vein
+    -- field no longer cuts the void out of itself, so the carve's air —
+    -- which evaluates anyway — clears every vein cell inside it
+    -- (caves.lua, `vein_fill`). The lining paints only into rock, and the
+    -- covers below stand on the banks the carve opens. The pads carry the
+    -- base's `side` tag too (the algae is both dressings'), so a chunk
+    -- clear of the variant line skips the far side's fills whole.
     local fills = {
-        { carve = carve },
         { layers = true, depth = depth, code = codes, entries = entries },
-        caves.vein_fill(ctx, void, 0.0),              -- the crystal veins through the rock (caves.lua)
+        caves.vein_fill(ctx, 0.0),                    -- the crystal veins through the rock (caves.lua)
+        { carve = carve },
         { cover = blocks.glow_algae, cells = 1, take = algae },
-        { cover = blocks.ocean_moss, cells = 1, take = pads },
+        { cover = blocks.ocean_moss, cells = 1, take = pads, side = "base" },
     }
     if game.schematic_shapes then
         local built = structures()
         -- The roots and the snags are what the Rapids' brief replaces, so
         -- both keep to the base side (`ctx.base` where plain `ctx.mine`
         -- was); the Rapids hang and lodge their own below.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.roots, cell = ROOT_CELL, chance = ROOT_SQUARES, salt = 421, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.roots, cell = ROOT_CELL, chance = ROOT_SQUARES, salt = 421, sink = 0, side = "base",
             stand = ctx.compile("stand_root", ctx.base(n.sub(n.noise("ur_roots", 1 / 20, 1, 1.0), n.const(0.1)))) }
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.snags, cell = SNAG_CELL, chance = SNAG_SQUARES, salt = 422, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.snags, cell = SNAG_CELL, chance = SNAG_SQUARES, salt = 422, sink = 1, side = "base",
             stand = ctx.compile("stand_snag", ctx.base(n.min(in_channel, n.sub(n.const(HALF - 0.8), half())))) }
         -- The Rapids' teeth: mid-channel, only where the rapids gate says
         -- the water runs white; sink 1 lodges each root in the bed.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.teeth, cell = TOOTH_CELL, chance = TOOTH_SQUARES, salt = 423, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.teeth, cell = TOOTH_CELL, chance = TOOTH_SQUARES, salt = 423, sink = 1, side = "variant",
             stand = ctx.compile("stand_tooth", ctx.variant(n.min(in_channel, rapids()))) }
         -- The trunks root anywhere in the tube's width — a span from mid-
         -- channel reaches both banks, one rooted at the edge reaches the
         -- far one — in the same white stretches, where a jam belongs.
-        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.trunks, cell = TRUNK_CELL, chance = TRUNK_SQUARES, salt = 424, sink = 1,
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.trunks, cell = TRUNK_CELL, chance = TRUNK_SQUARES, salt = 424, sink = 1, side = "variant",
             stand = ctx.compile("stand_trunk", ctx.variant(n.min(n.sub(n.mul(half(), n.const(0.8)), across()), rapids()))) }
         -- The cages hang where the roots would have (`ur_roots` reused on
         -- purpose: the ceiling's crevices do not move when the dressing
         -- does), the depth positive in the VOID so the crossing the engine
         -- stamps at is rock over air.
-        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.cages, cell = ROOT_CELL, chance = ROOT_SQUARES, salt = 425, sink = 0,
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.cages, cell = ROOT_CELL, chance = ROOT_SQUARES, salt = 425, sink = 0, side = "variant",
             stand = ctx.compile("stand_cage", ctx.variant(n.sub(n.noise("ur_roots", 1 / 20, 1, 1.0), n.const(0.1)))) }
     end
     -- Each river: WATER_DEEP over its channel's floor, in world y. The floor

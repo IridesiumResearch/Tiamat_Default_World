@@ -3218,3 +3218,91 @@ says so beside the numbers — dim the lava under r 14, or push its blue
 past 3, and it quietly stops setting anything alight. Weather also names
 `lava` and `magma` by id in its hot solids (climate_spindle), so those two
 ids are spoken for.
+
+### The performance pass, and the water that was never there (2026-09-23)
+
+The designer flew the world and named it: "we might need a performance
+pass", with screenshots — giant flat slabs beside the player in the Alpine
+and the Badlands, a bone-dry river bed, a wall between the Jungle and the
+Savanna, a water sheet over the Obsidian Barrens' lava, a featureless
+smooth slope at the barrens' edge.
+
+**The slabs are the engine's summaries outstaying their distance.** A far
+chunk arrives as a summary; a near one whose detail has not been generated
+keeps SHOWING that summary, and nothing upgrades it while the workers are
+behind. Our generator was measured (its own comment) at ~69 ms a surface
+chunk and estimated 35–60 ms in the cave band, against the engine's ~4 ms
+reference — so the world arrives in slabs wherever a player flies
+somewhere new. The pass, all of it output-identical or declared:
+
+- **The cave variants gate by a point sample** (caves.lua `M.into`, the
+  province's own idiom): a chunk well clear of the variant line skips the
+  far dressing's fills outright — the in-field side cuts stay, so the gate
+  can only save time, never change a block. Fills carry `side` tags in all
+  six cave files.
+- **The crystal veins no longer re-evaluate the carve.** Veins run after
+  the linings and BEFORE the carve now, and the carve's air — which
+  evaluates anyway — clears every vein cell inside the void for free:
+  one whole carve-subtree evaluation (~25–35 noise reads) off every cave
+  chunk.
+- **Two decorative cave fills demoted sampled → smooth** (the iron
+  knuckles, the fungal brackets): ~70% off each; the Crystal Seam's knobs
+  stay sampled — they are the biome's signature.
+- **The ores gate by a lode point sample** (generate.lua): each ore's fill
+  is skipped where a chunk-centre read of its own lode noise sits more
+  than 0.45 under the lode threshold — the in-field term still draws the
+  exact edge. Up to eleven chunk-volume evaluations saved on most solid
+  chunks; the one too-tight symptom (veins clipped flat at chunk faces)
+  is documented at the constant.
+- **The humidity dither is out of the biome PRESENCE test** (shape.lua,
+  biomes.lua): the ±0.03 speckle term made "which biomes touch this
+  chunk" undecidable in a strip along every wet/dry line, so both biomes
+  paid full terrain there. The presence test is smooth now, inset 0.03 so
+  no dithered block can land on a skipped side; every material and cover
+  field keeps the speckle.
+
+**The dry river was our own guard eating our own error.** The 2026-09-22
+guard turns the engine's "`within` reads height" refusal into a silent
+skip — and the river's `within` read the ring's wobbled radius, so whole
+reaches dried the day the guard landed. Worse and older: a terraced
+fill's `within` is read on the world plane y = 0.5, eleven kilometres
+under the ground, so every fill that tested an unstretched 3D noise there
+was testing a DIFFERENT pattern than its terrain — the fen pools, the
+brooks, the hot pools and the brine have been a few per cent of their
+designed water since they were built. Every terraced `within` in the mod
+is flat now: the river's and sea's from geometry and maps, the brooks and
+pools by dropping slice-tests their levels already imply and putting the
+pool gates on a stretch that truly retires height, the bands on the TRUE
+radius sized by the wobble's reach — with the river and coast exclusions
+minned back in where dropping a slice-test would have flooded replaced
+ground. The guard stays, and counts skips PER FILL NAME now, logging each
+name's first skip — a live server names a dry fill while the first player
+is still looking at it. Look changes are recorded per file; the honest
+ones: geyser, salt-pan and deep-ocean pools RELOCATE on the same seed
+(their gates' pattern moved to the flat field everything else already
+read), water edges follow smooth lines where they followed dithered or
+wobbled ones, and brine under a trench's dead stretches goes dry.
+
+**The smooth slope was the lava-pit cap.** The Volcanic Foothills clamp
+their terms under a cap that, off a pit, stood ~12 blocks over the
+undulation — shearing +28-block ridges and +45-block cones into one
+featureless smooth sheet across the province (the Salt Pan's identical
+cap uses a 0.10 km standoff; ours now does too, hard-gated off-pit, bowls
+unchanged). The ridges and cones are back.
+
+**The wall between Jungle and Savanna is not the biome programs**: they
+share one compiled terrain and cross-fade over ~0.04 of humidity; the
+worst step they can produce is ~30–50 blocks. The screenshot's cliff is
+either the slab family above or the Goldwater lane's sea trough running
+dry (the same `within` family, now fixed) — worth a second look in game
+before any terrain is retuned.
+
+**Filed on the engine's sheet (39–42):** a true 2D noise so a `within`
+can be flat by construction; a log line for generation lag (it is silent
+today); finer summaries ahead of the detail frontier inside the detail
+radius; summary fluid drawn blended instead of as an opaque slab.
+
+Checked: `--check-mods` with the caves force-compiled — 13 mods, all six
+cave builds, zero errors or warnings. What only a live flight can check:
+rivers, brooks and pools wet again; foothills ridges back; slabs
+shrinking as generation cheapens (their full cure is engine 40/41).

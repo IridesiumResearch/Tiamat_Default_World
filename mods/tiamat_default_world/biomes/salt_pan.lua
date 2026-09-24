@@ -60,8 +60,32 @@ end
 local function ripple()
     return n.noise("sp_ripple", RIPPLE_FREQ, 2, RIPPLE_AMP)
 end
+-- The pools' weight, and **FLAT in y since 2026-09-23**: the brine's
+-- `within` mins this in, and a terraced fill's `within` is read on the
+-- one plane y = 0.5 for the whole world (engine ask 35; the write-up is
+-- at the fill below) — an unstretched noise is a DIFFERENT field down
+-- there, and the brine found its pools only by coincidence. Flat, the
+-- mud beds, the pillars' stand and the brine all read ONE set of pools
+-- at every height. A world generated before this has its pools elsewhere
+-- on the same seed; their size, depth and count do not move. The ripple
+-- stays 3D: only the terrain and the level read it, and both may read
+-- height.
+--
+-- The stretch is the POOL gates' OWN, not HUMIDITY_STRETCH: x1000 retires
+-- height against fields of the humidity's scale (1/9000), and the pan
+-- stands tens of thousands of blocks over the slice (Y0 alone is 11,000),
+-- so after the division this 1/70 gate still read the slice ~0.4 of a
+-- feature from where the terrain and the stands read it — twice that at
+-- its second octave. One set of pools, read from two places: the ask-35
+-- fault reduced rather than fixed. At x1e6 the offset is under a
+-- thousandth of a feature at any height the world has. Shared with the
+-- Geyser Basin's and the Deep Ocean's gates — the `or` keeps the three
+-- declarations one table. Pools move once more on existing seeds, the
+-- trade the x1000 change already accepted.
+shape.POOL_GATE_STRETCH = shape.POOL_GATE_STRETCH or { y = 1e6 }
+local FLAT = shape.POOL_GATE_STRETCH
 local function pool_w()
-    return n.clamp(n.mul(n.sub(n.noise("sp_pool", POOL_FREQ, 2, 1.0), n.const(POOL_MIN)), n.const(POOL_EDGE)), 0.0, 1.0)
+    return n.clamp(n.mul(n.sub(n.noise("sp_pool", POOL_FREQ, 2, 1.0, FLAT), n.const(POOL_MIN)), n.const(POOL_EDGE)), 0.0, 1.0)
 end
 
 -- The pan's floor, km, as a term: the flat, rippled, with the pools sunk
@@ -226,11 +250,50 @@ tdw.build_biome(ID, function(ctx)
     end
     -- The brine, last: a block deep in the pools, at the pan's floor less
     -- what the pool is sunk, by the terraced fluid fill.
+    --
+    -- **`within` rides no wobbled radius** (2026-09-23), the lava's
+    -- treatment (volcanic_foothills.lua). The engine reads a terraced
+    -- fill's fields on the one plane y = 0.5, and since engine ask 35 a
+    -- `within` whose bounds disagree between that plane and the chunk's
+    -- slab is an ERROR — the guard (hooks.lua) takes it as "no brine
+    -- here", and a pool chunk skipped dry. `masked()` carried the readers,
+    -- `band()` and the biome mask's band both riding the wobbled radius —
+    -- and the pool gate itself was a 3D noise, now flat (`pool_w`, above).
+    -- The band here is on the TRUE radius, widened to the wobble's whole
+    -- reach (u_biome = u * (1 ± SHARE)), and the province gate is the
+    -- smooth flat-stretched noise it always was. Widening is safe because
+    -- the pan's own stand-off bounds the brine harder than any band: off
+    -- the pan the cap stands SALT_RAMP * (1 - weight) over the floor — a
+    -- hundred blocks at nothing, a block at weight 0.99 — while the level
+    -- sits POOL_D - POOL_FILL under it, so a column the band admits and
+    -- the pan does not hold has no room. What remains below the level
+    -- anywhere near the pan is the ring's own sub-base cuts (an arroyo two
+    -- blocks, a piping void six), and brine in those where a pool spot
+    -- crosses them was always this fill's behaviour — the gate and the
+    -- cuts admit exactly what they admitted, minus the wobble's lie.
+    -- One cut is NOT the ring's and gets its own term: a river valley
+    -- crosses the pan as it crosses everything (`locate_field`, above),
+    -- cut from the SMOOTH height to ~27 blocks under it, while the
+    -- brine's level rides the relief 3.6 blocks under the pan's base — a
+    -- pool spot on a crossing had ~23 blocks of room under a level that
+    -- was never the valley's. The course is kept out to the rim on its
+    -- own flat contour, the same exclusion `/tp` already used.
+    local within = n.sub(pool_w(), n.const(0.75))
+    local SHARE = shape.RING_WOBBLE_SHARE
+    local band_lo, band_hi = IN_U / (1.0 + SHARE), OUT_U / (1.0 - SHARE)
+    local band_mid, band_half = (band_lo + band_hi) / 2, (band_hi - band_lo) / 2
+    within = n.min(within, n.sub(n.const(band_half), n.abs(n.sub(shape.sub.u(), n.const(band_mid)))))
+    if not tdw.config.everywhere then
+        within = n.min(within, shape.province_mask("b", SPLIT))
+    end
+    if shape.river_exclude then
+        within = shape.river_exclude(within, (shape.RIVER_RIM or 150) + 4)
+    end
     fills[#fills + 1] = {
         fluid = BRINE,
         level = shape.compile("biome.salt.brine_level", n.add(n.mul(n.add(n.add(shape.relief_node(), shape.dome_node()), ripple()),
             n.const(1.0 / shape.SCALE)), n.const(shape.Y0 + (FLOOR - POOL_D + POOL_FILL) / shape.SCALE))),
-        within = shape.compile("biome.salt.brine_within", masked(n.sub(pool_w(), n.const(0.75)))),
+        within = shape.compile("biome.salt.brine_within", within),
     }
     return fills
 end)
