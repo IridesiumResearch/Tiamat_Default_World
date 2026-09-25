@@ -27,7 +27,7 @@ local SAND_FREQ, SAND_MIN = 1 / 55, 0.36
 local ACACIA_CELL, ACACIA_SQUARES = 28, 0.45
 local MOUND_CELL, MOUND_SQUARES = 22, 0.35
 local KOPJE_CELL, KOPJE_SQUARES = 64, 0.20
-local SHRUB_CELL, SHRUB_SQUARES = 12, 0.25
+local SHRUB_CELL, SHRUB_SQUARES = 12, 0.125   -- halved 2026-09-25: ground decoration too thick
 
 tdw.biomes[ID].ring_mode = "belt"
 tdw.biomes[ID].lazy = true

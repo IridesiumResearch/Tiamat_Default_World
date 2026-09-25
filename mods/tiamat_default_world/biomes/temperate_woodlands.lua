@@ -120,14 +120,14 @@ local ROOT_SHARE = 5           -- one candidate in this many is a root node, not
 
 local MANTLE_CHANCE = 600      -- one grass block in this many, inside a mantle patch, starts a patch
 local MANTLE_PATCH = 24        -- patches this many blocks square, one in MANTLE_PATCH_ONE_IN
-local MANTLE_PATCH_ONE_IN = 3
-local MANTLE_BY_DEAD_ONE_IN = 2 -- dead wood gets a patch round it this often — not every time
+local MANTLE_PATCH_ONE_IN = 6   -- 3 until 2026-09-25: half the ground cover
+local MANTLE_BY_DEAD_ONE_IN = 4 -- dead wood gets a patch round it this often — not every time
 local MANTLE_R = { 2, 2 }      -- patch radius, blocks
 local MANTLE_BLOOM_ONE_IN = 3  -- columns of the patch that carry a bloom
 
 local BRAMBLE_CHANCE = 700     -- one grass block in this many, inside a bramble patch
 local BRAMBLE_PATCH = 24       -- patches this many blocks square, one in BRAMBLE_PATCH_ONE_IN
-local BRAMBLE_PATCH_ONE_IN = 3
+local BRAMBLE_PATCH_ONE_IN = 6  -- 3 until 2026-09-25: half the brambles
 local HOLLOW_ONE_IN = 3        -- one oak in this many has a hollow under its roots
 
 -- Trees are tried so often they keep the edit queue full; anything rarer

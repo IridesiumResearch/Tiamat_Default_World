@@ -53,7 +53,7 @@ local DEN_R = { 1.5, 0.9 }     -- the chamber's half-width: least and extra
 -- loose groups, picked by hand (see `pick_roses` below).
 local ROSE_CHANCE = 200        -- one grass block in this many, in a square that has them
 local ROSE_CELL = 32           -- squares this wide...
-local ROSE_CELL_ONE_IN = 3     -- ...one in this many has bushes
+local ROSE_CELL_ONE_IN = 6     -- ...one in this many has bushes (3 until 2026-09-25: half the bushes)
 local ROSE_APART = 7           -- and never within this many blocks of another bush: a square fills to a loose group
 local ROSE_R = { 0.7, 0.5 }    -- half-width, blocks: least and extra
 local ROSE_BLOOMS = { 3, 4 }   -- blooms on a bush: least and extra

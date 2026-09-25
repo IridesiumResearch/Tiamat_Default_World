@@ -490,7 +490,7 @@ local function generate(buf, pos)
             for _, biome in ipairs(found) do
                 for _, fill in ipairs(fills_of(biome)) do
                     if fill.cover then
-                        buf:fill_cover(fill.cover, { cells = fill.cells, take = fill.take })
+                        buf:fill_cover(fill.cover, { cells = fill.cells, take = shape.thinned(fill.take) })
                     end
                 end
             end

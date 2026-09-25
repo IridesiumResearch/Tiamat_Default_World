@@ -43,7 +43,7 @@ local IN_U = { 0.271, 0.349 }                           -- where the terms stand
 local STREAK_FREQ, STREAK_MIN = 1 / 6, 0.25
 local POOL_FREQ, POOL_MIN = 1 / 35, 0.30
 local FERN_FREQ, FERN_MIN = 1.5, 0.05
-local SCRUB_CELL, SCRUB_SQUARES = 5, 0.45
+local SCRUB_CELL, SCRUB_SQUARES = 5, 0.225   -- halved 2026-09-25: ground decoration too thick
 local TREE_CELL, TREE_SQUARES = 16, 0.45
 
 -- Positive over a tower's footprint, before its edge is drawn.

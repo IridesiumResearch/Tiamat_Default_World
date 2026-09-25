@@ -8,6 +8,31 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-09-25
+
+### Half the ground decoration, everywhere
+
+- **Every ground cover is thinned to half** (`shape.thinned`, used by
+  `generate.lua` and `biomes/caves.lua`): each cover's `take` is min'd
+  with a fine noise (`cover_thin`, 1.7 a block) that is positive half the
+  time, so every biome's grass, flowers, ferns, heather, sage, seagrass and
+  cave plants keep the patches they had at half the density. One place
+  rather than forty retuned thresholds. Measured over 1,547 chunks across
+  the disc: tall grass 0.49 of what it was, heather 0.50, seagrass 0.49,
+  ferns 0.56, the flowers 0.40–0.46 on small counts.
+- **Bushes halved by their own rates**: savanna shrubs, heather-moor gorse,
+  karst scrub, the mossy limestone's cushions and coastal seagrass by their
+  scatter `chance`; the grasslands' rose-bush squares, the woodlands'
+  bramble and lady's-mantle patches by their `ONE_IN`s (a subset of the
+  old squares, so nothing moves — half of them are simply empty).
+- **Generation, measured:** 29% less time per chunk from an engine change,
+  with no change to the mod: the density evaluator now samples a noise or
+  contour node once per program when the program names it more than once,
+  and copies it for the repeats. The terrain programs name 155 octaves of
+  noise per point, 52–77 of them distinct. The mesa's plateau noise
+  appears 21 times, once per terrace. Byte-identical chunks before and
+  after. Engine e9d6244.
+
 ## 2026-09-11
 
 ### Ground cover: grass as cards that stand still

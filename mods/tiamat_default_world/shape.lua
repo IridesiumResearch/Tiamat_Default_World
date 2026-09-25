@@ -1279,6 +1279,9 @@ end
 -- the body wall (the generator's gate guarantees it); `flank` programs also
 -- test the body, at a noise node more, for chunks near the rim, the underside
 -- or the needle.
+-- What each program was compiled from, so a finished program can be built on
+-- (`M.thinned`). Weak, so a program nobody holds takes its source with it.
+local SOURCES = setmetatable({}, { __mode = "k" })
 local function compile(name, spec)
     local ok, field = pcall(game.density, spec)
     if not ok then
@@ -1287,9 +1290,30 @@ local function compile(name, spec)
         error(field, 0)
     end
     game.log(string.format("tiamat_default_world density %-18s %3d ops", name, field:len()))
+    SOURCES[field] = spec
     return field
 end
 M.compile = compile
+
+-- EVERY ground cover at half the density its biome asks for (2026-09-25:
+-- "too thick everywhere" — half the grass, half the flowers, in every
+-- biome). A cover's take is min'd with a fine noise that is positive half
+-- the time: symmetric about zero, so exactly half of what the take allows
+-- survives, and at 1.7 a block its features are under a cell apart, so it
+-- thins evenly rather than cutting bald patches. Done here, once for every
+-- biome, rather than by retuning forty thresholds that each thin a
+-- different shape of patch. A take compiled elsewhere is passed through.
+local COVER_THIN_FREQ = 1.7
+local THINNED = setmetatable({}, { __mode = "k" })
+function M.thinned(take)
+    local done = THINNED[take]
+    if done == nil then
+        local spec = SOURCES[take]
+        done = spec and compile("cover.thinned", min(spec, noise("cover_thin", COVER_THIN_FREQ, 1, 1.0))) or take
+        THINNED[take] = done
+    end
+    return done
+end
 
 M.programs = {}
 local P = M.programs

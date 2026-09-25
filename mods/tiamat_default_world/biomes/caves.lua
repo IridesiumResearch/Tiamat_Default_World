@@ -359,7 +359,7 @@ function M.into(buf, pos, dmin, dmax)
             elseif fill.field then
                 buf:fill_density(fill.field, fill.material, fill.detail or DETAIL)
             elseif fill.cover then
-                buf:fill_cover(fill.cover, { cells = fill.cells, take = fill.take })
+                buf:fill_cover(fill.cover, { cells = fill.cells, take = shape.thinned(fill.take) })
             elseif fill.scatter and buf.scatter then
                 stats.stamped = stats.stamped + buf:scatter({ depth = fill.depth, stand = fill.stand,
                     schematics = fill.schematics, cell = fill.cell, chance = fill.chance, salt = fill.salt, sink = fill.sink })

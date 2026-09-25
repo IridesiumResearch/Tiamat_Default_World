@@ -157,7 +157,7 @@ local PINE_PATCH_FREQ = 1 / 120
 local PINE_PATCH_MIN = 0.05
 local PINE_TEMPLATES = 10
 -- The shelf's life.
-local SEAGRASS_CELL, SEAGRASS_SQUARES = 2, 0.65
+local SEAGRASS_CELL, SEAGRASS_SQUARES = 2, 0.325   -- halved 2026-09-25: ground decoration too thick
 local SEAGRASS_DEPTH = { 0.003, 0.010 }
 local PRAIRIE_FREQ, PRAIRIE_MIN = 1 / 150, -0.05
 local KELP_CELL, KELP_SQUARES = 4, 0.35
