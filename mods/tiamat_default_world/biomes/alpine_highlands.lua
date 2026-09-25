@@ -86,6 +86,13 @@ local MAP_CENTRE_Z = MAP_ON_SPAWN and shape.SPAWN_Z or 0
 local MAP_ORIGIN_X = MAP_CENTRE_X - MAP_SIDE * MAP_SCALE // 2
 local MAP_ORIGIN_Z = MAP_CENTRE_Z - MAP_SIDE * MAP_SCALE // 2
 local MAP_SEED = 1303                                 -- mixed with the world's own by the engine
+-- The whole range squashed to this share of its height (2026-09-25: "a bit
+-- too tall", down a fifth). Applied to the finished height map, after the
+-- erosion, so the shape is exactly the one tuned below and only shorter;
+-- the snow line, its valley drop and crest rise and the tree line are
+-- scaled by it too, so the snow and the firs keep the same share of every
+-- mountain. The amplitudes below are the range BEFORE it.
+local HEIGHT_SCALE = 0.8
 
 -- The range. Four ridged octaves, each a crest along its noise's zero
 -- contour, the finer weighted by the coarser.
@@ -139,7 +146,7 @@ local LAKE_ICE = 0.001                                -- km: one block of ice on
 -- transition band, WALL_GAIN times f(1-f) — carry none: snow lies where
 -- the ground faces up, which is the dot product the designer asked for,
 -- read from the two masks the map already carries.
-local SNOWLINE = 0.065                                -- km above the dome: snow and ice above, slopes below
+local SNOWLINE = 0.065 * HEIGHT_SCALE                 -- km above the dome: snow and ice above, slopes below
 -- The line is not drawn: it wanders by SNOW_WANDER over a few hundred
 -- blocks and is flecked by SNOW_FLECK at a few blocks, so its edge is a
 -- mottled zone some fifty blocks tall rather than a contour.
@@ -154,8 +161,8 @@ local SNOW_FLECK_FREQ = 1 / 9
 local SNOW_PATCH_FREQ = 1 / 40
 local SNOW_PATCH_T = 0.02                             -- near the line about half the ground is patch
 local SNOW_PATCH_FADE = 1 / 0.12                      -- the threshold up by 1 (past the noise) 120 blocks below
-local SNOW_VALLEY_DROP = 0.08                         -- km: how much lower the snow reaches down a valley
-local SNOW_CREST_RAISE = 0.10                         -- km: how much higher it must be to lie on a crest
+local SNOW_VALLEY_DROP = 0.08 * HEIGHT_SCALE          -- km: how much lower the snow reaches down a valley
+local SNOW_CREST_RAISE = 0.10 * HEIGHT_SCALE          -- km: how much higher it must be to lie on a crest
 local SNOW_DEPTH = 0.008                              -- km: eight blocks of packed snow on the snowfields (doubled 2026-09-12), SNOW_LIFT of them standing over the ground
 local SNOW_PATCH_DEPTH = 0.004                        -- km: the patches below the line stay four deep and flat
 -- The snowfields are a deposit, not a colour: where the snow lies above
@@ -189,7 +196,7 @@ local PERMAFROST_MIN = 0.05
 local DIRT_FREQ = 1 / 80
 local DIRT_MIN = -0.08
 local DIRT_DEPTH = 0.003                              -- km: three blocks
-local TREELINE = 320                                  -- blocks over the base dome: turf and firs below (the firs read it at runtime); 200 was the valley floors and little else
+local TREELINE = 256                                  -- blocks over the base dome (320 before HEIGHT_SCALE, and an integer: the jitter hashes it): turf and firs below (the firs read it at runtime); 200 was the valley floors and little else
 local TREELINE_WANDER = 0.06                          -- km: the line wanders this much (+/- half) at TREELINE_WANDER_FREQ, for the scatter
 local TREELINE_WANDER_FREQ = 1 / 90
 local TURF_FREQ = 1 / 60
@@ -330,6 +337,9 @@ tdw.on_world_init(function()
     land:offset(1.0)                                  -- 1 - lake
     height_map:combine(land, "mul")
     height_map:combine(level, "add")
+
+    -- And the whole of it a fifth lower (HEIGHT_SCALE, above).
+    height_map:scale_by(HEIGHT_SCALE)
     game.log(string.format("tiamat_default_world alpine: maps built, %d samples a side at %d blocks, origin %d, %d",
         MAP_SIDE, MAP_SCALE, MAP_ORIGIN_X, MAP_ORIGIN_Z))
 end)
@@ -488,7 +498,7 @@ function shape.alpine_terms()
     local deep = n.add(n.mul(crack_term(), n.const(-1.0)), snow_lift())
     return n.add(n.add(n.add(deep, map_node("alp_height")), detail), steps)
 end
-shape.ALPINE_PEAK = RIDGE_AMP[1] + RIDGE_AMP[2] + RIDGE_AMP[3] + RIDGE_AMP[4] + BASE_AMP * shape.NOISE_RANGE
+shape.ALPINE_PEAK = (RIDGE_AMP[1] + RIDGE_AMP[2] + RIDGE_AMP[3] + RIDGE_AMP[4] + BASE_AMP * shape.NOISE_RANGE) * HEIGHT_SCALE
 
 tdw.biomes.alpine_highlands.ring_mode = "alpine"
 tdw.biomes.alpine_highlands.lazy = true               -- its programs read the maps: compiled at the first chunk

@@ -10,6 +10,17 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-25
 
+### The Alpine Highlands a fifth lower
+
+- **The range's height map is squashed to 0.8** (`HEIGHT_SCALE` in
+  `biomes/alpine_highlands.lua`), as the pre-pass's last step, after the
+  erosion, so the shape is exactly as tuned and only shorter: peaks near
+  720 blocks over the base dome instead of 900. The snow line, its valley
+  drop and crest rise and the tree line (320 to 256 blocks) are scaled
+  with it, so snow and firs keep the same share of every mountain, and
+  `ALPINE_PEAK` (the spawn's drop height) follows. The map is built once
+  in a world's life: a new world shows it, an old one keeps its range.
+
 ### Half the ground decoration, everywhere
 
 - **Every ground cover is thinned to half** (`shape.thinned`, used by
