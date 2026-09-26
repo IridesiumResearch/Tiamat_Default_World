@@ -10,6 +10,24 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-26
 
+### Shallow caves: something to find in the first two hundred blocks
+
+- **Seen:** dug 200 blocks under a desert and a jungle to a thin crystal
+  vein and no cave. Every cave biome lives on storeys, the shallowest some
+  four hundred blocks down, so the rock above them was solid but for the
+  mouths and the veins. Dug straight down in 60 columns across the disc:
+  **none** met a cave within 200 blocks, six within 500.
+- **The shallow caves** (`caves.lua`, `shallow_into`): winding tunnels
+  where two flattened noise sheets cross, and small chambers strung on
+  them, in bare rock — the walls are whatever the rock, its deposits and
+  its ores are. Full strength from ten blocks under the ground to 150, a
+  third through 150 to 250 (the dead zone asked for), most of it again
+  from 270, gone by 500 where the biomes' storeys begin. Only in chunks
+  the terrain's bound puts ten blocks under the real ground, so none
+  opens through the surface; the mouths still do that.
+- **Measured** over the same 60 columns: about three in four meet a cave
+  within 200 blocks now, the median at 55 down.
+
 ### The dark caves: Stone Labyrinth, Echoing Black Marble, Shadow Pool Chambers
 
 - **A second band of caves**, the Gloam, 1.6 to 4 km down. `caves.lua`

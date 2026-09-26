@@ -585,6 +585,9 @@ local function generate(buf, pos)
         -- alone; the caves' own water was lost to engine-asks 35.)
         if painted and tmin > 0 and not tail and not WHITE and tdw.caves then
             tdw.caves.into(buf, pos, dmin, dmax, smooth_min, smooth_max)
+            -- The shallow tunnels (caves.lua), in the rock between the ground
+            -- and the biomes' storeys; gated on the TERRAIN's depth bound.
+            tdw.caves.shallow_into(buf, pos, tmin, tmax)
             tdw.caves.mouths_into(buf, pos, dmin)
         end
     end

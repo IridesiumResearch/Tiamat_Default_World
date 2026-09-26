@@ -430,6 +430,75 @@ function M.into(buf, pos, dmin, dmax, smin, smax)
     end
 end
 
+-- ------------------------------------------------------------ the shallow caves
+
+-- **The rock between the ground and the cave biomes** (2026-09-26: "I
+-- mined down 200 blocks under a desert before hitting any kind of cave
+-- ... within your first 200 blocks you should have at least a 50% chance
+-- to run into a cave, even a small one; a bit of a dead zone between 150
+-- and 250 is fine"). The cave biomes live on storeys, the shallowest four
+-- hundred blocks down, so everything above them was solid but for the
+-- mouths and the crystal veins.
+--
+-- A network of winding tunnels in bare rock, where two sheets cross: each
+-- sheet the zero crossing of a 3D noise, drawn out flat (so the crossings
+-- run more along the ground than down it), a tunnel within a couple of
+-- blocks of both. And small chambers, blobs of a third noise, strung on
+-- it. No biome and no lining — the rock, its deposits and its ores are
+-- what the walls are — which is why they cost one carve a chunk.
+--
+-- HOW MUCH, BY DEPTH under the smooth ground (the mouths' reference: the
+-- dome's depth plus the relief, in blocks): full from the roof down to
+-- 150, thinned to a third through 150 to 250 (the dead zone), back to
+-- most of it from 270, and gone by 500, where the biomes' storeys are.
+-- The profile scales the tunnels' width and the chambers' threshold, so a
+-- thin stretch has fewer and narrower caves rather than stubs.
+--
+-- Never through the ground: only in chunks the terrain's bound puts ROOF
+-- blocks under the real surface or more (`shallow_into`), so a tunnel has
+-- ten blocks of rock over it at least. The mouths are what come up.
+local SHALLOW = {
+    ROOF = 0.010,                                     -- km under the real ground: no chunk shallower
+    BOTTOM = 0.55,                                    -- km under it: no chunk deeper
+    FREQ = 1 / 48, STRETCH = { x = 1.6, z = 1.6 },
+    W = 2.3,                                          -- a tunnel's half-width, blocks, at full strength
+    ROUGH_FREQ = 1 / 7, ROUGH = 0.6,
+    ROOM_FREQ = 1 / 22, ROOM_MIN = 0.40, ROOM_K = 13.0,
+}
+M.SHALLOW = SHALLOW
+local SHALLOW_FIELD = nil
+function M.shallow_node()
+    local function under()
+        return n.mul(n.add(M.D(), shape.relief_node()), n.const(1000.0))
+    end
+    local function ramp(from, over)
+        return n.clamp(n.mul(n.sub(under(), n.const(from)), n.const(1.0 / over)), 0.0, 1.0)
+    end
+    -- 1 to 150, a third by 200, back to 0.8 by 270, nothing by 510.
+    local profile = n.sub(n.add(n.sub(n.const(1.0), n.mul(ramp(150, 50), n.const(0.67))), n.mul(ramp(230, 40), n.const(0.47))),
+        n.mul(ramp(450, 60), n.const(0.8)))
+    local k = 0.625 / SHALLOW.FREQ
+    local function sheet(stream)
+        return n.mul(n.abs(n.noise(stream, SHALLOW.FREQ, 1, 1.0, SHALLOW.STRETCH)), n.const(k))
+    end
+    local tunnel = n.sub(n.mul(profile, n.const(SHALLOW.W)), n.max(sheet("shallow_a"), sheet("shallow_b")))
+    local room = n.mul(n.sub(n.noise("shallow_room", SHALLOW.ROOM_FREQ, 1, 1.0), n.add(n.const(SHALLOW.ROOM_MIN + 0.3), n.mul(profile, n.const(-0.3)))),
+        n.const(SHALLOW.ROOM_K))
+    return n.add(n.max(tunnel, room), n.noise("shallow_rough", SHALLOW.ROUGH_FREQ, 1, SHALLOW.ROUGH))
+end
+function M.shallow_field()
+    SHALLOW_FIELD = SHALLOW_FIELD or shape.compile("cave.shallow", M.shallow_node())
+    return SHALLOW_FIELD
+end
+-- `tmin`/`tmax`: the terrain's bound on the chunk's depth under the real
+-- ground, km.
+function M.shallow_into(buf, pos, tmin, tmax)
+    if tmin < SHALLOW.ROOF or tmin > SHALLOW.BOTTOM then
+        return
+    end
+    buf:fill_density(M.shallow_field(), AIR, DETAIL)
+end
+
 -- ------------------------------------------------------------ the mouths
 
 -- **Where the caves come to the surface** (2026-09-18, "be sure they
