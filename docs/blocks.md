@@ -51,6 +51,43 @@ the snags), and the `water` fluid.
 | `cobbles` | the channel's bed, in patches | the brief's rounded cobblestones; gravel is not round |
 | `glow_algae` | a film on the floor at the waterline | the brief's bioluminescent algae; nothing registered is a lit film |
 
+## 3. The dark caves (2026-09-26)
+
+The designer's rule for the dark caves: **one new block a biome at most,
+and as few as will do.** Three biomes, one new block. They hang on the same
+framework as the normal caves (`biomes/caves.lua`), in a second band — the
+Gloam, 1.6 to 4 km down — with a province of its own.
+
+### 3.1 Stone Labyrinth
+
+Shares `slate` banded with `dark_basalt` (the chiselled walls and the slab
+floors), `volcanic_ash` (the stone dust in the seams), `charcoal` (the black
+lichen in the corners; the petrified tendrils and the rubble are the slate
+and the basalt). **No new block.**
+
+### 3.2 Echoing Black Marble
+
+Shares `calcite` (the white hairlines), `silver_ore` (the silver veins —
+mineable), `obsidian` (the black tourmaline needles).
+
+| Block | Where | Why |
+|---|---|---|
+| `black_marble` | every surface of the halls six deep, the obelisk slabs | the biome is named for it; nothing registered is a polished black stone. Friction 0.6: the polish |
+
+### 3.3 Shadow Pool Chambers
+
+Shares `charcoal` (the greasy shale), `black_mud` (the shelves, the floors
+and the biofilm), `seagrass` (the weed ribbons), `pumice` (the pale
+sponges). The ink-black water is a FLUID, `still_water` — near-opaque, dark
+from inside, three levels of light lost a block — drawn as the `water`
+block, the way the brine is. **No new block.**
+
+## Deposits (2026-09-26)
+
+Pockets of `gravel`, `sand`, `granite` and `obsidian` through all the rock
+under the ground (`generate.lua`, THE DEPOSITS), laid before the ores so a
+vein runs on through a pocket. About 3.6% of the underground. No new block.
+
 ## The ores (2026-09-17)
 
 "add a basic list of ores and distribute them at various depths below the

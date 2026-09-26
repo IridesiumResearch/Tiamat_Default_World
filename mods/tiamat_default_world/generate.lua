@@ -137,6 +137,62 @@ local function ore_fields()
 end
 tdw.ORES = ORES
 tdw.ore_fields = ore_fields
+
+-- THE DEPOSITS (2026-09-26, "little gravel, sand, obsidian, granite
+-- deposits everywhere through the underground"): pockets a few blocks
+-- across of one of the four, all through the rock under the ground, laid
+-- BEFORE the ores so an ore's vein runs on through a pocket as it does
+-- through the rock (the ores overwrite), and before the caves, which cut
+-- through both.
+--
+-- ONE layered fill lays all four from one evaluation: `depth` is where a
+-- pocket is — a fine noise over a threshold, in blocks — and `code`, a
+-- slow noise cut in four, says which of the four a place's pockets are.
+-- So pockets come in neighbourhoods of a kind, a few dozen blocks across,
+-- which reads as geology rather than confetti.
+--
+-- **In fields, not everywhere evenly**, on purpose: a chunk of one
+-- material all through is SEALED — the server stops streaming what lies
+-- behind it (engine, `Lighting::is_dark_solid`) — and a pocket in every
+-- chunk would unseal the whole underground. The pockets keep to deposit
+-- fields, a slow noise over a threshold, and the chunks between stay
+-- whole rock. A chunk whose centre reads the field well under its
+-- threshold skips the fill (the ores' lode-gate idiom): margin as the
+-- lodes', for the same reasons.
+local DEPOSIT = {
+    FREQ = 1 / 6, MIN = 0.42, K = 3.75,       -- pockets: blocks per unit of the fine noise
+    FIELD_FREQ = 1 / 60, FIELD_MIN = 0.22,    -- the fields they keep to
+    KIND_FREQ = 1 / 40, CUTS = { -0.28, 0.0, 0.28 },   -- about a quarter each
+    MARGIN = 0.45,
+}
+local DEPOSIT_FIELD, DEPOSIT_KIND, DEPOSIT_GATE = nil, nil, nil
+local function deposits_into(buf, pos)
+    local n = shape.node
+    if DEPOSIT_FIELD == nil then
+        local field_node = n.noise("deposit_field", DEPOSIT.FIELD_FREQ, 1, 1.0)
+        DEPOSIT_FIELD = shape.compile("deposit.pockets", n.min(
+            n.mul(n.sub(n.noise("deposit_pocket", DEPOSIT.FREQ, 1, 1.0), n.const(DEPOSIT.MIN)), n.const(DEPOSIT.K)),
+            n.mul(n.sub(field_node, n.const(DEPOSIT.FIELD_MIN)), n.const(40.0))))
+        -- 1 + one step per cut the kind noise is over: 1 to 4. (The noise is
+        -- named once per cut; the engine samples it once.)
+        local code = n.const(1.0)
+        for _, cut in ipairs(DEPOSIT.CUTS) do
+            local kind = n.noise("deposit_kind", DEPOSIT.KIND_FREQ, 1, 1.0)
+            code = n.add(code, n.clamp(n.mul(n.sub(kind, n.const(cut)), n.const(1e4)), 0.0, 1.0))
+        end
+        DEPOSIT_KIND = shape.compile("deposit.kind", code)
+        DEPOSIT_GATE = shape.compile("deposit.field", field_node)
+    end
+    if DEPOSIT_GATE:at(pos.x * 16 + 8.5, pos.y * 16 + 8.5, pos.z * 16 + 8.5, pos.seed) < DEPOSIT.FIELD_MIN - DEPOSIT.MARGIN then
+        return
+    end
+    buf:fill_layers(DEPOSIT_FIELD, DEPOSIT_KIND, {
+        { code = 1, to = math.huge, material = blocks.gravel },
+        { code = 2, to = math.huge, material = blocks.sand },
+        { code = 3, to = math.huge, material = blocks.granite },
+        { code = 4, to = math.huge, material = blocks.obsidian },
+    })
+end
 -- `dmax` is the chunk's greatest smooth depth: an ore whose level is under
 -- it cannot reach the chunk, and costs it nothing. Then the lode gate: one
 -- point sample of the bare lode noise at the chunk's centre skips the fill
@@ -304,6 +360,9 @@ local function generate(buf, pos)
     local tmin, tmax = t.low, t.high
     -- A sea floor's deep bands are measured from the terrain (shape.lua,
     -- `BANDS_BY_TERRAIN`): the gate's depths are the terrain's there too.
+    -- The smooth depths themselves, kept: the caves are cut from D, and a
+    -- cave fill that belongs to one storey is gated on them (caves.lua).
+    local smooth_min, smooth_max = dmin, dmax
     if shape.BANDS_BY_TERRAIN[mode] then
         dmin, dmax = tmin, tmax
     end
@@ -446,6 +505,7 @@ local function generate(buf, pos)
         -- The ores, into rock that is solid throughout, under the bands
         -- they sit in and before the core stack, which overwrites them.
         if painted and tmin > 0 and not WHITE then
+            deposits_into(buf, pos)
             ores_into(buf, pos, dmax)
         end
         if skin and painted and tmin < shape.SKIN_TOP then
@@ -524,7 +584,7 @@ local function generate(buf, pos)
         -- fill empties the columns outside its `within` — it leaves them
         -- alone; the caves' own water was lost to engine-asks 35.)
         if painted and tmin > 0 and not tail and not WHITE and tdw.caves then
-            tdw.caves.into(buf, pos, dmin, dmax)
+            tdw.caves.into(buf, pos, dmin, dmax, smooth_min, smooth_max)
             tdw.caves.mouths_into(buf, pos, dmin)
         end
     end

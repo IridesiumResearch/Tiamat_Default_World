@@ -8,6 +8,57 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-09-26
+
+### The dark caves: Stone Labyrinth, Echoing Black Marble, Shadow Pool Chambers
+
+- **A second band of caves**, the Gloam, 1.6 to 4 km down. `caves.lua`
+  now takes a biome of either depth area: each band has its own top,
+  bottom and province noise, and `biomes_in`, the HUD's `cave_under` and
+  `/tp`'s `locate` read the biome's own. The normal caves' fields are
+  built node for node as before: 360 chunks across their band hash the
+  same, cell for cell, with and without this change.
+- **3.1 Stone Labyrinth** (the province under -0.15): a grid of square-cut
+  passages three to five wide, from two families of noise planes (a noise
+  stretched a thousandfold along two axes varies along the third alone,
+  so its zero crossings are flat walls), cut into segments with dead
+  ends; levels a dozen blocks apart from a noise in y alone; shafts at
+  crossings; colonnade halls where the grid opens round the cells' cores;
+  grooves along the walls. Slate banded with dark basalt, ash dust, black
+  charcoal lichen in the corners, rubble heaps, petrified tendrils.
+- **3.2 Echoing Black Marble** (-0.15 to 0.15): halls 25 to 40 across whose
+  ceiling rises in a straight line from the wall to a ridge — a pointed
+  vault — over floors stepped in sheer six-block ledges; slit galleries
+  along a contour; echo pockets. Black marble six deep with calcite
+  hairlines and silver veins; obelisk slabs; tourmaline needles.
+  **New: `black_marble`**, the round's one new block.
+- **3.3 Shadow Pool Chambers** (over 0.15): broad chambers four to seven
+  high over still black water one to three deep, the ceiling dipping
+  into it; mud shelves and stepping stones; charcoal shale; weed ribbons,
+  biofilm, pale sponges; drips. The water is a new FLUID, `still_water`,
+  drawn as the water block: near-opaque, black from inside, light
+  falling three levels a block. No new block.
+- **A pool is gated to its storey** (`reach`, `caves.lua`): a terraced
+  fluid fill floods every empty cell under its level in its columns, so
+  a pool laid in the chunks of the storey beneath filled it solid. The
+  generator now passes the chunk's smooth-depth bounds to the caves.
+- **Flat in y, for real** (`caves.DEEP_FLAT`, a millionfold): a fluid's
+  `level` and `within` are read at y = 0.5, twenty-six thousand blocks
+  from the Gloam, where a noise drawn out only a thousandfold had drifted
+  a whole feature, and the water went into the wrong columns or none.
+  The normal caves keep their stretch. **Their Stalactite Forests' pools
+  have the same fault** (the dam noise at 1/8 has moved several features
+  by y = 0.5) and are left as they are for now.
+- **Deposits** of gravel, sand, granite and obsidian through all the rock
+  under the ground: one layered fill a chunk, in deposit fields, before
+  the ores so a vein runs through a pocket. About 3.6% of the
+  underground, near a quarter each. They cost no sealed chunks (the ores
+  and the caves had already left almost none whole) and about 1 ms a
+  chunk.
+- `tools/make_textures.py` keeps the nine plant textures the designer
+  redrew on 2026-09-25, items included; before, running it would have
+  painted over them.
+
 ## 2026-09-25
 
 ### The Alpine Highlands a fifth lower

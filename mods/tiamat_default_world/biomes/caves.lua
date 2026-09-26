@@ -61,6 +61,30 @@ M.BLEND = 0.04                  -- the province noise's units: a biome fades out
 -- Fungal Grove Chambers to 0.33, Underground River over it.
 M.bands = {}
 
+-- **The two bands** (2026-09-26, the dark caves). A cave biome belongs to a
+-- depth band — its catalogue area — and each band has its own top, bottom
+-- and province noise, so the dark caves change kind on their own map
+-- rather than under the normal caves'. The normal band is the one this
+-- file was written for and keeps every field it had, node for node: its
+-- worlds do not move. The dark band is the Gloam, GLOAM_D to ABYSS_D, a
+-- flat top under which no relief reaches.
+M.DARK_PROVINCE_FREQ = 1 / 900     -- its halls are bigger; so are its provinces
+-- **Flat in y, for real.** A fluid fill reads its `level` and `within` at
+-- y = 0.5 (engine ask 35), and the Gloam is some twenty-six thousand blocks
+-- over that: a noise drawn out a thousandfold in y has drifted a whole
+-- feature by then at the chambers' frequencies, so a pool's `within`
+-- answered for somewhere else and its water went into the wrong columns or
+-- none. A millionfold is flat over the whole world. The dark caves' fields
+-- and province use it; the normal caves keep the thousandfold their worlds
+-- were generated with.
+M.DEEP_FLAT = { y = 1000000 }
+M.LAYERS = {
+    normal_caves = { TOP = M.TOP, BOTTOM = M.BOTTOM, stream = "cave_province", freq = M.PROVINCE_FREQ, order = {} },
+    dark_caves = { TOP = shape.GLOAM_D, BOTTOM = shape.ABYSS_D, stream = "dark_cave_province", freq = M.DARK_PROVINCE_FREQ, order = {},
+        stretch = M.DEEP_FLAT },
+}
+M.layer_of = {}                    -- biome id -> its band's entry in LAYERS
+
 -- The smooth depth in km, positive down (shape.depth), and the band.
 function M.D()
     return shape.depth()
@@ -79,6 +103,18 @@ end
 function M.province()
     return n.noise("cave_province", M.PROVINCE_FREQ, 2, 1.0, M.PROVINCE_STRETCH)
 end
+-- The same two for any band: the normal band's are exactly the two above.
+local function band_of(layer)
+    if layer == M.LAYERS.normal_caves then
+        return M.band()
+    end
+    local d = M.D()
+    return n.min(n.sub(d, n.const(layer.TOP)), n.sub(n.const(layer.BOTTOM), M.D()))
+end
+local function province_of(layer)
+    return n.noise(layer.stream, layer.freq, 2, 1.0, layer.stretch or M.PROVINCE_STRETCH)
+end
+M.province_of = province_of
 -- **The crystal veins** (2026-09-18: "reduce the amount of random Crystal
 -- and Crystal seams. Rather let's have veins of it running through the
 -- rock around and also through the caves"). A vein is where two stretched
@@ -133,13 +169,14 @@ end
 function M.weight(id)
     local band = M.bands[id]
     assert(band, "no cave biome called " .. tostring(id))
-    local w = n.clamp(n.mul(M.band(), n.const(1.0 / M.EDGE)), 0.0, 1.0)
-    local p = M.province()
+    local layer = M.layer_of[id]
+    local w = n.clamp(n.mul(band_of(layer), n.const(1.0 / M.EDGE)), 0.0, 1.0)
+    local p = province_of(layer)
     if band[1] > -1 then
         w = n.min(w, n.clamp(n.mul(n.sub(p, n.const(band[1])), n.const(1.0 / M.BLEND)), 0.0, 1.0))
     end
     if band[2] < 1 then
-        w = n.min(w, n.clamp(n.mul(n.sub(n.const(band[2]), M.province()), n.const(1.0 / M.BLEND)), 0.0, 1.0))
+        w = n.min(w, n.clamp(n.mul(n.sub(n.const(band[2]), province_of(layer)), n.const(1.0 / M.BLEND)), 0.0, 1.0))
     end
     return w
 end
@@ -157,12 +194,13 @@ end
 -- whole height of the world. The province is flat, so it agrees.
 function M.mine_flat(id, field)
     local band = M.bands[id]
+    local layer = M.layer_of[id]
     local w = n.const(1.0)
     if band[1] > -1 then
-        w = n.min(w, n.clamp(n.mul(n.sub(M.province(), n.const(band[1])), n.const(1.0 / M.BLEND)), 0.0, 1.0))
+        w = n.min(w, n.clamp(n.mul(n.sub(province_of(layer), n.const(band[1])), n.const(1.0 / M.BLEND)), 0.0, 1.0))
     end
     if band[2] < 1 then
-        w = n.min(w, n.clamp(n.mul(n.sub(n.const(band[2]), M.province()), n.const(1.0 / M.BLEND)), 0.0, 1.0))
+        w = n.min(w, n.clamp(n.mul(n.sub(n.const(band[2]), province_of(layer)), n.const(1.0 / M.BLEND)), 0.0, 1.0))
     end
     return n.min(field, n.mul(n.sub(w, n.const(0.5)), n.const(20.0)))
 end
@@ -232,14 +270,17 @@ end
 local built = {}       -- id -> { fills = {...}, cavity = Density (positive in the void) }
 local order = {}
 
----@param id string  a biome of the normal_caves area (biomes/catalogue.lua)
----@param band number[]  { low, high } of the province noise; -1 and 1 are open ends
+---@param id string  a biome of the normal_caves or dark_caves area (biomes/catalogue.lua)
+---@param band number[]  { low, high } of its band's province noise; -1 and 1 are open ends
 ---@param build fun(ctx: table): table
 function tdw.cave_biome(id, band, build)
     local biome = tdw.biomes[id]
-    assert(biome and biome.area == "normal_caves", "cave_biome: " .. tostring(id) .. " is not a normal-caves biome")
+    local layer = biome and M.LAYERS[biome.area]
+    assert(layer, "cave_biome: " .. tostring(id) .. " is not a normal- or dark-caves biome")
     M.bands[id] = band
+    M.layer_of[id] = layer
     order[#order + 1] = id
+    layer.order[#layer.order + 1] = id
     biome.cave = true
     biome.built = true
     biome.placed = true
@@ -301,22 +342,29 @@ end
 
 -- ------------------------------------------------------------ the chunk
 
-local PROVINCE = nil
--- The cave biomes a chunk may hold: those whose band the province noise at
--- the chunk's centre is in or within BLEND of. Empty above or below the
--- band, which `dmin`/`dmax` (the chunk's smooth-depth bounds) decide.
+-- Each band's province, compiled at first use, for the point reads below.
+local function province_program(layer)
+    layer.program = layer.program or shape.compile(layer == M.LAYERS.normal_caves and "cave.province" or "cave.dark_province",
+        province_of(layer))
+    return layer.program
+end
+-- The cave biomes a chunk may hold: in each band the chunk reaches, those
+-- whose band of the province noise at the chunk's centre it is in or within
+-- BLEND of. Nil above or below both bands, which `dmin`/`dmax` (the chunk's
+-- depth bounds) decide.
 function M.biomes_in(pos, dmin, dmax)
-    if dmax < M.TOP or dmin > M.BOTTOM then
-        return nil
-    end
-    PROVINCE = PROVINCE or shape.compile("cave.province", M.province())
-    local p = PROVINCE:at(pos.x * 16 + 8.5, pos.y * 16 + 8.5, pos.z * 16 + 8.5, pos.seed)
     local found = nil
-    for _, id in ipairs(order) do
-        local band = M.bands[id]
-        if p > band[1] - M.BLEND and p < band[2] + M.BLEND then
-            found = found or {}
-            found[#found + 1] = id
+    for _, key in ipairs({ "normal_caves", "dark_caves" }) do
+        local layer = M.LAYERS[key]
+        if #layer.order > 0 and dmax >= layer.TOP and dmin <= layer.BOTTOM then
+            local p = province_program(layer):at(pos.x * 16 + 8.5, pos.y * 16 + 8.5, pos.z * 16 + 8.5, pos.seed)
+            for _, id in ipairs(layer.order) do
+                local band = M.bands[id]
+                if p > band[1] - M.BLEND and p < band[2] + M.BLEND then
+                    found = found or {}
+                    found[#found + 1] = id
+                end
+            end
         end
     end
     return found
@@ -326,10 +374,16 @@ local DETAIL = shape.SURFACE_DETAIL
 local AIR = game.AIR
 local stats = { chunks = 0, carved = 0, stamped = 0 }
 M.stats = stats
--- Runs the cave fills of a chunk that is rock throughout. `tmax` is the
--- terrain's greatest depth over the chunk (positive: rock), for the
--- structures' reach.
-function M.into(buf, pos, dmin, dmax)
+-- Runs the cave fills of a chunk that is rock throughout. `dmin`/`dmax`
+-- bound its depth as the generator gates it; `smin`/`smax` bound the
+-- SMOOTH depth D the caves are cut from, for a fill that carries a `reach`.
+--
+-- **A fluid fill floods every empty cell under its level in its columns**,
+-- in whatever chunk it runs — so a pool on one storey laid in the chunks
+-- of the storey under it fills that storey's rooms to the ceiling. A fill
+-- with `reach = { lo, hi }` (km of D) runs only in chunks whose smooth
+-- depth meets that range: its own storey's.
+function M.into(buf, pos, dmin, dmax, smin, smax)
     local found = M.biomes_in(pos, dmin, dmax)
     if found == nil then
         return
@@ -349,8 +403,11 @@ function M.into(buf, pos, dmin, dmax)
     for _, id in ipairs(found) do
         for _, fill in ipairs(fills_of(id)) do
             local skip = (fill.side == "base" and skip_base) or (fill.side == "variant" and skip_variant)
+            if fill.reach and smin and (smax < fill.reach[1] or smin > fill.reach[2]) then
+                skip = true
+            end
             if skip then
-                -- the far dressing's decoration: its field cannot be positive here
+                -- the far dressing's decoration, or another storey's pool
             elseif fill.carve then
                 buf:fill_density(fill.carve, AIR, DETAIL)
                 stats.carved = stats.carved + 1
@@ -458,11 +515,12 @@ function tdw.cave_under(x, y, z)
     if seed == nil or #order == 0 then
         return nil
     end
-    PROVINCE = PROVINCE or shape.compile("cave.province", M.province())
-    local p = PROVINCE:at(x + 0.5, y + 0.5, z + 0.5, seed)
+    local p = {}
     for _, id in ipairs(order) do
         local band = M.bands[id]
-        if p > band[1] - M.BLEND and p < band[2] + M.BLEND then
+        local layer = M.layer_of[id]
+        p[layer] = p[layer] or province_program(layer):at(x + 0.5, y + 0.5, z + 0.5, seed)
+        if p[layer] > band[1] - M.BLEND and p[layer] < band[2] + M.BLEND then
             local cavity = M.cavity_of(id)
             if cavity and cavity:at(x + 0.5, y + 0.5, z + 0.5, seed) > -2.0 then
                 return id
@@ -478,7 +536,8 @@ end
 -- narrows the search to one dressing's ground: "variant" for /tp by the
 -- variant's name, "base" for the biome dressed as itself.
 function M.locate(id, px, pz, seed, side)
-    PROVINCE = PROVINCE or shape.compile("cave.province", M.province())
+    local layer = M.layer_of[id]
+    local PROVINCE = province_program(layer)
     VARIANT_AT = VARIANT_AT or shape.compile("cave.variant", M.variant_node())
     local cavity = M.cavity_of(id)
     if cavity == nil then
@@ -500,7 +559,7 @@ function M.locate(id, px, pz, seed, side)
             if u < 0.93 then
                 local dome_y = shape.Y0 + 1000 * shape.dome_at(u)
                 -- The province at the band's middle, then the column.
-                local y_mid = math.floor(dome_y - 1000 * (M.TOP + M.BOTTOM) / 2)
+                local y_mid = math.floor(dome_y - 1000 * (layer.TOP + layer.BOTTOM) / 2)
                 local p = PROVINCE:at(x + 0.5, y_mid + 0.5, z + 0.5, seed)
                 -- Well inside the band, or the first void found is the
                 -- wall on the province line — and well inside the asked-for
@@ -512,7 +571,7 @@ function M.locate(id, px, pz, seed, side)
                         or side == "base" and v < VARIANT.MIN - 0.05
                 end
                 if ok then
-                    for y = math.floor(dome_y - 1000 * M.TOP - 60), math.floor(dome_y - 1000 * M.BOTTOM), -2 do
+                    for y = math.floor(dome_y - 1000 * layer.TOP - 60), math.floor(dome_y - 1000 * layer.BOTTOM), -2 do
                         if cavity:at(x + 0.5, y + 0.5, z + 0.5, seed) > 1.0 then
                             return x, y, z
                         end

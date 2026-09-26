@@ -132,6 +132,8 @@ BLOCKS = {
     "fir_needles":    ( 40,  68,  54,  0),
     "rose_blooms":    (176,  42,  64,  0),
     "water":          ( 58,  92, 110,  0),
+    # The dark caves (2026-09-26): 3.2 Echoing Black Marble's one new block.
+    "black_marble":   ( 24,  23,  27,  0),
     "morphic_rock":    ( 40,  38,  44,  0),
     "magma_crust":    ( 96,  44,  30,  0),
     "magma":          (222, 112,  28,  0),
@@ -167,6 +169,9 @@ HAND_MADE = {
     "acacia_leaves", "apple_leaves", "birch_leaves", "cherry_blossom", "cherry_leaves",
     "fir_needles", "ironwood_leaves", "kapok_leaves", "mangrove_leaves", "oak_leaves",
     "willow_leaves",
+    # Redrawn by the designer, 2026-09-25.
+    "ladys_mantle", "monstera", "peony", "poppy", "rose", "rose_blooms", "tall_grass",
+    "water_iris", "wild_mint",
 }
 
 # Alpha per texture; everything not listed is opaque.
@@ -506,6 +511,9 @@ def main():
         (OUT / f"{name}.png").write_bytes(texture(name, r, g, b, grain))
         print(f"wrote {name}.png")
     for name, colours in ITEMS.items():
+        if name in HAND_MADE:
+            print(f"kept {name}.png (hand-made)")
+            continue
         (OUT / f"{name}.png").write_bytes(item_picture(name, colours))
         print(f"wrote {name}.png")
 

@@ -111,6 +111,9 @@ load("biomes.underground_river")    -- 2.3
 load("biomes.fungal_grove_chambers")  -- 2.4
 load("biomes.mineral_vein_tunnels")  -- 2.5
 load("biomes.stalactite_forests")    -- 2.6
+load("biomes.stone_labyrinth")       -- 3.1, the dark caves (2026-09-26)
+load("biomes.echoing_black_marble")  -- 3.2
+load("biomes.shadow_pool_chambers")  -- 3.3
 if tdw.config.compile_caves then
     tdw.caves.compile_all()          -- validation: see the config flag above
 end

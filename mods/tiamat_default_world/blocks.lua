@@ -393,6 +393,25 @@ game.register_fluid{
     evaporates = 0,
     color = { r = 24, g = 44, b = 52 },
 }
+-- Still water: the Shadow Pool Chambers' reservoirs (2026-09-26), ink-black
+-- and light-swallowing. The water block's surface, near-opaque, dark from
+-- inside, and three levels of light lost a block, so a lamp held over it
+-- lights nothing under it. Laid full, in bodies, so it lies at rest and
+-- mirror-flat until somebody wades in.
+local STILL_WATER = {
+    id = "still_water",
+    material = "water",
+    tick_rate = 8,
+    evaporates = 0,
+    washes = false,
+    color = { r = 6, g = 8, b = 12 },
+    opacity = 0.96,
+    light_falloff = 3,
+}
+if not pcall(game.register_fluid, STILL_WATER) then
+    STILL_WATER.opacity, STILL_WATER.light_falloff, STILL_WATER.washes = nil, nil, nil
+    game.register_fluid(STILL_WATER)
+end
 
 -- The ores (2026-09-17, "a basic list of ores ... distribute them at
 -- various depths below the world", in the designer's order of depth):
@@ -435,6 +454,15 @@ block("mushroom_cap", "Mushroom cap", "Tan fungal flesh, spongy, faintly lit amb
     { hardness = 0.3, tint = { strength = 0.12, scale = 32 }, light_emit = { r = 5, g = 3, b = 1 } })
 block("pyrite", "Pyrite", "Brassy cubes of fool's gold, grown in clusters out of the fractures.", { hardness = 2.2, tint = { strength = 0.06, scale = 24 } })
 block("flowstone", "Flowstone", "Cream and honey dripstone, rippled like a frozen wave over every surface.", { hardness = 1.4, tint = ROCK })
+-- The dark caves (2026-09-26), one new block a biome at most and as few as
+-- will do: 3.2 Echoing Black Marble's `black_marble`, polished by the
+-- ages to a slick (friction 0.6) near-mirror. 3.1 Stone Labyrinth is
+-- `slate` and `dark_basalt` with `volcanic_ash` dust and `charcoal`
+-- lichen; 3.3 Shadow Pool Chambers is `charcoal` shale over `black_mud`,
+-- its ink-black water a fluid of its own drawn as the `water` block (the
+-- brine's trick) — no new block for either.
+block("black_marble", "Black marble", "Pitch-black metamorphic marble, polished glass-smooth; white calcite hairlines run through it.",
+    { hardness = 2.4, friction = 0.6, tint = { strength = 0.05, scale = 64 } })
 
 -- Depth bands -----------------------------------------------------------
 block("dark_sediment", "Dark sediment", "Dark-cave rock, 1.6 to 4 km down: old mud turned to stone.", { hardness = 2.0, tint = ROCK })

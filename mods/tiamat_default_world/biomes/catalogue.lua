@@ -176,9 +176,12 @@ biome{ id = "stalactite_forests", name = "Stalactite Forests", area = "normal_ca
 
 -- 3. Dark caves ------------------------------------------------------------------
 area{ id = "dark_caves", name = "Dark Caves", kind = "depth", note = "1,600 to 4,000 blocks down: the Gloam." }
-biome{ id = "stone_labyrinth", name = "Stone Labyrinth", area = "dark_caves" }
-biome{ id = "echoing_black_marble", name = "Echoing Black Marble", area = "dark_caves" }
-biome{ id = "shadow_pool_chambers", name = "Shadow Pool Chambers", area = "dark_caves" }
+biome{ id = "stone_labyrinth", name = "Stone Labyrinth", area = "dark_caves",
+    note = "3.1 (2026-09-26) — a grid of narrow square-cut passages in levels a dozen blocks apart, dead ends, shafts between levels; slate banded with dark basalt, slab floors with ash dust, black lichen in the corners, petrified tendrils, colonnade halls, rubble heaps, wall grooves. The dark caves' province under -0.15." }
+biome{ id = "echoing_black_marble", name = "Echoing Black Marble", area = "dark_caves",
+    note = "3.2 (2026-09-26) — vaulted halls 25 to 40 across under pointed vaults, slit galleries, echo pockets; polished black marble with calcite hairlines and silver veins, sheer floor ledges, obelisk slabs, black tourmaline needles. Province -0.15 to 0.15. New: black_marble." }
+biome{ id = "shadow_pool_chambers", name = "Shadow Pool Chambers", area = "dark_caves",
+    note = "3.3 (2026-09-26) — broad low chambers over ink-black still water one to three deep, the ceiling dipping into it; charcoal shale, black mud shelves, stepping stones, weed ribbons, biofilm, pale sponges, drips. Province over 0.15. The water is still_water, drawn as the water block." }
 biome{ id = "blind_fish_grottoes", name = "Blind Fish Grottoes", area = "dark_caves" }
 biome{ id = "whispering_crevasse", name = "Whispering Crevasse", area = "dark_caves" }
 biome{ id = "phosphorescent_fungi_pockets", name = "Phosphorescent Fungi Pockets", area = "dark_caves", note = "Rare." }
