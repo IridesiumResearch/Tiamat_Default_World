@@ -32,6 +32,9 @@ and answers `nil` or `false` rather than raising.
 | `biome_under(x, y, z)` | function → string or nil | The id of the biome at a place (section 3), or nil. |
 | `add_soil_alias(block, dry)` | function → boolean | Another mod's block (a full id string) counts as this mod's block `dry` wherever this mod compares materials: what soil is under a place, the HUD's owner table, what a plant stands on. Resolved on first use, so it may name blocks registered later. |
 | `add_harmless_fluid(fluid)` | function → boolean | A fluid (a full id string) that neither breaks leaves nor quenches lava into rock. |
+| `biomes()` | function → table or nil | Everything `biome_under` can name, in catalogue order: each `{ id, name, area, area_name, kind, findable }`. `kind` is the area's (`surface`, `depth`, `shell`, `tail`), `cave` for a built cave biome, `depth_area` for the three deep areas at the end (`normal_caves`, `dark_caves`, `abyss`), which `biome_under` answers deep under the ground when no cave biome claims the place. `findable` is true for what a world actually holds: built and placed, and not excluded by the dev switch. A fresh table each call. Added 2026-09-28 (Progress, W5). |
+| `depth_under(x, y, z)` | function → number or nil | Blocks under the ground **as generated** at a place, from the terrain field of its ring; negative over the ground. It does not see what has been dug. One point sample: fine for a player a tick. nil before the world has a seed. Added 2026-09-28 (Progress, W6). |
+| `depth_band(x, y, z)` | function → string, string or nil | The world's depth band at a place and its name: `surface` (anything over the normal caves, mountains included), `normal_caves` (100 to 1,600 blocks under the base dome), `dark_caves` (1,600 to 4,000), `abyss` (below). By the smooth depth the bands are laid by. Added 2026-09-28 (Progress, W6). |
 
 ## 2. Registered identifiers
 
@@ -58,6 +61,26 @@ rose_bush, rust_red_sandstone, salt, sand, scorch, seagrass, silver_ore, slate,
 snow, stone, sulfur, tall_grass, tin_ore, volcanic_ash, water, water_iris,
 wet_clay, white_sand, wild_mint, willow_leaves, willow_log, willow_planks.
 `docs/blocks.md` says where each is used and why.
+
+**Block tags** (2026-09-28, Craft's W2; read back with the engine's
+`game.tags(material)`). Every block carries a few plain words for what it
+is, most particular first, so a reader that takes the first word it knows
+gets the most specific one: `hard` comes before `stone` and `ore`, and
+`hardwood` before `log` and `plank`. The words are facts, not rules;
+nothing here says what digs what. The vocabulary:
+
+- ground: `soil`, `clay`, `ash`, `sand`, `gravel`, `snow`, `ice`, `frozen`
+- rock: `stone`, `hard` (the hard stones and ores, the deep bands),
+  `sandstone`, `marble`, `porous`, `glass`, `flint`
+- underground: `ore`, `metal_ore`, `gem`, `fuel`, `mineral`, `crystal`,
+  `metal`, `bone`
+- wood: `log`, `plank`, `wood`, `hardwood`, `dead`
+- growth: `plant`, `leaves`, `flower`, `bush`, `vine`, `aquatic`, `algae`,
+  `fungus`, `coral`, `membrane`
+- other: `fluid` (the blocks the fluids are drawn as), `hot`, `glowing`
+
+The table is `TAGS` in `mods/tiamat_default_world/blocks.lua`, and a
+block registered without tags is named in the log at load.
 
 **Items.** rose.
 

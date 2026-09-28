@@ -559,6 +559,13 @@ local function generate(buf, pos)
             -- engine's `scatter` does the whole neighbourhood pass — every
             -- chunk within reach derives the same trees and keeps its slice.
             structures_into(buf, found, mode, math.huge)
+            -- The shallow tunnels under this ground, closing ten blocks
+            -- under it (biomes/caves.lua): in the surface chunk too, so a
+            -- tunnel that rises into it rounds off rather than stopping at
+            -- the chunk's floor.
+            if tdw.caves and not tail and not WHITE then
+                tdw.caves.shallow_into(buf, pos, tmin, tmax, smooth_min, mode)
+            end
             -- A cave's mouth where one comes up through this ground
             -- (biomes/caves.lua), after the paint, the plants and the trees.
             if tdw.caves then
@@ -587,7 +594,7 @@ local function generate(buf, pos)
             tdw.caves.into(buf, pos, dmin, dmax, smooth_min, smooth_max)
             -- The shallow tunnels (caves.lua), in the rock between the ground
             -- and the biomes' storeys; gated on the TERRAIN's depth bound.
-            tdw.caves.shallow_into(buf, pos, tmin, tmax)
+            tdw.caves.shallow_into(buf, pos, tmin, tmax, smooth_min, mode)
             tdw.caves.mouths_into(buf, pos, dmin)
         end
     end

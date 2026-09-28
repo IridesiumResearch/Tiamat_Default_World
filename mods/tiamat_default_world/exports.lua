@@ -18,6 +18,10 @@
 --   biome_under(x, y, z)  the biome id at a place, or nil
 --   add_soil_alias(block, dry)   another mod's block counts as one of ours
 --   add_harmless_fluid(fluid)    a fluid the leaves and the lava ignore
+--   biomes()          every biome and depth area `biome_under` can name,
+--                     with its display name and whether a world has it
+--   depth_under(x, y, z)  blocks under the ground as generated, or nil
+--   depth_band(x, y, z)   the depth band a place is in: id and name
 --
 -- THE RING TEMPERATURE is not a field this mod generates from — the rings
 -- are placed by radius and the biomes carry the climate themselves — but
@@ -102,6 +106,98 @@ local function add_harmless_fluid(fluid)
     return true
 end
 
+-- **The biome list** (Progress, sibling ask W5, 2026-09-28): what
+-- `biome_under` can answer, in catalogue order, so a discoveries view can
+-- show what is not found yet under its real name and count what there is
+-- to find. Every biome in the catalogue — `findable` true for those built
+-- and placed in a world, false for the catalogue's ones still to come —
+-- and after them the depth areas `biome_under` names a place deep under
+-- the ground by when no cave biome claims it. A fresh table every call.
+local DEPTH_AREAS = { normal_caves = true, dark_caves = true, abyss = true }
+local function biomes()
+    local ok, list = pcall(function()
+        local out = {}
+        local only = tdw.config.everywhere
+        for _, biome in ipairs(tdw.biome_list) do
+            local area = tdw.areas[biome.area]
+            local findable = biome.built == true and biome.placed ~= false and (only == nil or only == biome.id)
+            out[#out + 1] = { id = biome.id, name = biome.name, area = biome.area, area_name = area and area.name or nil,
+                kind = biome.cave and "cave" or (area and area.kind) or "surface", findable = findable }
+        end
+        for _, band in ipairs(tdw.layers.DEPTH) do
+            local area = tdw.areas[band.id]
+            if DEPTH_AREAS[band.id] and area then
+                out[#out + 1] = { id = band.id, name = area.name, area = band.id, area_name = area.name,
+                    kind = "depth_area", findable = true }
+            end
+        end
+        return out
+    end)
+    if not ok then
+        return nil
+    end
+    return list
+end
+
+-- **Depth from the surface** (Progress, sibling ask W6, 2026-09-28). The
+-- ground as GENERATED: the terrain program of the place's ring, whose value
+-- is the depth under the surface in km — the same field the ground was
+-- made from, read at one point. Negative over the ground. It does not know
+-- what anybody has dug since, which for "how deep has this player been" is
+-- what is wanted: a shaft does not make its own floor shallow. One point
+-- sample: cheap enough for a player a tick, not for a field of them.
+local function depth_under(x, y, z)
+    x, y, z = number(x), number(y), number(z)
+    if x == nil or y == nil or z == nil then
+        return nil
+    end
+    local seed = game.world_seed or tdw.seed
+    if seed == nil then
+        return nil
+    end
+    local ok, depth = pcall(function()
+        local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+        local mode = shape.terrain_mode_for(u, u, { x = math.floor(x) // 16, y = math.floor(y) // 16, z = math.floor(z) // 16, seed = seed })
+        return shape.top_for(mode).solid:at(math.floor(x) + 0.5, math.floor(y) + 0.5, math.floor(z) + 0.5, seed) * 1000.0
+    end)
+    if not ok then
+        return nil
+    end
+    return depth
+end
+-- The world's depth band at a place: "surface", "normal_caves", "dark_caves"
+-- or "abyss" (layers.DEPTH), and its name. By the smooth depth under the
+-- base dome, which is what the bands are laid by: anything over the
+-- normal caves is the surface, mountains included; nil only under the
+-- abyss's own floor.
+local function depth_band(x, y, z)
+    x, y, z = number(x), number(y), number(z)
+    if x == nil or y == nil or z == nil then
+        return nil
+    end
+    local ok, id, name = pcall(function()
+        local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+        local depth = shape.dome_at(u) - (y - shape.Y0) * shape.SCALE
+        for _, band in ipairs(tdw.layers.DEPTH) do
+            if depth >= band.d[1] and depth < band.d[2] then
+                local area = tdw.areas[band.id]
+                return band.id, area and area.name or band.id
+            end
+        end
+        -- Over the surface band's top: a mountain is still the surface.
+        local first = tdw.layers.DEPTH[1]
+        if depth < first.d[1] then
+            local area = tdw.areas[first.id]
+            return first.id, area and area.name or first.id
+        end
+        return nil
+    end)
+    if not ok then
+        return nil
+    end
+    return id, name
+end
+
 game.export{
     version = 1,
     humidity = HUMIDITY,
@@ -110,6 +206,9 @@ game.export{
     biome_under = biome_under,
     add_soil_alias = add_soil_alias,
     add_harmless_fluid = add_harmless_fluid,
+    biomes = biomes,
+    depth_under = depth_under,
+    depth_band = depth_band,
 }
 
 game.log("tiamat_default_world: exports published (version 1)")

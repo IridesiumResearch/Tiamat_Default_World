@@ -1303,6 +1303,12 @@ M.compile = compile
 -- thins evenly rather than cutting bald patches. Done here, once for every
 -- biome, rather than by retuning forty thresholds that each thin a
 -- different shape of patch. A take compiled elsewhere is passed through.
+-- The spec a compiled program was built from, or nil: for building on a
+-- finished program (the shallow caves' roof builds on a mode's terrain).
+function M.source_of(field)
+    return SOURCES[field]
+end
+
 local COVER_THIN_FREQ = 1.7
 local THINNED = setmetatable({}, { __mode = "k" })
 function M.thinned(take)

@@ -8,6 +8,58 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-09-28
+
+### Tags on every block (Craft's sibling ask W2)
+
+- Every block carries a few plain words for what it is: `soil`, `stone`,
+  `hard`, `ore`, `log`, `hardwood`, `leaves`, `plant` and so on. They are
+  ordered most particular first, because a reader takes the first word it
+  knows. The engine reads them back with `game.tags` (c83fbc9). The table
+  is `TAGS` in `blocks.lua`, and any block registered without tags is
+  named in the log. The vocabulary is in `docs/exports.md`.
+- Craft's `tag_classes` already understands `soil`, `sand`, `plant`, `log`,
+  `plank`, `hardwood`, `stone` and `ore`. With one more line from Craft,
+  `hard = "hard_rock"`, the tags reproduce its hand-written table for
+  every world block but four: `flint` (Craft: cracked), `bone` (rock),
+  `dead_log` and `marrow` (loose). Those stay in Craft's own table, which
+  it reads first.
+
+### Exports for Progress: the biome list and depth from the surface
+
+- **`biomes()`** (Progress's sibling ask W5): every biome `biome_under` can
+  name, with its display name, area, kind and whether a world holds it
+  (`findable`), and after them the three deep areas it names a place by.
+  45 biomes are findable today, and 3 depth areas: Progress's "of 55" was
+  a guess at the catalogue.
+- **`depth_under(x, y, z)`** and **`depth_band(x, y, z)`** (W6): blocks under
+  the ground as generated, from the terrain field of the place's ring; and
+  the depth band a place is in, with its name. Anything over the normal
+  caves is the surface, mountains included.
+- `docs/exports.md` has both. Still version 1: only fields were added.
+
+### Shallow caves: rounded tops, a third fewer
+
+- **Seen:** the top of every shallow cave "clean chopped off". The first
+  cut decided by CHUNK — tunnels only in chunks the terrain's bound put
+  ten blocks under the ground — so a tunnel that rose that far stopped
+  flat on a chunk's face. The same at the bottom under high ground, where
+  the gate read the terrain's depth and the profile the smooth ground's.
+- **The roof is in the field now** (`caves.lua`, `shallow_near`): near the
+  ground the tunnels are min'd — as a taper, not a cut — against the
+  mode's own terrain, narrowing to nothing over twelve blocks as the real
+  ground comes within ten, so a tunnel's end is rounded. Deeper, the
+  cheap program without the terrain, which is equal to it wherever the
+  ground is 22 blocks up or more: the two meet without a seam. They run
+  in the surface chunks too. The bottom gate reads the smooth depth, the
+  profile's own. The gates only skip chunks the field is nothing in.
+- **Off the seas and the river valleys**, as the mouths are: a sea's fill
+  floods a cave in a surface chunk and not in the rock chunk under it.
+- **A third fewer** ("a little too common, 33% too many"): half-width 2.3
+  to 1.9 blocks, the chambers' threshold 0.40 to 0.42. Dug down in 120
+  columns: about half now meet a cave within 200 blocks, where three in
+  four did.
+
 ## 2026-09-26
 
 ### Shallow caves: something to find in the first two hundred blocks

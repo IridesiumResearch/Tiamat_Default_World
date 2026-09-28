@@ -54,6 +54,74 @@ local COLD_GREEN = { strength = 0.16, scale = 192, low = { 0.86, 1.0, 0.98 }, hi
 -- The ice: cold blue, shifting between a deeper blue and a paler one.
 local COLD_BLUE = { strength = 0.18, scale = 96, low = { 0.80, 0.90, 1.0 }, high = { 1.0, 1.0, 1.0 } }
 
+-- **Tags** (2026-09-28, Craft's sibling ask W2; engine `game.tags`, c83fbc9):
+-- what each block IS, in plain words another mod can class by rule rather
+-- than naming our blocks one by one. The vocabulary is `docs/exports.md`'s.
+-- A block's list goes most particular first — `hard` before `stone`,
+-- `hardwood` before `log` — because a reader takes the first word it knows
+-- (Craft's does). Facts, not rules: nothing here says what digs what.
+local TAGS = {}
+local function tag(list, ...)
+    for _, id in ipairs(list) do TAGS[id] = { ... } end
+end
+tag({ "dirt", "packed_dirt", "grass", "mud", "black_mud", "dried_mud", "mulch" }, "soil")
+tag({ "permafrost" }, "soil", "frozen")
+tag({ "dry_clay", "wet_clay", "charcoal" }, "clay", "soil")
+tag({ "volcanic_ash" }, "ash", "soil")
+tag({ "sand", "white_sand", "dark_sand" }, "sand")
+tag({ "gravel", "cobbles" }, "gravel")
+tag({ "pumice" }, "gravel", "porous")
+tag({ "snow" }, "snow")
+tag({ "ice", "clear_ice" }, "ice")
+tag({ "stone", "granite", "slate", "calcite", "dark_basalt", "lava_rock", "dark_sediment", "light_sediment",
+    "pale_terracotta", "flowstone" }, "stone")
+tag({ "rust_red_sandstone", "ochre_sandstone" }, "stone", "sandstone")
+tag({ "black_marble" }, "stone", "marble")
+tag({ "marrow" }, "stone", "porous")
+tag({ "morphic_rock", "scorch", "apex_stone", "magma_crust" }, "hard", "stone")
+tag({ "obsidian" }, "hard", "stone", "glass")
+tag({ "magma", "hot_fiber_stone" }, "hard", "stone", "hot", "glowing")
+tag({ "cold_fiber_stone" }, "hard", "stone", "glowing")
+tag({ "copper_ore", "iron_ore", "tin_ore", "silver_ore", "lead_ore", "gold_ore" }, "ore", "metal_ore")
+tag({ "coal" }, "ore", "fuel")
+tag({ "pyrite" }, "ore", "mineral")
+tag({ "chromium_ore" }, "hard", "ore", "metal_ore")
+tag({ "diamond" }, "hard", "ore", "gem")
+tag({ "orichalcum" }, "hard", "ore", "metal_ore", "glowing")
+tag({ "metal" }, "hard", "metal")
+tag({ "crystal" }, "hard", "crystal", "glowing")
+tag({ "flint" }, "flint", "stone")
+tag({ "salt" }, "mineral", "stone")
+tag({ "sulfur" }, "mineral", "glowing")
+tag({ "bone" }, "bone")
+tag({ "oak_log", "birch_log", "fir_log", "willow_log", "kapok_log", "juniper_log", "apple_log", "cherry_log" }, "log", "wood")
+tag({ "ironwood_log", "mangrove_log", "acacia_log", "redwood_log" }, "hardwood", "log", "wood")
+tag({ "dead_log" }, "log", "wood", "dead")
+tag({ "willow_planks", "kapok_planks" }, "plank", "wood")
+tag({ "ironwood_planks" }, "hardwood", "plank", "wood")
+tag({ "oak_leaves", "birch_leaves", "willow_leaves", "ironwood_leaves", "kapok_leaves", "apple_leaves", "cherry_leaves",
+    "mangrove_leaves", "acacia_leaves", "fir_needles", "juniper_needles", "redwood_needles" }, "leaves", "plant")
+tag({ "apple_blossom", "cherry_blossom" }, "leaves", "plant", "flower")
+tag({ "fern", "tall_grass", "ladys_mantle", "wild_mint", "monstera", "pitcher_plant", "maidenhair", "cactus", "moss", "lichen" }, "plant")
+tag({ "ladys_mantle_bloom", "blue_lunaria", "roman_chamomile", "rose_blooms", "allium", "peony", "poppy", "bluebell", "heather" },
+    "plant", "flower")
+tag({ "bramble", "rose_bush", "gorse" }, "plant", "bush")
+tag({ "dead_sagebrush" }, "plant", "dead")
+tag({ "climbing_ivy" }, "plant", "vine")
+tag({ "seagrass", "kelp", "reeds", "ocean_moss" }, "plant", "aquatic")
+tag({ "water_iris" }, "plant", "flower", "aquatic")
+tag({ "pink_algae" }, "plant", "algae", "aquatic")
+tag({ "glow_algae" }, "plant", "algae", "glowing")
+tag({ "mycelium" }, "fungus", "soil")
+tag({ "mushroom_cap" }, "fungus", "glowing")
+tag({ "glow_cap" }, "fungus", "plant", "glowing")
+tag({ "dead_coral", "coral_magenta", "coral_cyan", "coral_amber", "barnacles" }, "coral", "aquatic")
+tag({ "glow_polyp" }, "coral", "aquatic", "glowing")
+tag({ "caul" }, "membrane", "glowing")
+tag({ "water" }, "fluid")
+tag({ "lava" }, "fluid", "hot", "glowing")
+local untagged = {}
+
 local function block(id, name, description, extra)
     local spec = {
         id = id,
@@ -72,6 +140,10 @@ local function block(id, name, description, extra)
     -- e4ac3a8, `washes_away`: every occupied cell goes, nothing dropped).
     if spec.passable and spec.washes_away == nil then
         spec.washes_away = true
+    end
+    spec.tags = spec.tags or TAGS[id]
+    if spec.tags == nil then
+        untagged[#untagged + 1] = id
     end
     -- `register_block` hands back the per-session numeric id, which is what
     -- the native fills take. Never persisted, never compared to a literal.
@@ -490,5 +562,8 @@ block("marrow", "Marrow", "White porous stone of the tail.", { hardness = 1.2, t
 block("apex_stone", "Apex stone", "What the needle is made of at the end.", { hardness = 5.0 })
 
 game.log("tiamat_default_world: registered placeholder blocks")
+if #untagged > 0 then
+    game.log("tiamat_default_world: blocks with no tags (blocks.lua, TAGS): " .. table.concat(untagged, ", "))
+end
 
 return M

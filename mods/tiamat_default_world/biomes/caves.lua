@@ -458,15 +458,18 @@ end
 -- blocks under the real surface or more (`shallow_into`), so a tunnel has
 -- ten blocks of rock over it at least. The mouths are what come up.
 local SHALLOW = {
-    ROOF = 0.010,                                     -- km under the real ground: no chunk shallower
-    BOTTOM = 0.55,                                    -- km under it: no chunk deeper
+    ROOF = 10.0,                                      -- blocks under the real ground a tunnel closes by...
+    TAPER = 12.0, TAPER_K = 0.25,                     -- ...narrowing from ROOF + TAPER, so its end is rounded, not cut
     FREQ = 1 / 48, STRETCH = { x = 1.6, z = 1.6 },
-    W = 2.3,                                          -- a tunnel's half-width, blocks, at full strength
+    W = 1.9,                                          -- a tunnel's half-width, blocks, at full strength (2.3 until 2026-09-28: a third too many)
     ROUGH_FREQ = 1 / 7, ROUGH = 0.6,
-    ROOM_FREQ = 1 / 22, ROOM_MIN = 0.40, ROOM_K = 13.0,
+    ROOM_FREQ = 1 / 22, ROOM_MIN = 0.42, ROOM_K = 13.0,
+    DEEPEST = 0.51,                                   -- km under the smooth ground: the profile is nothing past it
+    RELIEF_MAX = 0.45,                                -- km: the most the relief moves the smooth ground off the dome
+    OFF_SEA = 150.0,
 }
 M.SHALLOW = SHALLOW
-local SHALLOW_FIELD = nil
+local SHALLOW_FIELD, SHALLOW_NEAR = nil, {}
 function M.shallow_node()
     local function under()
         return n.mul(n.add(M.D(), shape.relief_node()), n.const(1000.0))
@@ -484,19 +487,66 @@ function M.shallow_node()
     local tunnel = n.sub(n.mul(profile, n.const(SHALLOW.W)), n.max(sheet("shallow_a"), sheet("shallow_b")))
     local room = n.mul(n.sub(n.noise("shallow_room", SHALLOW.ROOM_FREQ, 1, 1.0), n.add(n.const(SHALLOW.ROOM_MIN + 0.3), n.mul(profile, n.const(-0.3)))),
         n.const(SHALLOW.ROOM_K))
-    return n.add(n.max(tunnel, room), n.noise("shallow_rough", SHALLOW.ROUGH_FREQ, 1, SHALLOW.ROUGH))
+    local void = n.add(n.max(tunnel, room), n.noise("shallow_rough", SHALLOW.ROUGH_FREQ, 1, SHALLOW.ROUGH))
+    -- Off the seas and out of the river valleys, as the mouths are: their
+    -- water would pour in where a tunnel met a bed, and a sea's fill
+    -- floods a cave in one chunk and not the next.
+    local seas = tdw.seas
+    if seas and seas.on() then
+        void = n.min(void, n.mul(n.sub(n.mul(seas.d_map(), n.const(-1.0)), n.const(SHALLOW.OFF_SEA)), n.const(0.2)))
+    end
+    if shape.river_exclude then
+        void = shape.river_exclude(void, (shape.RIVER_REACH or 174) + 10)
+    end
+    return void
 end
+-- Deep enough that the real ground cannot reach: the tunnels alone.
 function M.shallow_field()
     SHALLOW_FIELD = SHALLOW_FIELD or shape.compile("cave.shallow", M.shallow_node())
     return SHALLOW_FIELD
 end
+-- Near the ground: the same, narrowed to nothing over TAPER blocks as the
+-- REAL ground comes within ROOF of it — the mode's terrain, whose value is
+-- the depth under the surface in km. Equal to the field above wherever the
+-- ground is ROOF + TAPER blocks up or more, so the two meet without a seam.
+-- The terrain FIRST: it is the deepest operand, and holds nothing while it
+-- runs.
+local function shallow_near(mode)
+    if SHALLOW_NEAR[mode] == nil then
+        local terrain = shape.source_of(shape.top_for(mode).solid)
+        if terrain == nil then
+            SHALLOW_NEAR[mode] = false
+        else
+            local close = n.clamp(n.mul(n.add(n.mul(terrain, n.const(-1000.0)), n.const(SHALLOW.ROOF + SHALLOW.TAPER)),
+                n.const(SHALLOW.TAPER_K)), 0.0, 1e6)
+            SHALLOW_NEAR[mode] = shape.compile("cave.shallow." .. mode, n.add(n.mul(close, n.const(-1.0)), M.shallow_node()))
+        end
+    end
+    return SHALLOW_NEAR[mode] or nil
+end
 -- `tmin`/`tmax`: the terrain's bound on the chunk's depth under the real
--- ground, km.
-function M.shallow_into(buf, pos, tmin, tmax)
-    if tmin < SHALLOW.ROOF or tmin > SHALLOW.BOTTOM then
+-- ground, km; `smin`: the least smooth depth under the dome, km.
+--
+-- **No gate here decides a cave's shape**: the first cut chose by chunk
+-- (none where the chunk came within ten blocks of the ground), and every
+-- tunnel that rose that far was sliced flat on a chunk's face. The roof is
+-- in the field now; the gates below only skip chunks the field is nothing
+-- in, and pick the cheaper of two programs that agree.
+function M.shallow_into(buf, pos, tmin, tmax, smin, mode)
+    if tmax * 1000 < SHALLOW.ROOF then
+        return                                        -- the whole chunk within the roof of the ground
+    end
+    if smin and smin - SHALLOW.RELIEF_MAX > SHALLOW.DEEPEST then
+        return                                        -- under the profile's reach everywhere
+    end
+    if tmin * 1000 >= SHALLOW.ROOF + SHALLOW.TAPER then
+        buf:fill_density(M.shallow_field(), AIR, DETAIL)
         return
     end
-    buf:fill_density(M.shallow_field(), AIR, DETAIL)
+    local near = shallow_near(mode)
+    if near then
+        buf:fill_density(near, AIR, DETAIL)
+    end
 end
 
 -- ------------------------------------------------------------ the mouths
