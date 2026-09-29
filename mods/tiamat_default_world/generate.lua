@@ -109,6 +109,7 @@ local ORES = {
     { "chromium_ore", level = 0.42, freq = 1 / 4,   min = 0.46, n = 2, lode = 0.15, stretch = { z = 2 } },
     { "lead_ore",     level = 0.42, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { x = 2 } },
     { "gold_ore",     level = 0.75, freq = 1 / 3,   min = 0.42, n = 3, lode = 0.25 },
+    { "pitchblende",  level = 1.20, freq = 1 / 4,   min = 0.49, n = 2, lode = 0.28, stretch = { y = 2 } },
     { "diamond",      level = 1.20, freq = 1 / 2.5, min = 0.45, n = 3, lode = 0.25 },
     { "orichalcum",   level = 2.00, freq = 1 / 2.5, min = 0.46, n = 3, lode = 0.32 },
 }

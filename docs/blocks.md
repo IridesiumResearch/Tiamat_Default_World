@@ -108,6 +108,7 @@ throughout.
 | `chromium_ore` | 420 blocks | asked for by name |
 | `lead_ore` | 420 blocks | asked for by name |
 | `gold_ore` | 750 blocks | asked for by name |
+| `pitchblende` | 1,200 blocks | Craft's sibling ask W3 (2026-09-28): the tech tree's fission ore, "beside lead and silver, where it really occurs"; rarer lodes than the lead's |
 | `diamond` | 1,200 blocks | asked for by name; "very rarely should there ever be a full block of diamond" |
 | `orichalcum` | 2,000 blocks (the Gloam) | asked for by name; faintly lit from within |
 

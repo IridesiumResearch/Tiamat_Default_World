@@ -55,7 +55,7 @@ ladys_mantle_bloom, lava, lava_rock, lead_ore, lichen, light_sediment, magma,
 magma_crust, maidenhair, mangrove_leaves, mangrove_log, marrow, metal,
 monstera, morphic_rock, moss, mud, mulch, mushroom_cap, mycelium, oak_leaves,
 oak_log, obsidian, ocean_moss, ochre_sandstone, orichalcum, packed_dirt,
-pale_terracotta, peony, permafrost, pink_algae, pitcher_plant, poppy, pumice,
+pale_terracotta, peony, permafrost, pink_algae, pitchblende, pitcher_plant, poppy, pumice,
 pyrite, redwood_log, redwood_needles, reeds, roman_chamomile, rose_blooms,
 rose_bush, rust_red_sandstone, salt, sand, scorch, seagrass, silver_ore, slate,
 snow, stone, sulfur, tall_grass, tin_ore, volcanic_ash, water, water_iris,
@@ -73,7 +73,7 @@ nothing here says what digs what. The vocabulary:
 - rock: `stone`, `hard` (the hard stones and ores, the deep bands),
   `sandstone`, `marble`, `porous`, `glass`, `flint`
 - underground: `ore`, `metal_ore`, `gem`, `fuel`, `mineral`, `crystal`,
-  `metal`, `bone`
+  `metal`, `bone`, `radioactive`
 - wood: `log`, `plank`, `wood`, `hardwood`, `dead`
 - growth: `plant`, `leaves`, `flower`, `bush`, `vine`, `aquatic`, `algae`,
   `fungus`, `coral`, `membrane`

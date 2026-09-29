@@ -86,6 +86,7 @@ tag({ "copper_ore", "iron_ore", "tin_ore", "silver_ore", "lead_ore", "gold_ore" 
 tag({ "coal" }, "ore", "fuel")
 tag({ "pyrite" }, "ore", "mineral")
 tag({ "chromium_ore" }, "hard", "ore", "metal_ore")
+tag({ "pitchblende" }, "hard", "ore", "metal_ore", "radioactive")
 tag({ "diamond" }, "hard", "ore", "gem")
 tag({ "orichalcum" }, "hard", "ore", "metal_ore", "glowing")
 tag({ "metal" }, "hard", "metal")
@@ -500,6 +501,11 @@ block("silver_ore", "Silver ore", "Pale threads and wires through dark rock.", {
 block("chromium_ore", "Chromium ore", "Hard grey-green crystals in the deep stone.", { hardness = 2.4, tint = ROCK })
 block("lead_ore", "Lead ore", "Heavy, dull, blue-grey cubes.", { hardness = 1.9, tint = ROCK })
 block("gold_ore", "Gold ore", "Flecks and stringers of yellow in white quartz.", { hardness = 2.2, tint = ROCK })
+-- Pitchblende (2026-09-28, Craft's sibling ask W3: the one ore of the tech
+-- tree's design with no block in the world, for its fission, later).
+-- Uraninite, black and pitch-lustred, deep beside the lead and the silver.
+-- Nothing in this mod uses it. It does not glow; it is only dangerous.
+block("pitchblende", "Pitchblende", "Heavy black ore with a pitch-like lustre, deep beside the lead and the silver.", { hardness = 2.6, tint = ROCK })
 block("diamond", "Diamond", "A few bright cells in the dark of the Gloam; almost never a whole block.", { hardness = 3.5, tint = { strength = 0.06, scale = 32 } })
 block("orichalcum", "Orichalcum", "The old metal: red-gold, warm, faintly lit from within, deeper than anything.",
     { hardness = 4.0, tint = { strength = 0.08, scale = 48 }, light_emit = { r = 4, g = 2, b = 1 } })
