@@ -8,7 +8,38 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-09-29
+
+### The biome's name: announced, bottom right, faded
+
+- **Only on arriving** ("display the current biome only when entering a new
+  biome again ... bottom right, a little smaller, fade in and then fade
+  back out"). A change of biome starts ten seconds of name: a second and a
+  half fading in, held, a second and a half fading out. The HUD script
+  cannot tell time, so the server sends the opacity every two ticks, and
+  an unchanged value costs nothing on the wire. A biome seen in the last
+  fifteen seconds, arriving or leaving, is not announced again, so a walk
+  along a border does not flash two names in turn.
+- **Bottom right, size 20** (26 before), above the corner of the hotbar.
+  The engine draws text rightward from its anchor, so the name is pushed
+  left by an estimate of its own width.
+- **The shadow was white.** HUD colours are read by position,
+  `{ r, g, b, a }`, and the named `{ r = ... }` form the script used was
+  ignored, so both copies of the name drew white. Positional now, and the
+  shadow fades with the name.
+
 ## 2026-09-28
+
+### Pitchblende, and white sand confirmed (Craft's sibling asks W3, W4)
+
+- **`pitchblende`**, a new ore from 1,200 blocks down, for the tech tree's
+  fission later. It is the one ore of Craft's design with no block in the
+  world. Veins beside the lead and the silver, as in life, and rarer than
+  either: about 0.7 of the lead at the same depths, measured over 160
+  chunks from 1.3 to 2.5 km. It has its own noise streams, so no other ore
+  moved. Tags `hard`, `ore`, `metal_ore`, `radioactive`. It does not glow.
+- **`white_sand` is the glass sand** (W4). It is the one near-white sand in
+  the world, on the Coral-Fringed Shallows' lagoon flats and sandspits.
 
 ### Tags on every block (Craft's sibling ask W2)
 

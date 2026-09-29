@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: Iridesium
 -- SPDX-License-Identifier: GPL-3.0-only
 --
--- Which biome a player is standing in: named on their HUD for a second when
+-- Which biome a player is standing in: named on their HUD for ten seconds when
 -- they walk into a new one, and reachable by name from chat.
 --
 -- **The biome is read from the GROUND, not computed.** Which biome a place
@@ -310,11 +310,59 @@ end
 
 -- ----------------------------------------------------------------- the HUD
 
-local shown = {}               -- uuid -> { biome = id }
+local shown = {}               -- uuid -> { biome = name, name = shown name, age = ticks, recent = { name -> tick } }
 
-local function say(uuid, name)
-    game.set_hud(uuid, name and { biome = name } or {})
+-- **The name is announced, not worn** (2026-09-29: "display the current
+-- biome only when entering a new biome again ... bottom right, a little
+-- smaller, fade in and then fade back out", after a fortnight of it always
+-- on screen). A change of biome starts a showing: FADE_IN ticks up to full,
+-- held, FADE_OUT ticks down, SHOW ticks in all. The HUD script cannot tell
+-- time, so the server sends the opacity every FADE_STEP ticks and the
+-- script draws what it is told; an unchanged value costs nothing on the
+-- wire. A biome shown in the last QUIET ticks is not announced again, so
+-- walking along a border does not flash the same two names.
+local SHOW, FADE_IN, FADE_OUT = 200, 30, 30          -- ten seconds, a second and a half each way
+local FADE_STEP = 2
+local QUIET = 300                                     -- fifteen seconds
+local clock, since_fade = 0, 0
+
+local function alpha_at(age)
+    if age < FADE_IN then
+        return age / FADE_IN
+    elseif age > SHOW - FADE_OUT then
+        return math.max(0, (SHOW - age) / FADE_OUT)
+    end
+    return 1
 end
+
+local function say(uuid, state)
+    if state.name == nil or state.age >= SHOW then
+        game.set_hud(uuid, {})
+        return
+    end
+    -- To a twentieth: the steps are finer than the eye reads at this size.
+    local alpha = math.floor(alpha_at(state.age) * 20 + 0.5) / 20
+    game.set_hud(uuid, { biome = state.name, alpha = alpha })
+end
+
+tdw.on_tick(function(dt)
+    clock = clock + dt
+    since_fade = since_fade + dt
+    if since_fade < FADE_STEP then
+        return
+    end
+    local step = since_fade
+    since_fade = 0
+    for uuid, state in pairs(shown) do
+        if state.name ~= nil then
+            state.age = state.age + step
+            say(uuid, state)
+            if state.age >= SHOW then
+                state.name = nil
+            end
+        end
+    end
+end)
 
 local since = 0
 tdw.on_tick(function(dt)
@@ -331,7 +379,7 @@ tdw.on_tick(function(dt)
             local here = tdw.biome_under(px, py, pz)
             local state = shown[uuid]
             if state == nil then
-                state = { biome = nil }
+                state = { biome = nil, name = nil, age = 0, recent = {} }
                 shown[uuid] = state
             end
             -- Only a CHANGE speaks, and unloaded ground says nothing rather
@@ -349,8 +397,18 @@ tdw.on_tick(function(dt)
                     name = tdw.caves.variant_name_at(here, px, py, pz, seed) or name
                 end
                 if name ~= state.biome then
+                    -- Seen until now: stepping out of a biome and straight
+                    -- back in is not arriving in it.
+                    if state.biome then
+                        state.recent[state.biome] = clock
+                    end
                     state.biome = name
-                    say(uuid, name)
+                    local last = state.recent[name]
+                    if last == nil or clock - last > QUIET then
+                        state.name, state.age = name, 0
+                        say(uuid, state)
+                    end
+                    state.recent[name] = clock
                 end
             end
         end
