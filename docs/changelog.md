@@ -10,6 +10,35 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-30
 
+### The Abyss Below: 4.1 to 4.3
+
+- **A third cave band** (`biomes/caves.lua`, `LAYERS.abyss`): from 4 km
+  down to 5.85, with its own province noise, flat in y. The underside
+  under the core stack is abyss by depth too, but no storey reaches it
+  yet. Three biomes split the province for now, as the Gloam's first
+  three did: the shafts under -0.2, the crushed chambers to 0.15, the mud
+  flats over it. The other three will take ground from them.
+- **4.1 Pressure-Crushed Depths**: crawl-chambers two to four high under
+  ceilings buckled into bulges that sag to the floor, squeezed oval
+  tunnels, crushed rock laminated with gneiss and ironstone, oil residue,
+  bacterial film along the fault seams, rock powder, spalled slabs,
+  hairline fault-cracks, and brine spraying from them near a player.
+- **4.2 Silent Vertical Shafts**: near-round shafts where two blob noises
+  overlap, 8 to 14 across and 60 to 100 deep, narrowing away above and
+  below; low adits between them are the way in; basalt striated with
+  iron-granite, friction grooves top to bottom, lone ledges, rare calcite
+  tendrils, dust motes hanging in the air. **Silent**: a cave biome may now
+  name no sound bed (`sounds.lua`, `false`), and this one does, so it has
+  no echoes either.
+- **4.3 Abyssal Mud Flats**: a void six to ten high whose walls are
+  hundreds of blocks apart, pillars flared at floor and ceiling, black mud
+  over ash over clay, black water in the hollows and the mud pots, worm-
+  tubes, glassy sponge-stalks, half-buried ribs, mist on the floor and gas
+  bubbling up. The ground does not give underfoot: no block can.
+- No new block. Seen on seed 12345 in cuts through each: the crushed crawl
+  and its plates, a flat's floor bands, pools and a tube, and a shaft's
+  wall a hundred blocks down. Not seen: a ledge in a shaft, a rib.
+
 ### An optimization pass
 
 "Go through and see where we can cut corners. Be sure the sponge section

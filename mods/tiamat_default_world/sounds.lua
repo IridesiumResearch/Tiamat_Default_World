@@ -64,6 +64,9 @@ local BEDS = {
     -- A cave that names its own: the draft up the Whispering Crevasse
     -- (2026-09-30), whistling through its slots.
     whispering_crevasse = "wind",
+    -- And one that names none (2026-09-30): the Silent Vertical Shafts'
+    -- "absolute acoustic dampening, zero echoes".
+    silent_vertical_shafts = false,
 }
 -- The night layer, where one belongs: crickets in the grass and under the
 -- broadleaves, frogs where the ground is wet. Nothing at night on ice, in
@@ -85,6 +88,10 @@ local ECHO_LEAST, ECHO_SPAN = 1800, 5400   -- ticks: one per 1.5 to 6 minutes
 local function bed_for(here)
     local biome = tdw.biomes[here]
     if biome and biome.cave then
+        -- `false` in BEDS is silence: no bed, and so no echoes either.
+        if BEDS[here] == false then
+            return nil
+        end
         return BEDS[here] or "cave"
     end
     if biome == nil then

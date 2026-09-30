@@ -82,6 +82,13 @@ M.LAYERS = {
     normal_caves = { TOP = M.TOP, BOTTOM = M.BOTTOM, stream = "cave_province", freq = M.PROVINCE_FREQ, order = {} },
     dark_caves = { TOP = shape.GLOAM_D, BOTTOM = shape.ABYSS_D, stream = "dark_cave_province", freq = M.DARK_PROVINCE_FREQ, order = {},
         stretch = M.DEEP_FLAT },
+    -- **The third band** (2026-09-30), the Abyss Below: from ABYSS_D down to
+    -- ABYSS_BOTTOM, just over the magma shell's cooked crust where it comes
+    -- nearest, under the Crown (5.94 km down there; it lies deeper
+    -- everywhere else). Its biomes' storeys keep inside it. The underside
+    -- under the core stack is abyss too, by depth, but no storey reaches it.
+    abyss = { TOP = shape.ABYSS_D, BOTTOM = 5.85, stream = "abyss_cave_province", freq = 1 / 1100, order = {},
+        stretch = M.DEEP_FLAT },
 }
 M.layer_of = {}                    -- biome id -> its band's entry in LAYERS
 
@@ -354,7 +361,7 @@ end
 -- depth bounds) decide.
 function M.biomes_in(pos, dmin, dmax)
     local found = nil
-    for _, key in ipairs({ "normal_caves", "dark_caves" }) do
+    for _, key in ipairs({ "normal_caves", "dark_caves", "abyss" }) do
         local layer = M.LAYERS[key]
         if #layer.order > 0 and dmax >= layer.TOP and dmin <= layer.BOTTOM then
             local p = province_program(layer):at(pos.x * 16 + 8.5, pos.y * 16 + 8.5, pos.z * 16 + 8.5, pos.seed)

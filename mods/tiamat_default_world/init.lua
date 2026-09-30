@@ -118,6 +118,9 @@ load("biomes.shadow_pool_chambers")  -- 3.3
 load("biomes.blind_fish_grottoes")   -- 3.4 (2026-09-30)
 load("biomes.whispering_crevasse")   -- 3.5
 load("biomes.phosphorescent_fungi_pockets")  -- 3.6, rare
+load("biomes.pressure_crushed_depths")   -- 4.1, the Abyss Below (2026-09-30)
+load("biomes.silent_vertical_shafts")    -- 4.2
+load("biomes.abyssal_mud_flats")         -- 4.3
 if tdw.config.compile_caves then
     tdw.caves.compile_all()          -- validation: see the config flag above
 end

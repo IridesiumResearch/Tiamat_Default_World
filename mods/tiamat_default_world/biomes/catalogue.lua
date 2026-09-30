@@ -191,9 +191,12 @@ biome{ id = "phosphorescent_fungi_pockets", name = "Phosphorescent Fungi Pockets
 
 -- 4. The abyss -------------------------------------------------------------------
 area{ id = "abyss", name = "Abyss Below", kind = "depth", note = "More than 4,000 blocks down. Under the core stack, from Spindle Y -10.8 to -33.3 km, the underside is carved into a fractal sponge (sponge.lua, 2026-09-30): the biomes built there will be sliced and holed by it." }
-biome{ id = "pressure_crushed_depths", name = "Pressure-Crushed Depths", area = "abyss" }
-biome{ id = "silent_vertical_shafts", name = "Silent Vertical Shafts", area = "abyss" }
-biome{ id = "abyssal_mud_flats", name = "Abyssal Mud Flats", area = "abyss" }
+biome{ id = "pressure_crushed_depths", name = "Pressure-Crushed Depths", area = "abyss",
+    note = "4.1 (2026-09-30) — crawl-chambers 12 to 20 across and 2 to 4 high under ceilings buckled into bulges that sag to the floor, squeezed oval tunnels; crushed rock laminated with gneiss and ironstone, oil residue, blue-black bacterial film on the fault seams, rock powder, spalled slabs, fault-cracks spraying brine. The abyss's province -0.2 to 0.15." }
+biome{ id = "silent_vertical_shafts", name = "Silent Vertical Shafts", area = "abyss",
+    note = "4.2 (2026-09-30) — near-round shafts 8 to 14 across and 60 to 100 deep, narrowing away into black, joined by low adits; black basalt striated with iron-granite, friction grooves top to bottom, lone one-block ledges, rare calcite tendrils, hanging dust; no sound at all. Province under -0.2." }
+biome{ id = "abyssal_mud_flats", name = "Abyssal Mud Flats", area = "abyss",
+    note = "4.3 (2026-09-30) — vast low voids 6 to 10 high with walls hundreds of blocks apart and pillars flared at floor and ceiling; black mud over ash over waterlogged clay, black-water pools and mud pots, pale worm-tubes, glassy sponge-stalks, half-buried ribs, mist on the floor. Province over 0.15." }
 biome{ id = "crush_zone_mineral_beds", name = "Crush-Zone Mineral Beds", area = "abyss" }
 biome{ id = "black_water_reservoirs", name = "Black Water Reservoirs", area = "abyss", note = "Needs generated water." }
 biome{ id = "fossil_embedded_walls", name = "Fossil-Embedded Walls", area = "abyss" }

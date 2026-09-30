@@ -133,6 +133,18 @@ line, as the normal caves have: **no new block**, one new FLUID.
 and near-opaque, the still water's trick. It is not quicksilver: nothing
 takes a metal from it.
 
+## 4. The Abyss Below (2026-09-30)
+
+A third band of the caves' framework (`biomes/caves.lua`): 4 km down to
+5.85, just over the magma shell's crust where it comes nearest, with a
+province of its own. **No new block** in the first three.
+
+| Biome | Shares |
+|---|---|
+| 4.1 Pressure-Crushed Depths | `morphic_rock` (the abyss's crushed rock) laminated with `granite` (gneiss) and `rust_red_sandstone` (ironstone); `black_mud` (the oil residue); `obsidian` (the bacterial film on the fault seams); `volcanic_ash` (the powder); spalled slabs of `morphic_rock` |
+| 4.2 Silent Vertical Shafts | `dark_basalt` striated with `granite` (the iron-granite); `calcite` (the mineral tendrils) |
+| 4.3 Abyssal Mud Flats | `black_mud` over `volcanic_ash` over `wet_clay`; `morphic_rock` walls and pillars; `bone` (the worm-tubes and the ribs); `crystal` (the silicate sponge-stalks); the black water is `still_water` |
+
 ## Deposits (2026-09-26)
 
 Pockets of `gravel`, `sand`, `granite` and `obsidian` through all the rock
