@@ -104,7 +104,7 @@ local function centre(k)
     return n.add(n.noise("ebm_storey" .. k, WANDER_FREQ, 1, 2.0 * STOREY_WANDER, FLAT), n.const(STOREYS[k]))
 end
 
-tdw.cave_biome(ID, { -0.15, 0.15 }, function(ctx)
+tdw.cave_biome(ID, { -0.15, 0.05 }, function(ctx)   -- to 0.15 until 2026-09-30: the Fungi Pockets and the Shadow Pools took the rest
     local caves = ctx.caves
     -- Blocks above a storey's centre: the depth FIRST.
     local function up(k)

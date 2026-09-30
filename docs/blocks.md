@@ -82,6 +82,45 @@ sponges). The ink-black water is a FLUID, `still_water` — near-opaque, dark
 from inside, three levels of light lost a block — drawn as the `water`
 block, the way the brine is. **No new block.**
 
+### 3.4 Blind Fish Grottoes (2026-09-30)
+
+The second three bend the one-block rule: their growths are ones nothing
+in the world had. Six new blocks across the three; every stone, soil and
+film is reused.
+
+Shares `calcite` (the water-smoothed limestone, and the lip that holds
+the pools), `light_sediment` (the silt), `white_sand` (the pale banks),
+`crystal` (the quartz pebbles, faintly lit under the water). The water is
+the world's clear `water`, laid full so each pool lies at rest.
+
+| Block | Where | Why |
+|---|---|---|
+| `ghost_weed` | nets of threads hanging from the ceilings; stalks a block tall out of the silt under the water | the brief's bleached water-tendrils and colourless root-stalks: nothing registered is pale and near-transparent |
+| `glass_algae` | a sheet a cell thick on the submerged rock | the glass-like algae; transparent, so the stone shows through |
+
+### 3.5 Whispering Crevasse (2026-09-30)
+
+Shares `slate` fluted with `dark_basalt` in vertical bands (the walls),
+`rust_red_sandstone` (the iron crusts, a block deep), `volcanic_ash` (the
+dust on the path and the bridges).
+
+| Block | Where | Why |
+|---|---|---|
+| `dead_roots` | hanging from the overhangs | the desiccated black root-threads; the brief's one growth |
+
+### 3.6 Phosphorescent Fungi Pockets (2026-09-30), rare
+
+Shares `dark_basalt` (the walls), `mycelium` (the veins through them, and
+the bulbs' stalks), `mud` (the damp loam), `glow_algae` (the glowing moss
+and the sap on it), `glow_cap` (the neon-teal mushrooms). The reflecting
+pools are the world's `water`.
+
+| Block | Where | Why |
+|---|---|---|
+| `violet_glowcap` | on the loam, in patches beside the teal | the deep-violet mushrooms; light 7, 2, 11 |
+| `spore_vine` | drapes four to eight blocks long from the ceilings | glowing, teal; light 2, 7, 7 |
+| `spore_bulb` | balls a block to three across, hung on mycelium stalks | the pockets' lanterns; light 5, 9, 12 |
+
 ## Deposits (2026-09-26)
 
 Pockets of `gravel`, `sand`, `granite` and `obsidian` through all the rock

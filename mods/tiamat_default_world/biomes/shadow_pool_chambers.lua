@@ -80,7 +80,7 @@ local function centre(k)
     return n.add(n.noise("spc_storey" .. k, WANDER_FREQ, 1, 2.0 * STOREY_WANDER, FLAT), n.const(STOREYS[k]))
 end
 
-tdw.cave_biome(ID, { 0.15, 1 }, function(ctx)
+tdw.cave_biome(ID, { 0.12, 0.33 }, function(ctx)   -- over 0.15 until 2026-09-30, when the Blind Fish Grottoes took the high end
     local caves = ctx.caves
     -- Blocks above the water: the depth FIRST.
     local function up(k)

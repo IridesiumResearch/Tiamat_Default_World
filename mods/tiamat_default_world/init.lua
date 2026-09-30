@@ -114,6 +114,9 @@ load("biomes.stalactite_forests")    -- 2.6
 load("biomes.stone_labyrinth")       -- 3.1, the dark caves (2026-09-26)
 load("biomes.echoing_black_marble")  -- 3.2
 load("biomes.shadow_pool_chambers")  -- 3.3
+load("biomes.blind_fish_grottoes")   -- 3.4 (2026-09-30)
+load("biomes.whispering_crevasse")   -- 3.5
+load("biomes.phosphorescent_fungi_pockets")  -- 3.6, rare
 if tdw.config.compile_caves then
     tdw.caves.compile_all()          -- validation: see the config flag above
 end

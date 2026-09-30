@@ -114,7 +114,7 @@ local function centre(k)
     return n.add(n.noise("sl_storey" .. k, 1 / 900, 1, 2.0 * STOREY_WANDER, FLAT), n.const(STOREYS[k]))
 end
 
-tdw.cave_biome(ID, { -1, -0.15 }, function(ctx)
+tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)   -- under -0.15 until 2026-09-30, when the Whispering Crevasse took the low end
     local caves = ctx.caves
     -- Blocks from the passage lines, each family: |n| * K.
     local function dist_x()

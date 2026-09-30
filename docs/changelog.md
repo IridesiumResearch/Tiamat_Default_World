@@ -10,6 +10,51 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-30
 
+### The rest of the dark caves: 3.4 to 3.6
+
+The Gloam has all six of its biomes. Its province is split six ways now,
+neighbours kin: the Whispering Crevasse under -0.33 beside the Stone
+Labyrinth (-0.33 to -0.15, the slate and basalt pair); the Echoing Black
+Marble to 0.05; the Phosphorescent Fungi Pockets 0.05 to 0.12, the narrowest
+band, which is what makes them rare; the Shadow Pool Chambers to 0.33 and
+the Blind Fish Grottoes over it (the two with water). **The three older
+biomes gave up ground**, so in a world generated before this, dark-cave
+chunks not yet made will come out as the new biomes where the lines moved,
+and there can be a seam against chunks already made.
+
+- **3.4 Blind Fish Grottoes** (`biomes/blind_fish_grottoes.lua`): broad low
+  chambers over clear still pools one to four deep, a calcified ledge just
+  under the water round each rim and a dry lip at the wall, dry white banks
+  and stepping stones, grooves in the silt, stone arches two to three
+  blocks over the water, and side-tunnels floored under the water whose
+  roofs dip under it into flooded crawls. Ghost-weed nets from the
+  ceilings and stalks out of the silt, glass algae on the submerged rock,
+  quartz pebbles. The water is the world's clear `water`, so a grotto is
+  lit only by what a player brings, and the crystal pebbles' faint glow.
+  **The blind fish are a creature, and creatures are Life's**: the water
+  is there for them.
+- **3.5 Whispering Crevasse** (`biomes/whispering_crevasse.lua`): chasms two
+  to five wide along a noise's zero contours, sixty to eighty tall,
+  pinching away above and below. A ledge path a block thick that holds a
+  level and then drops twenty-two blocks, broken by gaps; bridges at a
+  second level; wind-slots up to two blocks into the walls. Slate fluted
+  with basalt, iron crusts, ash dust, dead root-threads. Dust and soot
+  drift up past a player in one, and its sound bed is the wind (`sounds.lua`:
+  a cave biome may now name its own bed).
+- **3.6 Phosphorescent Fungi Pockets** (`biomes/phosphorescent_fungi_pockets.lua`),
+  rare: compact rounded pockets where two blob noises overlap, about ten
+  across and nine high, reached along narrow folds that run only near
+  one. Teal and violet glowing mushrooms, spore-vine drapes, spore-bulb
+  lanterns, glowing moss on damp loam, mycelium veins, a block-deep
+  reflecting pool in the floor's dips, spore clouds drifting past.
+- **Six new blocks** (`docs/blocks.md`): `ghost_weed`, `glass_algae`,
+  `dead_roots`, `violet_glowcap`, `spore_vine`, `spore_bulb`. The one-block
+  rule bent: the brief's growths are ones the world had nothing like.
+- Seen in generated cuts on seed 12345: the grottoes' pools, weed, algae and
+  pebbles; the crevasse's slot, path and wind-slots; a pocket's shape, its
+  growths and its pools. Not seen: an arch or a flooded crawl in a cut,
+  though both are in the fields.
+
 ### Wild wheat and apples on the trees (Life's sibling asks W1 and W2)
 
 - **`wild_wheat`** (Life's W1): a yard of pale straw under grain heads, a

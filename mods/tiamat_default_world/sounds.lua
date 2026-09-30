@@ -61,6 +61,9 @@ local BEDS = {
     -- reader might wrongly guess; the default catches the rest.)
     rolling_grasslands = "wind", savanna = "wind", alpine_highlands = "wind",
     heather_moor = "wind", river_valleys = "wind",
+    -- A cave that names its own: the draft up the Whispering Crevasse
+    -- (2026-09-30), whistling through its slots.
+    whispering_crevasse = "wind",
 }
 -- The night layer, where one belongs: crickets in the grass and under the
 -- broadleaves, frogs where the ground is wet. Nothing at night on ice, in
@@ -82,7 +85,7 @@ local ECHO_LEAST, ECHO_SPAN = 1800, 5400   -- ticks: one per 1.5 to 6 minutes
 local function bed_for(here)
     local biome = tdw.biomes[here]
     if biome and biome.cave then
-        return "cave"
+        return BEDS[here] or "cave"
     end
     if biome == nil then
         -- Not a biome: an AREA came back — the dark caves, the gloam, the
