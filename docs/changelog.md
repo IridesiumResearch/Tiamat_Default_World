@@ -10,6 +10,44 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-30
 
+### An optimization pass
+
+"Go through and see where we can cut corners. Be sure the sponge section
+is as fast as we can get it." Measured with a benchmark that loads the old
+mod and the new side by side and alternates them chunk by chunk, so a busy
+machine slows both alike (single runs swung threefold with other work on
+the box). 96 chunks a zone, best of three passes:
+
+| Zone | Before | After |
+|---|---|---|
+| The sponge band | 7.8 ms | 1.9 ms |
+| The surface at spawn | 31.0 ms | 22.3 ms |
+| The normal caves | 13.1 ms | 12.2 ms |
+| The dark caves | 7.3 ms | 7.4 ms |
+
+- **No ores or deposits in the sponge's full strength** (`sponge.bare`,
+  generate.lua). They were three quarters of a chunk there, laid into rock
+  the sponge then carved half away. The fades at the band's ends keep them.
+- **The sponge carves by the block**, not smooth: its own fill is 2 ms
+  smooth and 1 ms by the block, and a staircase does not read in a chaos
+  of holes. Fewer octaves in its program bought nothing measurable, so its
+  shape is unchanged.
+- **Cave earth only in tunnels at least 22 blocks down** (`shallow_into`,
+  caves.lua): near the ground its take carried the whole biome terrain and
+  was sampled at every surface in the chunk, the ground's own included,
+  28% of a surface chunk's time. A quarter fewer cells of it, the ones
+  just under the surface; none of it was ever on open ground.
+- **Looked at and left:**
+  - The ores are three quarters of every dark-cave chunk and a third of a
+    normal one. Their lode gate skips little, but it cannot skip more: a
+    lode is somewhere in 97% of chunks (measured against a dense sampling),
+    so the work is real. Laying them by the block would take 22% off a
+    dark-cave chunk and change how a vein's edge looks; not done.
+  - The shallow tunnels read the relief six times a sample (the node set
+    has no way to share a value), but it is 2 to 6% of a chunk.
+  - The plant covers are a quarter of a surface chunk, and are the
+    surface's own look.
+
 ### The dark caves' variants, and five blocks out
 
 - **Five blocks taken out** ("replace/remove glass algae, ghost weed, dead

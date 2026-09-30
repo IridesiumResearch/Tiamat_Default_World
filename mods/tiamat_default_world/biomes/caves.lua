@@ -533,9 +533,11 @@ local function shallow_near(mode)
 end
 -- **Cave earth** (Science's W-S2): a cover's take, positive where a patch
 -- noise says AND the run's base cell is in a shallow cave's void — the
--- same field the carve used (the near-ground one where the ground is
--- close, which is negative in the open air over the ground, so no earth
--- lands on a hillside). `mode` nil for the deep program. The void FIRST.
+-- same field the carve used. Laid only by the deep branch since
+-- 2026-09-30 (`shallow_into`): a chunk wholly ROOF + TAPER under the
+-- ground, where the deep field is exact and no hillside is in reach.
+-- `mode` names a near-ground program, which nothing asks for now. The
+-- void FIRST.
 local function earth_take(mode)
     local key = mode or "deep"
     if EARTH_TAKE[key] == nil then
@@ -570,7 +572,11 @@ function M.shallow_into(buf, pos, tmin, tmax, smin, mode)
             return
         end
         buf:fill_density(near, AIR, DETAIL)
-        take = earth_take(mode)
+        -- No cave earth this near the ground (2026-09-30, the optimization
+        -- pass): its take is the near field, the whole biome terrain in it,
+        -- sampled at every surface in the chunk, the ground's included, and
+        -- it was 28% of a surface chunk's time (12 ms of 43, paired). The
+        -- deep branch above lays it in every tunnel ROOF + TAPER down.
     end
     -- Not thinned (`shape.thinned` is for decoration): a resource.
     if take then

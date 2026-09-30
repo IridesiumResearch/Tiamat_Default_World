@@ -32,6 +32,16 @@
 --                of the band, so it thins out rather than stopping at a
 --                ceiling or a floor.
 -- One fill, one program, only in chunks the band reaches (`into`).
+--
+-- **Cheap on purpose** (2026-09-30, "be sure the sponge section is as fast
+-- as we can get it"). Measured per chunk in the band, paired against the
+-- same chunks without it: the sponge's own fill is about 2 ms smooth and
+-- 1 ms at block resolution, so it carves by the BLOCK — the sponge is a
+-- chaos of holes, where a staircase edge does not read. And the ores and
+-- deposits, which were three quarters of a chunk here (some 6 of 8.6 ms)
+-- and laid into rock the sponge then carved half away, are not laid in
+-- the band's full strength (`bare`, generate.lua). Trimming the program's
+-- octaves bought nothing measurable, so the shape is as it was.
 
 local shape = tdw.shape
 local n = shape.node
@@ -89,8 +99,15 @@ function M.into(buf, Ylo, Yhi)
     if Yhi < M.BOTTOM_Y or Ylo > M.TOP_Y then
         return false
     end
-    buf:fill_density(field(), game.AIR, shape.SURFACE_DETAIL)
+    buf:fill_density(field(), game.AIR)
     return true
+end
+
+-- True where the chunk lies wholly in the band's full strength, past the
+-- fades: the rock there gets no ores or deposits (generate.lua).
+local FULL_TOP, FULL_BOTTOM = M.TOP_Y - FADE * 0.001, M.BOTTOM_Y + FADE * 0.001
+function M.bare(Ylo, Yhi)
+    return Yhi < FULL_TOP and Ylo > FULL_BOTTOM
 end
 
 return M

@@ -505,7 +505,9 @@ local function generate(buf, pos)
         end
         -- The ores, into rock that is solid throughout, under the bands
         -- they sit in and before the core stack, which overwrites them.
-        if painted and tmin > 0 and not WHITE then
+        -- Not in the sponge's full strength (sponge.lua): it carves half of
+        -- whatever they lay, and they were three quarters of a chunk there.
+        if painted and tmin > 0 and not WHITE and not (tdw.sponge and tdw.sponge.bare(Ylo, Yhi)) then
             deposits_into(buf, pos)
             ores_into(buf, pos, dmax)
         end
