@@ -37,6 +37,8 @@ BLOCKS = {
     "dead_log":      (110, 102,  90,  0),
     "fern":           ( 52,  96,  54,  0),
     "tall_grass":     (116, 136,  60,  0),
+    "wild_wheat":     (204, 178, 108,  0),   # 2026-09-30: pale straw (Life's W1)
+    "apple_fruit":    (182,  44,  38,  0),   # 2026-09-30: a red apple (Life's W2)
     "bramble":        ( 72,  60,  44,  0),
     "ladys_mantle":       ( 96, 124,  70,  0),
     "ladys_mantle_bloom": (172, 176,  92,  0),
@@ -230,7 +232,10 @@ BLOOMS = {
     "monstera": 7.0,     # one broad leaf the width of the card
     "peony": 6.0,        # the flower forest (2.6): a heavy double bloom
     "poppy": 4.0,        # one scarlet cup on a thin stem
+    "apple_fruit": 4.5,  # one round apple a cell (2026-09-30)
 }
+# Blooms drawn whole, with no nibbled rim: fruit, not petals.
+SMOOTH = {"apple_fruit"}
 
 # Items are PICTURES — a rose on its stem — because an item is never in the
 # world; the flat-colour rule is the world's. Drawn from a few strokes.
@@ -290,6 +295,7 @@ SPRAYS = {
     "heather": 8,            # many short wiry stems in flower (3.6)
     "glow_polyp": 3,         # a few stalks under glowing heads (3.9)
     "bluebell": 5,           # nodding bells, a card a block high
+    "wild_wheat": 7,         # straw stems under grain heads, a card a block high (2026-09-30)
 }
 
 
@@ -431,7 +437,7 @@ def texture(name, r, g, b, grain):
                 d2 = (px - mx) ** 2 + (py - my) ** 2
                 on = d2 <= bloom * bloom
                 # Petals: the rim is nibbled in a pattern, so it is not a coin.
-                if on and d2 >= bloom * bloom - 3.0 and (x * 3 + y * 5) % 4 == 0:
+                if on and name not in SMOOTH and d2 >= bloom * bloom - 3.0 and (x * 3 + y * 5) % 4 == 0:
                     on = False
                 row += [r, g, b, 255 if on else 0]
             rows.append(row)

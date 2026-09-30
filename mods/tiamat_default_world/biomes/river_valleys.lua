@@ -419,6 +419,9 @@ tdw.build_biome("river_valleys", function(ctx)
         { cover = blocks.tall_grass, cells = 2, take = grass },
         lunaria,
         chamomile,
+        tdw.wheat_cover("biome.river", "river_grass", GRASS_FREQ, function(field)
+            return masked(n.min(field, band(TERRACE, RIM)))
+        end),
     }
     if game.schematic and tdw.river_schematics then
         local trees = tdw.river_schematics()

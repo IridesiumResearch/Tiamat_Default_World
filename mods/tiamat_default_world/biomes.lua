@@ -352,6 +352,28 @@ function tdw.flower_covers(prefix, noise_name, freq, gate)
         { cover = blocks.roman_chamomile, cells = 1, take = shape.compile(prefix .. ".chamomile", gate(chamomile)) }
 end
 
+-- **Wild wheat** (2026-09-30, Life's sibling ask W1: "a player finds the
+-- crop before they find a seed"): a cover for the grassland and the river
+-- meadows, added beside the flowers. It takes the flowers' side of the
+-- grass noise, so it never stands on a tuft, but not the bloom thinning:
+-- inside a stand about one column in seven carries a yard of it, a
+-- block's worth of drift. It takes only the middle of the flower patch
+-- noise, the band between the lunaria's and the chamomile's, so no wheat
+-- run lands on a flower's. A slow noise of its own gathers it into
+-- stands a few blocks to a dozen across, well apart.
+--   Arguments as `tdw.flower_covers`.
+local WHEAT_OFF = 0.45                -- the flowers' cut on the grass noise
+local WHEAT_PATCH = { -0.25, 0.05 }   -- inside the gap between the flowers' patches (-0.30, 0.10)
+local WHEAT_STAND_FREQ, WHEAT_STAND_MIN = 1 / 28, 0.30
+function tdw.wheat_cover(prefix, noise_name, freq, gate)
+    local n, shape, blocks = tdw.shape.node, tdw.shape, tdw.blocks
+    local patch = n.noise("flower_patch", FLOWER_PATCH_FREQ, 1, 1.0)
+    local field = n.min(n.sub(n.mul(n.noise(noise_name, freq, 1, 1.0), n.const(-1.0)), n.const(WHEAT_OFF)),
+        n.min(n.min(n.sub(patch, n.const(WHEAT_PATCH[1])), n.sub(n.const(WHEAT_PATCH[2]), patch)),
+            n.sub(n.noise("wheat_stand", WHEAT_STAND_FREQ, 1, 1.0), n.const(WHEAT_STAND_MIN))))
+    return { cover = blocks.wild_wheat, cells = 3, take = shape.compile(prefix .. ".wheat", gate(field)) }
+end
+
 -- The whole u range a biome can be found in, over all its spans.
 function tdw.biome_span_u(id)
     local lo, hi = nil, nil

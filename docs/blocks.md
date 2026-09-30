@@ -97,6 +97,8 @@ Magic's `docs/sibling-asks.md`. Neither belongs to one biome.
 |---|---|---|
 | `cinnabar` | a crust ring round each Volcanic Foothills fumarole, the lining of each Geyser Basin throat under its sulfur, thin seams through the Mineral Vein Tunnels' walls | Magic's W-M1, shared with Science: mercury's ore, roasted for quicksilver. Tags `ore`, `mineral`; hardness 1.8 |
 | `cave_earth` | two-cell patches on the floors of the shallow caves (`caves.lua`), in about half their floor | Science's W-S2: the nitrous earth the saltpetre men leached. Tags `soil`, `nitrous` |
+| `wild_wheat` (2026-09-30) | stands of a yard-tall straw sprite through the Rolling Grasslands and the River Valleys' terraces and slopes (`tdw.wheat_cover`, `biomes.lua`) | Life's W1: the crop is found before its seed. Life forages wheat seed from it. Tags `plant`, `grain` |
+| `apple_fruit` (2026-09-30) | one cell hanging under an apple tree's lowest leaves, grown by the leaves' random tick at a fixed quarter of the leaf blocks (`biomes/flower_forest.lua`) | Life's W2: fruit that is seen. Life picks it; the spot grows another on its next tick, about twenty minutes. Tags `plant`, `fruit` |
 
 ## The ores (2026-09-17)
 

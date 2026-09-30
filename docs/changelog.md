@@ -8,6 +8,27 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-09-30
+
+### Wild wheat and apples on the trees (Life's sibling asks W1 and W2)
+
+- **`wild_wheat`** (Life's W1): a yard of pale straw under grain heads, a
+  swaying sprite like the tall grass, in stands a few blocks to a dozen
+  across through the Rolling Grasslands and the river meadows. It takes
+  the flowers' side of the grass noise and the gap between the lunaria's
+  and chamomile's patches, so it never stands on a tuft or a flower.
+  Measured: some 380 runs over a 128-block square of grassland, beside
+  some 470 of lunaria, and some 125 round one river valley.
+- **`apple_fruit`** (Life's W2): an apple is one cell hanging under an
+  apple tree's lowest leaf. The world takes the apple leaves' random tick:
+  a fixed quarter of the leaf blocks are fruiting spots, and on its tick a
+  spot with no apple grows one where the cell under its leaf is empty. A
+  picked spot grows back on its next tick, about twenty minutes. Life does
+  the picking. Trees are bare when their chunk is first made: ticks, not
+  generation, hang the fruit.
+- `cinnabar` and `cave_earth` had been put between pitchblende's comment
+  and its block in `blocks.lua`; moved after it.
+
 ## 2026-09-29
 
 ### Cinnabar and cave earth (Science's and Magic's sibling asks)

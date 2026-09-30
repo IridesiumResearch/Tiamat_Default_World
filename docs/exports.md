@@ -41,7 +41,7 @@ and answers `nil` or `false` rather than raising.
 Content registered with the engine, namespaced `tiamat_default_world:`.
 
 **Blocks.** acacia_leaves, acacia_log, allium, apex_stone, apple_blossom,
-apple_leaves, apple_log, barnacles, birch_leaves, birch_log, black_mud,
+apple_fruit, apple_leaves, apple_log, barnacles, birch_leaves, birch_log, black_mud,
 blue_lunaria, bluebell, bone, bramble, cactus, calcite, caul, cave_earth, charcoal,
 cherry_blossom, cherry_leaves, cherry_log, chromium_ore, cinnabar, clear_ice,
 climbing_ivy, coal, cobbles, cold_fiber_stone, copper_ore, coral_amber,
@@ -59,7 +59,7 @@ pale_terracotta, peony, permafrost, pink_algae, pitchblende, pitcher_plant, popp
 pyrite, redwood_log, redwood_needles, reeds, roman_chamomile, rose_blooms,
 rose_bush, rust_red_sandstone, salt, sand, scorch, seagrass, silver_ore, slate,
 snow, stone, sulfur, tall_grass, tin_ore, volcanic_ash, water, water_iris,
-wet_clay, white_sand, wild_mint, willow_leaves, willow_log, willow_planks.
+wet_clay, white_sand, wild_mint, wild_wheat, willow_leaves, willow_log, willow_planks.
 `docs/blocks.md` says where each is used and why.
 
 **Block tags** (2026-09-28, Craft's W2; read back with the engine's
@@ -77,7 +77,7 @@ nothing here says what digs what. The vocabulary:
   `metal`, `bone`, `radioactive`
 - wood: `log`, `plank`, `wood`, `hardwood`, `dead`
 - growth: `plant`, `leaves`, `flower`, `bush`, `vine`, `aquatic`, `algae`,
-  `fungus`, `coral`, `membrane`
+  `fungus`, `coral`, `membrane`, `grain`, `fruit`
 - other: `fluid` (the blocks the fluids are drawn as), `hot`, `glowing`
 
 The table is `TAGS` in `mods/tiamat_default_world/blocks.lua`, and a

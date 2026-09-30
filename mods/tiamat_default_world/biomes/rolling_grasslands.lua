@@ -144,6 +144,15 @@ tdw.build_biome("rolling_grasslands", function(ctx)
         { cover = blocks.tall_grass, cells = 2, take = tufts },
         lunaria,
         chamomile,
+        tdw.wheat_cover("biome.grasslands", "tuft", TUFT_FREQ, function(field)
+            if shape.river_exclude then
+                field = shape.river_exclude(field, shape.RIVER_RIM)
+            end
+            if shape.sea_exclude then
+                field = shape.sea_exclude(field, 20.0)
+            end
+            return masked(field)
+        end),
     }
 end)
 tdw.biomes.rolling_grasslands.soil = blocks.dirt

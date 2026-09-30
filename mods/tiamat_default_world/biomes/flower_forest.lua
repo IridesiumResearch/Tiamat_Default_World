@@ -460,3 +460,71 @@ tdw.build_biome(ID, function(ctx)
     }
     return fills
 end)
+
+-- ------------------------------------------------------------ the apples
+
+-- **Apples on the apple trees** (2026-09-30, Life's sibling ask W2: "fruit
+-- that is SEEN: an apple hanging in an apple tree, picked with a
+-- right-click, back a while later"). One apple leaf block in FRUIT_ONE_IN,
+-- fixed by the block's hash, is a fruiting spot: on its random tick, if no
+-- apple hangs from it, one grows in the cell under its lowest leaf. So a
+-- tree carries a handful, always in the same places, and a spot picked
+-- bare grows its apple back on its next tick — some twenty minutes, the
+-- engine's rate. Life does the picking (it takes the `apple_fruit` cell
+-- and gives its own apple); the world only grows them. A tree is bare
+-- until its chunk has been loaded a while: ticks, not worldgen, hang the
+-- fruit.
+local FRUIT_ONE_IN = 4
+local APPLE_ID = "tiamat_default_world:apple_fruit"
+
+local function cell_of(at, index)
+    if at.cells then
+        return at.cells[index + 1]
+    end
+    if at.occupancy & (1 << index) ~= 0 then
+        return at.material
+    end
+    return game.AIR
+end
+
+tdw.on_random_tick(blocks.apple_leaves, function(x, y, z)
+    if schem.hash(x, y, z) % FRUIT_ONE_IN ~= 0 then
+        return true
+    end
+    local here = game.get_block{ x = x, y = y, z = z }
+    local under = game.get_block{ x = x, y = y - 1, z = z }
+    if here == nil or under == nil then
+        return true                                      -- unloaded below: next time
+    end
+    -- One apple a spot: none already in this block or under it.
+    for i = 0, 26 do
+        if cell_of(here, i) == blocks.apple_fruit or cell_of(under, i) == blocks.apple_fruit then
+            return true
+        end
+    end
+    -- The nine columns from a place the hash picks, so a tree's apples do
+    -- not all hang from the same corner of their blocks.
+    local start = schem.hash(x, y + 1, z) % 9
+    for k = 0, 8 do
+        local c = (start + k) % 9
+        local cx, cz = c % 3, c // 3
+        for cy = 0, 2 do
+            if cell_of(here, cx + 3 * cy + 9 * cz) == blocks.apple_leaves then
+                -- The lowest leaf in this column; the cell under it is in
+                -- this block, or the top of the one below.
+                local pos, index, at
+                if cy > 0 then
+                    pos, index, at = { x = x, y = y, z = z }, cx + 3 * (cy - 1) + 9 * cz, here
+                else
+                    pos, index, at = { x = x, y = y - 1, z = z }, cx + 6 + 9 * cz, under
+                end
+                if cell_of(at, index) == game.AIR then
+                    game.set_block(pos, APPLE_ID, 1 << index, { merge = true })
+                    return true
+                end
+                break
+            end
+        end
+    end
+    return true
+end)

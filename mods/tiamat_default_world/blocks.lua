@@ -105,6 +105,8 @@ tag({ "ironwood_planks" }, "hardwood", "plank", "wood")
 tag({ "oak_leaves", "birch_leaves", "willow_leaves", "ironwood_leaves", "kapok_leaves", "apple_leaves", "cherry_leaves",
     "mangrove_leaves", "acacia_leaves", "fir_needles", "juniper_needles", "redwood_needles" }, "leaves", "plant")
 tag({ "apple_blossom", "cherry_blossom" }, "leaves", "plant", "flower")
+tag({ "wild_wheat" }, "plant", "grain")
+tag({ "apple_fruit" }, "plant", "fruit")
 tag({ "fern", "tall_grass", "ladys_mantle", "wild_mint", "monstera", "pitcher_plant", "maidenhair", "cactus", "moss", "lichen" }, "plant")
 tag({ "ladys_mantle_bloom", "blue_lunaria", "roman_chamomile", "rose_blooms", "allium", "peony", "poppy", "bluebell", "heather" },
     "plant", "flower")
@@ -203,6 +205,11 @@ block("fir_needles", "Fir needles", "Tiers of them, dark.", { hardness = 0.2, ti
 -- round-dot look. Everything soft sways.
 block("fern", "Fern", "Knee-high, in carpets.", { hardness = 0.1, tint = GREEN, cutout = true, passable = true, sway = true })
 block("tall_grass", "Tall grass", "Tufts of it.", { hardness = 0.1, tint = GREEN, passable = true, sway = true, billboard = "cross" })
+-- Wild wheat (2026-09-30, Life's sibling ask W1): the grain a player finds
+-- before a seed, standing in drifts through the Rolling Grasslands and the
+-- river meadows (`tdw.wheat_cover`, biomes.lua). A yard of it, a straw
+-- sprite; Life forages its seed from it. Tone-only, so it stays straw.
+block("wild_wheat", "Wild wheat", "Tall pale straw with bearded heads, gone wild in the meadow.", { hardness = 0.1, tint = { strength = 0.12, scale = 96 }, passable = true, sway = true, billboard = "cross" })
 block("bramble", "Bramble", "Wild berry canes, tangled.", { hardness = 0.3, tint = GREEN, billboard = "cross" })
 -- Lady's mantle: a low rosette of rounded leaves, and its bloom — sprays of
 -- tiny chartreuse flowers, its own colour, placed above a leaf cell so a
@@ -412,6 +419,10 @@ block("coral_amber", "Amber coral", "Rounded brain coral domes in amber.", { har
 -- meadow flowers* are the brief's own list.
 block("apple_log", "Apple log", "Short, crooked, pale-barked: an orchard tree gone wild.", { hardness = 0.9, tint = SOIL })
 block("apple_leaves", "Apple leaves", "A low, broad crown of them.", { hardness = 0.2, tint = GREEN, cutout = true, sway = true, light_falloff = 1 })
+-- An apple (2026-09-30, Life's sibling ask W2): one cell hanging under an
+-- apple tree's leaves, grown there by the leaves' random tick
+-- (biomes/flower_forest.lua). Life picks it; the tree grows another.
+block("apple_fruit", "Apple", "A small red apple hanging under the leaves.", { hardness = 0.1, passable = true, billboard = "cross" })
 block("apple_blossom", "Apple blossom", "White-pink blossom through the crown, and fallen under it.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true, light_falloff = 1 })
 block("cherry_log", "Cherry log", "Dark, banded bark; a wild cherry leans toward the light.", { hardness = 0.9, tint = SOIL })
 block("cherry_leaves", "Cherry leaves", "Pink from the first thaw to the last of the summer.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true, light_falloff = 1 })
@@ -507,6 +518,7 @@ block("gold_ore", "Gold ore", "Flecks and stringers of yellow in white quartz.",
 -- tree's design with no block in the world, for its fission, later).
 -- Uraninite, black and pitch-lustred, deep beside the lead and the silver.
 -- Nothing in this mod uses it. It does not glow; it is only dangerous.
+block("pitchblende", "Pitchblende", "Heavy black ore with a pitch-like lustre, deep beside the lead and the silver.", { hardness = 2.6, tint = ROCK })
 -- Cinnabar (2026-09-29, Magic's sibling ask W-M1, shared with Science):
 -- mercury's ore, red, crusted round the fumaroles of the Volcanic Foothills
 -- and the Geyser Basin's throats and in thin seams through the Mineral
@@ -516,7 +528,6 @@ block("cinnabar", "Cinnabar", "Vermilion crust and seams round the vents, soft a
 -- earth of cave floors, which the saltpetre men leached. On the floors of
 -- the shallow caves, in patches (biomes/caves.lua).
 block("cave_earth", "Cave earth", "Dry, sour-smelling earth on the cave floors; leached, it gives saltpetre.", { hardness = 0.5, tint = SOIL })
-block("pitchblende", "Pitchblende", "Heavy black ore with a pitch-like lustre, deep beside the lead and the silver.", { hardness = 2.6, tint = ROCK })
 block("diamond", "Diamond", "A few bright cells in the dark of the Gloam; almost never a whole block.", { hardness = 3.5, tint = { strength = 0.06, scale = 32 } })
 block("orichalcum", "Orichalcum", "The old metal: red-gold, warm, faintly lit from within, deeper than anything.",
     { hardness = 4.0, tint = { strength = 0.08, scale = 48 }, light_emit = { r = 4, g = 2, b = 1 } })
