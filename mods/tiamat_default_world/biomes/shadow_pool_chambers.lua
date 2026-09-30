@@ -26,6 +26,17 @@
 -- Materials: `charcoal` for the shale, `black_mud` for the shelves, the
 -- floors and the biofilm, `seagrass` for the weed ribbons and `pumice` for
 -- the sponges. **No new block.**
+--
+-- 3.3.1 INKY LOTUS BASINS (2026-09-30), the variant: the same chambers on
+-- the far side of the `cave_variant` line (caves.lua). The still water is
+-- dotted with pads of pitch-black leaves, a cell-thin sheet of `charcoal`
+-- floating at the surface, and on the pads pale night-blooming lotus buds
+-- (`glow_polyp`, whose cold glow is the only light here). The mud shelves
+-- are coated with graphite-dark pebbles (`flint`) and ribbed with
+-- calcified silt ripples (`light_sediment`, in bands of a noise drawn out
+-- one way, like frozen waves). Shadow-vines, thread-thin `charcoal`,
+-- trail from the drip hollows down into the water, and the drips there
+-- come three times as often. No new block.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -45,6 +56,11 @@ local CEIL_FREQ, CEIL_LOW, CEIL_SPAN = 1 / 14, -0.5, 6.5
 local HOLLOW_FREQ, HOLLOW_MIN, HOLLOW_H = 1 / 8, 0.35, 3.0
 local WEED_FREQ, WEED_MIN, WEED_DEEP = 1 / 9, 0.05, 1.6   -- only in the deeper water, and short enough to stay under it
 local SPONGE_CELL, SPONGE_SQUARES = 6, 0.20
+local PAD_FREQ, PAD_MIN, PAD_PATCH_FREQ, PAD_PATCH_MIN = 1 / 3, 0.08, 1 / 20, -0.05   -- the lotus basins' leaf pads
+local BUD_FREQ, BUD_MIN = 1 / 2.5, 0.28
+local PEBBLE_FREQ, PEBBLE_MIN = 1 / 3, 0.10
+local RIPPLE_FREQ, RIPPLE_MIN = 1 / 3, 0.05
+local VINE_CELL, VINE_SQUARES = 3, 0.45
 
 -- ------------------------------------------------------------ the structures
 
@@ -64,12 +80,25 @@ local function sponge(rng)
     end
     return schem.record_schematic({})
 end
+-- A shadow-vine (the basins): two or three black threads from one point
+-- of a hollow's ceiling, long enough to reach down into the water.
+local function vine(rng)
+    schem.record_begin()
+    for _ = 1, 2 + rng:below(2) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local x, z = 0.5 + d[1] * rng:below(3) * 0.3, 0.5 + d[2] * rng:below(3) * 0.3
+        local len = 5.0 + rng:below(5)
+        schem.push_path(blocks.charcoal, { { x, 0.95, z, 0.1 }, { x + d[1] * 0.25, 0.95 - len, z + d[2] * 0.25, 0.08 } }, BLIND)
+    end
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { sponges = {} }
+    BUILT = { sponges = {}, vines = {} }
     if game.schematic_shapes then
         for i = 1, 5 do BUILT.sponges[i] = sponge(rng_for("sponge:" .. i)) end
+        for i = 1, 5 do BUILT.vines[i] = vine(rng_for("vine:" .. i)) end
     end
     return BUILT
 end
@@ -120,13 +149,23 @@ tdw.cave_biome(ID, { 0.12, 0.33 }, function(ctx)   -- over 0.15 until 2026-09-30
     local void = ctx.mine(v)
     local carve = ctx.compile("carve", void)
     local function step(f) return n.clamp(n.mul(f, n.const(1e4)), 0.0, 1.0) end
-    local code = n.max(n.const(1.0), n.mul(step(floors), n.const(2.0)))
+    -- 3 the basins' shelves: calcified silt ripples, bands of a noise
+    -- drawn out along x, on the floors that stand out of the water.
+    local dry_floor = nil
+    for k = 1, #STOREYS do
+        local d = n.min(n.sub(floor_at(), up(k)), n.min(n.add(footprint(k), n.const(2.0)), n.sub(up(k), n.const(-0.2))))
+        dry_floor = dry_floor and n.max(dry_floor, d) or d
+    end
+    local ripples = n.min(n.min(dry_floor, ctx.side(1)), n.sub(n.noise("spc_ripple", RIPPLE_FREQ, 1, 1.0, { x = 6, y = 1000000 }), n.const(RIPPLE_MIN)))
+    local code = n.max(n.max(n.const(1.0), n.mul(step(floors), n.const(2.0))), n.mul(step(ripples), n.const(3.0)))
     local depth = ctx.compile("depth", n.mul(void, n.const(-1.0)))
     local fills = {
         { layers = true, depth = depth, code = ctx.compile("codes", code), entries = {
             { code = 1, to = 3.0, material = blocks.charcoal },
             { code = 2, to = 2.0, material = blocks.black_mud },
             { code = 2, from = 2.0, to = 3.0, material = blocks.charcoal },
+            { code = 3, to = 1.0, material = blocks.light_sediment },
+            { code = 3, from = 1.0, to = 3.0, material = blocks.black_mud },
         } },
         { carve = carve },
         -- The weed ribbons, standing a block or so high in the deeper water;
@@ -134,13 +173,43 @@ tdw.cave_biome(ID, { 0.12, 0.33 }, function(ctx)   -- over 0.15 until 2026-09-30
         -- water, which takes the room they leave.
         { cover = blocks.seagrass, cells = 4, take = ctx.compile("take_weed",
             ctx.mine(n.min(n.sub(wet, n.const(WEED_DEEP)), n.sub(n.noise("spc_weed", WEED_FREQ, 1, 1.0, FLAT), n.const(WEED_MIN))))) },
-        { cover = blocks.black_mud, cells = 1, take = ctx.compile("take_film",
-            ctx.mine(n.sub(n.const(0.8), n.abs(n.add(wet, n.const(0.3)))))) },
+        { cover = blocks.black_mud, cells = 1, side = "base", take = ctx.compile("take_film",
+            ctx.base(n.sub(n.const(0.8), n.abs(n.add(wet, n.const(0.3)))))) },
+        -- The basins: graphite pebbles over the shelves out of the water.
+        { cover = blocks.flint, cells = 1, side = "variant", take = ctx.compile("take_pebbles",
+            ctx.variant(n.min(n.mul(wet, n.const(-1.0)), n.sub(n.noise("spc_pebble", PEBBLE_FREQ, 1, 1.0, FLAT), n.const(PEBBLE_MIN))))) },
     }
+    -- The leaf pads: a sheet a third of a block thick just under each
+    -- storey's surface, over water a block deep or more, in patches.
+    -- Laid before the water, which takes the room round them, so they
+    -- float in it. Sampled: a sheet thinner than a block.
+    local pads = nil
+    for k = 1, #STOREYS do
+        local p = n.min(n.sub(n.const(0.17), n.abs(n.add(up(k), n.const(0.17)))), n.add(footprint(k), n.const(-1.0)))
+        pads = pads and n.max(pads, p) or p
+    end
+    pads = n.min(n.min(n.min(pads, n.sub(wet, n.const(-0.5))), n.sub(n.noise("spc_pad", PAD_FREQ, 1, 1.0, FLAT), n.const(PAD_MIN))),
+        n.mul(n.sub(n.noise("spc_pad_patch", PAD_PATCH_FREQ, 1, 1.0, FLAT), n.const(PAD_PATCH_MIN)), n.const(10.0)))
+    fills[#fills + 1] = { field = ctx.compile("pads", ctx.variant(n.mul(pads, n.const(6.0)))), material = blocks.charcoal, side = "variant",
+        detail = { detail = "sampled" } }
+    -- The lotus buds, standing on the pads: a cover over the surface's
+    -- height only, where a fine noise and the pads' patches agree.
+    local at_surface = nil
+    for k = 1, #STOREYS do
+        local a = n.sub(n.const(0.7), n.abs(n.sub(up(k), n.const(0.3))))
+        at_surface = at_surface and n.max(at_surface, a) or a
+    end
+    fills[#fills + 1] = { cover = blocks.glow_polyp, cells = 2, side = "variant", take = ctx.compile("take_buds",
+        ctx.variant(n.min(n.min(at_surface, n.sub(n.noise("spc_bud", BUD_FREQ, 1, 1.0, FLAT), n.const(BUD_MIN))),
+            n.sub(n.noise("spc_pad_patch", PAD_PATCH_FREQ, 1, 1.0, FLAT), n.const(PAD_PATCH_MIN))))) }
     if game.schematic_shapes then
         local built = structures()
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.sponges, cell = SPONGE_CELL, chance = SPONGE_SQUARES, salt = 491, sink = 1,
             stand = ctx.compile("stand_sponges", ctx.mine(n.sub(wet, n.const(0.8)))) }
+        -- The shadow-vines from the drip hollows' ceilings: the depth
+        -- positive in the VOID, where the hollow noise is high.
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.vines, cell = VINE_CELL, chance = VINE_SQUARES, salt = 492, sink = 0,
+            side = "variant", stand = ctx.compile("stand_vines", ctx.variant(n.sub(n.noise("spc_hollow", HOLLOW_FREQ, 1, 1.0, FLAT), n.const(HOLLOW_MIN)))) }
     end
     -- The reservoirs: still water to each storey's level, within its
     -- chambers, held by mud where the rock leaves a block less than whole.
@@ -156,6 +225,7 @@ tdw.cave_biome(ID, { 0.12, 0.33 }, function(ctx)   -- over 0.15 until 2026-09-30
     end
     return fills
 end)
+tdw.cave_variant(ID, "Inky Lotus Basins")
 
 -- ------------------------------------------------------------ the drips
 
@@ -174,7 +244,13 @@ if game.emit_particles then
             local body = game.player_entity(uuid)
             local e = body and game.entity(body)
             local p = e and e.pos
-            if p and tdw.cave_under(math.floor(p.x), math.floor(p.y), math.floor(p.z)) == ID then
+            local fx, fy, fz = p and math.floor(p.x), p and math.floor(p.y), p and math.floor(p.z)
+            -- The basins' vines keep the water rippling: three drops for one.
+            local drops = 0
+            if p and tdw.cave_under(fx, fy, fz) == ID then
+                drops = tdw.caves.variant_name_at(ID, fx, fy, fz, game.world_seed) and 3 or 1
+            end
+            for _ = 1, drops do
                 drip_n = drip_n + 1
                 local d = schem.DIR16[(drip_n * 5) % 16 + 1]
                 local r = 2 + (drip_n * 3) % 6

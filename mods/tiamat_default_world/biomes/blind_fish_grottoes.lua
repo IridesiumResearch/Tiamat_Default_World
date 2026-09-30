@@ -9,8 +9,7 @@
 -- branching off into flood-carved passages, some of them crawls under the
 -- water. Water-smoothed pale limestone; soft white banks; silt, quartz
 -- pebbles and water-carved grooves on the pool floors. Bleached threads
--- hanging from the ceilings in nets and standing out of the silt; glassy
--- sheets of algae on the submerged rock. Natural stone arches spanning the
+-- hanging from the ceilings in nets. Natural stone arches spanning the
 -- pools a couple of blocks over the water; calcified ledges round the
 -- pools' rims, a shelf just under the surface before the floor drops.
 --
@@ -33,8 +32,19 @@
 -- Life's: this biome gives them their water.
 --
 -- Materials: `calcite` for the limestone, `light_sediment` for the silt,
--- `white_sand` for the pale banks, `crystal` for the quartz pebbles; new,
--- `ghost_weed` and `glass_algae` (blocks.lua).
+-- `white_sand` for the pale banks, `crystal` for the quartz pebbles,
+-- `mycelium` for the pale threads. No new block (the `ghost_weed` and
+-- `glass_algae` it was built with were taken out the same day, and the
+-- stalks and the algae sheets with them).
+--
+-- 3.4.1 ALBINO CORAL CENOTE (2026-09-30), the variant: the same chambers
+-- on the far side of the `cave_variant` line (caves.lua). The soft banks
+-- give way to skeletal, bleached cave-coral (`bone`), branching one to
+-- three blocks tall along the floors and the submerged ledges, the banks
+-- under it bare `calcite`; the threads to calcified stone-vines
+-- (`calcite`) hanging like pale ice drips; the pool bottoms to pearl
+-- gravel, `white_sand` with the quartz (`crystal`) thick through it, whose
+-- faint light is a halo in the clear water. No new block.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -59,10 +69,11 @@ local ARCH_PATCH_FREQ, ARCH_PATCH_MIN = 1 / 60, 0.05
 local TUNNEL_FREQ, TUNNEL_W_LO, TUNNEL_W_SPAN = 1 / 70, 1.0, 1.0   -- two to four wide
 local TUNNEL_FLOOR, TUNNEL_ROOF = 2.5, 1.5
 local DIP_FREQ, DIP_MIN, DIP_DEPTH = 1 / 30, 0.12, 3.0    -- a roof dipped under the water: a crawl
-local STALK_FREQ, STALK_MIN = 1 / 5, 0.22
-local ALGAE_FREQ, ALGAE_MIN = 1 / 6, 0.05
 local PEBBLE_FREQ, PEBBLE_MIN = 1 / 3, 0.36
+local PEARL_MIN = 0.12                                    -- the cenote's quartz: several times as thick
 local THREAD_CELL, THREAD_SQUARES = 4, 0.30
+local CORAL_CELL, CORAL_SQUARES = 5, 0.40
+local DRIP_CELL, DRIP_SQUARES = 4, 0.30
 
 -- ------------------------------------------------------------ the structures
 
@@ -80,16 +91,50 @@ local function threads(rng)
         local off = rng:below(4) * 0.35
         local x, z = 0.5 + d[1] * off, 0.5 + d[2] * off
         local len = 1.0 + rng:below(7) * 0.33
-        schem.push_path(blocks.ghost_weed, { { x, 0.95, z, 0.14 }, { x, 0.95 - len, z, 0.14 } }, BLIND)
+        schem.push_path(blocks.mycelium, { { x, 0.95, z, 0.1 }, { x, 0.95 - len, z, 0.08 } }, BLIND)
+    end
+    return schem.record_schematic({})
+end
+-- Cave-coral (the cenote): a bleached stem a block to three tall that
+-- forks two or three times on the way up, the branches thinning, like a
+-- bone candelabrum.
+local function coral(rng)
+    schem.record_begin()
+    local tall = 1.0 + rng:below(5) * 0.5
+    local lean = schem.DIR16[rng:below(16) + 1]
+    local top = { 0.5 + lean[1] * 0.2, 1.0 + tall * 0.55, 0.5 + lean[2] * 0.2 }
+    schem.push_path(blocks.bone, { { 0.5, 0.9, 0.5, 0.2 }, { top[1], top[2], top[3], 0.15 } }, BLIND)
+    for _ = 1, 2 + rng:below(2) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local reach = 0.4 + rng:below(4) * 0.2
+        local rise = tall * (0.35 + rng:below(3) * 0.15)
+        local mid = { top[1] + d[1] * reach * 0.5, top[2] + rise * 0.5, top[3] + d[2] * reach * 0.5 }
+        local tip = { top[1] + d[1] * reach, top[2] + rise, top[3] + d[2] * reach }
+        schem.push_path(blocks.bone, { { top[1], top[2], top[3], 0.13 }, { mid[1], mid[2], mid[3], 0.1 }, { tip[1], tip[2], tip[3], 0.07 } }, BLIND)
+    end
+    return schem.record_schematic({})
+end
+-- A stone-vine (the cenote): a pale drip of calcite a block to two and a
+-- half long, thick at the ceiling and tapering, a second beside it now
+-- and then.
+local function stone_vine(rng)
+    schem.record_begin()
+    for i = 1, 1 + rng:below(2) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local x, z = 0.5 + d[1] * (i - 1) * 0.4, 0.5 + d[2] * (i - 1) * 0.4
+        local len = 1.0 + rng:below(4) * 0.5
+        schem.push_path(blocks.calcite, { { x, 0.98, z, 0.22 }, { x, 0.98 - len * 0.6, z, 0.14 }, { x, 0.98 - len, z, 0.06 } }, BLIND)
     end
     return schem.record_schematic({})
 end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { threads = {} }
+    BUILT = { threads = {}, corals = {}, drips = {} }
     if game.schematic_shapes then
         for i = 1, 6 do BUILT.threads[i] = threads(rng_for("threads:" .. i)) end
+        for i = 1, 6 do BUILT.corals[i] = coral(rng_for("coral:" .. i)) end
+        for i = 1, 5 do BUILT.drips[i] = stone_vine(rng_for("drip:" .. i)) end
     end
     return BUILT
 end
@@ -164,8 +209,15 @@ tdw.cave_biome(ID, { 0.33, 1 }, function(ctx)
     end
     local void = ctx.mine(v)
     local carve = ctx.compile("carve", void)
-    -- 1 the limestone; 2 a floor under the water (silt); 3 a floor out of it (the banks).
-    local code = n.max(n.const(1.0), n.add(n.mul(step(floors, 1e4), n.const(1.0)), n.mul(step(n.min(floors, n.mul(wet, n.const(-1.0))), 1e4), n.const(2.0))))
+    -- 1 the limestone; 2 a floor under the water (silt); 3 a floor out of
+    -- it (the banks); 4 the cenote's pool floor (pearl gravel); 5 its
+    -- banks (bare calcite, under the coral). A higher code wins.
+    local dry = n.min(floors, n.mul(wet, n.const(-1.0)))
+    local conditions = { n.const(1.0), floors, dry, n.min(floors, ctx.side(1)), n.min(dry, ctx.side(1)) }
+    local code = n.const(0.0)
+    for k, c in ipairs(conditions) do
+        code = n.max(code, n.mul(step(c, 1e4), n.const(k)))
+    end
     local depth = ctx.compile("depth", n.mul(void, n.const(-1.0)))
     local fills = {
         { layers = true, depth = depth, code = ctx.compile("codes", code), entries = {
@@ -174,24 +226,30 @@ tdw.cave_biome(ID, { 0.33, 1 }, function(ctx)
             { code = 2, from = 1.0, to = 3.0, material = blocks.calcite },
             { code = 3, to = 1.0, material = blocks.white_sand },
             { code = 3, from = 1.0, to = 3.0, material = blocks.calcite },
+            { code = 4, to = 1.0, material = blocks.white_sand },
+            { code = 4, from = 1.0, to = 3.0, material = blocks.calcite },
+            { code = 5, to = 3.0, material = blocks.calcite },
         } },
         { carve = carve },
-        -- Before the water, which takes the room they leave: the stalks
-        -- out of the silt, a block tall and under the surface; the glass
-        -- sheets, a cell thick, on the rest of the pool floors; the quartz
-        -- pebbles, a cell here and there.
-        { cover = blocks.ghost_weed, cells = 3, take = ctx.compile("take_stalks",
-            ctx.mine(n.min(n.sub(wet, n.const(1.4)), n.sub(n.noise("bfg_stalk", STALK_FREQ, 1, 1.0, FLAT), n.const(STALK_MIN))))) },
-        { cover = blocks.glass_algae, cells = 1, take = ctx.compile("take_algae",
-            ctx.mine(n.min(n.sub(wet, n.const(0.5)), n.sub(n.noise("bfg_algae", ALGAE_FREQ, 1, 1.0, FLAT), n.const(ALGAE_MIN))))) },
-        { cover = blocks.crystal, cells = 1, take = ctx.compile("take_pebbles",
-            ctx.mine(n.min(n.sub(wet, n.const(0.3)), n.sub(n.noise("bfg_pebble", PEBBLE_FREQ, 1, 1.0, FLAT), n.const(PEBBLE_MIN))))) },
+        -- Before the water, which takes the room they leave: the quartz
+        -- pebbles, a cell here and there, and thick through the cenote's
+        -- pearl gravel.
+        { cover = blocks.crystal, cells = 1, side = "base", take = ctx.compile("take_pebbles",
+            ctx.base(n.min(n.sub(wet, n.const(0.3)), n.sub(n.noise("bfg_pebble", PEBBLE_FREQ, 1, 1.0, FLAT), n.const(PEBBLE_MIN))))) },
+        { cover = blocks.crystal, cells = 1, side = "variant", take = ctx.compile("take_pearls",
+            ctx.variant(n.min(n.sub(wet, n.const(0.3)), n.sub(n.noise("bfg_pebble", PEBBLE_FREQ, 1, 1.0, FLAT), n.const(PEARL_MIN))))) },
     }
     if game.schematic_shapes then
         local built = structures()
         -- The threads hang from the ceilings: the depth positive in the VOID.
         fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.threads, cell = THREAD_CELL, chance = THREAD_SQUARES, salt = 511, sink = 0,
-            stand = ctx.compile("stand_threads", ctx.mine(n.const(1.0))) }
+            side = "base", stand = ctx.compile("stand_threads", ctx.base(n.const(1.0))) }
+        -- The cenote's stone-vines where the threads were; its coral on the
+        -- floors, dry or under the water, but not in the pools' depths.
+        fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.drips, cell = DRIP_CELL, chance = DRIP_SQUARES, salt = 512, sink = 0,
+            side = "variant", stand = ctx.compile("stand_drips", ctx.variant(n.const(1.0))) }
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.corals, cell = CORAL_CELL, chance = CORAL_SQUARES, salt = 513, sink = 1,
+            side = "variant", stand = ctx.compile("stand_corals", ctx.variant(n.sub(n.const(1.6), wet))) }
     end
     -- The pools: clear water to each storey's level, within its chambers
     -- and its tunnels, held by calcite where the rock leaves a block less
@@ -206,3 +264,4 @@ tdw.cave_biome(ID, { 0.33, 1 }, function(ctx)
     end
     return fills
 end)
+tdw.cave_variant(ID, "Albino Coral Cenote")

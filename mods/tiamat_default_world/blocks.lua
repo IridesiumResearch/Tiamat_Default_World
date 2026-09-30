@@ -77,12 +77,7 @@ tag({ "stone", "granite", "slate", "calcite", "dark_basalt", "lava_rock", "dark_
     "pale_terracotta", "flowstone" }, "stone")
 tag({ "rust_red_sandstone", "ochre_sandstone" }, "stone", "sandstone")
 tag({ "black_marble" }, "stone", "marble")
-tag({ "ghost_weed" }, "plant", "aquatic")
-tag({ "glass_algae" }, "plant", "algae", "aquatic")
-tag({ "dead_roots" }, "plant", "dead")
 tag({ "violet_glowcap" }, "fungus", "plant", "glowing")
-tag({ "spore_vine" }, "fungus", "vine", "glowing")
-tag({ "spore_bulb" }, "fungus", "glowing")
 tag({ "marrow" }, "stone", "porous")
 tag({ "morphic_rock", "scorch", "apex_stone", "magma_crust" }, "hard", "stone")
 tag({ "obsidian" }, "hard", "stone", "glass")
@@ -504,6 +499,25 @@ if not pcall(game.register_fluid, STILL_WATER) then
     STILL_WATER.opacity, STILL_WATER.light_falloff, STILL_WATER.washes = nil, nil, nil
     game.register_fluid(STILL_WATER)
 end
+-- Mirror water: the Veined Silver Gallery's gutters (2026-09-30, "still,
+-- mercury-like liquid pools that cast sharp reflections"). The still
+-- water's trick again, a fluid drawn as the water block, here near-opaque
+-- and silver, so a gutter reads as a bead of quicksilver. It is not
+-- quicksilver, which Science roasts out of cinnabar: nothing takes a
+-- metal from it.
+local MIRROR_WATER = {
+    id = "mirror_water",
+    material = "water",
+    tick_rate = 12,
+    evaporates = 0,
+    washes = false,
+    color = { r = 196, g = 202, b = 210 },
+    opacity = 0.97,
+}
+if not pcall(game.register_fluid, MIRROR_WATER) then
+    MIRROR_WATER.opacity, MIRROR_WATER.washes = nil, nil
+    game.register_fluid(MIRROR_WATER)
+end
 
 -- The ores (2026-09-17, "a basic list of ores ... distribute them at
 -- various depths below the world", in the designer's order of depth):
@@ -569,33 +583,15 @@ block("flowstone", "Flowstone", "Cream and honey dripstone, rippled like a froze
 -- brine's trick) — no new block for either.
 block("black_marble", "Black marble", "Pitch-black metamorphic marble, polished glass-smooth; white calcite hairlines run through it.",
     { hardness = 2.4, friction = 0.6, tint = { strength = 0.05, scale = 64 } })
--- The second three (2026-09-30). Their growths are ones nothing in the
--- world had, so the rule bends: two for the grottoes, one for the
--- crevasse, three for the fungi pockets, and every stone, soil and film
--- reused. 3.4 Blind Fish Grottoes: `ghost_weed`, bleached threads hanging
--- from the ceilings and standing out of the silt, and `glass_algae`, a
--- clear sheet a cell thick on the submerged rock. Walls `calcite`, silt
--- `light_sediment`, banks `white_sand`, quartz pebbles `crystal`.
-block("ghost_weed", "Ghost weed", "Bleached, near-transparent threads, hanging in nets from the grotto ceilings and standing out of the silt.",
-    { hardness = 0.1, tint = { strength = 0.06, scale = 32 }, passable = true, sway = true, billboard = "cross" })
-block("glass_algae", "Glass algae", "A clear, glassy sheet of algae on the rock under the water; you see the stone through it.",
-    { hardness = 0.1, transparent = true, tint = { strength = 0.05, scale = 32 } })
--- 3.5 Whispering Crevasse: `dead_roots`, black root-threads hanging like
--- dry cobweb from the overhangs. Walls `slate` fluted with `dark_basalt`,
--- iron crusts `rust_red_sandstone`, dust `volcanic_ash`.
-block("dead_roots", "Dead root-threads", "Desiccated black root-threads, hanging like dry cobweb in the crevasse.",
-    { hardness = 0.1, passable = true, sway = true, billboard = "cross" })
--- 3.6 Phosphorescent Fungi Pockets: `violet_glowcap`, the deep violet
--- mushrooms (the teal ones are the river's `glow_cap`); `spore_vine`, the
--- dripping drapes; `spore_bulb`, the great glowing bulbs that are the
--- pockets' lanterns. Walls `dark_basalt` veined with `mycelium`, loam
--- `mud`, moss and sap `glow_algae`.
+-- The second three (2026-09-30): one new block among them, the Fungi
+-- Pockets' `violet_glowcap` (the teal ones are the river's `glow_cap`).
+-- Five more were made and taken out the same day ("replace/remove glass
+-- algae, ghost weed, dead root-threads (dead wood), spore vines, spore
+-- bulbs"): the grottoes' threads are `mycelium`, the crevasse's roots
+-- `dead_log`, the pockets' drapes `glow_algae` and their bulbs
+-- `mushroom_cap`; the glass algae and the stalks out of the silt went.
 block("violet_glowcap", "Violet glowcap", "Clustered mushrooms pulsing a deep violet light.",
     { hardness = 0.1, tint = { strength = 0.08, scale = 24 }, passable = true, billboard = "cross", light_emit = { r = 7, g = 2, b = 11 } })
-block("spore_vine", "Spore vine", "Long glowing drapes of fungal thread, beaded with spores that drip and drift.",
-    { hardness = 0.1, tint = { strength = 0.08, scale = 24 }, passable = true, sway = true, billboard = "cross", light_emit = { r = 2, g = 7, b = 7 } })
-block("spore_bulb", "Spore bulb", "A swollen, soft-walled bulb of spores, lit from inside like a lantern.",
-    { hardness = 0.3, tint = { strength = 0.08, scale = 24 }, light_emit = { r = 5, g = 9, b = 12 } })
 
 -- Depth bands -----------------------------------------------------------
 block("dark_sediment", "Dark sediment", "Dark-cave rock, 1.6 to 4 km down: old mud turned to stone.", { hardness = 2.0, tint = ROCK })

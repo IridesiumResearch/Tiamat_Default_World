@@ -46,8 +46,8 @@ blue_lunaria, bluebell, bone, bramble, cactus, calcite, caul, cave_earth, charco
 cherry_blossom, cherry_leaves, cherry_log, chromium_ore, cinnabar, clear_ice,
 climbing_ivy, coal, cobbles, cold_fiber_stone, copper_ore, coral_amber,
 coral_cyan, coral_magenta, crystal, dark_basalt, dark_sand, dark_sediment,
-dead_coral, dead_log, dead_roots, dead_sagebrush, diamond, dirt, dried_mud, dry_clay, fern,
-fir_log, fir_needles, flint, flowstone, ghost_weed, glass_algae, glow_algae, glow_cap, glow_polyp,
+dead_coral, dead_log, dead_sagebrush, diamond, dirt, dried_mud, dry_clay, fern,
+fir_log, fir_needles, flint, flowstone, glow_algae, glow_cap, glow_polyp,
 gold_ore, gorse, granite, grass, gravel, heather, hot_fiber_stone, ice,
 iron_ore, ironwood_leaves, ironwood_log, ironwood_planks, juniper_log,
 juniper_needles, kapok_leaves, kapok_log, kapok_planks, kelp, ladys_mantle,
@@ -58,7 +58,7 @@ oak_log, obsidian, ocean_moss, ochre_sandstone, orichalcum, packed_dirt,
 pale_terracotta, peony, permafrost, pink_algae, pitchblende, pitcher_plant, poppy, pumice,
 pyrite, redwood_log, redwood_needles, reeds, roman_chamomile, rose_blooms,
 rose_bush, rust_red_sandstone, salt, sand, scorch, seagrass, silver_ore, slate,
-snow, spore_bulb, spore_vine, stone, sulfur, tall_grass, tin_ore, violet_glowcap, volcanic_ash, water, water_iris,
+snow, stone, sulfur, tall_grass, tin_ore, violet_glowcap, volcanic_ash, water, water_iris,
 wet_clay, white_sand, wild_mint, wild_wheat, willow_leaves, willow_log, willow_planks.
 `docs/blocks.md` says where each is used and why.
 

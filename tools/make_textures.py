@@ -136,12 +136,7 @@ BLOCKS = {
     "water":          ( 58,  92, 110,  0),
     # The dark caves (2026-09-26): 3.2 Echoing Black Marble's one new block.
     "black_marble":   ( 24,  23,  27,  0),
-    "ghost_weed":     (214, 222, 220,  0),   # 3.4 (2026-09-30): bleached, near-white threads
-    "glass_algae":    (196, 214, 210,  0),   # 3.4: a clear sheet (alpha below)
-    "dead_roots":     ( 26,  22,  22,  0),   # 3.5: black, dry
-    "violet_glowcap": (150,  86, 214,  0),   # 3.6: deep violet caps
-    "spore_vine":     ( 92, 214, 204,  0),   # 3.6: neon teal drapes
-    "spore_bulb":     (126, 150, 230,  0),   # 3.6: a lantern between the teal and the violet
+    "violet_glowcap": (150,  86, 214,  0),   # 3.6 (2026-09-30): deep violet caps
     "morphic_rock":    ( 40,  38,  44,  0),
     "magma_crust":    ( 96,  44,  30,  0),
     "magma":          (222, 112,  28,  0),
@@ -190,7 +185,6 @@ ALPHA = {
     "crystal": 150,
     "water": 150,
     "clear_ice": 120,
-    "glass_algae": 110,
 }
 
 # Foliage: the share of pixels that are HOLES. A block face is three cells
@@ -281,9 +275,6 @@ BLADES = {
     "pitcher_plant": (3, 9, 14), # three fat tubes
     "dead_sagebrush": (7, 5, 11), # brittle, many short sticks
     "reeds": (4, 13, 16),          # tall, a few stems a card (3.13)
-    "ghost_weed": (6, 12, 16),     # pale threads the height of the card (3.4)
-    "dead_roots": (5, 10, 16),     # thin black threads (3.5)
-    "spore_vine": (4, 14, 16),     # a few long drapes (3.6)
 }
 
 # Rosettes and sprays, for the mantle: a rosette is a few round leaves

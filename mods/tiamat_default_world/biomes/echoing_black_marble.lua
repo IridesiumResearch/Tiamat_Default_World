@@ -26,6 +26,16 @@
 -- (thin sheets, laid in the lining at block resolution, so a hairline is a
 -- block wide); `obsidian` for the tourmaline. The polish is the marble's
 -- own friction, 0.6: walk carefully near the ledges.
+--
+-- 3.2.1 VEINED SILVER GALLERY (2026-09-30), the variant: the same halls
+-- on the far side of the `cave_variant` line (caves.lua). The calcite
+-- hairlines give way to thick bands of raw `silver_ore` and specular
+-- `iron_ore` along the walls and up the vaults; the tourmaline to tall
+-- needle-thin selenite spires of `crystal`, three to six high, which
+-- catch what light there is; the floor plates are cut by a grid of
+-- shallow gutters a block wide and nearly a block deep, and the gutters
+-- hold `mirror_water`, a still silver liquid (blocks.lua) laid a hair
+-- under the floor so it lies in them alone. No new block.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -33,6 +43,8 @@ local schem = tdw.schem
 local n = shape.node
 local ID = "echoing_black_marble"
 local FLAT = tdw.caves.DEEP_FLAT                     -- flat in y, all the way to y = 0.5 (caves.lua)
+local ALONG_X = { y = 1000000, z = 1000 }              -- varies in x alone
+local ALONG_Z = { x = 1000, y = 1000000 }              -- varies in z alone
 
 local STOREYS = { 2.10, 2.90, 3.60 }                    -- km under the dome
 local STOREY_WANDER, WANDER_FREQ = 0.03, 1 / 3000   -- the halls' floors lie near level
@@ -48,6 +60,10 @@ local VEIN_FREQ, VEIN_W, VEIN_ZONE_FREQ, VEIN_ZONE_MIN = 1 / 20, 0.45, 1 / 50, -
 local SILVER_FREQ, SILVER_W, SILVER_ZONE_MIN = 1 / 26, 0.35, 0.22
 local OBELISK_CELL, OBELISK_SQUARES, OBELISK_IN = 14, 0.35, 5.0
 local NEEDLE_CELL, NEEDLE_SQUARES, NEEDLE_REACH = 5, 0.30, 4.0
+local BAND_FREQ, BAND_W, BAND_ZONE_MIN = 1 / 22, 1.3, -0.25   -- the gallery's silver bands, thick
+local IRON_FREQ, IRON_W, IRON_ZONE_MIN = 1 / 30, 1.0, -0.10   -- and its specular iron
+local SPIRE_CELL, SPIRE_SQUARES = 6, 0.35
+local GUTTER_FREQ, GUTTER_W, GUTTER_D, GUTTER_IN = 1 / 14, 0.55, 0.9, 2.5
 
 -- ------------------------------------------------------------ the structures
 
@@ -87,13 +103,27 @@ local function needles(rng)
     end
     return schem.record_schematic({})
 end
+-- A selenite spire (the gallery): one or two needle-thin prisms three to
+-- six blocks tall, straight up, barely leaning.
+local function spire(rng)
+    schem.record_begin()
+    for i = 1, 1 + rng:below(2) do
+        local d = schem.DIR16[rng:below(16) + 1]
+        local off = (i - 1) * 0.45
+        local tall = 3.0 + rng:below(7) * 0.5
+        schem.push_path(blocks.crystal, { { 0.5 + d[1] * off, 1.0, 0.5 + d[2] * off, 0.2 },
+            { 0.5 + d[1] * (off + 0.15), 1.0 + tall, 0.5 + d[2] * (off + 0.15), 0.08 } }, BLIND)
+    end
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { obelisks = {}, needles = {} }
+    BUILT = { obelisks = {}, needles = {}, spires = {} }
     if game.schematic_shapes then
         for i = 1, 6 do BUILT.obelisks[i] = obelisk(rng_for("obelisk:" .. i)) end
         for i = 1, 5 do BUILT.needles[i] = needles(rng_for("needles:" .. i)) end
+        for i = 1, 6 do BUILT.spires[i] = spire(rng_for("spire:" .. i)) end
     end
     return BUILT
 end
@@ -126,6 +156,14 @@ tdw.cave_biome(ID, { -0.15, 0.05 }, function(ctx)   -- to 0.15 until 2026-09-30:
         local vault = n.add(n.add(n.mul(n.clamp(footprint(k), 0.0, VAULT_RIDGE), n.const(VAULT_RISE)), n.const(VAULT_SPRING)),
             n.noise("ebm_vault", VAULT_VARY_FREQ, 1, VAULT_VARY, FLAT))
         local hall = n.min(n.min(over_floor, n.sub(vault, up(k))), f)
+        -- The gallery's gutters: a grid of slots along x and z a block
+        -- wide, cut GUTTER_D into the floor, clear of the walls; on the
+        -- variant's ground only.
+        local gk = 0.625 / GUTTER_FREQ
+        local line = n.max(n.sub(n.const(GUTTER_W), n.mul(n.abs(n.noise("ebm_gutter_x", GUTTER_FREQ, 1, 1.0, ALONG_X)), n.const(gk))),
+            n.sub(n.const(GUTTER_W), n.mul(n.abs(n.noise("ebm_gutter_z", GUTTER_FREQ, 1, 1.0, ALONG_Z)), n.const(gk))))
+        local gutter = n.min(n.min(n.min(line, n.add(over_floor, n.const(GUTTER_D))), n.sub(f, n.const(GUTTER_IN))), ctx.side(1))
+        hall = n.max(hall, n.min(gutter, n.sub(n.const(0.5), over_floor)))
         local gallery = n.min(n.sub(n.const(GALLERY_W), n.contour("ebm_gallery", GALLERY_FREQ, 2)),
             n.sub(n.const(GALLERY_HH), n.abs(n.sub(up(k), n.const(GALLERY_MID)))))
         local pocket = n.min(n.min(n.mul(n.sub(n.noise("ebm_pocket", POCKET_FREQ, 1, 1.0), n.const(POCKET_MIN)), n.const(6.0)),
@@ -147,8 +185,10 @@ tdw.cave_biome(ID, { -0.15, 0.05 }, function(ctx)   -- to 0.15 until 2026-09-30:
     end
     local conditions = {
         n.const(1.0),                                                   -- 1 marble
-        sheet("ebm_vein", VEIN_FREQ, VEIN_W, VEIN_ZONE_MIN),            -- 2 calcite hairlines
-        sheet("ebm_silver", SILVER_FREQ, SILVER_W, SILVER_ZONE_MIN),    -- 3 silver veins
+        n.min(sheet("ebm_vein", VEIN_FREQ, VEIN_W, VEIN_ZONE_MIN), ctx.side(-1)),          -- 2 calcite hairlines
+        n.min(sheet("ebm_silver", SILVER_FREQ, SILVER_W, SILVER_ZONE_MIN), ctx.side(-1)),  -- 3 silver veins
+        n.min(sheet("ebm_band", BAND_FREQ, BAND_W, BAND_ZONE_MIN), ctx.side(1)),           -- 4 the gallery's silver bands
+        n.min(sheet("ebm_iron", IRON_FREQ, IRON_W, IRON_ZONE_MIN), ctx.side(1)),           -- 5 its specular iron
     }
     local code = n.const(0.0)
     for k, c in ipairs(conditions) do
@@ -160,6 +200,8 @@ tdw.cave_biome(ID, { -0.15, 0.05 }, function(ctx)   -- to 0.15 until 2026-09-30:
             { code = 1, to = LINING, material = blocks.black_marble },
             { code = 2, to = LINING, material = blocks.calcite },
             { code = 3, to = LINING, material = blocks.silver_ore },
+            { code = 4, to = LINING, material = blocks.silver_ore },
+            { code = 5, to = LINING, material = blocks.iron_ore },
         } },
         { carve = carve },
     }
@@ -174,7 +216,21 @@ tdw.cave_biome(ID, { -0.15, 0.05 }, function(ctx)   -- to 0.15 until 2026-09-30:
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.obelisks, cell = OBELISK_CELL, chance = OBELISK_SQUARES, salt = 481, sink = 1,
             stand = ctx.compile("stand_obelisks", ctx.mine(n.sub(f_any, n.const(OBELISK_IN)))) }
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.needles, cell = NEEDLE_CELL, chance = NEEDLE_SQUARES, salt = 482, sink = 1,
-            stand = ctx.compile("stand_needles", ctx.mine(n.sub(n.const(NEEDLE_REACH), f_any))) }
+            side = "base", stand = ctx.compile("stand_needles", ctx.base(n.sub(n.const(NEEDLE_REACH), f_any))) }
+        -- The gallery's spires where the needles would be, and a few further out.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.spires, cell = SPIRE_CELL, chance = SPIRE_SQUARES, salt = 483, sink = 1,
+            side = "variant", stand = ctx.compile("stand_spires", ctx.variant(n.sub(n.const(NEEDLE_REACH + 4.0), f_any))) }
+    end
+    -- The gutters' mirror water: a hair under each storey's floor, over
+    -- the ledges too, so it lies in the gutters and nowhere else.
+    for k = 1, #STOREYS do
+        local floor_y = n.add(n.add(n.mul(n.sub(shape.dome_node(), centre(k)), n.const(1000.0)), ledge()), n.const(shape.Y0 - FLOOR - 0.15))
+        local reach = STOREY_WANDER + 0.03
+        fills[#fills + 1] = { fluid = "tiamat_default_world:mirror_water", side = "variant",
+            reach = { STOREYS[k] - reach, STOREYS[k] + reach },
+            level = ctx.compile("mirror_level" .. k, floor_y),
+            within = ctx.compile("mirror_within" .. k, ctx.variant_flat(n.sub(footprint(k), n.const(GUTTER_IN)))) }
     end
     return fills
 end)
+tdw.cave_variant(ID, "Veined Silver Gallery")

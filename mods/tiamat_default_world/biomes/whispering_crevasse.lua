@@ -9,8 +9,8 @@
 -- metallic iron crust. A narrow ledge path along the walls that drops
 -- twenty blocks without warning; fragile rock bridges across the gap;
 -- wind-slots in the stone that the draft whistles through; dust and soot
--- carried up on it. Almost nothing lives: black root-threads, dead, hung
--- like cobweb from the overhangs.
+-- carried up on it. Almost nothing lives: dead root-threads, dry wood
+-- (`dead_log`), hung like cobweb from the overhangs.
 --
 -- THE CHASMS follow the zero contours of a slow 2D noise (engine
 -- `contour`: the distance to the line in blocks), so each is a wandering
@@ -27,7 +27,18 @@
 --
 -- Materials: `slate`, fluted with `dark_basalt` in vertical bands (a noise
 -- drawn out in y), crusted with `rust_red_sandstone` for the iron; dust
--- `volcanic_ash`. New: `dead_roots` (blocks.lua).
+-- `volcanic_ash`, the roots `dead_log`. No new block (it was built with a
+-- `dead_roots` block, taken out the same day: "dead root-threads (dead
+-- wood)").
+--
+-- 3.5.1 SINGING WIND CLEFT (2026-09-30), the variant: the same chasms on
+-- the far side of the `cave_variant` line (caves.lua). The walls are
+-- bored with acoustic pipes, tubes two blocks across running into the
+-- rock where two noises are both near zero, and with vertical wind-flutes
+-- (the same, drawn out in y); webs of crystalline tension-threads
+-- (`crystal`, half a block thick) span the gap in patches where they
+-- replace the dead roots; and hollow `pumice` fragments hang in the void
+-- over the drops, held up, the brief says, by the updraft. No new block.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -55,6 +66,10 @@ local FLUTE_FREQ, FLUTE_MIN = 1 / 3, 0.12
 local CRUST_FREQ, CRUST_MIN = 1 / 9, 0.26
 local DUST_FREQ, DUST_MIN = 1 / 5, 0.05
 local ROOT_CELL, ROOT_SQUARES = 4, 0.35
+local PIPE_FREQ, PIPE_W, PIPE_REACH = 1 / 14, 1.0, 5.0      -- the cleft's pipes: two across, up to five into the walls
+local FLUTE_PIPE = { y = 6 }                               -- the flutes: the same tubes drawn out upright
+local THREAD_FREQ, THREAD_W, THREAD_PATCH_FREQ, THREAD_PATCH_MIN = 1 / 7, 0.55, 1 / 24, 0.08
+local PUMICE_FREQ, PUMICE_MIN, PUMICE_PATCH_FREQ, PUMICE_PATCH_MIN = 1 / 5, 0.26, 1 / 30, 0.05
 
 -- ------------------------------------------------------------ the structures
 
@@ -70,7 +85,7 @@ local function roots(rng)
         local d = schem.DIR16[rng:below(16) + 1]
         local x, z = 0.5 + d[1] * rng:below(3) * 0.3, 0.5 + d[2] * rng:below(3) * 0.3
         local len = 1.0 + rng:below(7) * 0.33
-        schem.push_path(blocks.dead_roots, { { x, 0.95, z, 0.13 }, { x + d[1] * 0.2, 0.95 - len, z + d[2] * 0.2, 0.13 } }, BLIND)
+        schem.push_path(blocks.dead_log, { { x, 0.95, z, 0.1 }, { x + d[1] * 0.2, 0.95 - len, z + d[2] * 0.2, 0.07 } }, BLIND)
     end
     return schem.record_schematic({})
 end
@@ -110,6 +125,15 @@ tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)
         n.mul(n.sub(n.noise("wc_bridge_patch", BRIDGE_PATCH_FREQ, 1, 1.0, FLAT), n.const(BRIDGE_PATCH_MIN)), n.const(40.0)))
     local slot_line = n.min(n.sub(n.const(SLOT_W), n.mul(n.abs(n.noise("wc_slot", SLOT_FREQ, 1, 1.0, ALONG_Y)), n.const(k_of(SLOT_FREQ)))),
         n.mul(n.sub(n.noise("wc_slot_patch", SLOT_PATCH_FREQ, 1, 1.0, FLAT), n.const(SLOT_PATCH_MIN)), n.const(40.0)))
+    -- The cleft's pipes and flutes: tubes where two noises are both near
+    -- zero, only on the variant's ground (cut to the walls per storey).
+    local function tubes(stream, stretch)
+        local k = 0.625 / PIPE_FREQ
+        return n.sub(n.const(PIPE_W), n.max(n.mul(n.abs(n.noise(stream .. "_a", PIPE_FREQ, 1, 1.0, stretch)), n.const(k)),
+            n.mul(n.abs(n.noise(stream .. "_b", PIPE_FREQ, 1, 1.0, stretch)), n.const(k))))
+    end
+    local pipes = n.min(n.max(tubes("wc_pipe", nil), tubes("wc_flute", FLUTE_PIPE)), ctx.side(1))
+    local inside = nil                                      -- the chasms themselves, for the threads and the pumice
     local function storey(k)
         local u = up(k)
         -- The chasm, pinched past its reach.
@@ -121,6 +145,9 @@ tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)
         -- The wind-slots, cut up to SLOT_REACH into the walls, within the
         -- chasm's height.
         local slot = n.min(n.min(slot_line, n.add(chasm, n.const(SLOT_REACH))), n.sub(n.const(0.0), n.sub(n.abs(u), reach)))
+        -- The pipes, bored up to PIPE_REACH into the walls within the chasm's height.
+        slot = n.max(slot, n.min(n.min(pipes, n.add(chasm, n.const(PIPE_REACH))), n.sub(n.const(0.0), n.sub(n.abs(u), reach))))
+        inside = inside and n.max(inside, chasm) or chasm
         return n.max(n.min(chasm, n.mul(kept, n.const(-1.0))), slot)
     end
     local v = nil
@@ -145,14 +172,27 @@ tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)
         { cover = blocks.volcanic_ash, cells = 1, take = ctx.compile("take_dust",
             ctx.mine(n.sub(n.noise("wc_dust", DUST_FREQ, 1, 1.0, FLAT), n.const(DUST_MIN)))) },
     }
+    -- The cleft's tension-threads: a lattice of lines where two fine
+    -- noises are both near zero, inside the chasm, in patches, half a
+    -- block thick, so they read as strands strung across the gap.
+    local tk = 0.625 / THREAD_FREQ
+    local threads = n.min(n.min(n.sub(n.const(THREAD_W), n.max(n.mul(n.abs(n.noise("wc_thread_a", THREAD_FREQ, 1, 1.0)), n.const(tk)),
+        n.mul(n.abs(n.noise("wc_thread_b", THREAD_FREQ, 1, 1.0)), n.const(tk)))), n.sub(inside, n.const(0.3))),
+        n.mul(n.sub(n.noise("wc_thread_patch", THREAD_PATCH_FREQ, 1, 1.0), n.const(THREAD_PATCH_MIN)), n.const(20.0)))
+    fills[#fills + 1] = { field = ctx.compile("threads", ctx.variant(threads)), material = blocks.crystal, side = "variant" }
+    -- Its pumice: small blobs hanging in the open, clear of the walls.
+    local pumice = n.min(n.min(n.mul(n.sub(n.noise("wc_pumice", PUMICE_FREQ, 1, 1.0), n.const(PUMICE_MIN)), n.const(8.0)),
+        n.sub(inside, n.const(1.0))), n.mul(n.sub(n.noise("wc_pumice_patch", PUMICE_PATCH_FREQ, 1, 1.0), n.const(PUMICE_PATCH_MIN)), n.const(20.0)))
+    fills[#fills + 1] = { field = ctx.compile("pumice", ctx.variant(pumice)), material = blocks.pumice, side = "variant" }
     if game.schematic_shapes then
         local built = structures()
         -- The root-threads hang from the overhangs: the depth positive in the VOID.
         fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.roots, cell = ROOT_CELL, chance = ROOT_SQUARES, salt = 521, sink = 0,
-            stand = ctx.compile("stand_roots", ctx.mine(n.const(1.0))) }
+            side = "base", stand = ctx.compile("stand_roots", ctx.base(n.const(1.0))) }
     end
     return fills
 end)
+tdw.cave_variant(ID, "Singing Wind Cleft")
 
 -- ------------------------------------------------------------ the draft
 

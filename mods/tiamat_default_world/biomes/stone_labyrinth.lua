@@ -31,6 +31,14 @@
 -- Materials: `slate` banded with `dark_basalt` for the walls and the slab
 -- floor, `volcanic_ash` for the dust, `charcoal` for the black lichen. **No
 -- new block.** The brief asks for near-total absence of life, and gets it.
+--
+-- 3.1.1 RUINED OBSIDIAN MAZE (2026-09-30), the variant: the same passages
+-- on the far side of the `cave_variant` line (caves.lua), redecorated.
+-- The walls glossy `obsidian`, violet-black; the floors slag beds of
+-- `lava_rock` laid with heat-fractured glass tiles of `crystal` in a
+-- grid, grout of slag between; petrified ash (`volcanic_ash`) banked in
+-- the corners where the lichen was; black quartz shards (`obsidian`)
+-- jutting out of the corners at right angles. No new block.
 
 local blocks = tdw.blocks
 local shape = tdw.shape
@@ -60,6 +68,8 @@ local DUST_FREQ, DUST_MIN = 1 / 7, 0.0
 local LICHEN_REACH = 0.8                               -- blocks from a wall
 local RUBBLE_CELL, RUBBLE_SQUARES = 9, 0.22
 local TENDRIL_CELL, TENDRIL_SQUARES = 5, 0.10
+local TILE_FREQ, TILE_GROUT = 1 / 3, 0.12              -- the maze's glass tiles, a block or so, grout between
+local SHARD_CELL, SHARD_SQUARES = 4, 0.30
 
 -- ------------------------------------------------------------ the structures
 
@@ -97,13 +107,28 @@ local function tendril(rng)
         { 0.5 - d[1] * 0.1, 0.95 - len, 0.5 - d[2] * 0.1, 0.07 } }, BLIND)
     return schem.record_schematic({})
 end
+-- Black quartz shards (the maze): two to four needles of black glass out
+-- of one corner, each straight up or straight out along x or z, so they
+-- meet at right angles; half a block to a block and a half long.
+local function shards(rng)
+    schem.record_begin()
+    local AXES = { { 0, 1, 0 }, { 1, 0, 0 }, { -1, 0, 0 }, { 0, 0, 1 }, { 0, 0, -1 } }
+    for i = 1, 2 + rng:below(3) do
+        local a = i == 1 and AXES[1] or AXES[rng:below(5) + 1]
+        local len = 0.5 + rng:below(5) * 0.25
+        local y0 = 1.1 + (a[2] == 0 and rng:below(3) * 0.25 or 0)
+        schem.push_path(blocks.obsidian, { { 0.5, y0, 0.5, 0.11 }, { 0.5 + a[1] * len, y0 + a[2] * len, 0.5 + a[3] * len, 0.05 } }, BLIND)
+    end
+    return schem.record_schematic({})
+end
 local BUILT = nil
 local function structures()
     if BUILT then return BUILT end
-    BUILT = { rubble = {}, tendrils = {} }
+    BUILT = { rubble = {}, tendrils = {}, shards = {} }
     if game.schematic_shapes then
         for i = 1, 6 do BUILT.rubble[i] = rubble(rng_for("rubble:" .. i)) end
         for i = 1, 5 do BUILT.tendrils[i] = tendril(rng_for("tendril:" .. i)) end
+        for i = 1, 6 do BUILT.shards[i] = shards(rng_for("shards:" .. i)) end
     end
     return BUILT
 end
@@ -158,6 +183,7 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)   -- under -0.15 until 2026-0
     local conditions = {
         n.const(1.0),                                                                          -- 1 slate
         n.sub(n.noise("sl_strata", STRATA_FREQ, 1, 1.0, ALONG_Y), n.const(STRATA_MIN)),        -- 2 basalt bands
+        ctx.side(1),                                                                           -- 3 the maze: obsidian throughout
     }
     local code = n.const(0.0)
     for k, c in ipairs(conditions) do
@@ -168,24 +194,38 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)   -- under -0.15 until 2026-0
         { layers = true, depth = depth, code = ctx.compile("codes", code), entries = {
             { code = 1, to = 3.0, material = blocks.slate },
             { code = 2, to = 3.0, material = blocks.dark_basalt },
+            { code = 3, to = 3.0, material = blocks.obsidian },
         } },
         { carve = carve },
         -- The black lichen, flush in the corners where a floor meets a wall;
         -- then the dust over the rest of the slabs, in the seams' patches.
         -- (In a hall the passages' value runs negative away from the lines;
         -- the second term keeps the lichen to the pillars' feet there.)
-        { cover = blocks.charcoal, cells = 1, take = ctx.compile("take_lichen",
-            ctx.mine(n.min(n.sub(n.const(LICHEN_REACH), passages), n.add(passages, n.const(3.0))))) },
-        { cover = blocks.volcanic_ash, cells = 1, take = ctx.compile("take_dust",
-            ctx.mine(n.sub(n.noise("sl_dust", DUST_FREQ, 1, 1.0, FLAT), n.const(DUST_MIN)))) },
+        { cover = blocks.charcoal, cells = 1, side = "base", take = ctx.compile("take_lichen",
+            ctx.base(n.min(n.sub(n.const(LICHEN_REACH), passages), n.add(passages, n.const(3.0))))) },
+        { cover = blocks.volcanic_ash, cells = 1, side = "base", take = ctx.compile("take_dust",
+            ctx.base(n.sub(n.noise("sl_dust", DUST_FREQ, 1, 1.0, FLAT), n.const(DUST_MIN)))) },
+        -- The maze's floors: petrified ash in the corners first, then the
+        -- glass tiles away from their grout lines, then slag over the rest.
+        -- A floor block takes one cover, the first to claim it.
+        { cover = blocks.volcanic_ash, cells = 2, side = "variant", take = ctx.compile("take_ash",
+            ctx.variant(n.min(n.sub(n.const(LICHEN_REACH), passages), n.add(passages, n.const(3.0))))) },
+        { cover = blocks.crystal, cells = 1, side = "variant", take = ctx.compile("take_tiles",
+            ctx.variant(n.min(n.sub(n.abs(n.noise("sl_tile_x", TILE_FREQ, 1, 1.0, ALONG_X)), n.const(TILE_GROUT)),
+                n.sub(n.abs(n.noise("sl_tile_z", TILE_FREQ, 1, 1.0, ALONG_Z)), n.const(TILE_GROUT))))) },
+        { cover = blocks.lava_rock, cells = 1, side = "variant", take = ctx.compile("take_slag", ctx.variant(n.const(1.0))) },
     }
     if game.schematic_shapes then
         local built = structures()
         fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.rubble, cell = RUBBLE_CELL, chance = RUBBLE_SQUARES, salt = 471, sink = 1,
-            stand = ctx.compile("stand_rubble", ctx.mine(n.const(1.0))) }
+            side = "base", stand = ctx.compile("stand_rubble", ctx.base(n.const(1.0))) }
         -- The tendrils hang from ceilings: the depth positive in the VOID.
         fills[#fills + 1] = { scatter = true, depth = carve, schematics = built.tendrils, cell = TENDRIL_CELL, chance = TENDRIL_SQUARES, salt = 472, sink = 0,
-            stand = ctx.compile("stand_tendrils", ctx.mine(n.const(1.0))) }
+            side = "base", stand = ctx.compile("stand_tendrils", ctx.base(n.const(1.0))) }
+        -- The maze's shards, in the corners where the ash is.
+        fills[#fills + 1] = { scatter = true, depth = depth, schematics = built.shards, cell = SHARD_CELL, chance = SHARD_SQUARES, salt = 473, sink = 1,
+            side = "variant", stand = ctx.compile("stand_shards", ctx.variant(n.sub(n.const(LICHEN_REACH + 0.4), passages))) }
     end
     return fills
 end)
+tdw.cave_variant(ID, "Ruined Obsidian Maze")

@@ -84,42 +84,54 @@ block, the way the brine is. **No new block.**
 
 ### 3.4 Blind Fish Grottoes (2026-09-30)
 
-The second three bend the one-block rule: their growths are ones nothing
-in the world had. Six new blocks across the three; every stone, soil and
-film is reused.
+The second three were built with six new blocks, and five were taken out
+the same day ("replace/remove glass algae, ghost weed, dead root-threads
+(dead wood), spore vines, spore bulbs"). One is left, the Fungi Pockets'
+`violet_glowcap`.
 
-Shares `calcite` (the water-smoothed limestone, and the lip that holds
-the pools), `light_sediment` (the silt), `white_sand` (the pale banks),
-`crystal` (the quartz pebbles, faintly lit under the water). The water is
-the world's clear `water`, laid full so each pool lies at rest.
-
-| Block | Where | Why |
-|---|---|---|
-| `ghost_weed` | nets of threads hanging from the ceilings; stalks a block tall out of the silt under the water | the brief's bleached water-tendrils and colourless root-stalks: nothing registered is pale and near-transparent |
-| `glass_algae` | a sheet a cell thick on the submerged rock | the glass-like algae; transparent, so the stone shows through |
+Shares `calcite` (the water-smoothed limestone, the lip that holds the
+pools, and the pale threads' place in the variant), `light_sediment` (the
+silt), `white_sand` (the pale banks), `crystal` (the quartz pebbles,
+faintly lit under the water), `mycelium` (the pale threads hanging from
+the ceilings). The water is the world's clear `water`, laid full so each
+pool lies at rest. **No new block.**
 
 ### 3.5 Whispering Crevasse (2026-09-30)
 
 Shares `slate` fluted with `dark_basalt` in vertical bands (the walls),
 `rust_red_sandstone` (the iron crusts, a block deep), `volcanic_ash` (the
-dust on the path and the bridges).
-
-| Block | Where | Why |
-|---|---|---|
-| `dead_roots` | hanging from the overhangs | the desiccated black root-threads; the brief's one growth |
+dust on the path and the bridges), `dead_log` (the dead root-threads).
+**No new block.**
 
 ### 3.6 Phosphorescent Fungi Pockets (2026-09-30), rare
 
 Shares `dark_basalt` (the walls), `mycelium` (the veins through them, and
-the bulbs' stalks), `mud` (the damp loam), `glow_algae` (the glowing moss
-and the sap on it), `glow_cap` (the neon-teal mushrooms). The reflecting
+the bulbs' stalks), `mud` (the damp loam), `glow_algae` (the glowing moss,
+the sap and the drapes from the ceilings), `glow_cap` (the neon-teal
+mushrooms), `mushroom_cap` (the bulbs, amber lanterns). The reflecting
 pools are the world's `water`.
 
 | Block | Where | Why |
 |---|---|---|
 | `violet_glowcap` | on the loam, in patches beside the teal | the deep-violet mushrooms; light 7, 2, 11 |
-| `spore_vine` | drapes four to eight blocks long from the ceilings | glowing, teal; light 2, 7, 7 |
-| `spore_bulb` | balls a block to three across, hung on mycelium stalks | the pockets' lanterns; light 5, 9, 12 |
+
+### The dark caves' variants (2026-09-30)
+
+One decoration variant for each, on the far side of the caves' variant
+line, as the normal caves have: **no new block**, one new FLUID.
+
+| Variant | Of | Its dressing |
+|---|---|---|
+| 3.1.1 Ruined Obsidian Maze | Stone Labyrinth | walls `obsidian`; floors `lava_rock` slag with `crystal` glass tiles in a grid; `volcanic_ash` banked in the corners; black quartz shards of `obsidian` at right angles |
+| 3.2.1 Veined Silver Gallery | Echoing Black Marble | thick bands of `silver_ore` and specular `iron_ore`; selenite spires of `crystal` three to six tall; a grid of floor gutters holding `mirror_water` |
+| 3.3.1 Inky Lotus Basins | Shadow Pool Chambers | leaf pads of `charcoal` floating on the water; lotus buds of `glow_polyp`; `flint` pebbles and `light_sediment` ripples on the shelves; `charcoal` shadow-vines into the water |
+| 3.4.1 Albino Coral Cenote | Blind Fish Grottoes | branching cave-coral of `bone`; bare `calcite` banks; `calcite` stone-vines hanging like ice drips; pool floors of `white_sand` pearl gravel thick with `crystal` |
+| 3.5.1 Singing Wind Cleft | Whispering Crevasse | acoustic pipes and upright wind-flutes bored into the walls; webs of `crystal` tension-threads across the gap; floating `pumice` fragments |
+| 3.6.1 Indigo Spore Grotto | Phosphorescent Fungi Pockets | fan-fungi three to six across, caps of violet-black `obsidian` over golden `mushroom_cap` gills; star-lichen specks of `crystal`; amber `mushroom_cap` sap-falls and tiered shelf-fungi |
+
+`mirror_water` (`blocks.lua`) is a fluid drawn as the `water` block, silver
+and near-opaque, the still water's trick. It is not quicksilver: nothing
+takes a metal from it.
 
 ## Deposits (2026-09-26)
 

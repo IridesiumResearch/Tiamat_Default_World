@@ -10,6 +10,36 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-30
 
+### The dark caves' variants, and five blocks out
+
+- **Five blocks taken out** ("replace/remove glass algae, ghost weed, dead
+  root-threads (dead wood), spore vines, spore bulbs"), made earlier the
+  same day: the grottoes' hanging threads are `mycelium`, and their stalks
+  and algae sheets are gone; the crevasse's roots are `dead_log`; the
+  pockets' drapes are `glow_algae` strands and their bulbs `mushroom_cap`.
+  `violet_glowcap` stays.
+- **A decoration variant for each dark cave**, on the far side of the caves'
+  variant line, the same carve redecorated, no new block (`docs/blocks.md`
+  has the table): 3.1.1 Ruined Obsidian Maze, 3.2.1 Veined Silver Gallery,
+  3.3.1 Inky Lotus Basins, 3.4.1 Albino Coral Cenote, 3.5.1 Singing Wind
+  Cleft, 3.6.1 Indigo Spore Grotto. The HUD names each where a player
+  stands in it.
+- Two variants change the rock as well as its dressing, inside the shared
+  carve and on their own ground only: the Silver Gallery's floor gutters and
+  the Wind Cleft's pipes and flutes.
+- **One new fluid**, `mirror_water`: the gallery's gutters, silver and
+  near-opaque, drawn as the water block.
+- The Lotus Basins' drips come three times as often, the vines' ripples.
+- Seen on seed 12345, counting what generated round a variant spot of each:
+  obsidian walls, tiles, slag and ash in the maze; silver and iron bands
+  and 590 blocks of mirror water in the gallery; lotus buds and pebbles
+  in the basins, a bud at the water's edge in a cut; coral, pearl gravel
+  and dense quartz in the cenote; crystal threads and floating pumice in
+  the cleft; fans, star-lichen and sap in the grotto. **Not seen**: the
+  leaf pads, which are a third of a block thick at the water's top and
+  fall between the probe's samples. The coral and the spires came out
+  sparse.
+
 ### The sponge: the underside broken up
 
 "From about y -10.8 km to about -33.3 we need to break up the world with
@@ -72,9 +102,9 @@ and there can be a seam against chunks already made.
   one. Teal and violet glowing mushrooms, spore-vine drapes, spore-bulb
   lanterns, glowing moss on damp loam, mycelium veins, a block-deep
   reflecting pool in the floor's dips, spore clouds drifting past.
-- **Six new blocks** (`docs/blocks.md`): `ghost_weed`, `glass_algae`,
-  `dead_roots`, `violet_glowcap`, `spore_vine`, `spore_bulb`. The one-block
-  rule bent: the brief's growths are ones the world had nothing like.
+- **Six new blocks** at first: `ghost_weed`, `glass_algae`, `dead_roots`,
+  `violet_glowcap`, `spore_vine`, `spore_bulb`. Five were taken out later
+  the same day (above).
 - Seen in generated cuts on seed 12345: the grottoes' pools, weed, algae and
   pebbles; the crevasse's slot, path and wind-slots; a pocket's shape, its
   growths and its pools. Not seen: an arch or a flooded crawl in a cut,
