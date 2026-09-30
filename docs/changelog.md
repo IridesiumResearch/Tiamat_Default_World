@@ -10,6 +10,31 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-30
 
+### The sponge: the underside broken up
+
+"From about y -10.8 km to about -33.3 we need to break up the world with
+really strong noise that turns it into a sponge-like fractal structure.
+Biomes will still exist in there but they will be sliced and fragmented,
+with crazy holes and tunnels."
+
+- **`sponge.lua`**: one density program, one fill, carved into every chunk
+  the band reaches, AFTER the rock, any biome's paint and the ores, so a
+  biome built down there later is cut up by it without knowing. It cuts
+  through the body's outer wall too: from outside, the underside between
+  the core stack and the Tail is ragged and holed.
+- The terms, all unioned: a four-octave noise over a cut just above its
+  middle, which is a sponge whose solid and void both run connected,
+  rooms a few hundred blocks across; a finer two-octave one punching holes
+  ten to twenty blocks across through the solid; tunnels where two noises
+  are both near zero, twelve and four blocks wide; and the zero sheets of
+  two slow noises, cracks a couple of blocks thick and kilometres across
+  that slice straight through. It fades in over 800 blocks at each end of
+  the band.
+- Seen on seed 12345 in cuts at 220, 4 and 1 blocks a character: about
+  half void at full strength from -11.3 km down to -32.9, the
+  solid left as struts, pillars and ribs, the outer wall ragged all the
+  way down. Only chunks that generate after this have it.
+
 ### The rest of the dark caves: 3.4 to 3.6
 
 The Gloam has all six of its biomes. Its province is split six ways now,

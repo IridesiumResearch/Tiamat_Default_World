@@ -210,7 +210,7 @@ local function ores_into(buf, pos, dmax)
 end
 
 -- Chunk-class counters, logged now and then so the cost mix is visible.
-local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0, by_layers = 0 }
+local stats = { air = 0, hollow = 0, filled = 0, carved = 0, surface = 0, shells = 0, total = 0, stamped = 0, by_layers = 0, sponged = 0 }
 local LOG_EVERY = 1024        -- was 4096: a ninety-second headless run never reached one line
 
 -- Smallest and largest |value| over the integer range [a0, a1].
@@ -330,8 +330,8 @@ local function generate(buf, pos)
     stats.total = stats.total + 1
     if stats.total % LOG_EVERY == 0 then
         game.log(string.format(
-            "tiamat_default_world chunks: %d total — air %d, hollow %d, filled %d, carved %d (%d by the layers alone; surface %d, %d structures stamped), shells %d",
-            stats.total, stats.air, stats.hollow, stats.filled, stats.carved, stats.by_layers, stats.surface, stats.stamped, stats.shells))
+            "tiamat_default_world chunks: %d total — air %d, hollow %d, filled %d, carved %d (%d by the layers alone; surface %d, %d structures stamped), shells %d, sponged %d",
+            stats.total, stats.air, stats.hollow, stats.filled, stats.carved, stats.by_layers, stats.surface, stats.stamped, stats.shells, stats.sponged))
     end
 
     -- Order-independent with any other overworld generator: start empty.
@@ -598,6 +598,13 @@ local function generate(buf, pos)
             tdw.caves.shallow_into(buf, pos, tmin, tmax, smooth_min, mode)
             tdw.caves.mouths_into(buf, pos, dmin)
         end
+    end
+
+    -- The sponge (sponge.lua): the underside from -10.8 to -33.3 km carved
+    -- into a fractal of holes, tunnels and slices, AFTER the rock and
+    -- anything painted on it, so whatever lives down there is cut up by it.
+    if tdw.sponge and tdw.sponge.into(buf, Ylo, Yhi) then
+        stats.sponged = stats.sponged + 1
     end
 
     -- The core stack, outermost first, only the shells this chunk can touch.

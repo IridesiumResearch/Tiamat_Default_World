@@ -190,7 +190,7 @@ biome{ id = "phosphorescent_fungi_pockets", name = "Phosphorescent Fungi Pockets
     note = "3.6 (2026-09-30), rare — compact rounded pockets 8 to 14 across and 6 to 10 high behind narrow rock folds, the Gloam's only light: teal and violet glowing mushrooms, spore-vine drapes, spore-bulb lanterns, glowing moss and sap on dark loam, mycelium veins in the basalt, shallow reflecting pools, drifting spore clouds. Province 0.05 to 0.12, the narrowest band, and sparse inside it." }
 
 -- 4. The abyss -------------------------------------------------------------------
-area{ id = "abyss", name = "Abyss Below", kind = "depth", note = "More than 4,000 blocks down." }
+area{ id = "abyss", name = "Abyss Below", kind = "depth", note = "More than 4,000 blocks down. Under the core stack, from Spindle Y -10.8 to -33.3 km, the underside is carved into a fractal sponge (sponge.lua, 2026-09-30): the biomes built there will be sliced and holed by it." }
 biome{ id = "pressure_crushed_depths", name = "Pressure-Crushed Depths", area = "abyss" }
 biome{ id = "silent_vertical_shafts", name = "Silent Vertical Shafts", area = "abyss" }
 biome{ id = "abyssal_mud_flats", name = "Abyssal Mud Flats", area = "abyss" }

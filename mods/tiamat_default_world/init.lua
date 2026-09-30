@@ -103,6 +103,7 @@ load("whereami")                     -- the biome you are in, on the HUD and fro
 -- `game.set_hud` sent that player. It draws the biome's name; whereami.lua
 -- decides what the name is and how long it stays up.
 game.register_hud_script("hud.lua")
+load("sponge")                     -- the underside's fractal, -10.8 to -33.3 km (2026-09-30)
 load("generate")
 load("biomes.caves")                -- the normal caves' framework (2026-09-18)
 load("biomes.mossy_limestone")      -- 2.1
