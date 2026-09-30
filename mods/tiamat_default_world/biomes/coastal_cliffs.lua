@@ -115,7 +115,12 @@ local ARCH_LO, ARCH_HI = 0.002, 0.016
 -- noise says. Where a line crosses the coast the cave opens to the sea.
 local TUNNEL_FREQ = 1 / 90
 local TUNNEL_W = 2.5
-local TUNNEL_LO, TUNNEL_HI = -0.004, 0.003
+-- (-0.004 to 0.003 until 2026-09-29: the band's top stood OVER the lowest
+-- the land at a shore can be — the floor's beach, 0.002 — so where the
+-- ground was low a tunnel was an open trench running inland, and the sea
+-- filled it behind a ridge. Now its top is a block under that beach: a
+-- tunnel always has a roof, and is still flooded, as it was meant to be.)
+local TUNNEL_LO, TUNNEL_HI = -0.006, 0.001
 local TUNNEL_AREA_FREQ = 1 / 250
 local TUNNEL_AREA_MIN = 0.0
 -- (The blowholes went on 2026-09-15, with the seas: a shore program carries

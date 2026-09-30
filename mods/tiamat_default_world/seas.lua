@@ -285,9 +285,17 @@ tdw.on_world_init(function()
     local function inland(from, over)
         return n.clamp(n.mul(n.add(n.mul(M.d_map(), n.const(-1.0)), n.const(-from)), n.const(1.0 / over)), 0.0, 1.0)
     end
+    -- The fall begins a map sample PAST PLAIN_W (2026-09-29, "the ocean
+    -- water is spawning through the other side of the hill"): the map is
+    -- read bilinearly, so a sample just past PLAIN_W that had begun to fall
+    -- dragged the floor down across the whole 116 blocks before it. Behind
+    -- an outer shore the floor was under the water by 44 blocks in, and
+    -- the sea's fill, which reaches WATER_INLAND = 80, stood a strip of
+    -- sea in the low ground there, cut off along the map's straight line.
+    -- Started a sample late, the smear ends where the plain was meant to.
     local floor = game.map(map_spec("sea_floor"))
     floor:fill(shape.compile("sea.floor_fill", n.sub(n.add(M.rel(), n.const(M.BEACH)),
-        n.mul(inland(M.PLAIN_W, M.FADE), n.const(M.FLOOR_KM)))), fill)
+        n.mul(inland(M.PLAIN_W + MAP_SCALE, M.FADE), n.const(M.FLOOR_KM)))), fill)
     local ceiling = game.map(map_spec("sea_ceiling"))
     local function base_ceiling()
         return n.add(n.add(n.add(M.rel(), n.const(M.CLIFF_H)),

@@ -10,6 +10,29 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-29
 
+### The sea behind the hill
+
+- **Seen:** a strip of sea water standing in the low ground on the land
+  side of a coastal ridge, cut off along a straight line ("the ocean water
+  is spawning through the other side of the hill"). Found by walking 144
+  radial lines across the outer shores: three had water on the land side.
+- **The shore's floor sank too soon** (`seas.lua`). Within PLAIN_W = 130
+  blocks of a shore the land is held two blocks over the water, and past
+  that it falls away. But the floor is a map read bilinearly at 116 blocks
+  a sample, and the first sample past 130 that had begun to fall dragged
+  the floor down across the whole gap before it. Read along the line: the
+  floor began to sink 20 blocks in and was under the water by 44, and the
+  sea's fill, which reaches 80 blocks inland, flooded everything under it
+  out to the map's straight line. The fall now begins a sample later, so
+  the smear ends where the plain was meant to.
+- **The coast's tunnels had no roof on low ground** (`coastal_cliffs.lua`).
+  Their height band ran to 3 blocks over the water, above the floor's
+  2-block beach, so where the ground was low a tunnel was an open trench
+  running up to 70 blocks inland, and the sea filled it. The band now
+  tops out a block under the beach: -6 to +1.
+- The floor is a map built once in a world's life: a new world has the
+  fix, an old one keeps its old floor.
+
 ### The biome's name: announced, bottom right, faded
 
 - **Only on arriving** ("display the current biome only when entering a new
