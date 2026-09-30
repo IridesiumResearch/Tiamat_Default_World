@@ -102,7 +102,7 @@ local ROUGH = { rough = 0.3, blind = true }
 local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "geyser_template:" .. name)
 end
-local PRIORITY = { [blocks.lava_rock] = 1, [blocks.sulfur] = 1, [blocks.mud] = 1 }
+local PRIORITY = { [blocks.lava_rock] = 1, [blocks.sulfur] = 1, [blocks.mud] = 1, [blocks.cinnabar] = 1 }
 
 -- A geyser cone: a squat sinter chimney two to four blocks, a sulfur throat
 -- at its top that the random tick puffs steam from.
@@ -111,6 +111,9 @@ local function cone(rng)
     local tall = 2 + rng:below(3)
     local r = 1.6 + rng:below(3) * 0.3
     schem.push_path(blocks.lava_rock, { { 0.5, -1.0, 0.5, r }, { 0.5, tall * 0.6, 0.5, r * 0.6 }, { 0.5, tall, 0.5, 0.7 } }, ROUGH)
+    -- The throat lined with cinnabar under its sulfur (2026-09-29, Magic's
+    -- W-M1), a priority-one shape after the sinter so it shows in the rim.
+    schem.push_ellipsoid(blocks.cinnabar, 0.5, tall - 0.5, 0.5, 0.75, 0.6, 0.75, { blind = true })
     schem.push_ellipsoid(blocks.sulfur, 0.5, tall - 0.2, 0.5, 0.45, 0.5, 0.45, { blind = true })
     return schem.record_schematic(PRIORITY)
 end

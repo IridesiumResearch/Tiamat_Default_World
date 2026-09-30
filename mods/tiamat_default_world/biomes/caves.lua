@@ -468,8 +468,11 @@ local SHALLOW = {
     RELIEF_MAX = 0.45,                                -- km: the most the relief moves the smooth ground off the dome
     OFF_SEA = 150.0,
 }
+-- Cave earth on the floors (2026-09-29, Science's sibling ask W-S2): runs of
+-- EARTH_CELLS cells where a patch noise is over EARTH_MIN.
+SHALLOW.EARTH_FREQ, SHALLOW.EARTH_MIN, SHALLOW.EARTH_CELLS = 1 / 11, 0.05, 2
 M.SHALLOW = SHALLOW
-local SHALLOW_FIELD, SHALLOW_NEAR = nil, {}
+local SHALLOW_FIELD, SHALLOW_NEAR, EARTH_TAKE = nil, {}, {}
 function M.shallow_node()
     local function under()
         return n.mul(n.add(M.D(), shape.relief_node()), n.const(1000.0))
@@ -511,18 +514,36 @@ end
 -- ground is ROOF + TAPER blocks up or more, so the two meet without a seam.
 -- The terrain FIRST: it is the deepest operand, and holds nothing while it
 -- runs.
+-- The near-ground field's spec, for a mode, or nil.
+local function near_node(mode)
+    local terrain = shape.source_of(shape.top_for(mode).solid)
+    if terrain == nil then
+        return nil
+    end
+    local close = n.clamp(n.mul(n.add(n.mul(terrain, n.const(-1000.0)), n.const(SHALLOW.ROOF + SHALLOW.TAPER)),
+        n.const(SHALLOW.TAPER_K)), 0.0, 1e6)
+    return n.add(n.mul(close, n.const(-1.0)), M.shallow_node())
+end
 local function shallow_near(mode)
     if SHALLOW_NEAR[mode] == nil then
-        local terrain = shape.source_of(shape.top_for(mode).solid)
-        if terrain == nil then
-            SHALLOW_NEAR[mode] = false
-        else
-            local close = n.clamp(n.mul(n.add(n.mul(terrain, n.const(-1000.0)), n.const(SHALLOW.ROOF + SHALLOW.TAPER)),
-                n.const(SHALLOW.TAPER_K)), 0.0, 1e6)
-            SHALLOW_NEAR[mode] = shape.compile("cave.shallow." .. mode, n.add(n.mul(close, n.const(-1.0)), M.shallow_node()))
-        end
+        local node = near_node(mode)
+        SHALLOW_NEAR[mode] = node and shape.compile("cave.shallow." .. mode, node) or false
     end
     return SHALLOW_NEAR[mode] or nil
+end
+-- **Cave earth** (Science's W-S2): a cover's take, positive where a patch
+-- noise says AND the run's base cell is in a shallow cave's void — the
+-- same field the carve used (the near-ground one where the ground is
+-- close, which is negative in the open air over the ground, so no earth
+-- lands on a hillside). `mode` nil for the deep program. The void FIRST.
+local function earth_take(mode)
+    local key = mode or "deep"
+    if EARTH_TAKE[key] == nil then
+        local void = mode and near_node(mode) or M.shallow_node()
+        EARTH_TAKE[key] = void and shape.compile("cave.shallow_earth." .. key,
+            n.min(void, n.sub(n.noise("cave_earth", SHALLOW.EARTH_FREQ, 1, 1.0, shape.HUMIDITY_STRETCH), n.const(SHALLOW.EARTH_MIN)))) or false
+    end
+    return EARTH_TAKE[key] or nil
 end
 -- `tmin`/`tmax`: the terrain's bound on the chunk's depth under the real
 -- ground, km; `smin`: the least smooth depth under the dome, km.
@@ -539,13 +560,21 @@ function M.shallow_into(buf, pos, tmin, tmax, smin, mode)
     if smin and smin - SHALLOW.RELIEF_MAX > SHALLOW.DEEPEST then
         return                                        -- under the profile's reach everywhere
     end
+    local take
     if tmin * 1000 >= SHALLOW.ROOF + SHALLOW.TAPER then
         buf:fill_density(M.shallow_field(), AIR, DETAIL)
-        return
-    end
-    local near = shallow_near(mode)
-    if near then
+        take = earth_take(nil)
+    else
+        local near = shallow_near(mode)
+        if near == nil then
+            return
+        end
         buf:fill_density(near, AIR, DETAIL)
+        take = earth_take(mode)
+    end
+    -- Not thinned (`shape.thinned` is for decoration): a resource.
+    if take then
+        buf:fill_cover(tdw.blocks.cave_earth, { cells = SHALLOW.EARTH_CELLS, take = take })
     end
 end
 

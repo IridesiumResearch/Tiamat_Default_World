@@ -10,6 +10,26 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-09-29
 
+### Cinnabar and cave earth (Science's and Magic's sibling asks)
+
+- **`cinnabar`** (Magic's W-M1, shared with Science): mercury's ore,
+  vermilion, tags `ore` and `mineral`, hardness 1.8. It is a crust ring
+  round each Volcanic Foothills fumarole, between the sulfur and the
+  basalt cone, and lines each Geyser Basin cone's throat under its sulfur.
+  It also runs as thin seams through the Mineral Vein Tunnels' walls, a
+  ribbon beside the copper and the galena, below the scree so a floor
+  stays scree. Measured: 466 cells over a 128-block patch of foothills
+  and 29 in the basin's cones over 30 columns.
+- **`cave_earth`** (Science's W-S2): the nitrous earth of cave floors,
+  which the saltpetre men leached. Two-cell patches on about half the
+  shallow caves' floors. The cover tests the caves' own field, the
+  near-ground one where the ground is close, so none lands on open
+  ground: 0 under open sky over a 128-block patch at the spawn. It is a
+  resource, so it is not thinned like the decorations.
+- **Answered without a change:** W-M3, pyrite's random tick. The world
+  does not tick pyrite, so Magic may take the one handler the engine
+  allows. W-M2, the magical shells, is not built, and nothing waits on it.
+
 ### The sea behind the hill
 
 - **Seen:** a strip of sea water standing in the low ground on the land

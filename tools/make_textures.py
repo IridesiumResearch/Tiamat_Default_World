@@ -155,6 +155,8 @@ BLOCKS = {
     "lead_ore":       ( 90,  92, 106,  0),
     "gold_ore":       (196, 160,  74,  0),
     "pitchblende":    ( 44,  40,  36,  0),   # 2026-09-28: black, a little brown, pitch-lustred
+    "cinnabar":       (150,  52,  42,  0),   # 2026-09-29: vermilion, muted
+    "cave_earth":     (116, 102,  84,  0),   # 2026-09-29: pale, dry, grey-brown
     "diamond":        (172, 212, 220,  0),
     "orichalcum":     (196, 128,  84,  0),
     # The normal caves (2026-09-18).

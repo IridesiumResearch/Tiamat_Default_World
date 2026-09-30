@@ -85,6 +85,8 @@ tag({ "cold_fiber_stone" }, "hard", "stone", "glowing")
 tag({ "copper_ore", "iron_ore", "tin_ore", "silver_ore", "lead_ore", "gold_ore" }, "ore", "metal_ore")
 tag({ "coal" }, "ore", "fuel")
 tag({ "pyrite" }, "ore", "mineral")
+tag({ "cinnabar" }, "ore", "mineral")
+tag({ "cave_earth" }, "soil", "nitrous")
 tag({ "chromium_ore" }, "hard", "ore", "metal_ore")
 tag({ "pitchblende" }, "hard", "ore", "metal_ore", "radioactive")
 tag({ "diamond" }, "hard", "ore", "gem")
@@ -505,6 +507,15 @@ block("gold_ore", "Gold ore", "Flecks and stringers of yellow in white quartz.",
 -- tree's design with no block in the world, for its fission, later).
 -- Uraninite, black and pitch-lustred, deep beside the lead and the silver.
 -- Nothing in this mod uses it. It does not glow; it is only dangerous.
+-- Cinnabar (2026-09-29, Magic's sibling ask W-M1, shared with Science):
+-- mercury's ore, red, crusted round the fumaroles of the Volcanic Foothills
+-- and the Geyser Basin's throats and in thin seams through the Mineral
+-- Vein Tunnels. Science roasts it for quicksilver; Magic reads it too.
+block("cinnabar", "Cinnabar", "Vermilion crust and seams round the vents, soft and heavy; roasted, it gives up quicksilver.", { hardness = 1.8, tint = ROCK })
+-- Cave earth (2026-09-29, Science's sibling ask W-S2): the dry nitrous
+-- earth of cave floors, which the saltpetre men leached. On the floors of
+-- the shallow caves, in patches (biomes/caves.lua).
+block("cave_earth", "Cave earth", "Dry, sour-smelling earth on the cave floors; leached, it gives saltpetre.", { hardness = 0.5, tint = SOIL })
 block("pitchblende", "Pitchblende", "Heavy black ore with a pitch-like lustre, deep beside the lead and the silver.", { hardness = 2.6, tint = ROCK })
 block("diamond", "Diamond", "A few bright cells in the dark of the Gloam; almost never a whole block.", { hardness = 3.5, tint = { strength = 0.06, scale = 32 } })
 block("orichalcum", "Orichalcum", "The old metal: red-gold, warm, faintly lit from within, deeper than anything.",

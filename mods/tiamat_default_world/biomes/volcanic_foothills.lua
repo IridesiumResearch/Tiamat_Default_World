@@ -280,6 +280,9 @@ local function fumarole(rng)
     schem.record_begin()
     local r = 1.4 + rng:below(3) * 0.3
     schem.push_ellipsoid(blocks.sulfur, 0.5, 0.15, 0.5, r + 1.8, 0.45, r + 1.8, { rough = 0.4, blind = true })
+    -- Cinnabar crusted in a ring nearer the throat (2026-09-29, Magic's
+    -- W-M1): a band between the sulfur and the basalt cone.
+    schem.push_ellipsoid(blocks.cinnabar, 0.5, 0.2, 0.5, r + 0.8, 0.4, r + 0.8, { rough = 0.4, blind = true })
     schem.push_ellipsoid(blocks.dark_basalt, 0.5, 0.6, 0.5, r, r * 1.1, r, ROUGH)
     schem.push_path(blocks.magma, { { 0.5, 0.3, 0.5, 0.45 }, { 0.5, r * 1.1 + 0.9, 0.5, 0.35 } }, BLIND)
     return schem.record_schematic({ [blocks.magma] = 2, [blocks.dark_basalt] = 1 })

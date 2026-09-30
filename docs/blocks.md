@@ -88,6 +88,16 @@ Pockets of `gravel`, `sand`, `granite` and `obsidian` through all the rock
 under the ground (`generate.lua`, THE DEPOSITS), laid before the ores so a
 vein runs on through a pocket. About 3.6% of the underground. No new block.
 
+## For the sibling mods (2026-09-29)
+
+Two blocks the world holds for other mods, asked for in Science's and
+Magic's `docs/sibling-asks.md`. Neither belongs to one biome.
+
+| Block | Where | Why |
+|---|---|---|
+| `cinnabar` | a crust ring round each Volcanic Foothills fumarole, the lining of each Geyser Basin throat under its sulfur, thin seams through the Mineral Vein Tunnels' walls | Magic's W-M1, shared with Science: mercury's ore, roasted for quicksilver. Tags `ore`, `mineral`; hardness 1.8 |
+| `cave_earth` | two-cell patches on the floors of the shallow caves (`caves.lua`), in about half their floor | Science's W-S2: the nitrous earth the saltpetre men leached. Tags `soil`, `nitrous` |
+
 ## The ores (2026-09-17)
 
 "add a basic list of ores and distribute them at various depths below the

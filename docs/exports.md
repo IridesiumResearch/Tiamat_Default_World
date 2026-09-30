@@ -42,8 +42,8 @@ Content registered with the engine, namespaced `tiamat_default_world:`.
 
 **Blocks.** acacia_leaves, acacia_log, allium, apex_stone, apple_blossom,
 apple_leaves, apple_log, barnacles, birch_leaves, birch_log, black_mud,
-blue_lunaria, bluebell, bone, bramble, cactus, calcite, caul, charcoal,
-cherry_blossom, cherry_leaves, cherry_log, chromium_ore, clear_ice,
+blue_lunaria, bluebell, bone, bramble, cactus, calcite, caul, cave_earth, charcoal,
+cherry_blossom, cherry_leaves, cherry_log, chromium_ore, cinnabar, clear_ice,
 climbing_ivy, coal, cobbles, cold_fiber_stone, copper_ore, coral_amber,
 coral_cyan, coral_magenta, crystal, dark_basalt, dark_sand, dark_sediment,
 dead_coral, dead_log, dead_sagebrush, diamond, dirt, dried_mud, dry_clay, fern,
@@ -69,7 +69,8 @@ gets the most specific one: `hard` comes before `stone` and `ore`, and
 `hardwood` before `log` and `plank`. The words are facts, not rules;
 nothing here says what digs what. The vocabulary:
 
-- ground: `soil`, `clay`, `ash`, `sand`, `gravel`, `snow`, `ice`, `frozen`
+- ground: `soil`, `clay`, `ash`, `sand`, `gravel`, `snow`, `ice`, `frozen`,
+  `nitrous`
 - rock: `stone`, `hard` (the hard stones and ores, the deep bands),
   `sandstone`, `marble`, `porous`, `glass`, `flint`
 - underground: `ore`, `metal_ore`, `gem`, `fuel`, `mineral`, `crystal`,

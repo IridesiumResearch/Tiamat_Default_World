@@ -266,7 +266,12 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
         n.min(n.sub(n.noise("mv_rust", RUST_FREQ, 1, 1.0, { y = 8 }), n.const(OCC_RUST_MIN)),
             ctx.side(1)),                                                                           -- 9 the rust let run
         n.min(n.sub(weather(), n.const(VERD_MIN)), ctx.side(1)),                                    -- 10 verdigris and malachite
-        floorish,                                                                                   -- 11 scree
+        -- 11 a cinnabar seam (2026-09-29, Magic's W-M1): a thinner ribbon
+        -- than the ores', on its own stream, under the scree so a floor
+        -- stays scree.
+        n.sub(n.const(RIBBON_W * 0.6), n.abs(n.add(n.noise("mv_ribbon_hg", RIBBON_FREQ, 1, 1.0, STRATA_STRETCH),
+            n.noise("mv_ribbon_hg_jag", 1 / 2, 1, RIBBON_JAG)))),
+        floorish,                                                                                   -- 12 scree
     }
     local code = n.const(0.0)
     for k, c in ipairs(conditions) do
@@ -289,8 +294,9 @@ tdw.cave_biome(ID, { -0.33, -0.15 }, function(ctx)
         { code = 9, from = 0.4, to = 2.5, material = blocks.slate },
         { code = 10, to = 0.5, material = blocks.copper_ore },
         { code = 10, from = 0.5, to = 2.5, material = blocks.slate },
-        { code = 11, to = 1.0, material = blocks.gravel },
-        { code = 11, from = 1.0, to = 2.5, material = blocks.slate },
+        { code = 11, to = 2.5, material = blocks.cinnabar },
+        { code = 12, to = 1.0, material = blocks.gravel },
+        { code = 12, from = 1.0, to = 2.5, material = blocks.slate },
     }
     -- The frostings: in the last 0.6 of rock before the air, `0.3 - |void +
     -- 0.3|` (the void read once), where a fine noise is near zero — its
