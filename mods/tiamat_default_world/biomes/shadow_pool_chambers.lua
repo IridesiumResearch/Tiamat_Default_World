@@ -179,13 +179,14 @@ tdw.cave_biome(ID, { 0.12, 0.33 }, function(ctx)   -- over 0.15 until 2026-09-30
         { cover = blocks.flint, cells = 1, side = "variant", take = ctx.compile("take_pebbles",
             ctx.variant(n.min(n.mul(wet, n.const(-1.0)), n.sub(n.noise("spc_pebble", PEBBLE_FREQ, 1, 1.0, FLAT), n.const(PEBBLE_MIN))))) },
     }
-    -- The leaf pads: a sheet a third of a block thick just under each
+    -- The leaf pads: a sheet a third of a block thick lying ON each
     -- storey's surface, over water a block deep or more, in patches.
-    -- Laid before the water, which takes the room round them, so they
-    -- float in it. Sampled: a sheet thinner than a block.
+    -- (Under the surface until 2026-10-01: the still water is near-opaque,
+    -- and pads a hair under it were never seen.) Sampled: a sheet thinner
+    -- than a block.
     local pads = nil
     for k = 1, #STOREYS do
-        local p = n.min(n.sub(n.const(0.17), n.abs(n.add(up(k), n.const(0.17)))), n.add(footprint(k), n.const(-1.0)))
+        local p = n.min(n.sub(n.const(0.17), n.abs(n.sub(up(k), n.const(0.17)))), n.add(footprint(k), n.const(-1.0)))
         pads = pads and n.max(pads, p) or p
     end
     pads = n.min(n.min(n.min(pads, n.sub(wet, n.const(-0.5))), n.sub(n.noise("spc_pad", PAD_FREQ, 1, 1.0, FLAT), n.const(PAD_MIN))),

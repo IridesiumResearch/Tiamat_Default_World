@@ -125,6 +125,7 @@ if tdw.config.compile_caves then
     tdw.caves.compile_all()          -- validation: see the config flag above
 end
 load("player")
+load("underside")          -- the black sky under the world (2026-10-01)
 load("sounds")            -- the beds, the night layers, and the one-shots' table
 load("rules")             -- leaves and water, and other rules of the whole world
 load("exports")           -- what the other mods may read: climate, biomes, the two unlocks

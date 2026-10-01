@@ -171,9 +171,9 @@ if game.emit_particles then
                 spray_n = spray_n + 1
                 local d = schem.DIR16[(spray_n * 7) % 16 + 1]
                 local r = 2 + (spray_n * 3) % 5
-                game.emit_particles{ pos = { x = p.x + d[1] * r, y = p.y + 0.6, z = p.z + d[2] * r }, count = 14, size = 0.05, lifetime = 0.7,
-                    colour = { r = 0.78, g = 0.86, b = 0.92, a = 0.7 }, velocity = { x = -d[1] * 2.5, y = 0.4, z = -d[2] * 2.5 }, spread = 0.6,
-                    gravity = 0.6, area = { x = 0.05, y = 0.3, z = 0.05 }, collide = true }
+                game.emit_particles{ pos = { x = p.x + d[1] * r, y = p.y + 0.6, z = p.z + d[2] * r }, count = 5, size = 0.05, lifetime = 1.2,
+                    colour = { r = 0.78, g = 0.86, b = 0.92, a = 0.42 }, velocity = { x = -d[1] * 3.5, y = 0.6, z = -d[2] * 3.5 }, spread = 1.2,
+                    gravity = 0.6, area = { x = 0.4, y = 0.8, z = 0.4 }, collide = true }
             end
         end
     end)

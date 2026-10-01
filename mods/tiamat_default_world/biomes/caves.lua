@@ -696,6 +696,12 @@ end
 -- or nil. Coarse steps out to eight kilometres, then the column. `side`
 -- narrows the search to one dressing's ground: "variant" for /tp by the
 -- variant's name, "base" for the biome dressed as itself.
+-- **A thin biome's search** (2026-09-30, "could not find a whispering
+-- crevasse within 8 kilometers"): a chasm a few blocks wide is missed by
+-- one column even where its province is right, so a biome may name a
+-- spread and a step to try columns either side, and a vertical step its
+-- shapes are tall enough to bear.
+M.LOCATE_SPREAD = {}                -- id -> { spread = blocks, step = blocks, ystep = blocks }
 function M.locate(id, px, pz, seed, side)
     local layer = M.layer_of[id]
     local PROVINCE = province_program(layer)
@@ -708,7 +714,21 @@ function M.locate(id, px, pz, seed, side)
     -- How far inside the band to look: three blends, or a third of the band
     -- where that is less (the six bands of 2026-09-18 are 0.18 wide, and an
     -- inset of 0.12 either side left no ground at all to find).
-    local inset = math.min(3 * M.BLEND, (math.min(band[2], 1) - math.max(band[1], -1)) * 0.3)
+    -- An open end (-1 or 1) is measured from where the noise actually runs,
+    -- about +/-0.42: measured from 1, the inset asked for a value the noise
+    -- almost never reaches, and the Crevasse, under -0.33, was looked for
+    -- under -0.45 and not found.
+    local lo, hi = band[1] > -1 and band[1] or -0.42, band[2] < 1 and band[2] or 0.42
+    local inset = math.min(3 * M.BLEND, (hi - lo) * 0.3)
+    local hint = M.LOCATE_SPREAD[id]
+    local offsets = { { 0, 0 } }
+    if hint then
+        for d = hint.step, hint.spread, hint.step do
+            offsets[#offsets + 1] = { d, 0 }; offsets[#offsets + 1] = { -d, 0 }
+            offsets[#offsets + 1] = { 0, d }; offsets[#offsets + 1] = { 0, -d }
+        end
+    end
+    local ystep = hint and hint.ystep or 2
     local best = nil
     for ring = 0, 40 do
         local r = ring * 200
@@ -725,16 +745,19 @@ function M.locate(id, px, pz, seed, side)
                 -- Well inside the band, or the first void found is the
                 -- wall on the province line — and well inside the asked-for
                 -- dressing's ground, where a side is asked for.
-                local ok = p > band[1] + inset and p < band[2] - inset
+                local ok = (band[1] <= -1 or p > band[1] + inset) and (band[2] >= 1 or p < band[2] - inset)
                 if ok and side then
                     local v = VARIANT_AT:at(x + 0.5, y_mid + 0.5, z + 0.5, seed)
                     ok = side == "variant" and v > VARIANT.MIN + 0.05
                         or side == "base" and v < VARIANT.MIN - 0.05
                 end
                 if ok then
-                    for y = math.floor(dome_y - 1000 * layer.TOP - 60), math.floor(dome_y - 1000 * layer.BOTTOM), -2 do
-                        if cavity:at(x + 0.5, y + 0.5, z + 0.5, seed) > 1.0 then
-                            return x, y, z
+                    for _, o in ipairs(offsets) do
+                        local cx, cz = x + o[1], z + o[2]
+                        for y = math.floor(dome_y - 1000 * layer.TOP - 60), math.floor(dome_y - 1000 * layer.BOTTOM), -ystep do
+                            if cavity:at(cx + 0.5, y + 0.5, cz + 0.5, seed) > 1.0 then
+                                return cx, y, cz
+                            end
                         end
                     end
                 end

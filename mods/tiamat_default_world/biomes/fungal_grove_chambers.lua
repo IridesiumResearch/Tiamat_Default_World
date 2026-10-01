@@ -81,7 +81,6 @@ local WEB_FREQ, WEB_W = 1 / 4, 0.10                     -- the floor's glow film
 local SLIME_FREQ, SLIME_MIN = 1 / 7, 0.24               -- the slime pools sunk into the lattice
 -- The spore haze: how far one sees into it, and its colour.
 local FOG = { r = 0.66, g = 0.60, b = 0.44 }
-local FOG_VISIBILITY = 56
 
 -- ------------------------------------------------------------ the structures
 
@@ -362,27 +361,31 @@ tdw.cave_variant(ID, "Ghost-Cap Thicket")
 
 -- ------------------------------------------------------------ the spore haze
 
--- Spores hanging in the air like fog, in the chambers' columns: the fog
--- lies under the upper storey's ceiling, so everything under it in the
--- column is hazed (rock, mostly, and the lower storey) and the surface far
--- over it is clear — a fog thins by e every four blocks above its top.
--- Asked after the surface biomes (this file loads after them), so a
--- surface fog in the same column answers first.
-local fog_prov, fog_ceiling = nil, nil
-if tdw.on_chunk_fog then
-    tdw.on_chunk_fog(function(pos)
-        local caves = tdw.caves
-        fog_prov = fog_prov or shape.compile("fungal.fog_prov", caves.province())
-        local x, z = pos.x * 16 + 8.5, pos.z * 16 + 8.5
-        local p = fog_prov:at(x, 0.5, z, pos.seed)
-        local band = caves.bands[ID]
-        if p < band[1] or p > band[2] then
-            return nil
+-- Spores hanging in the air, near each player the HUD's cave test puts in
+-- these chambers: a few faint, slow motes of the haze's colour. (A chunk
+-- FOG until 2026-10-01: a chunk's fog is one for its whole column, with a
+-- top and no bottom, so this haze hung in everything under the chambers
+-- too, and the Veined Silver Gallery two kilometres down was "way too much
+-- bright yellowish fog". Engine ask 45 asks for a bottom.)
+local HAZE_EVERY = 24
+local haze_tick = 0
+if game.emit_particles then
+    tdw.on_tick(function(dt)
+        haze_tick = haze_tick + dt
+        if haze_tick < HAZE_EVERY or not tdw.online or not tdw.cave_under then
+            return
         end
-        fog_ceiling = fog_ceiling or shape.compile("fungal.fog_ceiling",
-            n.add(n.mul(n.sub(shape.dome_node(), centre(1)), n.const(1000.0)), n.mul(height(1), n.const(0.5))))
-        local top = shape.Y0 + fog_ceiling:at(x, 0.5, z, pos.seed)
-        return { r = FOG.r, g = FOG.g, b = FOG.b, visibility = FOG_VISIBILITY, top = math.floor(top) }
+        haze_tick = 0
+        for uuid in pairs(tdw.online) do
+            local body = game.player_entity(uuid)
+            local e = body and game.entity(body)
+            local p = e and e.pos
+            if p and tdw.cave_under(math.floor(p.x), math.floor(p.y), math.floor(p.z)) == ID then
+                game.emit_particles{ pos = { x = p.x, y = p.y + 1.2, z = p.z }, count = 12, size = 0.08, lifetime = 7.0,
+                    colour = { r = FOG.r, g = FOG.g, b = FOG.b, a = 0.18 }, velocity = { y = 0.03 }, spread = 0.06, gravity = 0.0,
+                    area = { x = 5.0, y = 2.0, z = 5.0 }, collide = false }
+            end
+        end
     end)
 end
 

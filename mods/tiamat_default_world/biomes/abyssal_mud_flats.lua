@@ -195,13 +195,13 @@ if game.emit_particles then
             local p = e and e.pos
             if p and tdw.cave_under(math.floor(p.x), math.floor(p.y), math.floor(p.z)) == ID then
                 mist_n = mist_n + 1
-                game.emit_particles{ pos = { x = p.x, y = p.y + 0.2, z = p.z }, count = 10, size = 0.9, lifetime = 7.0,
-                    colour = { r = 0.42, g = 0.43, b = 0.44, a = 0.10 }, velocity = { y = 0.0 }, spread = 0.08, gravity = 0.0,
+                game.emit_particles{ pos = { x = p.x, y = p.y + 0.2, z = p.z }, count = 10, size = 0.3, lifetime = 7.0,
+                    colour = { r = 0.42, g = 0.43, b = 0.44, a = 0.06 }, velocity = { y = 0.0 }, spread = 0.08, gravity = 0.0,
                     area = { x = 7.0, y = 0.3, z = 7.0 }, collide = false }
                 if mist_n % 4 == 0 then
                     local d = schem.DIR16[(mist_n * 5) % 16 + 1]
                     game.emit_particles{ pos = { x = p.x + d[1] * 4, y = p.y - 0.4, z = p.z + d[2] * 4 }, count = 5, size = 0.14, lifetime = 1.4,
-                        colour = { r = 0.16, g = 0.13, b = 0.10, a = 0.8 }, velocity = { y = 0.9 }, spread = 0.15, gravity = -0.2,
+                        colour = { r = 0.16, g = 0.13, b = 0.10, a = 0.5 }, velocity = { y = 0.9 }, spread = 0.15, gravity = -0.2,
                         area = { x = 0.3, y = 0.0, z = 0.3 }, collide = false }
                 end
             end

@@ -193,6 +193,8 @@ tdw.cave_biome(ID, { -1, -0.33 }, function(ctx)
     return fills
 end)
 tdw.cave_variant(ID, "Singing Wind Cleft")
+-- /tp: a chasm is a few blocks wide; try columns either side (caves.lua).
+tdw.caves.LOCATE_SPREAD[ID] = { spread = 36, step = 2, ystep = 8 }
 
 -- ------------------------------------------------------------ the draft
 
@@ -217,7 +219,7 @@ if game.emit_particles then
                 local r = 1 + (draft_n * 3) % 4
                 local soot = draft_n % 3 == 0
                 game.emit_particles{ pos = { x = p.x + d[1] * r, y = p.y - 3.0, z = p.z + d[2] * r }, count = 6, size = soot and 0.10 or 0.06,
-                    lifetime = 5.0, colour = soot and { r = 0.10, g = 0.10, b = 0.11, a = 0.7 } or { r = 0.55, g = 0.53, b = 0.50, a = 0.45 },
+                    lifetime = 5.0, colour = soot and { r = 0.10, g = 0.10, b = 0.11, a = 0.42 } or { r = 0.55, g = 0.53, b = 0.50, a = 0.27 },
                     velocity = { y = 1.3 }, spread = 0.25, gravity = 0.0, area = { x = 1.2, y = 1.0, z = 1.2 }, collide = false }
             end
         end

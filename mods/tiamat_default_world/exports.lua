@@ -22,6 +22,8 @@
 --                     with its display name and whether a world has it
 --   depth_under(x, y, z)  blocks under the ground as generated, or nil
 --   depth_band(x, y, z)   the depth band a place is in: id and name
+--   underside_sky(x, y, z)  true where the sky should be black: under the
+--                         world's flank, Spindle 14 km (underside.lua)
 --
 -- THE RING TEMPERATURE is not a field this mod generates from — the rings
 -- are placed by radius and the biomes carry the climate themselves — but
@@ -209,6 +211,10 @@ game.export{
     biomes = biomes,
     depth_under = depth_under,
     depth_band = depth_band,
+    -- True where a player's sky should be black, under the world's flank
+    -- (underside.lua), for Weather to lay as an overlay (the world's
+    -- sibling ask Wx-1). Coordinates are world blocks.
+    underside_sky = function(x, y, z) return tdw.underside and tdw.underside.dark_at(x, y, z) or false end,
 }
 
 game.log("tiamat_default_world: exports published (version 1)")

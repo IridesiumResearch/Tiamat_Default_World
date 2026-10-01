@@ -8,6 +8,46 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-10-01
+
+### From the designer's first look underground
+
+- **The Silent Vertical Shafts are rough-walled** ("a bit too stretched
+  out, give them some amount of noise on the walls"): a slow 3D noise
+  swells and pinches the radius about two blocks either way every twenty
+  or so down a shaft, a fine one roughens the face, and they are a fifth
+  shorter (50 to 85 deep).
+- **The Inky Lotus Basins' leaf pads float.** They were a sheet a hair
+  under the still water, which is near-opaque, so nobody saw them; they lie
+  on its surface now. Seen in cuts across the basin on seed 12345.
+- **Particles**: every new cave's a good deal fainter; the mud flats' mist
+  a third the size; the brine spray five droplets thrown wider and further
+  instead of fourteen in a knot; the fungi pockets' spores half the size
+  and nearly grey. The Lotus Basins' drips are as they were.
+- **The Whispering Crevasse could not be found** with `/tp` (none "within 8
+  kilometers"): the search measured an open-ended band (-1 to -0.33) from
+  -1 and asked for a province under -0.45, which the noise all but never
+  reaches; and a chasm a few blocks wide is missed by one column even
+  where the province is right. Open ends are measured from where the noise
+  runs now, and a biome may name columns either side to try
+  (`LOCATE_SPREAD`, the Crevasse's). Found within a kilometre on three
+  seeds, in under three seconds each.
+- **The Veined Silver Gallery's yellow fog was the Fungal Grove's.** A
+  chunk's fog is one per column, with a top and no bottom, so the grove's
+  spore haze filled every cave under it. Its fog is gone; a faint haze of
+  particles near the player stands in. The surface fogs do the same to the
+  caves under them, and only the engine can bound them: engine ask 45.
+- **The underside's sky is black** (`underside.lua`): under Spindle 14 km a
+  player's sky modifier is laid black at every hour, so the sponge looks
+  out on darkness and there is no day there. The stars are the keyframes'
+  and the modifier cannot touch them, so they show only at night: engine
+  ask 44. Weather writes the same modifier; until it composes the world's
+  as an overlay (the world's sibling ask Wx-1, `docs/sibling-asks.md`,
+  through the new `underside_sky` export), the world writes it again every
+  two seconds under the line.
+- `docs/sibling-asks.md`, new: the world's asks of Weather (Wx-1) and Life
+  (L-1, the blind fish).
+
 ## 2026-09-30
 
 ### The Abyss Below: 4.1 to 4.3

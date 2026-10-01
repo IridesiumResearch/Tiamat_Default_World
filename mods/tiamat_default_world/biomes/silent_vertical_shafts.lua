@@ -3,8 +3,8 @@
 --
 -- 4.2 Silent Vertical Shafts (2026-09-30).
 --
--- Near-perfectly cylindrical drop-shafts eight to fourteen blocks across
--- and sixty to a hundred deep, their tops and bottoms narrowing away into
+-- Drop-shafts eight to fourteen blocks across and fifty to eighty-five
+-- deep, round in plan but rough-walled, their tops and bottoms narrowing away into
 -- black. Unbroken black basalt striated with iron-granite, glass-smooth,
 -- cut top to bottom with parallel friction grooves. Barren but for rare
 -- wire-thin pale mineral tendrils hanging where a drip condenses. No
@@ -15,9 +15,13 @@
 -- THE SHAFTS: where two flat noises are BOTH over a cut, which leaves
 -- small round blobs far apart (one noise's blobs run long; two crossing
 -- are round), a radius of four to seven blocks. Each holds its width for a
--- reach of thirty to fifty blocks above and below its storey's centre,
+-- reach of twenty-four to forty blocks above and below its storey's centre,
 -- then closes three blocks of radius to ten of height, so it narrows away
--- rather than ending on a floor. THE ADITS: low passages along a noise's
+-- rather than ending on a floor. THE WALLS are not a clean tube
+-- (2026-10-01, "a bit too stretched out, give them some amount of noise
+-- on the walls"): a slow 3D noise swells and pinches the radius a couple
+-- of blocks either way every twenty or so down the shaft, and a fine one
+-- roughens the face by a block. THE ADITS: low passages along a noise's
 -- zero contours at the storey's centre, three wide and four high, which
 -- run from shaft to shaft and are the way in. THE GROOVES: the shaft's
 -- wall let back half a block where a noise drawn out in y is high, so
@@ -41,7 +45,9 @@ local function k_of(freq) return 0.625 / freq end
 local STOREYS = { 4.45, 5.25 }                         -- km under the dome
 local STOREY_WANDER, WANDER_FREQ = 0.03, 1 / 3000
 local SHAFT_FREQ, SHAFT_MIN, SHAFT_K = 1 / 55, 0.18, 28.0   -- radius to about seven at the heart of a blob
-local REACH_FREQ, REACH_LO, REACH_SPAN = 1 / 80, 30.0, 20.0
+local REACH_FREQ, REACH_LO, REACH_SPAN = 1 / 80, 24.0, 16.0
+local BULGE_FREQ, BULGE_AMP = 1 / 22, 5.0                -- the radius swells and pinches, about +/-2
+local ROUGH_FREQ, ROUGH_AMP = 1 / 6, 2.4                 -- and the face is rough by about a block
 local CLOSE = 0.3                                      -- radius lost a block past the reach
 local ADIT_FREQ, ADIT_W, ADIT_H, ADIT_NEAR = 1 / 90, 1.5, 2.0, 30.0
 local GROOVE_FREQ, GROOVE_MIN, GROOVE_D = 1 / 2.2, 0.18, 0.6
@@ -92,12 +98,13 @@ tdw.cave_biome(ID, { -1, -0.2 }, function(ctx)
         n.const(REACH_LO))
     -- The grooves: the wall let back GROOVE_D where an upright noise is high.
     local groove = n.mul(step(n.sub(n.noise("svs_groove", GROOVE_FREQ, 1, 1.0, UPRIGHT), n.const(GROOVE_MIN)), 8.0), n.const(GROOVE_D))
+    local wall = n.add(n.noise("svs_bulge", BULGE_FREQ, 1, BULGE_AMP), n.noise("svs_rough", ROUGH_FREQ, 2, ROUGH_AMP))
     local adit_line = n.sub(n.const(ADIT_W), n.contour("svs_adit", ADIT_FREQ, 1))
     local ledge_level = n.sub(n.const(LEDGE_W), n.mul(n.abs(n.noise("svs_ledge", LEDGE_FREQ, 1, 1.0, ALONG_Y)), n.const(k_of(LEDGE_FREQ))))
     local ledge_patch = n.mul(n.sub(n.noise("svs_ledge_patch", LEDGE_PATCH_FREQ, 1, 1.0), n.const(LEDGE_PATCH_MIN)), n.const(10.0))
     local function storey(k)
         local u = up(k)
-        local open = n.sub(n.add(plan, groove), n.mul(n.max(n.sub(n.abs(u), reach), n.const(0.0)), n.const(CLOSE)))
+        local open = n.sub(n.add(n.add(plan, groove), wall), n.mul(n.max(n.sub(n.abs(u), reach), n.const(0.0)), n.const(CLOSE)))
         -- A ledge: the first block inside the wall, at a level, in a patch.
         local ledge = n.min(n.min(n.sub(n.const(1.0), plan), ledge_level), ledge_patch)
         local shaft = n.min(open, n.mul(ledge, n.const(-1.0)))
@@ -148,7 +155,7 @@ if game.emit_particles then
             local p = e and e.pos
             if p and tdw.cave_under(math.floor(p.x), math.floor(p.y), math.floor(p.z)) == ID then
                 game.emit_particles{ pos = { x = p.x, y = p.y + 1.5, z = p.z }, count = 24, size = 0.04, lifetime = 8.0,
-                    colour = { r = 0.62, g = 0.60, b = 0.56, a = 0.35 }, velocity = { y = 0.0 }, spread = 0.03, gravity = 0.0,
+                    colour = { r = 0.62, g = 0.60, b = 0.56, a = 0.2 }, velocity = { y = 0.0 }, spread = 0.03, gravity = 0.0,
                     area = { x = 4.0, y = 3.0, z = 4.0 }, collide = false, player = uuid }
             end
         end

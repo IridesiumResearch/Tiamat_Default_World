@@ -261,8 +261,8 @@ if game.emit_particles then
                 spore_n = spore_n + 1
                 local d = schem.DIR16[(spore_n * 5) % 16 + 1]
                 local violet = spore_n % 2 == 0
-                game.emit_particles{ pos = { x = p.x + d[1] * 2.5, y = p.y + 1.5, z = p.z + d[2] * 2.5 }, count = 10, size = 0.12, lifetime = 6.0,
-                    colour = violet and { r = 0.62, g = 0.36, b = 0.95, a = 0.35 } or { r = 0.36, g = 0.90, b = 0.84, a = 0.35 },
+                game.emit_particles{ pos = { x = p.x + d[1] * 2.5, y = p.y + 1.5, z = p.z + d[2] * 2.5 }, count = 10, size = 0.06, lifetime = 6.0,
+                    colour = violet and { r = 0.56, g = 0.50, b = 0.64, a = 0.22 } or { r = 0.50, g = 0.62, b = 0.60, a = 0.22 },
                     velocity = { y = 0.05 }, spread = 0.18, gravity = 0.0, area = { x = 2.5, y = 1.5, z = 2.5 }, collide = false }
             end
         end
