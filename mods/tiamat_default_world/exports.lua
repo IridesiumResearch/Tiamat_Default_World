@@ -22,6 +22,8 @@
 --                     with its display name and whether a world has it
 --   depth_under(x, y, z)  blocks under the ground as generated, or nil
 --   depth_band(x, y, z)   the depth band a place is in: id and name
+--   dome_y(x, z)          the base dome's world y there: the smooth ground
+--                         under the biomes' relief (Weather's cloud floor)
 --   underside_sky(x, y, z)  true where the sky should be black: under the
 --                         world's flank, Spindle 14 km (underside.lua)
 --
@@ -214,6 +216,12 @@ game.export{
     -- True where a player's sky should be black, under the world's flank
     -- (underside.lua), for Weather to lay as an overlay (the world's
     -- sibling ask Wx-1). Coordinates are world blocks.
+    -- Weather's cloud floor (its exports contract, "wanted for clouds"):
+    -- the dome straight from shape.lua, so a reshaped dome reaches it.
+    dome_y = function(x, z)
+        local u = (x * x + z * z) * 1e-6 / (shape.R_DISC * shape.R_DISC)
+        return shape.Y0 + 1000 * shape.dome_at(u)
+    end,
     underside_sky = function(x, y, z) return tdw.underside and tdw.underside.dark_at(x, y, z) or false end,
 }
 

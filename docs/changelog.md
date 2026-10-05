@@ -8,6 +8,18 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-10-05
+
+- **`dome_y(x, z)` exported** (`exports.lua`): the base dome's world y,
+  straight from `shape.lua`. Weather's exports contract lists it as wanted
+  for its cloud floor, which it reads from this when it is there and from
+  a mirrored copy of the dome formula when it is not, so a reshaped dome
+  now reaches the clouds. Nothing else asked of the world was open: Craft,
+  Progress and Science have marked theirs answered; Life's W1 (wild wheat)
+  and W2 (apples) were built on 2026-09-30 and wait on Life to mark them;
+  Life's W3 (wild hives) is low and Life stands in for it; Magic's W-M2,
+  the magical shells, waits on the core shells being built.
+
 ## 2026-10-01
 
 ### From the designer's first look underground
