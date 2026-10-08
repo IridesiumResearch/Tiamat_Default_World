@@ -98,20 +98,36 @@ local LODE_FREQ = 1 / 40
 -- margin too tight, and its symptom would be visible: ore veins clipped
 -- flat at chunk faces, where a skipped chunk abuts a generated one.
 local LODE_MARGIN = 0.45
+-- **Retuned for Science and Magic** (2026-10-08, "pay attention to how
+-- rare the block is supposed to be ... gameplay first"). Measured over 210
+-- chunks a depth on seed 12345, gold, diamond and orichalcum came out at
+-- 16, 0 and 0 cells: three noises over 0.42 to 0.46 all at once almost
+-- never happens, since each sits at its clamp an eighth of the time. They
+-- take two now. Per chunk, about: gold half a block from 750 down (Magic's
+-- gold in bulk); pitchblende two from 1,200 (Science's radium is 27 blocks
+-- a grain); diamond one in twenty chunks from 1,200 ("very rarely a full
+-- block"); orichalcum one from 2,000, in rich lodes far apart (Science's
+-- Core wants some fifty blocks). And two new, near the surface: sulfur
+-- (Magic's tier 1, Science's tier-3 gunpowder; until now only on the Ember
+-- Ridge, five km from spawn) in flat beds like the salt's, and pyrite
+-- (Magic's tier 3, "near the surface"; until now only in the Mineral Vein
+-- Tunnels) in seams like the coal's, a block or two a chunk each.
 local ORES = {
     { "copper_ore",   level = 0.00, freq = 1 / 5,   min = 0.42, n = 2, lode = 0.15, stretch = { x = 3 } },
     { "iron_ore",     level = 0.00, freq = 1 / 5,   min = 0.43, n = 2, lode = 0.15, stretch = { z = 3 } },
     { "flint",        level = 0.00, freq = 1 / 3,   min = 0.44, n = 2, lode = 0.15 },
     { "coal",         level = 0.06, freq = 1 / 8,   min = 0.40, n = 2, lode = 0.15, stretch = { x = 4, z = 3 } },
+    { "pyrite",       level = 0.06, freq = 1 / 4,   min = 0.46, n = 3, lode = 0.22, stretch = { x = 4, z = 3 } },
     { "salt",         level = 0.06, freq = 1 / 6,   min = 0.44, n = 2, lode = 0.15, stretch = { x = 3, z = 3 } },
+    { "sulfur",       level = 0.06, freq = 1 / 5,   min = 0.46, n = 3, lode = 0.25, stretch = { x = 3, z = 3 } },
     { "tin_ore",      level = 0.20, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { y = 2 } },
     { "silver_ore",   level = 0.20, freq = 1 / 3.5, min = 0.46, n = 2, lode = 0.15, stretch = { x = 2 } },
     { "chromium_ore", level = 0.42, freq = 1 / 4,   min = 0.46, n = 2, lode = 0.15, stretch = { z = 2 } },
     { "lead_ore",     level = 0.42, freq = 1 / 4,   min = 0.48, n = 2, lode = 0.15, stretch = { x = 2 } },
-    { "gold_ore",     level = 0.75, freq = 1 / 3,   min = 0.42, n = 3, lode = 0.25 },
-    { "pitchblende",  level = 1.20, freq = 1 / 4,   min = 0.49, n = 2, lode = 0.28, stretch = { y = 2 } },
-    { "diamond",      level = 1.20, freq = 1 / 2.5, min = 0.45, n = 3, lode = 0.25 },
-    { "orichalcum",   level = 2.00, freq = 1 / 2.5, min = 0.46, n = 3, lode = 0.32 },
+    { "gold_ore",     level = 0.75, freq = 1 / 3,   min = 0.40, n = 2, lode = 0.12 },
+    { "pitchblende",  level = 1.20, freq = 1 / 4,   min = 0.47, n = 2, lode = 0.24, stretch = { y = 2 } },
+    { "diamond",      level = 1.20, freq = 1 / 2.5, min = 0.42, n = 2, lode = 0.22 },
+    { "orichalcum",   level = 2.00, freq = 1 / 3,   min = 0.37, n = 2, lode = 0.22 },
 }
 local ORE_FIELDS = nil
 local function ore_fields()
@@ -144,7 +160,10 @@ tdw.ore_fields = ore_fields
 -- across of one of the four, all through the rock under the ground, laid
 -- BEFORE the ores so an ore's vein runs on through a pocket as it does
 -- through the rock (the ores overwrite), and before the caves, which cut
--- through both.
+-- through both. The sand pockets are `white_sand` since 2026-10-08: glass
+-- is made from it (Craft's W4), and both Science and Magic need glass
+-- early, but it lay only on the coral lagoons, twenty km from spawn. The
+-- sand on beaches and dunes is the surface's own and stays.
 --
 -- ONE layered fill lays all four from one evaluation: `depth` is where a
 -- pocket is — a fine noise over a threshold, in blocks — and `code`, a
@@ -189,7 +208,7 @@ local function deposits_into(buf, pos)
     end
     buf:fill_layers(DEPOSIT_FIELD, DEPOSIT_KIND, {
         { code = 1, to = math.huge, material = blocks.gravel },
-        { code = 2, to = math.huge, material = blocks.sand },
+        { code = 2, to = math.huge, material = blocks.white_sand },   -- glass sand (2026-10-08): `sand` until then
         { code = 3, to = math.huge, material = blocks.granite },
         { code = 4, to = math.huge, material = blocks.obsidian },
     })

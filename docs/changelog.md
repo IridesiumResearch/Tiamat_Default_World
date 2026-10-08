@@ -8,6 +8,36 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-10-08
+
+### The ores, for Science and Magic
+
+"Look through Science and Magic and the blocks they added ... use all
+their blocks in the world ... pay attention to how rare the block is
+supposed to be ... gameplay first." Neither mod registers a natural block:
+their blocks are machines, doors, lamps, an alloy and a crafted tree, and
+every raw material they use is already the world's. What was wrong was how
+much of it there was. Measured over 210 chunks a depth, seed 12345:
+
+| Ore | Was, cells | Now, cells | Now, blocks a chunk | Who needs it |
+|---|---|---|---|---|
+| gold (750 down) | 7 to 45 | about 3,000 | half | Magic's gold in bulk, tiers 5 to 7 |
+| pitchblende (1,200) | about 3,400 | about 11,000 | two | Science: 27 blocks a radium grain |
+| diamond (1,200) | 0 | about 340 | one in twenty chunks | Science's drill |
+| orichalcum (2,000) | 0 | about 6,000 | one, in rich lodes | Science's Core, Magic's tier 5 |
+| sulfur (60, new) | Ember Ridge only | about 7,000 to 14,000 | one or two | Magic tier 1, Science's gunpowder |
+| pyrite (60, new) | the Vein Tunnels only | about 6,000 to 12,000 | one or two | Magic tier 3, "near the surface" |
+
+- Gold, diamond and orichalcum needed three noises over 0.42 to 0.46 at
+  once, and each sits at its clamp an eighth of the time: two now.
+- The underground sand pockets are `white_sand`: glass sand, which both mods
+  need early, was only on the coral lagoons twenty km from spawn.
+- Left as they are, and worth a look: salt is some 30 blocks a chunk and
+  coal 50, which is a lot of the rock; flint is all but absent (about 2 a
+  chunk in cells).
+- Magic's gnome list names `W:basalt` and `W:cobble`, which the world has
+  not got: they are `dark_basalt` and `cobbles`.
+
 ## 2026-10-05
 
 - **`dome_y(x, z)` exported** (`exports.lua`): the base dome's world y,

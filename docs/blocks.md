@@ -178,6 +178,8 @@ throughout.
 | `iron_ore` | the surface | asked for by name |
 | `flint` | the surface | asked for by name |
 | `coal` | 60 blocks | asked for by name |
+| `pyrite` | 60 blocks (2026-10-08) | Magic's tier 3, "near the surface": seams like the coal's, a block or two a chunk. Until then only in the Mineral Vein Tunnels |
+| `sulfur` | 60 blocks (2026-10-08) | Magic's tier 1, Science's tier-3 gunpowder: flat beds like the salt's, a block or two a chunk. Until then only on the Ember Ridge |
 | `tin_ore` | 200 blocks | asked for by name |
 | `silver_ore` | 200 blocks | asked for by name |
 | `chromium_ore` | 420 blocks | asked for by name |
@@ -186,6 +188,14 @@ throughout.
 | `pitchblende` | 1,200 blocks | Craft's sibling ask W3 (2026-09-28): the tech tree's fission ore, "beside lead and silver, where it really occurs"; rarer lodes than the lead's |
 | `diamond` | 1,200 blocks | asked for by name; "very rarely should there ever be a full block of diamond" |
 | `orichalcum` | 2,000 blocks (the Gloam) | asked for by name; faintly lit from within |
+
+**Retuned 2026-10-08 for Science and Magic**, gameplay first. Measured over
+210 chunks a depth (seed 12345), in blocks a chunk: gold about half from
+750 down (it was all but none), pitchblende about two from 1,200 (it was
+half of one; Science's radium is 27 blocks a grain), diamond one in twenty
+chunks (it was none), orichalcum about one from 2,000, in rich lodes far
+apart (it was none; Science's Core wants some fifty blocks). The deposits'
+sand pockets are `white_sand`, glass sand, within reach of every mine.
 
 ## Quenched lava (2026-09-16)
 
