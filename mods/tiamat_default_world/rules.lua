@@ -99,3 +99,32 @@ game.register_on_fluid_flow(function(event)
         quench(event.into)
     end
 end)
+
+-- **Flint in the ground** (2026-10-08, "make gravel, dirt, grass and sand
+-- very occasionally have flint in them"). The flint ore all but never
+-- generates (a couple of cells a chunk), and the first thing Craft makes
+-- of it is the fire striker, two flints. So digging one of the four now
+-- and then turns up a whole flint as well as the block's own drop, given
+-- to the digger a tick later: gravel one dig in ten, the others one in forty.
+-- A bonus, not an answer: the hook returns nil, so the block's own rule
+-- and any other mod's answer for the dig stand. Placing and digging the
+-- same dirt can farm it, at the same rate, as gravel always could.
+local FLINT_ONE_IN = {
+    [blocks.gravel] = 10,
+    [blocks.dirt] = 40, [blocks.grass] = 40, [blocks.sand] = 40,
+}
+local FLINT_ID = "tiamat_default_world:flint"
+local flint_digs = 0
+tdw.on_dig_complete(function(event)
+    local one_in = FLINT_ONE_IN[event.material]
+    if one_in == nil or event.player == nil then
+        return nil
+    end
+    flint_digs = flint_digs + 1
+    if tdw.schem.hash(event.x, event.y, event.z + flint_digs * 7919) % one_in == 0 then
+        -- A tick later: a hook's writes are refused (the roses' way, edits.lua).
+        local player = event.player
+        tdw.edits.later(1, function() game.give(player, { material = FLINT_ID, units = 27 }) end)
+    end
+    return nil
+end)

@@ -10,6 +10,17 @@ engine commit they landed in, because the mod is written against them.
 
 ## 2026-10-08
 
+### Flint in the ground
+
+- "Leave salt and coal as they are and make gravel, dirt, grass and sand
+  very occasionally have flint in them." Digging gravel turns up a whole
+  flint one time in ten, dirt, grass or sand one in forty, as well as the
+  block's own drop, given to the digger a tick later (`rules.lua`). The
+  hook answers nothing, so the block's own rule and any other mod's answer
+  stand. The generator cannot lay flint inside those four only, since a
+  fill cannot ask what a block already holds, so it is found by digging.
+  Salt and coal stay as they are.
+
 ### The ores, for Science and Magic
 
 "Look through Science and Magic and the blocks they added ... use all
