@@ -1321,6 +1321,71 @@ function M.thinned(take)
     return done
 end
 
+-- **No cover on another cover** (2026-10-12, the designer's playtest:
+-- "grass should not grow on bushes or flowers, only ground; no ground cover
+-- should grow on other ground cover"). The engine's `fill_cover` never
+-- stands a run on one IT wrote, but a run an EARLIER call wrote is ground
+-- to it, and every biome lays its grass, its flowers and its plants in
+-- separate calls. The biomes split their columns between them with one
+-- noise's ranges, but a run's take is sampled at its base cell, and on top
+-- of a tuft that cell is two thirds of a block up, where the fine noises
+-- read something else. So the covers of a chunk are made EXCLUSIVE here:
+-- each take FLAT (every noise in it drawn out in y, so a column decides
+-- the same at every height) and cut out of every column a cover before it
+-- in the chunk took. A cover never lands on another, in any biome, with
+-- no biome file changed. Engine ask 46 asks for the rule in `fill_cover`
+-- itself (a passable cell is not ground), which would make this go.
+local function flat(spec)
+    if type(spec) ~= "table" then
+        return spec
+    end
+    local out = {}
+    for k, v in pairs(spec) do
+        out[k] = (k == "stretch") and v or flat(v)
+    end
+    if out.op == "noise" then
+        local s = spec.stretch or {}
+        out.stretch = { x = s.x, y = 1000000, z = s.z }
+    end
+    return out
+end
+local EXCLUSIVE = {}
+-- The takes of one chunk's covers, in the order they are laid, exclusive.
+-- `takes` are compiled programs; a take compiled without a source is passed
+-- through as it is.
+function M.exclusive_takes(takes)
+    local key = {}
+    for i, t in ipairs(takes) do key[i] = tostring(t) end
+    key = table.concat(key, "|")
+    local done = EXCLUSIVE[key]
+    if done then
+        return done
+    end
+    done = {}
+    local claimed = nil
+    for i, take in ipairs(takes) do
+        local spec = SOURCES[take]
+        if spec == nil then
+            done[i] = take
+        else
+            local own = flat(min(spec, noise("cover_thin", COVER_THIN_FREQ, 1, 1.0)))
+            local spec_i = claimed and min(own, sub(const(0.0), claimed)) or own
+            -- A chunk of many covers could outgrow a program (4,096
+            -- operations, 16 live buffers): then this cover is flat but
+            -- not exclusive, rather than the mod disabled.
+            local ok, program = pcall(compile, "cover.exclusive", spec_i)
+            if not ok then
+                game.log("tiamat_default_world: an exclusive cover take was refused; laid flat only: " .. tostring(program))
+                program = M.thinned(take)
+            end
+            done[i] = program
+            claimed = claimed and max(claimed, own) or own
+        end
+    end
+    EXCLUSIVE[key] = done
+    return done
+end
+
 M.programs = {}
 local P = M.programs
 -- The top programs, one set per terrain mode the world needs: the dev

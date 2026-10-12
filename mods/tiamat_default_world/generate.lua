@@ -569,11 +569,22 @@ local function generate(buf, pos)
             -- the second's turf must be down before the first's grass
             -- stands on it. The engine keeps a run inside one block and
             -- never stands one on another (`fill_cover`).
+            -- Exclusive since 2026-10-12 (shape.exclusive_takes): no cover
+            -- stands on one an earlier call laid, the playtest's "no ground
+            -- cover should grow on other ground cover".
+            local covers, takes = {}, {}
             for _, biome in ipairs(found) do
                 for _, fill in ipairs(fills_of(biome)) do
                     if fill.cover then
-                        buf:fill_cover(fill.cover, { cells = fill.cells, take = shape.thinned(fill.take) })
+                        covers[#covers + 1] = fill
+                        takes[#takes + 1] = fill.take
                     end
+                end
+            end
+            if #covers > 0 then
+                local exclusive = shape.exclusive_takes(takes)
+                for i, fill in ipairs(covers) do
+                    buf:fill_cover(fill.cover, { cells = fill.cells, take = exclusive[i] })
                 end
             end
             -- The structures, after the covers: a trunk's base merges into

@@ -125,9 +125,9 @@ local MANTLE_BY_DEAD_ONE_IN = 4 -- dead wood gets a patch round it this often â€
 local MANTLE_R = { 2, 2 }      -- patch radius, blocks
 local MANTLE_BLOOM_ONE_IN = 3  -- columns of the patch that carry a bloom
 
-local BRAMBLE_CHANCE = 700     -- one grass block in this many, inside a bramble patch
+local BRAMBLE_CHANCE = 350     -- one grass block in this many, inside a bramble patch (700 until 2026-10-12)
 local BRAMBLE_PATCH = 24       -- patches this many blocks square, one in BRAMBLE_PATCH_ONE_IN
-local BRAMBLE_PATCH_ONE_IN = 6  -- 3 until 2026-09-25: half the brambles
+local BRAMBLE_PATCH_ONE_IN = 2  -- 3 until 2026-09-25, 6 until 2026-10-12 ("not enough brambles"): six times what it was
 local HOLLOW_ONE_IN = 3        -- one oak in this many has a hollow under its roots
 
 -- Trees are tried so often they keep the edit queue full; anything rarer
@@ -959,7 +959,34 @@ end
 
 -- A tangle: over a disc of one to two blocks, each block gets about half
 -- its lower two cell layers and a few cells of the top one, lifted to sit
--- on the surface within its block. Merged, so the turf's cells stay.
+-- on the surface within its block. Merged, so the turf's cells stay; but
+-- the ground cover's are cleared first (2026-10-12, the playtest: "grass
+-- should not grow on bushes"), or the tufts stood up through the tangle.
+local COVER_PLANTS = {}
+for _, id in ipairs({ "tall_grass", "fern", "ladys_mantle", "ladys_mantle_bloom", "blue_lunaria", "roman_chamomile",
+    "wild_wheat", "wild_mint", "bluebell" }) do
+    if blocks[id] then COVER_PLANTS[blocks[id]] = true end
+end
+-- The cells of a block that hold ground cover, as an occupancy mask.
+local function cover_cells(b)
+    if b == nil or b.occupancy == 0 then
+        return 0
+    end
+    if b.cells then
+        local m = 0
+        for i = 1, 27 do
+            if COVER_PLANTS[b.cells[i]] then m = m | (1 << (i - 1)) end
+        end
+        return m
+    end
+    return COVER_PLANTS[b.material] and b.occupancy or 0
+end
+local function clear_cover(x, y, z)
+    local m = cover_cells(at(x, y, z))
+    if m ~= 0 then
+        edits.push({ x = x, y = y, z = z }, "engine:air", m, true)
+    end
+end
 local function place_bramble(x, y, z, rng)
     if not edits.room(RESERVE) then
         stats.no_room = stats.no_room + 1
@@ -990,6 +1017,8 @@ local function place_bramble(x, y, z, rng)
                     local low = (mask << (9 * layer)) & FULL
                     local high = mask >> (9 * (3 - layer))
                     if low ~= 0 then
+                        clear_cover(x + dx, by, z + dz)
+                        clear_cover(x + dx, by + 1, z + dz)
                         edits.push({ x = x + dx, y = by, z = z + dz }, "tiamat_default_world:bramble", low, true)
                         placed = placed + 1
                     end

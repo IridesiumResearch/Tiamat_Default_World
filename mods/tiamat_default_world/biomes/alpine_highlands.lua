@@ -87,12 +87,14 @@ local MAP_ORIGIN_X = MAP_CENTRE_X - MAP_SIDE * MAP_SCALE // 2
 local MAP_ORIGIN_Z = MAP_CENTRE_Z - MAP_SIDE * MAP_SCALE // 2
 local MAP_SEED = 1303                                 -- mixed with the world's own by the engine
 -- The whole range squashed to this share of its height (2026-09-25: "a bit
--- too tall", down a fifth). Applied to the finished height map, after the
+-- too tall", down a fifth; 2026-10-12, the playtest: "mountains in alpine
+-- highlands are still too big, reduce to 65%", 0.8 to 0.52). Applied to
+-- the finished height map, after the
 -- erosion, so the shape is exactly the one tuned below and only shorter;
 -- the snow line, its valley drop and crest rise and the tree line are
 -- scaled by it too, so the snow and the firs keep the same share of every
 -- mountain. The amplitudes below are the range BEFORE it.
-local HEIGHT_SCALE = 0.8
+local HEIGHT_SCALE = 0.52
 
 -- The range. Four ridged octaves, each a crest along its noise's zero
 -- contour, the finer weighted by the coarser.
@@ -196,7 +198,7 @@ local PERMAFROST_MIN = 0.05
 local DIRT_FREQ = 1 / 80
 local DIRT_MIN = -0.08
 local DIRT_DEPTH = 0.003                              -- km: three blocks
-local TREELINE = 256                                  -- blocks over the base dome (320 before HEIGHT_SCALE, and an integer: the jitter hashes it): turf and firs below (the firs read it at runtime); 200 was the valley floors and little else
+local TREELINE = 166                                  -- blocks over the base dome (320 before HEIGHT_SCALE, 256 at 0.8; an integer: the jitter hashes it): turf and firs below (the firs read it at runtime); 200 was the valley floors and little else
 local TREELINE_WANDER = 0.06                          -- km: the line wanders this much (+/- half) at TREELINE_WANDER_FREQ, for the scatter
 local TREELINE_WANDER_FREQ = 1 / 90
 local TURF_FREQ = 1 / 60
@@ -338,7 +340,7 @@ tdw.on_world_init(function()
     height_map:combine(land, "mul")
     height_map:combine(level, "add")
 
-    -- And the whole of it a fifth lower (HEIGHT_SCALE, above).
+    -- And the whole of it lower (HEIGHT_SCALE, above).
     height_map:scale_by(HEIGHT_SCALE)
     game.log(string.format("tiamat_default_world alpine: maps built, %d samples a side at %d blocks, origin %d, %d",
         MAP_SIDE, MAP_SCALE, MAP_ORIGIN_X, MAP_ORIGIN_Z))

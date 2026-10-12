@@ -8,6 +8,35 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-10-12
+
+### The designer's playtest
+
+- **No cover on another cover** ("grass should not grow on bushes or
+  flowers, only ground; no ground cover should grow on other ground
+  cover"). The engine's `fill_cover` treats a run an earlier call laid as
+  ground, and the biomes lay grass, flowers and plants in separate calls;
+  their split of columns failed where a take, sampled two thirds of a
+  block up on a tuft, read a different value of a 3D noise. Now
+  `shape.exclusive_takes` makes every take in a chunk flat and cuts it
+  out of the columns every cover before it took, for every biome at once.
+  Counted over 2,880 chunks in every ring: ferns on monstera, grass on
+  sagebrush and flowers on grass, about 350 cells, down to none (a pitcher
+  plant's edge, 7 cells). It costs about 7% of a chunk across the world
+  and 30% in a meadow of four covers; engine ask 46 would make it free.
+- **The woodland's brambles clear the grass where they grow** (they were
+  merged into blocks with tufts in them, so the grass stood up through the
+  tangle), and **there are six times as many**: patches in half the squares
+  (one in six) and twice as likely in one. The berries are Life's: sibling
+  ask L-2.
+- **Quieter**: the sound beds and the night layer at 0.25 (0.55 and 0.5).
+- **The wind comes in gusts**: where a place's bed is the wind (every open
+  biome, and the Whispering Crevasse), it blows for fifteen to thirty-five
+  seconds after two to five minutes of calm, faded in and out.
+- **The Alpine Highlands at 65%** of their height (`HEIGHT_SCALE` 0.8 to
+  0.52, the tree line 256 to 166 blocks). The range is a map built once in
+  a world's life: a new world has it.
+
 ## 2026-10-08
 
 ### Flint in the ground

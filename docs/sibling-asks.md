@@ -35,6 +35,18 @@ takes its writer out.
 
 ## Tiamat Default Life
 
+### L-2. Fewer berries from a bramble (2026-10-12): OPEN
+
+**Wanted.** The designer's playtest: "too many berries on brambles and not
+enough brambles." The brambles are the world's, and there are six times
+as many now in the woodlands (World, 2026-10-12). The berries are Life's:
+`config.lua` gives one a dig and a pick and regrows them at
+`bramble_regrow_chance = 50`.
+
+**Smallest change.** A smaller yield or a slower regrowth, Life's call, so
+that the berries a woodland gives stay about what they were with six
+times the bushes.
+
 ### L-1. The blind fish of the grottoes (2026-10-01): OPEN, low
 
 **Wanted.** The Blind Fish Grottoes' brief (3.4, the dark caves): "pale,

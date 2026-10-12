@@ -78,11 +78,37 @@ local NIGHT = {
     jungle = "frogs",
 }
 local DAWN, DUSK = 0.25, 0.75
-local GAIN = { bed = 0.55, layer = 0.5 }
+-- Under half what they were (0.55 and 0.5 until 2026-10-12, the playtest:
+-- "background noise is way too loud").
+local GAIN = { bed = 0.25, layer = 0.25 }
 local FADE = 80                -- ticks a bed takes to cross-fade at a line
 local SAMPLE_EVERY = 10        -- ticks between looks, the HUD's own cadence
 -- The dark's punctuation: a far echo now and then, only in a cave's bed.
 local ECHO_LEAST, ECHO_SPAN = 1800, 5400   -- ticks: one per 1.5 to 6 minutes
+
+-- **The wind comes in gusts** (2026-10-12, the playtest: "wind should only be
+-- played occasionally"). Where a place's bed is the wind, it is silent most
+-- of the time and blows now and then: calm for CALM ticks, then a gust of
+-- GUST, each length drawn fresh from a seeded stream, the loop faded in and
+-- out over GUST_FADE. Every open biome's bed is the wind, so this is most
+-- of the surface's ambience.
+local CALM_LEAST, CALM_SPAN = 2400, 3600       -- two to five minutes of calm
+local GUST_LEAST, GUST_SPAN = 300, 400         -- a gust of fifteen to thirty-five seconds
+local GUST_FADE = 120
+local gusts = 0
+local function windy(s, px, py, pz)
+    if s.gust_left == nil then
+        s.gusting, s.gust_left = false, CALM_LEAST // 2
+    end
+    s.gust_left = s.gust_left - SAMPLE_EVERY
+    if s.gust_left <= 0 then
+        gusts = gusts + 1
+        local rng = game.rng_stream({ x = px // 16, y = py // 16, z = pz // 16, seed = game.world_seed or tdw.seed or 0 }, "gust:" .. gusts)
+        s.gusting = not s.gusting
+        s.gust_left = s.gusting and (GUST_LEAST + rng:below(GUST_SPAN)) or (CALM_LEAST + rng:below(CALM_SPAN))
+    end
+    return s.gusting and "wind" or nil
+end
 
 -- What kind of ground an id names: a bed, from the biome tables.
 local function bed_for(here)
@@ -140,6 +166,9 @@ tdw.on_tick(function(dt)
                     bed, layer = s.bed, s.layer
                 else
                     bed = bed_for(here)
+                    if bed == "wind" then
+                        bed = windy(s, px, py, pz)
+                    end
                     if night and bed ~= "cave" and bed ~= "underworld" then
                         layer = NIGHT[here]
                     end
@@ -147,10 +176,12 @@ tdw.on_tick(function(dt)
             end
             if bed ~= s.bed then
                 s.bed = bed
+                local fade = (bed == "wind" or s.was_wind) and GUST_FADE or FADE
+                s.was_wind = bed == "wind"
                 if bed then
-                    game.play_loop{ id = "bed", sound = bed, everywhere = true, player = uuid, gain = GAIN.bed, fade_ticks = FADE }
+                    game.play_loop{ id = "bed", sound = bed, everywhere = true, player = uuid, gain = GAIN.bed, fade_ticks = fade }
                 else
-                    game.stop_loop{ id = "bed", player = uuid, fade_ticks = FADE }
+                    game.stop_loop{ id = "bed", player = uuid, fade_ticks = fade }
                 end
             end
             if layer ~= s.layer then
