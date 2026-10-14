@@ -14,7 +14,397 @@ does — and `scripts/check-stubs.sh` fails the engine's build if a `game.*`
 function exists that it does not document. **It cannot fall behind the engine.**
 If something is not in there, it does not exist; do not invent it.
 
+## The API's version, and how a function leaves it
+
+The mod API has a version of its own, `major.minor`, apart from the engine's.
+**1.0 is the API as frozen at engine 0.5.0.** `game.api_version` holds it at
+run time, and the header of [`stubs/game.lua`](stubs/game.lua) names the
+version the stubs describe; the engine's CI fails if the two differ, so the
+stubs you vendored say which API you wrote against.
+
+The rule the number carries:
+
+- **Within a major, nothing you can call goes away or changes its meaning
+  without a deprecation first.** New functions, new optional fields, new
+  events a mod may ignore: the minor goes up, and the list below names the
+  minor each arrived in.
+- **A deprecation is announced, then waited out.** A function, field or
+  option on its way out gets `---@deprecated Since API 1.x, goes in 1.y:
+  use ...` on its stub (your editor strikes it through) and an entry in the
+  list below, in the same release. It keeps working, unchanged, for at least
+  one minor release after the one that deprecated it. The release that
+  removes it raises the minor again; calling it then is a Lua error, which
+  disables the mod as any error does, so read the list before moving a mod
+  to a new engine.
+- **The major goes up only to break that rule on purpose**, and none is
+  planned.
+
+A mod that needs a later minor than the engine it is loaded into can say so
+and stop: `if game.api_version < "1.2" then error("needs API 1.2") end`
+during registration disables the mod with that reason in the server log,
+which beats a `nil` call halfway through a tick. (String comparison works
+until a minor reaches 10; compare numbers from `string.match` if you want
+to be exact.)
+
+## What changed since engine 0.3.0
+
+If the copy of this file in your mod is older than this list, re-vendor
+`api/` from the engine's `main` and read the sections named here. Each item
+is a mechanism a mod may now use; none of them changes a mod that ignores it.
+Everything listed is in API 1.0; from 1.1 on, an entry names the minor it
+arrived in, and a deprecation is an entry here too.
+
+- **A swimming player, and a crawling one** (2026-10-14, Life ask 23 parts
+  2 and 3; protocol 91). A player off the bottom in a fluid is tagged `SWIM`
+  (4) on everybody's figure, so a model's `swim` clip plays where it used to
+  walk. And `crawl = true` on `game.set_player_abilities` lets that player
+  lie down to go under a one-block gap — sneaking at it, or when a ceiling
+  closes over them — and stand where there is room, never into a ceiling:
+  the box is 2.4 cells tall while they crawl, the eye 2.0 up, the pace the
+  sneak's, no jump, and the client predicts the same posture. The tag is
+  `CRAWL` (6), matched to a clip named `crawl` (the engine's humanoid has
+  none and stands idle); `game.entity(body).crawling` says whether a player
+  is down. A world that never grants it is exactly the world it was.
+- **A schematic stamped at run time** (2026-10-13, weather ask W35).
+  `game.stamp_schematic(schematic, pos, { turn, domain })` writes a
+  `game.schematic` (or `game.schematic_shapes`) into the running world as
+  `buf:scatter` writes it — a whole mask replaces, a partial one merges by
+  cell — paced with `game.plans.stamp` and answering whether it was accepted.
+  `turn` is 0 to 3 quarter turns about the vertical, `+z` to `+x`: offset
+  `(dx, dz)` to `(dz, -dx)`, cell `(x, y, z)` to `(z, y, 2 - x)`. One
+  structure built at load now serves a generator and an event alike.
+- **A line of yours under a stack's name on hover** (2026-10-13, Craft ask
+  16). `game.set_hover(uuid, { [material] = "text", ... })`, latest state per
+  player and keyed by material (a block id or the number a stack reports),
+  each line at most 256 bytes, at most 256 lines, `nil` to clear: the client
+  draws it under the stack's name wherever that player hovers a stack of that
+  material. What it says is yours — Craft's "Makes: …" is the reference.
+- **Whole blocks first, and a stack dropped outside the sheet** (2026-10-12,
+  UI ask 21). `game.set_slot_grain(27)`, registration only, makes a plain
+  right-click split and place loose material in whole blocks (a cut in whole
+  cuts); shift+right-click is the unit gesture it used to be. A click outside
+  every open screen with a stack on the cursor reaches the screen's owner as
+  `kind = "dropped"` with `click` and the `stack` that has already left the
+  player — all of it, one block, one unit; answer `true` to keep it, or the
+  engine puts it back on the cursor. Nothing changes for a mod that asks for
+  neither.
+- **A grant may say no to an operator's flight** (2026-10-13, Life ask 22).
+  `game.set_player_abilities(uuid, { operator_fly = false })` makes the grant
+  the whole answer for that player: the operator list no longer OR-s flight
+  in. Left out, nothing changes.
+- **A cover never stands on a passable cell** (2026-10-12, World ask 46).
+  `buf:fill_cover` takes a cell whose material is `passable` as neither
+  ground nor empty, so one call's grass is not the next call's floor and is
+  not written over. A mod that cut earlier covers out of later takes by hand
+  can stop.
+- **An item moves in whole items** (2026-10-12, Craft ask 15). A material
+  from `register_item` has no cells, so in every inventory the engine holds a
+  right-click halves a stack of it in whole items, a right-click with a stack
+  held puts down one whole item, and `game.give`/`game.take` round to whole
+  items (27 units). Nothing to do unless a mod handed out parts of an item
+  and relied on them.
+- **A tint on an entity** (2026-10-09, Life ask 21). `game.set_entity(id,
+  { tint = { r, g, b } })` colours a creature's figure until changed;
+  `tint_ticks` makes it a flash eased back out by the engine — the hit flash,
+  a frozen creature's blue. `game.entity(id).tint` reads it back. Presentation
+  only, not persisted.
+- **A flicker on a block's light** (2026-10-09). `register_block{ light_emit
+  = {...}, flicker = { depth = 0.3, rate = 8 } }` makes the light breathe on
+  the client: the ground near it dims by up to `depth` with smooth noise,
+  `rate` steps a second, and a model block dims in step. Presentation only.
+- **`sweeps = false` on a whole block** (2026-10-08). A `whole` block set
+  down on thin ground sweeps it by default; `sweeps = false` makes it stand
+  among the ground's cells instead, its model clipping through — a torch.
+  Sub-Node Contract §7.6.
+- **`e.swept` on the place event** (2026-10-08). `true` when the placement
+  destroys what the block holds — a `whole` block laid on a partial block
+  with no top node, or grass cards. A mod gating what a bare hand may clear
+  refuses here with its own words; the remains stay. See "Your hooks".
+- **Nothing is built on grass** (2026-10-08). A `billboard` block — a grass
+  card — is neither ground nor in the way: a placement against it lands
+  where the card is and the card is gone. Nothing to do. Sub-Node Contract
+  §7.6.
+- **A whole block set on a thin floor sweeps the floor** (2026-10-08). On a
+  partial block with no node in its top layer, a `whole` block's placement
+  destroys that block's remains and lays the thing whole at its bottom; with
+  any top node present it goes in the block above, intact. A side-face
+  placement with no air for the shape says "this is not flat ground".
+  Nothing to do. Sub-Node Contract §7.6.
+- **A model block's slot shows the model, a grass card shows the card**
+  (2026-10-08). A `model` block is drawn in a slot as its model in its own
+  skin, from the same angle as a cube, once both have arrived; a `billboard`
+  block is drawn flat, like an item. Nothing to do; `textures` is still what
+  shows until the model lands.
+- **A whole block swapped where one stands** (2026-10-08). `set_block` of a
+  `whole` block on the block another stands in — a campfire lit, a torch burnt
+  out — replaces the thing and keeps the ground cells it was set into. Nothing
+  to do. Sub-Node Contract §7.5.
+- **A part-full block digs in part of the time** (2026-10-08). A block
+  brush's dig takes `hardness` scaled by how full the block was when the dig
+  began: a block a third full, a third of the time. A chisel's cell and a
+  `whole` block are priced as before. Nothing to do. Sub-Node Contract §7.7.
+- **Blocks drawn as models, and blocks dug whole** (2026-10-02).
+  `register_block{ model = "<your model id>", shape = {...} }` draws a
+  registered glTF in place of the block's cells; `whole = true` makes any
+  block one piece: dug whole by any tool, placed as its shape, paid 27 either
+  way. A campfire, a brazier, an anvil, a station. See "A campfire is a
+  `model` block, and it is `whole`" below.
+- **Ground that is not a full block** (2026-10-07). A thing placed against
+  the top of a block under three quarters full goes into that block and
+  stands on the first full block beneath — a whole material's model clips
+  through the ground cells, loose material fills the gaps. Nothing to do: it
+  is how placement works now. Sub-Node Contract §7.6.
+- **`[[setting]]` in `mod.toml`** (2026-10-07). A player setting declared in
+  the manifest shows under your mod on the start screen's Mods tab, before any
+  world is open; `register_setting` stays for the rest. Never both for one id.
+  See "Your mod's own options".
+- **`domain` on the place and dig events** (2026-10-05). `e.domain` says which
+  space a block was placed or dug in; key placed things on it with the
+  coordinates. See the hooks paragraph.
+- **`light_floor` on `set_sky_modifier`** (2026-10-05). The least the frame is
+  lit at, in the open and underground: night-sight. A mod composing overlays
+  sends the highest floor.
+- **A creature turns by its pitch** (2026-10-05). `set_entity(id, { pitch })`
+  on a mod's own model tips it about the middle of its collider; a climbing
+  spider lies on its wall. Players and mounts stay level.
+- **`stars` on `set_sky_modifier`, `bottom` on a chunk's fog** (2026-10-02).
+  A modifier may name how much of the star catalog shows; a surface fog may
+  stop above a cave.
+- **The moon** (2026-10-05). The night is lit from opposite the sun, in the
+  keyframe's night `sun` colour, with shadows; a sky's night keyframes are
+  the moonlight, and no longer need a lifted grade to be legible.
+
 ---
+
+## Reference, by area
+
+Every function and method the stubs declare, one line each, grouped by what
+it is for — to find the one you need. Its contract is in
+[`stubs/game.lua`](stubs/game.lua): the options table, the fields, the
+reasons. This list is generated from the stubs by `scripts/api-reference.py`,
+and the engine's CI fails if the two disagree, so a function that is here
+exists and one that is not does not.
+
+<!-- api-reference:start -->
+
+### The `game` table's fields
+
+- `game.CHUNK_BLOCKS` (integer) — Blocks along each axis of a chunk.
+- `game.UNITS_PER_BLOCK` (integer) — Sub-node units in a block.
+- `game.OCCUPANCY_FULL` (integer) — Every one of a block's 27 sub-nodes, as a mask.
+- `game.ITEMS_PER_STACK` (integer) — How many of a thing one inventory slot holds.
+- `game.AIR` (integer) — The numeric id of air.
+- `game.mod_id` (string) — Your mod's id, and your registration namespace.
+- `game.api_version` (string) — The version of the mod API this engine speaks, `"major.minor"`; `"1.0"` is the API frozen at engine 0.5.0.
+- `game.world_seed` (integer?) — The world's seed — the same number a generator's `pos.seed` carries — for sampling a density or a map outside a generator (`density:at(x, y, z, game.world_seed)` to aim a spawn at the ground).
+
+### Your mod, and what it shares
+
+- `game.log(message)` — Writes a line to the server log, attributed to your mod.
+- `game.world_option(id)` — What this world chose for one of its mods' WORLD options, or `nil`.
+- `game.register_setting(spec)` — Offers the player an option, shown in the in-game settings screen.
+- `game.setting(player, id)` — What a player answered for one of your settings.
+- `game.export(exports)` — Publishes a table for the mods that depend on you to read.
+- `game.exports(mod_id)` — Another mod's exports, or `nil`.
+- `game.content_hash(file)` — The content hash of a file in your mod's directory, as 64 hex characters — for a dialog's `image` or `nine_slice` without pasting a hash by hand.
+
+### Registering blocks, items, fluids and tools
+
+- `game.register_block(spec)` — Registers a block.
+- `game.register_item(spec)` — Registers an ITEM: something a player can carry and cannot build with.
+- `game.register_fluid(spec)` — Registers a fluid.
+- `game.register_tool(spec)` — Registers a tool.
+- `game.get_block_id(id)` — Looks up a registered block's numeric id by its string id.
+- `game.block_of(material)` — The block id a numeric material belongs to: the inverse of `game.get_block_id`.
+- `game.fluid_id(name)` — A fluid's number for this session, by name — or `nil` for one nobody registered.
+- `game.hardness(material)` — What a block's registration said its hardness was, by numeric material: seconds to break with a bare hand, the default for a block that said nothing.
+- `game.tags(material)` — The tags a block was registered with, by numeric material — `{ "ore" }`, say — so a mod can class the world's blocks by rule rather than name them one by one.
+- `game.tagged(tag)` — The qualified ids of every block registered so far that carries a tag, in the order they were registered — the other direction from `game.tags`: not what a block is tagged, but which blocks a tag names.
+
+### Worldgen: generators and callbacks
+
+- `game.register_on_world_init(callback)` — Runs ONCE in a world's life, before the first chunk is generated.
+- `game.register_on_generate(callback)` — Registers a world generation callback.
+- `game.register_chunk_tint(callback)` — Gives one chunk its biome colour: a multiplier every TINTED material in it is drawn through.
+- `game.register_chunk_fog(callback)` — Gives one chunk's column its own fog — a rainforest's ground mist, a marsh's murk — on top of the sky's distance fog.
+- `game.noise_heightmap(pos, options)` — Generates a heightmap for a chunk from fractal noise.
+- `game.flat_heightmap(height)` — A heightmap with the same height in every column.
+- `game.rng_stream(pos, name)` — Opens a named random stream for a chunk.
+- `game.density(spec)` — Compiles a density field from a table of nested operations.
+- `game.map(spec)` — Fetches this mod's map by name, building an empty one the first time.
+- `game.schematic(blocks)` — A structure built once, from a list of blocks, for `buf:scatter` to stamp — or `game.stamp_schematic`, at run time.
+- `game.schematic_shapes(shapes)` — A structure CUT from shapes, for `buf:scatter` to stamp: paths with a thickness, ellipsoids and the named cells of single blocks, rasterised to the cell natively.
+
+### Worldgen: the chunk buffer
+
+- `buf:fill_all(material)` — Fills every block with one material.
+- `buf:fill_below_heightmap(heightmap, material)` — Fills every block below the given surface.
+- `buf:fill_density(density, material, options)` — Fills every block where a density field is POSITIVE.
+- `buf:fill_palette(density, bands, options)` — Fills from a density field through a table of materials, in ONE evaluation.
+- `buf:fill_layers(depth, code, layers)` — Paints the surface's layers from ONE terrain evaluation: `depth` is a density positive underground, like any fill's field, and `code` is a cheap second density whose value at each BLOCK, rounded, names which set of layers the block gets.
+- `buf:fill_cover(material, options)` — Stands a run of cells on every surface the buffer already holds: ground cover — grass, ferns, anything that grows UP from the ground.
+- `buf:fill_fluid_below(level, fluid)` — Fills every block below `level` with a fluid, around the terrain.
+- `buf:fill_fluid_terraced(spec)` — Fills a body of fluid whose level is its own in every column, and holds it there with lips: a river running downhill.
+- `buf:scatter(spec)` — Stamps structures on the surface, across chunk edges, at generation.
+- `buf:set_block(x, y, z, material)` — Sets one whole block.
+- `buf:set_world(x, y, z, material)` — Writes one block by WORLD position, ignoring anything outside this chunk.
+- `buf:set_subnode(bx, by, bz, sx, sy, sz, material)` — Sets one sub-node cell.
+- `buf:set_subnode_world(x, y, z, material)` — The same write at sub-node resolution, in world CELL coordinates — three to a block, so block `(1, 0, 0)`'s lowest corner cell is `(3, 0, 0)`.
+- `buf:is_expanded()` — Whether this buffer has expanded to sub-node resolution.
+
+### Worldgen: fields, maps, heightmaps and random streams
+
+- `density:len()` — How many operations it compiled to.
+- `density:bounds(pos)` — What this field can possibly be over one chunk, without evaluating it.
+- `density:at(x, y, z, seed)` — This field's value at ONE world position.
+- `map:side()` — Samples along one side.
+- `map:scale()` — Blocks per sample.
+- `map:noise(options)` — Fills the whole map with fractal noise, in WORLD coordinates.
+- `map:offset(by)` — Adds a constant to every sample.
+- `map:scale_by(by)` — Multiplies every sample by a constant.
+- `map:clamp(low, high)` — Bounds every sample to a range.
+- `map:blur(radius)` — Smooths the map with a box blur.
+- `map:combine(other, how)` — Combines another map into this one, sample for sample.
+- `map:fill(density, options)` — Replaces every value with a density field's, sampled on one plane.
+- `map:heightmap(pos)` — One chunk's worth of heights, sampled from this map.
+- `heightmap:len()` — Number of columns.
+- `stream:below(bound)` — A uniformly distributed integer in `0..bound-1`.
+- `stream:next_bool()` — A boolean with even odds.
+- `schematic:len()` — How many blocks it holds.
+
+### The world at run time
+
+- `game.get_block(position)` — What a block holds, right now.
+- `game.set_block(position, block, occupancy, options)` — Replaces a whole block, at runtime.
+- `game.get_fluid(position)` — What a block holds.
+- `game.set_fluid(position, spec)` — Puts fluid in a block, or takes it away.
+- `game.get_light(position)` — The light at a block, right now.
+- `game.surface_at(spec)` — The top of a column: the first occupied block at or below `from`, looking down at most `depth` blocks (default 64, at most 256), in one call.
+- `game.line_of_sight(from, to)` — Whether one point in the world can see another.
+- `game.find_path(from, to, options)` — A walkable route between two points, or why there is not one.
+- `game.stamp_schematic(schematic, pos, options)` — Writes a schematic into the running world with its root at `pos`, turned, paced across ticks — the structure a generator scatters, built once at load, stamped by an event long after the ground was made: a wreck at the end of a rainbow, a ruin a quest uncovers.
+- `game.time_of_day()` — Where the day stands: 0 at midnight, 0.5 at noon, wrapping at 1.
+- `game.set_time_of_day(time)` — Winds the day.
+
+### Block events: vetoes, handlers and ticks
+
+- `game.register_on_dig_start(callback)` — Registers a veto on digs BEGINNING: the tick a dig is first seen, before any of the block has come off.
+- `game.register_on_dig_complete(callback)` — Registers a veto on completed digs.
+- `game.register_on_place(callback)` — Registers a veto on placements.
+- `game.register_on_punch(callback)` — Registers a veto on punches.
+- `game.register_on_use(callback, options)` — Registers a handler for USING a block: the place control with nothing to place.
+- `game.register_on_use_entity(callback)` — Registers a handler for USING an entity: the place control with an entity nearer than any block along the player's own reach ray — getting on a horse, milking a cow, shearing a sheep, feeding a pig.
+- `game.register_on_fluid_flow(callback)` — Registers a listener for flows that could not happen.
+- `game.register_random_tick(material, callback)` — Registers what happens when a block of yours gets a turn.
+- `game.register_on_tick(callback)` — Registers a per-tick callback.
+
+### Players
+
+- `game.register_on_player_join(callback)` — Called when a player arrives in the world.
+- `game.register_on_player_leave(callback)` — Called when somebody leaves.
+- `game.register_on_player_move(callback)` — Called when a player's feet cross into another block.
+- `game.register_on_chat(callback)` — Called when a player says something in chat.
+- `game.chat_to(player, text)` — Sends one line of chat to one player.
+- `game.move_player(player, position)` — Puts a connected player somewhere else.
+- `game.push_player(player, impulse)` — Adds to a connected player's velocity, in cells per tick.
+- `game.set_player_abilities(player, abilities)` — Sets what one player may do: fly, how fast they move, whether they may sprint, and how heavy gravity is for them.
+- `game.is_operator(player)` — Whether the server already trusts this player with operator powers.
+- `game.looking_at(player)` — What a connected player's crosshair is on, within their reach.
+- `game.look_direction(player)` — Which way a player is looking, as a unit vector, and from which domain.
+- `game.heading(dx, dz)` — The heading of a direction across the ground, in radians.
+- `game.player_entity(player)` — The entity mirroring a connected player, by their UUID.
+
+### Inventories and containers
+
+- `game.register_view(spec)` — Registers an inventory view: a place stacks may sit, given to every player.
+- `game.set_main_slots(slots)` — Fixes the size of `player:main` for this server.
+- `game.set_slot_grain(units)` — Makes a plain right-click deal in whole blocks.
+- `game.inventory(player, view)` — What a player is carrying in one of their views.
+- `game.give(player, spec)` — Puts material into a player's inventory.
+- `game.take(player, spec)` — Takes material out of a player's inventory.
+- `game.held(player)` — What a player is holding: the stack in the hotbar slot they have selected.
+- `game.slot(player, view, n)` — The stack in one slot of a player's view, or nil for an empty slot, a view that does not exist, a slot past its end, or a player who is not connected.
+- `game.select_slot(player, slot)` — Selects one of a player's hotbar slots.
+- `game.get_tool(player)` — The tool a player is holding, or nil for a bare hand.
+- `game.set_tool(player, tool)` — Puts a tool in a player's hand.
+- `game.make_container(name, slots)` — Makes an inventory that belongs to the WORLD rather than to a player.
+- `game.open_container(name, player)` — Opens a container for a player, so a screen can show it.
+- `game.close_container(name, player)` — Closes a container, putting its contents back into the world.
+- `game.container(name)` — What is in a container, in the same shape `game.inventory` reports stacks, plus a `slot` on each — one-based, and the slot the stack is actually in.
+- `game.container_give(name, spec)` — Puts a stack into a container.
+- `game.container_take(name, spec)` — Takes material out of a container.
+- `game.break_container(name)` — Removes a container and hands back everything that was in it.
+- `game.container_holder(name)` — Who has a container open, as a player UUID in hex — or `nil` for nobody.
+- `game.containers(prefix)` — The names of the containers that exist, starting with `prefix`, in name order.
+
+### Screens: dialogs, the HUD, hover lines, fonts and pictures
+
+- `game.show_dialog(spec)` — Shows a dialog on a player's screen.
+- `game.update_dialog(spec)` — Replaces the contents of a dialog already open.
+- `game.close_dialog(spec)` — Closes a dialog you opened.
+- `game.register_on_dialog_event(callback)` — Called when a player acts in a dialog you opened: a button, a slot click, a text, a shape, a stack dropped outside the sheet.
+- `game.set_hover(player, lines)` — A line of yours under a stack's name, per player, wherever they hover a stack of that material: an `item_slot`, an `item_grid`, any screen's.
+- `game.set_hud(player, values)` — Sets what YOUR HUD script should show one player.
+- `game.register_hud_script(file)` — Registers a HUD script this mod wants clients to run.
+- `game.register_font(spec)` — Registers a font your interface can draw text in.
+- `game.register_picture(spec)` — Registers a picture, so every client fetches it on join, and answers its content hash as 64 hex characters.
+- `game.show_over(entity, spec)` — Hangs a row of pictures over an entity, following it.
+
+### Input
+
+- `game.register_action(spec)` — Registers a named input action.
+- `game.register_on_action(callback)` — Called when a player presses or releases one of YOUR registered actions.
+
+### Entities and riding
+
+- `game.register_model(spec)` — Registers a model entities can be drawn as.
+- `game.spawn_entity(spec)` — Puts an entity in the world.
+- `game.despawn_entity(id)` — Removes an entity.
+- `game.entity(id)` — Everything the engine knows about an entity, or nil if the id is stale.
+- `game.set_entity(id, spec)` — Changes an entity.
+- `game.entities_in_radius(position, radius, source)` — Every entity within `radius` blocks of a position, nearest first.
+- `game.register_on_entity_step(callback)` — Runs once per tick for every entity your mod spawned.
+- `game.steer_entity(id, target, gait)` — Walks an entity one tick toward a place, jumping over what is in the way.
+- `game.transfer_entity(id, domain, position)` — Asks for a body to be moved into another simulation space.
+- `game.mount(player, entity, options)` — Seats a connected player on an entity, so their keys drive it — Life ask 18.
+- `game.dismount(player)` — Gets a player off whatever they are riding.
+- `game.mounted(player)` — The entity a connected player is riding, or `nil`.
+- `game.register_on_dismount(callback)` — Called when a rider comes off their mount — Life ask 18.
+
+### Sound and particles
+
+- `game.register_sound(spec)` — Registers a sound.
+- `game.bind_sound(cue, sound)` — Binds a sound to a named event.
+- `game.cue(spec)` — Raises a cue, playing whatever is bound to it.
+- `game.play_sound(spec)` — Plays a sound for everyone close enough to hear it.
+- `game.play_loop(spec)` — Starts a looping sound.
+- `game.stop_loop(id)` — Stops a looping sound by the id you gave it.
+- `game.emit_particles(spec)` — Scatters a burst of short-lived sprites — sea spray, a drip, mist.
+
+### Sky, weather and stars
+
+- `game.register_sky(spec)` — Registers the sky: how long a day is, and what colour it goes.
+- `game.set_domain_sky(id, spec)` — The sky a domain has, set while the world runs: a woven world's own dawn without a per-player overlay.
+- `game.set_sky_modifier(player, modifier)` — Lays weather over one player's sky: a standing change to the keyframes, eased on their client.
+- `game.register_clouds(spec)` — Declares this world's cloud deck.
+- `game.set_clouds(uuid, spec)` — Sets how much cloud one player is under.
+- `game.set_precipitation(player, precipitation)` — Sets the rain around one player: an emitter their client runs.
+- `game.set_rainbow(player, rainbow)` — Puts a rainbow in one player's sky, or fades it out with `nil`.
+- `game.flash(spec)` — Lightning, seen: a moment's light added to the sun and sky of every player within `radius` of `pos` in its domain.
+- `game.lightning(spec)` — Lightning, drawn: a jagged, forked bolt from `from` to `to`, shown to every player within `radius` of `from` in its domain.
+- `game.stars()` — The star catalog: every star in this universe, in a fixed order.
+- `game.world_position()` — Where the overworld sits in the universe, in the frame the catalog speaks.
+- `game.star_in_view(player)` — The star a player is looking at, and how squarely.
+
+### Domains: simulation spaces
+
+- `game.register_domain(spec)` — Registers a simulation space, or a template for making them.
+- `game.create_domain(template, key, options)` — Makes an instance of a template, or hands back the one already there.
+- `game.destroy_domain(id)` — Removes an instance and everything stored in it.
+- `game.register_on_domain_enter(callback)` — Registers what happens before a body enters a simulation space.
+- `game.register_on_domain_exit(callback)` — Registers what happens before a body leaves a simulation space.
+
+<!-- api-reference:end -->
 
 ## What a mod is
 
@@ -62,6 +452,14 @@ typos, namespace errors and load-order problems in seconds:
 
 ```console
 cargo run -p server -- --check-mods <mods-dir>
+```
+
+A mod to start from is one command away: the engine's template, written out
+with your id, name and licence, the stubs and this file beside it, and checked
+the same way before it is handed over.
+
+```console
+cargo run -p server -- --create-mod my_mod --into <mods-dir>
 ```
 
 It prints the mods that loaded, in dependency order, and every block that
@@ -124,6 +522,40 @@ partial ones. `game.inventory` reports each stack as
 are different numbers and confusing them is the commonest arithmetic bug here,
 and `blocks`/`nodes` are already worked out for you, so do not divide again.
 
+**A cut of several materials** — one carved shape, each of its 27 cells its own
+material — is a stack too, and it carries `cells`: 27 numeric ids, entry `i`
+being cell `i - 1` (`x + 3*y + 9*z`), `0` for empty. Its `material` is the
+LOWEST id in the cells and its `shape` their occupancy (the full mask
+`0x7FFFFFF` when it fills the block, never nil). Give one with
+`game.give(uuid, { cells = cells, count = n })` — no `material`, no `shape`;
+the engine derives both. **The engine does not craft it for you**: one item
+costs one unit of each cell's own material, so take `n * cells_of(m)` units of
+every material `m` first, then give the cut. Take it back with the same
+`cells`: a take naming only a material never touches a cut of several, and one
+moves in whole items. A `shape_editor` given `cells` edits one, and its
+`"chiselled"` event reports `cells` — pass them straight to `game.give`.
+`game/core_ui/init.lua` is the worked example: its shape crafter's "Several
+materials" box, with the material list as the brush.
+
+```lua
+local need = {}                                  -- cells of each material, per item
+for _, id in ipairs(event.cells) do
+    if id ~= 0 then need[id] = (need[id] or 0) + 1 end
+end
+local taken, short = {}, false
+for id, per in pairs(need) do
+    taken[id] = game.take(uuid, { material = id, units = per * n })
+    short = short or taken[id] < per * n
+end
+if short then                                    -- put back exactly what was taken
+    for id, units in pairs(taken) do
+        if units > 0 then game.give(uuid, { material = id, units = units }) end
+    end
+else
+    game.give(uuid, { cells = event.cells, count = n })
+end
+```
+
 ### 3. String IDs are canonical; numbers are per-session
 
 `"core:white"` is the identity. The numeric ids `game.get_block_id` hands back
@@ -141,15 +573,47 @@ calling one is a hard error. Anything conditional on the world, the player or
 the time of day belongs in a hook, not in registration.
 
 Hooks (`register_on_tick`, `register_on_chat`, `register_on_place`,
-`register_on_dig_complete`, `register_on_use`, `register_on_generate`, …) are
-registered in the window and called for ever after.
+`register_on_dig_start`, `register_on_dig_complete`, `register_on_use`,
+`register_on_generate`, …) are registered in the window and called for ever
+after.
+
+**A tool gate goes on `register_on_dig_start`**, which is asked the tick a dig
+begins: "that needs a pick" reaches the player as they start, not after they
+have waited out the dig. `register_on_dig_complete` is asked at the first chip,
+for a mod that wants the block's state then. And a tools mod's `default` hand
+wins over the engine's reference `core_tools:hand` whatever the ids, so it need
+not `conflicts` the fixture out of the set to be the hand.
+
+**Every place, dig and use event says which space it is in** (`e.domain`:
+`"overworld"`, or a domain's id). A block placed on a body at a star is not
+the block at the same coordinates in the overworld, so a mod that records
+placed things — a station, a frame, a box — keys them on the domain and the
+coordinates together, and reads the block back with `game.get_block{ x, y,
+z, domain = e.domain }`. Keeping each player's domain from the move hook and
+trusting the order was the workaround; the field is the fix.
 
 **Right-clicking a block with nothing to place is `register_on_use`**, not a
 cancelled dig. Picking fruit, opening a door, pulling a lever: the event has the
 cell, what it is made of and what is in the hand, `game.get_block` works inside
 it, and returning `""` says you handled it. Return `nil` for blocks that are not
 yours, so the next mod — and in the end the engine's own "nothing selected"
-warning — gets its turn.
+warning — gets its turn. **A callback registered with `materials = { "campfire_lit",
+... }` is asked first, and only, at those blocks**, ahead of every callback with
+no list — a fire's own mod hears the use before a mod that eats whatever is
+held. `register_on_use` may be called twice per mod, once with `materials` and
+once without: each is its own slot, so a mod can both claim its own blocks and
+still be heard, in its ordinary load-order place, at every block it cannot
+name. **Right-clicking at nothing** (open sky, or past reach) is a use too,
+heard only by a callback registered with `{ anywhere = true }` — the UNLISTED
+one; a listed callback can never be asked about a use with no block, so
+`anywhere` on one is refused at load: it comes with no cell — `e.x` and
+`e.material` nil — and `e.held` as ever, which is how a meal is eaten wherever
+the player looks. A callback that did not ask never sees a use without a
+cell.
+**Right-clicking an entity is `register_on_use_entity`**: the server casts
+the ray, a creature nearer than any block is the target, the event carries it
+with its owner and the hand, and a use nobody handles falls through to the
+block. `game.looking_at` answers `{ entity = id }` in the same case.
 
 **Between events, `game.looking_at(uuid)` says what a player's crosshair is
 on** — the same `{ x, y, z, domain, material }` a use event carries, plus the
@@ -457,6 +921,27 @@ a boolean or the chosen STRING — never the raw index — so comparing against
 `"unfair"` keeps working when you insert an option above it, and it answers your
 declared default for a player who has never touched it.
 
+**Declare it in `mod.toml` if the start screen should show it.** The start
+screen runs no Lua, so a setting only `register_setting` knows about appears on
+the in-game settings page but not under your mod on the Mods tab. The same
+setting as a `[[setting]]` shows in both, with the same fields as
+`[[world_option]]` (`id`, `name`, `description`, `options`, `default`):
+
+```toml
+[[setting]]
+id = "difficulty"
+name = "How hard the mimics hit"
+options = ["gentle", "ordinary", "unfair"]
+default = 2        # ONE-BASED here, like [[world_option]]: "ordinary"
+```
+
+One declaration per id: a `register_setting` for an id `mod.toml` already
+declares fails your mod's load ("`my_mod:difficulty` is declared in mod.toml;
+declare a setting once"). `game.setting(uuid, "my_mod:difficulty")` answers the
+same either way. Note the one difference of convention: `register_setting`'s
+`default` is a zero-based index, a manifest's is one-based (a toggle is 0 or 1
+in both).
+
 **Answers belong to the world, not to the machine.** A player's choices are
 remembered per world and per server, so they are still there when they come
 back to that server and do not follow them into the next one. That is the same
@@ -735,7 +1220,10 @@ end)
 
 `visibility` is how many blocks a player sees into it (95% hidden there), the
 colour is its colour in daylight — the engine dims it at night — and `top` makes
-it ground fog that thins over a few blocks above that height. The engine blends
+it ground fog that thins over a few blocks above that height. `bottom` is its
+mirror: the fog thins over the same few blocks below it, so a surface fog can
+stand on its biome's ground instead of filling every cave under the column
+(`bottom = ground - margin`); without one the fog goes all the way down. The engine blends
 columns, and a fog is visible from outside as well as inside, so return what the
 PLACE is and let the edges take care of themselves. It runs where the tint does,
 in the generation workers.
@@ -871,6 +1359,10 @@ What to design around:
   value, or as an argument to your callback — you get the very table you gave,
   mutable and iterable, not a view of a view. A third mod that receives it
   gets a read-only view of YOUR table, however many hands it passed through.
+- **Views go straight into a dialog.** A widget another mod's exported
+  builder returned is a read-only view, and `game.show_dialog` /
+  `update_dialog` read views wherever they sit in the tree. Do not copy them
+  into plain tables first.
 - **A disabled mod's functions stop answering, even ones you are holding.** A
   function you took from `exports` yesterday answers `nil` the moment its owner
   is disabled, and its code does not run. If it matters whether the other mod
@@ -910,11 +1402,17 @@ end)
 - **Both answer in UNITS, not true or false.** A container is a fixed size, so a
   partial fit is ordinary: what did not fit was never taken from you. 27 units
   to a block (charter rule 5).
+- **Ask `game.container_holder(name)` before breaking one.** `break_container`
+  answers an empty list for an empty box and for one it refused because somebody
+  has it open, so the holder is how a chest tells "empty" from "in use" and says
+  so instead of vanishing under them. `game/core_chest` is the worked example.
 - **They work while a player has it open.** An open container lives in that
   player's own inventory, and the engine writes into the slots they are looking
   at, so a machine does not stop while its owner watches it.
-- **One callback per hook per mod.** Two `register_on_tick` calls is an error,
-  not a merge — put your machines in one tick function.
+- **One callback per hook per mod — `on_use` is the exception.** Two
+  `register_on_tick` calls is an error, not a merge — put your machines in
+  one tick function. `register_on_use` alone takes two: once with
+  `materials`, once without (see "Right-clicking a block", above).
 
 ---
 
@@ -1223,6 +1721,66 @@ Blending a biome's COLOUR is the exception, and it is an engine feature
 (`register_chunk_tint`, above) for a reason you cannot work around: the blend
 has to happen where the pixels are, and a mod has no way to reach them.
 
+**A campfire is a `model` block, and it is `whole`.** A block whose look is a
+shape no cube is — a campfire, a brazier, an anvil, a machine — names a model
+you registered, and the client draws that in place of the block's cells. What
+the WORLD knows of it is its `shape`: which of the 27 cells it occupies, for
+collision, light, fluid and the aim. The two need not agree, as a creature's
+collider and its mesh need not: a fire whose flames reach the top of the block
+and whose shape is its bottom layer is the intended use.
+
+```lua
+game.register_model{ id = "campfire", file = "models/campfire.glb", texture = "models/campfire.png" }
+
+game.register_block{
+    id = "campfire",
+    model = "campfire",             -- your own model; another mod's as "their_mod:thing"
+    shape = {                       -- three layers, bottom first; nine cells each
+        "### ### ###",              -- z = 0, 1, 2 rows, x left to right
+        ".#. .#. .#.",
+        "... ... ...",
+    },
+    light_emit = { r = 15, g = 10, b = 4 },
+    hardness = 0.5,
+    textures = { all = "textures/campfire_icon.png" },   -- what the inventory shows
+}
+```
+
+A model block is **whole** without saying so: any tool digs the block, not the
+cell — a chisel included — in the block's own `hardness`, it comes off in one
+piece and pays a whole block's units (27, or your `drops` table in full) however
+many cells its shape has; placing it writes the air cells of its shape and
+costs 27 units whatever brush is held — on a chiselled slope it stands among
+the slope's cells, the model clipping through them, because **a block under
+with no node in its top layer is not ground**: placing against its top sweeps
+that block's remains away and lays the thing whole at its bottom, standing on
+the block beneath; a block with any top node is ground and the thing goes in
+the block above, intact (Contract §7.6; loose material keeps the
+three-quarters rule and fills a thin floor's gaps instead); and nothing is
+written into its block afterwards — a chisel cannot fill in a campfire, and a
+`set_block` with a mask or a merge naming one is refused and logged — except a
+`set_block` of another whole block, which swaps it in place and keeps the
+ground it was set into (a campfire lit, a torch burnt out). Dug, it
+comes up alone and the ground it stood among stays; a block brush on that
+ground takes the ground and leaves it. `whole = true` alone, with no model,
+gives a cube-looking block the same one-piece behaviour. `shape` needs one or
+the other: a registered shape a chisel could take apart would be a cut, and a
+cut is carried, not registered.
+
+The model is in cells, like a creature's: **three units to the block**, origin
+at the bottom centre, +Z forward, and `register_model`'s `scale` applies. It is
+lit as a creature is — one light for the model, the brightest at the block and
+its six neighbours — and it draws nothing until the model table has arrived,
+never a placeholder cube. `transparent`, `cutout`, `sway` and `billboard` are
+refused on it: it has no faces for them to apply to. The shape is written as
+declared, not turned to face the player; a block that should face four ways is
+four registered blocks for now.
+
+`game.set_block(x, y, z, "my_mod:campfire")` writes the shape; so do a stamped
+plan and a generator's `buf:set_block` / `buf:set_world`. A generator's area
+fills (`fill_density`, cover, palette, a scattered schematic) take a material as
+named — a full cube — so a schematic that wants the shape carries the cells.
+
 ---
 
 ## The sandbox
@@ -1255,6 +1813,10 @@ game.register_domain{ id = "quarry", generator = function(buf, pos)
     local heights = game.noise_heightmap(pos, { octaves = 4, frequency = 0.01, amplitude = 60.0 })
     buf:fill_below_heightmap(heights, stone)
 end }
+
+-- `pos.domain` is the domain being filled: "overworld", "my_mod:quarry", or
+-- "my_mod:ship/17" for an instance of a template. A template's generator is
+-- shared by all its instances, so this is how they come out different.
 
 game.register_on_chat(function(event)
     if event.text ~= "quarry" then
@@ -1365,15 +1927,36 @@ slower one; this is the multiplier that makes a cow amble rather than march at
 a player's walk. The same number, and the same code, that slows a player.
 
 **A player's movement is yours to limit, and flight yours to grant.**
-`game.set_player_abilities(uuid, { fly, speed, sprint, wind_sky })` — a Creative
+`game.set_player_abilities(uuid, { fly, speed, sprint, wind_sky, gravity })` — a Creative
 world where everybody flies, cold that slows, hunger that stops a sprint, and
 `wind_sky = false` for a world that means its nights (the engine's sky keys
-scrub the client's own clock, which lights a player's night for free). Replaced
+scrub the client's own clock, which lights a player's night for free), and
+`gravity` (a multiplier, `0.17` for a moon, `0` floats, over 4 is clamped; the
+jump impulse is unchanged so a light player jumps higher; a rider is governed
+by the mount's physics instead). Replaced
 whole each call (a field left out is the default again), `fly` is OR-ed with the
 operator list, and the client predicts with the same numbers so nobody
 rubber-bands. Do not try this with `game.set_entity` on a player's body: the
 body is stepped from the player's own inputs and your write is overwritten the
 next tick.
+
+**A player can ride an entity: `game.mount(uuid, entity, { seat, sneak_dismounts })`.**
+From the next tick their walk, jump and sprint drive the ENTITY — at its own
+`speed`, with its own `collider` — and their client predicts it, so nobody
+rubber-bands; their body and camera sit at the `seat` (blocks above the
+mount's feet, turned with it; no seat is on top of its box), and the mount
+faces where they look. Sneak gets them off unless `sneak_dismounts = false`,
+and so do `game.dismount(uuid)`, the mount being despawned (which is how you
+kill one), either of them changing domain, and the player leaving; every one
+of them is heard by `register_on_dismount` with a `reason` and where the engine
+put them — the mount's feet — so `game.move_player` from there lands them
+anywhere else. `game.mounted(uuid)` says what they are on. Refusals are
+`nil, reason`, never an error, because a race can cause each: one rider to a
+mount (`"ridden"`), one mount to a rider (`"already riding"`), and no players,
+markers, boxes past 16 blocks or other domains. The rider's own abilities stay
+theirs, a push on a rider pushes the mount, a `move_player` on one ends the
+ride, and nothing about a ride is saved. Do not build this with `move_player`
+every tick: that is the rubber-banding version.
 
 **Your sea is drawn at the horizon.** A chunk past the detail radius arrives as
 a summary — one material a cell — and until 2026-09-19 a summary held no fluid,
@@ -1400,7 +1983,9 @@ naming the other fluid, so what it MEANS — steam, obsidian, a hiss — is your
 write from there.
 
 **Ground drinks any fluid unless it names one.** `absorbs = { rate, becomes }`
-drinks whatever touches it; `absorbs = { rate, becomes, fluid = "weather:rain" }`
+drinks whatever touches it, and `becomes` may be another mod's block —
+`"tiamat_weather:damp_dirt"` — resolved once every mod has registered, so the
+soil is the world's and the dampness the weather's; `absorbs = { rate, becomes, fluid = "weather:rain" }`
 drinks that fluid alone, so the bed that soaks a puddle of rain does not drain
 the river it is the bed of. A named fluid nobody registered is one nothing
 drinks.
@@ -1417,13 +2002,25 @@ again for them from `register_on_player_join`.
 **The sky's keyframes are registration-only; the weather over them is not.**
 `register_sky` takes its keyframes in the registration window and the client
 interpolates them from the clock. `game.set_sky_modifier(uuid, { intensity,
-sky, sky_mix, fog_distance, saturation, ease_ticks })` lays a per-player change
-over them at any time — a storm darkens the sun, closes the horizon in and
-greys the grade, eased on that player's client — and `nil` puts the plain sky
-back. It multiplies and mixes rather than replacing, so it is right at every
-hour. `game.flash{ pos, radius, intensity, colour, attack_ticks, decay_ticks }`
+sky, sky_mix, fog_distance, saturation, stars, light_floor, ease_ticks })` lays a per-player
+change over them at any time — a storm darkens the sun, closes the horizon in
+and greys the grade, eased on that player's client — and `nil` puts the plain
+sky back. It multiplies and mixes rather than replacing, so it is right at every
+hour; the one field that replaces is `stars` (0 to 1), which stands in for the
+keyframes' star brightness while the modifier is set, so a black sky with
+`stars = 1` is darkness and stars by day as by night. The other field that
+does not multiply is `light_floor` (0 to 1), the least the frame is lit at:
+the sun term is raised to it where the sky reaches and the ambient floor where
+it does not, so a cave is lit too, colours kept (`intensity` cannot — it
+multiplies midnight's 0.08, and a cave has no sun). `0` or nil changes nothing,
+and out of range is an error. A mod composing overlays sends the HIGHEST floor
+any overlay asks: a floor is a floor, not a product. `game.flash{ pos, radius, intensity, colour, attack_ticks, decay_ticks }`
 is lightning: a moment's light on the sun and sky of everyone in reach, with no
-relight. The sun's direction and the keyframes themselves cannot be moved.
+relight. `game.lightning{ from, to, seed, colour, width, branches, ticks,
+radius, player }` draws the bolt itself — a forked line every client builds
+from `seed`, so everyone watching sees the same one; its `radius` is measured
+from `from`, the top, so a tall bolt needs a radius taller than it. The sun's
+direction and the keyframes themselves cannot be moved.
 
 **Stars are places, and the sky is per domain.** A keyframe's `stars` (0 to 1)
 says how much of the catalog shows at that hour — omit it and none do; the
@@ -1433,7 +2030,11 @@ star a player sees is the star `game.star_in_view(uuid)` names. A domain
 registered with a `position`, or an instance made with
 `game.create_domain(template, key, { position = ... })`, sees the sky from
 there; `register_sky{ domain = ... }` gives it colours of its own, sent to the
-client when a player arrives. Travel is yours: which star has a surface, what
+client when a player arrives. `game.set_domain_sky(id, spec)` (or
+`create_domain`'s `options.sky`) sets one at run time, for an instance or any live
+domain: everyone in it has it now, a later arrival on arrival, it is kept across
+restarts and leaves with `destroy_domain`, and `nil` gives the registered sky
+back. The day's length is still the world's one clock. Travel is yours: which star has a surface, what
 takes you there and what brings you back is a mod's rule, and `game/core_space`
 is the smallest one that works.
 
@@ -1460,6 +2061,12 @@ all: `game.set_precipitation(uuid, { rate, size, colour, velocity, area, above,
 ease_ticks })` sends the shape once and the player's client spawns it around
 its own camera until you send `nil`.
 
+**A rainbow is a strength, not a place.** `game.set_rainbow(uuid, { intensity,
+ease_ticks? })` (or `nil`) says whether and how strongly; the client draws the
+bow 42 degrees round the point opposite the sun, at the sky's depth, fading out
+as the sun climbs and hidden at night. Deciding when one is owed, after rain, by
+day, under open sky, is yours.
+
 **A mod reaches another mod only through what it exports.** Each mod gets a
 fresh sandbox and `game.storage` is private; `game.export` / `game.exports`
 (below, under "Sharing with other mods") is the channel, and `depends` is what
@@ -1468,7 +2075,11 @@ thing that goes quietly wrong the day they are retuned.
 
 ## Before you say it works
 
-- `--check-mods` passes and your mod is listed.
+- `--check-mods` passes and your mod is listed. From an engine checkout,
+  `scripts/conform.sh <your mod's directory>` runs that and then a real
+  server with the bot joining, beside the default mods a release ships;
+  `docs/mod-conformance.md` in the engine has the workflow a mod repository
+  runs it from on every push.
 - No `math.sin`, `math.atan`, `^` or any other float maths on a value that
   reaches the world. A density table instead.
 - A `game.density` field compiled ONCE at load, not rebuilt per chunk.
@@ -1497,4 +2108,7 @@ It describes behaviour that changes. When the engine changes something a mod
 author relies on, this file changes in the same commit — the same rule
 `scripts/check-stubs.sh` enforces mechanically for the stubs, applied by hand to
 the prose. If it contradicts [`stubs/game.lua`](stubs/game.lua), the stubs are
-right and this is stale: fix it.
+right and this is stale: fix it. A deprecation is announced here and on the
+stub in one commit, as the version rule above requires, and the version in the
+stubs' header moves in the release that adds or removes something — never in
+between, because a mod compares against it.
