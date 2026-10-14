@@ -59,7 +59,7 @@ pale_terracotta, peony, permafrost, pink_algae, pitchblende, pitcher_plant, popp
 pyrite, redwood_log, redwood_needles, reeds, roman_chamomile, rose_blooms,
 rose_bush, rust_red_sandstone, salt, sand, scorch, seagrass, silver_ore, slate,
 snow, stone, sulfur, tall_grass, tin_ore, violet_glowcap, volcanic_ash, water, water_iris,
-wet_clay, white_sand, wild_mint, wild_wheat, willow_leaves, willow_log, willow_planks.
+wet_clay, white_sand, wild_hive, wild_mint, wild_wheat, willow_leaves, willow_log, willow_planks.
 `docs/blocks.md` says where each is used and why.
 
 **Block tags** (2026-09-28, Craft's W2; read back with the engine's

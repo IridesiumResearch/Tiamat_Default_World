@@ -8,6 +8,44 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-10-14
+
+### The API reference re-vendored (milestone 0.5.0, A4)
+
+- `stubs/game.lua` and `AGENTS.md` copied from the engine's `main`
+  (6a9c56bf): the mod API is 1.0 and the stubs say so, with
+  `game.api_version`; `AGENTS.md` carries the version and deprecation
+  rule and the "Reference, by area" list. The copies here had no local
+  edits, only older wording.
+
+### Wild hives in the Flower Forest (Life's sibling ask W3)
+
+- "Hives the flower forest is generated with." A new block, `wild_hive`:
+  a lump of comb in ONE block (the middle layer whole, a cross over and
+  under it), hung on a twig from the middle of an apple tree's first
+  limb, in the block under the limb and off the bole. **One apple tree in
+  six** carries one: a sixth apple schematic, `apple:hive`, beside the
+  five there were. Reckoned from the scatter (a square in 36 columns, 42%
+  of them taken, inside a grove), about one hive in every two chunks of
+  dense orchard, and none outside the groves; not yet counted.
+- **The wood keeps its cells where the comb meets it** (logs now priority
+  2, the hive 1, leaves 0, so the order of the rest is as it was): the
+  comb is built round the bough. Replayed over every lean, limb, reach and
+  rise the apple can draw (16,384 trees), 14 of the 19 cells stand in all
+  but one tree in twenty, never fewer than 6, and the hive's block is two
+  or three blocks over the root, in reach from the ground.
+- The world only grows it. It registers no random tick and no use, so
+  that Life can take both: filling it near flowers and handing over the
+  honey are Life's, as the apple is (W2). Life's stand-in spawn pass can
+  go when Life takes the block up. Life's `flowers_near` looks two blocks
+  down; a hive's flowers are one to three under it.
+- The flower forest's apple variants are now six, so which tree stands
+  where changes in chunks generated from here on: in an older world, the
+  seam is at the edge of what had been generated.
+- Not yet seen in a running world: the tree was built and measured at
+  load (a scratch copy forcing the flower forest's lazy build into
+  `--check-mods`: 6 apples, the hived one 447 blocks), not walked under.
+
 ## 2026-10-12
 
 ### The designer's playtest

@@ -113,7 +113,8 @@ local function rng_for(name)
     return game.rng_stream({ x = 0, y = 0, z = 0, seed = 0 }, "flower_forest_template:" .. name)
 end
 local PRIORITY = {
-    [blocks.apple_log] = 1, [blocks.cherry_log] = 1, [blocks.birch_log] = 1, [blocks.moss] = 1,
+    [blocks.apple_log] = 2, [blocks.cherry_log] = 2, [blocks.birch_log] = 2, [blocks.moss] = 2,
+    [blocks.wild_hive] = 1,                              -- under the wood it hangs on, over the leaves
 }
 
 -- A crown: a rough ball of leaves with blossom thrown through it — two or
@@ -129,10 +130,44 @@ local function crown(rng, leaves, blossom, x, y, z, r, flat)
     end
 end
 
+-- A wild hive (2026-10-14, Life's sibling ask W3): a lump of comb in ONE
+-- block, so whatever Life does with it is done to one block — the middle
+-- layer whole, a cross over and under it, nineteen cells, rounder than a
+-- box. It hangs on a twig from the middle of a limb, in the first block
+-- off the bole. The wood keeps its cells where the two meet, so the comb
+-- is built round the bough rather than the bough cut for it: over every
+-- lean, limb and size the apple can draw, 14 of the 19 cells stand in all
+-- but one tree in twenty, and never fewer than 6.
+local HIVE_CELLS = 0
+for y = 0, 2 do
+    for z = 0, 2 do
+        for x = 0, 2 do
+            if y == 1 or x == 1 or z == 1 then
+                HIVE_CELLS = HIVE_CELLS | (1 << (x + 3 * y + 9 * z))
+            end
+        end
+    end
+end
+local function hang_hive(top, d, reach, rise)
+    local mx, my, mz = top[1] + d[1] * reach * 0.5, top[2] + rise * 0.6, top[3] + d[2] * reach * 0.5
+    local bx, bz = math.floor(mx), math.floor(mz)
+    if bx == math.floor(top[1]) and bz == math.floor(top[3]) then
+        -- Still over the bole: one block further out along the limb.
+        if math.abs(d[1]) >= math.abs(d[2]) then
+            bx = bx + (d[1] < 0 and -1 or 1)
+        else
+            bz = bz + (d[2] < 0 and -1 or 1)
+        end
+    end
+    local by = math.floor(my - 0.32) - 1                 -- the block under the limb's underside
+    schem.push_path(blocks.apple_log, { { mx, my - 0.2, mz, 0.26 }, { bx + 0.5, by + 0.95, bz + 0.5, 0.2 } }, BLIND)
+    schem.push_cells(blocks.wild_hive, bx, by, bz, HIVE_CELLS)
+end
+
 -- A bearing apple: a short crooked bole that forks low into three or four
 -- limbs, each ending in its own lump of crown — the shape of an orchard
--- tree left to itself.
-local function apple(rng)
+-- tree left to itself. With `hive`, one hangs under its first limb.
+local function apple(rng, hive)
     schem.record_begin()
     local tall = 2.4 + rng:below(4) * 0.35
     local lean = schem.DIR16[rng:below(16) + 1]
@@ -153,6 +188,9 @@ local function apple(rng)
         schem.push_path(blocks.apple_log, { { top[1], top[2], top[3], 0.4 },
             { top[1] + d[1] * reach * 0.5, top[2] + rise * 0.6, top[3] + d[2] * reach * 0.5, 0.32 }, tip }, BLIND)
         crown(rng, blocks.apple_leaves, blocks.apple_blossom, tip[1], tip[2] + 0.8, tip[3], 2.0 + rng:below(3) * 0.35, 0.8)
+        if hive and i == 0 then
+            hang_hive(top, d, reach, rise)
+        end
     end
     return schem.record_schematic(PRIORITY)
 end
@@ -248,6 +286,7 @@ local function structures()
         return out
     end
     for i = 1, 5 do out.apples[i] = apple(rng_for("apple:" .. i)) end
+    out.apples[6] = apple(rng_for("apple:hive"), true)  -- one apple tree in six carries a wild hive
     for i = 1, 5 do out.cherries[i] = cherry(rng_for("cherry:" .. i)) end
     for i = 1, 5 do out.birches[i] = birch(rng_for("birch:" .. i)) end
     for i = 1, 4 do out.logs[i] = fallen_log(rng_for("log:" .. i)) end

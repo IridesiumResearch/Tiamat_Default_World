@@ -153,8 +153,9 @@ vein runs on through a pocket. About 3.6% of the underground. No new block.
 
 ## For the sibling mods (2026-09-29)
 
-Two blocks the world holds for other mods, asked for in Science's and
-Magic's `docs/sibling-asks.md`. Neither belongs to one biome.
+Blocks the world holds for other mods, asked for in the siblings'
+`docs/sibling-asks.md` (Science's, Magic's and Life's). None belongs to
+the biome it stands in.
 
 | Block | Where | Why |
 |---|---|---|
@@ -162,6 +163,7 @@ Magic's `docs/sibling-asks.md`. Neither belongs to one biome.
 | `cave_earth` | two-cell patches on the floors of the shallow caves (`caves.lua`), in about half their floor | Science's W-S2: the nitrous earth the saltpetre men leached. Tags `soil`, `nitrous` |
 | `wild_wheat` (2026-09-30) | stands of a yard-tall straw sprite through the Rolling Grasslands and the River Valleys' terraces and slopes (`tdw.wheat_cover`, `biomes.lua`) | Life's W1: the crop is found before its seed. Life forages wheat seed from it. Tags `plant`, `grain` |
 | `apple_fruit` (2026-09-30) | one cell hanging under an apple tree's lowest leaves, grown by the leaves' random tick at a fixed quarter of the leaf blocks (`biomes/flower_forest.lua`) | Life's W2: fruit that is seen. Life picks it; the spot grows another on its next tick, about twenty minutes. Tags `plant`, `fruit` |
+| `wild_hive` (2026-10-14) | a 19-cell lump of comb in one block, hung on a twig under the first limb of one apple tree in six in the Flower Forest, two or three blocks over the ground (`biomes/flower_forest.lua`, at generation) | Life's W3: hives the forest is generated with. The world registers no random tick and no use on it, so filling it and taking its honey are Life's. Tag `hive`; hardness 0.6 |
 
 ## The ores (2026-09-17)
 

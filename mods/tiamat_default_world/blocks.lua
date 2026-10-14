@@ -108,6 +108,7 @@ tag({ "oak_leaves", "birch_leaves", "willow_leaves", "ironwood_leaves", "kapok_l
 tag({ "apple_blossom", "cherry_blossom" }, "leaves", "plant", "flower")
 tag({ "wild_wheat" }, "plant", "grain")
 tag({ "apple_fruit" }, "plant", "fruit")
+tag({ "wild_hive" }, "hive")
 tag({ "fern", "tall_grass", "ladys_mantle", "wild_mint", "monstera", "pitcher_plant", "maidenhair", "cactus", "moss", "lichen" }, "plant")
 tag({ "ladys_mantle_bloom", "blue_lunaria", "roman_chamomile", "rose_blooms", "allium", "peony", "poppy", "bluebell", "heather" },
     "plant", "flower")
@@ -457,6 +458,12 @@ block("apple_leaves", "Apple leaves", "A low, broad crown of them.", { hardness 
 -- apple tree's leaves, grown there by the leaves' random tick
 -- (biomes/flower_forest.lua). Life picks it; the tree grows another.
 block("apple_fruit", "Apple", "A small red apple hanging under the leaves.", { hardness = 0.1, passable = true, billboard = "cross" })
+-- A wild hive (2026-10-14, Life's sibling ask W3: "hives the flower forest
+-- is generated with"): a lump of comb hung on a twig under an apple bough,
+-- one block of cells, in one apple tree in six (biomes/flower_forest.lua).
+-- The world only grows it. Life makes it a hive: the world registers no
+-- random tick and no use on it, so those are Life's to take.
+block("wild_hive", "Wild hive", "Grey-gold comb hung under an apple bough; the bees come and go.", { hardness = 0.6 })
 block("apple_blossom", "Apple blossom", "White-pink blossom through the crown, and fallen under it.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true, light_falloff = 1 })
 block("cherry_log", "Cherry log", "Dark, banded bark; a wild cherry leans toward the light.", { hardness = 0.9, tint = SOIL })
 block("cherry_leaves", "Cherry leaves", "Pink from the first thaw to the last of the summer.", { hardness = 0.2, tint = { strength = 0.10, scale = 96 }, cutout = true, sway = true, light_falloff = 1 })

@@ -39,6 +39,7 @@ BLOCKS = {
     "tall_grass":     (116, 136,  60,  0),
     "wild_wheat":     (204, 178, 108,  0),   # 2026-09-30: pale straw (Life's W1)
     "apple_fruit":    (182,  44,  38,  0),   # 2026-09-30: a red apple (Life's W2)
+    "wild_hive":      (164, 132,  78,  0),   # 2026-10-14: old comb, grey-gold (Life's W3)
     "bramble":        ( 72,  60,  44,  0),
     "ladys_mantle":       ( 96, 124,  70,  0),
     "ladys_mantle_bloom": (172, 176,  92,  0),
