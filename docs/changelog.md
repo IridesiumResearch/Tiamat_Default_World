@@ -8,6 +8,16 @@ The commit messages carry the same account; this file is the one you can
 read without git. Engine changes made for the mod are listed too, with the
 engine commit they landed in, because the mod is written against them.
 
+## 2026-10-15
+
+- **The engine's conformance run, on every push and nightly**
+  (`.github/workflows/conform.yml`; milestone 0.5.0, A3 and exit criterion
+  E8): from a checkout of the engine's `main`, `scripts/conform.sh` puts
+  the default mods `bundle.toml` pins beside this one, runs
+  `--check-mods`, then a real server with the fixture bot joining, and
+  fails if any mod is disabled. The engine's own workflow, as Progress
+  has it, with this mod's directory on the last line.
+
 ## 2026-10-14
 
 ### The API reference re-vendored (milestone 0.5.0, A4)
